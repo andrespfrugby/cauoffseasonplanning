@@ -22,230 +22,255 @@
   --font-body: 'DM Sans', sans-serif;
   --r:         10px;
 }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 15px;
-  min-height: 100vh;
-  line-height: 1.5;
-}
-.hidden { display: none !important; }
+body { background:var(--bg); color:var(--text); font-family:var(--font-body); font-size:15px; min-height:100vh; line-height:1.5; }
+.hidden { display:none !important; }
 
 /* ── LOGIN ── */
-#screen-login {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  position: relative;
-  overflow: hidden;
-}
-.login-bg {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(232,20,42,0.08) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 60% at 10% 80%, rgba(232,20,42,0.04) 0%, transparent 60%);
-  pointer-events: none;
-}
-.login-box { width: 100%; max-width: 380px; position: relative; z-index: 1; }
-.login-logo { font-family: var(--font-head); font-size: 56px; letter-spacing: 2px; line-height: 1; margin-bottom: 4px; }
-.login-logo .cau  { color: #e8142a; }
-.login-logo .rest { color: #ffffff; }
-.login-sub { color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2.5rem; }
-.field-group { margin-bottom: 1rem; }
-.field-group label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-.field-group input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--r); padding: 12px 14px; font-size: 15px; font-family: var(--font-body); color: var(--text); outline: none; transition: border-color .2s; }
-.field-group input:focus { border-color: var(--accent); }
-.btn-primary { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: var(--r); padding: 13px; font-size: 14px; font-weight: 600; font-family: var(--font-body); letter-spacing: .04em; cursor: pointer; transition: opacity .15s, transform .1s; margin-top: .5rem; }
-.btn-primary:hover { opacity: .88; }
-.btn-primary:active { transform: scale(.98); }
-.btn-primary:disabled { opacity: .4; cursor: not-allowed; }
-.error-msg { color: var(--danger); font-size: 13px; margin-top: .75rem; text-align: center; min-height: 20px; }
+#screen-login { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem; position:relative; overflow:hidden; }
+.login-bg { position:absolute; inset:0; background: radial-gradient(ellipse 60% 50% at 80% 20%, rgba(232,20,42,0.08) 0%, transparent 60%), radial-gradient(ellipse 40% 60% at 10% 80%, rgba(232,20,42,0.04) 0%, transparent 60%); pointer-events:none; }
+.login-box { width:100%; max-width:380px; position:relative; z-index:1; }
+.login-logo { font-family:var(--font-head); font-size:56px; letter-spacing:2px; line-height:1; margin-bottom:4px; }
+.login-logo .cau  { color:#e8142a; }
+.login-logo .rest { color:#ffffff; }
+.login-sub { color:var(--muted); font-size:12px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:2.5rem; }
+.field-group { margin-bottom:1rem; }
+.field-group label { display:block; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.field-group input { width:100%; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--r); padding:12px 14px; font-size:15px; font-family:var(--font-body); color:var(--text); outline:none; transition:border-color .2s; }
+.field-group input:focus { border-color:var(--accent); }
+.btn-primary { width:100%; background:var(--accent); color:#fff; border:none; border-radius:var(--r); padding:13px; font-size:14px; font-weight:600; font-family:var(--font-body); letter-spacing:.04em; cursor:pointer; transition:opacity .15s, transform .1s; margin-top:.5rem; }
+.btn-primary:hover { opacity:.88; }
+.btn-primary:active { transform:scale(.98); }
+.btn-primary:disabled { opacity:.4; cursor:not-allowed; }
+.error-msg { color:var(--danger); font-size:13px; margin-top:.75rem; text-align:center; min-height:20px; }
 
 /* ── APP ── */
-#screen-app { display: none; min-height: 100vh; padding-bottom: 5rem; }
-.topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(13,15,18,.93); backdrop-filter: blur(12px); z-index: 10; }
-.topbar-logo { font-family: var(--font-head); font-size: 20px; letter-spacing: 1px; }
-.topbar-logo .cau  { color: #e8142a; }
-.topbar-logo .rest { color: #ffffff; }
-.topbar-right { display: flex; align-items: center; gap: 10px; }
-.player-badge { background: var(--surface2); border: 1px solid var(--border2); border-radius: 99px; padding: 4px 12px 4px 8px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
-.avatar { width: 24px; height: 24px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
-.btn-logout { background: none; border: 1px solid var(--border2); border-radius: 8px; color: var(--muted); padding: 5px 10px; font-size: 12px; cursor: pointer; font-family: var(--font-body); }
-.btn-logout:hover { color: var(--text); }
-
-.content { padding: 1.5rem 1.25rem; max-width: 680px; margin: 0 auto; }
-.week-header { margin-bottom: 1.5rem; }
-.week-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .75rem; }
-.semana-select { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 8px 14px; color: var(--text); font-family: var(--font-body); font-size: 13px; outline: none; cursor: pointer; margin-bottom: 1rem; min-width: 220px; }
-.semana-select:focus { border-color: var(--accent); }
-.day-pills { display: flex; gap: 8px; flex-wrap: wrap; }
-.day-pill { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 6px 16px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; color: var(--muted); font-family: var(--font-body); }
-.day-pill:hover { border-color: rgba(232,20,42,.4); color: var(--text); }
-.day-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
-.session-title { font-family: var(--font-head); font-size: 34px; letter-spacing: 1px; line-height: 1; margin-bottom: .25rem; }
-.session-meta { color: var(--muted); font-size: 13px; margin-bottom: 1.5rem; }
-.phase-header { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 1.5rem 0 .75rem; display: flex; align-items: center; gap: 8px; }
+#screen-app { display:none; min-height:100vh; padding-bottom:5rem; }
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(13,15,18,.93); backdrop-filter:blur(12px); z-index:10; }
+.topbar-logo { font-family:var(--font-head); font-size:20px; letter-spacing:1px; }
+.topbar-logo .cau  { color:#e8142a; }
+.topbar-logo .rest { color:#ffffff; }
+.topbar-right { display:flex; align-items:center; gap:10px; }
+.player-badge { background:var(--surface2); border:1px solid var(--border2); border-radius:99px; padding:4px 12px 4px 8px; display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; }
+.avatar { width:24px; height:24px; background:var(--accent); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
+.btn-logout { background:none; border:1px solid var(--border2); border-radius:8px; color:var(--muted); padding:5px 10px; font-size:12px; cursor:pointer; font-family:var(--font-body); }
+.btn-logout:hover { color:var(--text); }
+.content { padding:1.5rem 1.25rem; max-width:680px; margin:0 auto; }
+.week-header { margin-bottom:1.5rem; }
+.week-label { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:.75rem; }
+.semana-select { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:8px 14px; color:var(--text); font-family:var(--font-body); font-size:13px; outline:none; cursor:pointer; margin-bottom:1rem; min-width:220px; }
+.semana-select:focus { border-color:var(--accent); }
+.day-pills { display:flex; gap:8px; flex-wrap:wrap; }
+.day-pill { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:6px 16px; font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; color:var(--muted); font-family:var(--font-body); }
+.day-pill:hover { border-color:rgba(232,20,42,.4); color:var(--text); }
+.day-pill.active { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
+.session-title { font-family:var(--font-head); font-size:34px; letter-spacing:1px; line-height:1; margin-bottom:.25rem; }
+.session-meta { color:var(--muted); font-size:13px; margin-bottom:1.5rem; }
+.phase-header { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:1.5rem 0 .75rem; display:flex; align-items:center; gap:8px; }
 .phase-header::after { content:''; flex:1; height:1px; background:var(--border); }
 
 /* ── EXERCISE CARD ── */
-.ex-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 8px; overflow: hidden; }
-.ex-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
-.block-id { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--muted); flex-shrink: 0; }
-.ex-info { flex: 1; min-width: 0; }
-.ex-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ex-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
-.tag { font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
-.tag-squat   { background: rgba(55,138,221,.15);  color: #5fb3f5; }
-.tag-hinge   { background: rgba(29,158,117,.15);  color: #3ecfa0; }
-.tag-push    { background: rgba(239,159,39,.15);  color: #ffc04d; }
-.tag-row     { background: rgba(127,119,221,.15); color: #a99ff5; }
-.tag-pull    { background: rgba(99,153,34,.15);   color: #9acf44; }
-.tag-plyo    { background: rgba(226,75,74,.15);   color: #ff7070; }
-.tag-iso     { background: rgba(136,135,128,.15); color: #aaa; }
-.tag-other   { background: rgba(212,83,126,.15);  color: #f07aaa; }
-.tag-neutral { background: var(--surface2); color: var(--muted); }
+.ex-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); margin-bottom:8px; overflow:hidden; }
+.ex-header { display:flex; align-items:center; gap:10px; padding:12px 14px; }
+
+/* Block ID — color por letra de bloque */
+.block-id {
+  border-radius:6px;
+  width:36px; height:36px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700;
+  flex-shrink:0;
+  border:1px solid transparent;
+}
+/* colores por letra — A=azul, B=verde, C=naranja, D=morado, E=rosa, resto=gris */
+.block-A { background:rgba(55,138,221,.18);  color:#5fb3f5; border-color:rgba(55,138,221,.35); }
+.block-B { background:rgba(29,158,117,.18);  color:#3ecfa0; border-color:rgba(29,158,117,.35); }
+.block-C { background:rgba(239,159,39,.18);  color:#ffc04d; border-color:rgba(239,159,39,.35); }
+.block-D { background:rgba(127,119,221,.18); color:#a99ff5; border-color:rgba(127,119,221,.35); }
+.block-E { background:rgba(212,83,126,.18);  color:#f07aaa; border-color:rgba(212,83,126,.35); }
+.block-X { background:var(--surface2); color:var(--muted); border-color:var(--border2); }
+
+.ex-info { flex:1; min-width:0; }
+.ex-name { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ex-tags { display:flex; gap:5px; flex-wrap:wrap; margin-top:5px; }
+
+/* ── TAGS por grupo ── */
+.tag { font-size:11px; padding:2px 8px; border-radius:4px; font-weight:500; }
+
+/* patrón — colores vivos por categoría */
+.tag-squat   { background:rgba(55,138,221,.15);  color:#5fb3f5; }
+.tag-hinge   { background:rgba(29,158,117,.15);  color:#3ecfa0; }
+.tag-push    { background:rgba(239,159,39,.15);  color:#ffc04d; }
+.tag-row     { background:rgba(127,119,221,.15); color:#a99ff5; }
+.tag-pull    { background:rgba(99,153,34,.15);   color:#9acf44; }
+.tag-plyo    { background:rgba(226,75,74,.15);   color:#ff7070; }
+.tag-iso     { background:rgba(136,135,128,.15); color:#aaa; }
+.tag-other   { background:rgba(212,83,126,.15);  color:#f07aaa; }
+
+/* sets + reps — azul claro */
+.tag-volume  { background:rgba(55,138,221,.10); color:#7ec8ff; border:1px solid rgba(55,138,221,.2); }
+
+/* contraction + tempo + load — verde apagado */
+.tag-method  { background:rgba(0,200,140,.08);  color:#00c88c; border:1px solid rgba(0,200,140,.18); }
+
+/* notas — amarillo suave */
+.tag-notes   { background:rgba(255,200,60,.08); color:#ffc83c; border:1px solid rgba(255,200,60,.18); }
+
+/* superserie badge — barra lateral coloreada */
+.ex-card.super-A { border-left:3px solid #5fb3f5; }
+.ex-card.super-B { border-left:3px solid #3ecfa0; }
+.ex-card.super-C { border-left:3px solid #ffc04d; }
+.ex-card.super-D { border-left:3px solid #a99ff5; }
+.ex-card.super-E { border-left:3px solid #f07aaa; }
 
 /* ── VIDEO BUTTON & EMBED ── */
 .btn-video {
-  flex-shrink: 0;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border2);
-  border-radius: 8px;
-  width: 34px; height: 34px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  transition: background .15s, border-color .15s;
-  color: var(--muted);
-  font-size: 14px;
+  flex-shrink:0;
+  background:rgba(255,255,255,0.06);
+  border:1px solid var(--border2);
+  border-radius:8px;
+  width:34px; height:34px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  transition:background .15s, border-color .15s;
+  color:var(--muted);
+  font-size:14px;
 }
-.btn-video:hover { background: rgba(232,20,42,.15); border-color: rgba(232,20,42,.4); color: var(--accent); }
-.btn-video.no-video { opacity: .25; cursor: default; pointer-events: none; }
+.btn-video:hover { background:rgba(232,20,42,.15); border-color:rgba(232,20,42,.4); color:var(--accent); }
+.btn-video.active { background:rgba(232,20,42,.2); border-color:var(--accent); color:var(--accent); }
+.btn-video.no-video { opacity:.2; cursor:default; pointer-events:none; }
 
-.video-embed {
-  display: none;
-  padding: 0 14px 14px;
+/* Modal de vídeo */
+.video-modal-overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  z-index:100;
+  align-items:center;
+  justify-content:center;
+  padding:1rem;
 }
-.video-embed.open { display: block; }
+.video-modal-overlay.open { display:flex; }
+.video-modal {
+  width:100%;
+  max-width:640px;
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:12px;
+  overflow:hidden;
+}
+.video-modal-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+}
+.video-modal-title { font-size:13px; font-weight:600; color:var(--text); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.video-modal-close {
+  background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; padding:0 4px; line-height:1;
+}
+.video-modal-close:hover { color:var(--text); }
 .video-wrap {
-  position: relative;
-  padding-bottom: 56.25%; /* 16:9 */
-  height: 0;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #000;
+  position:relative;
+  padding-bottom:56.25%;
+  height:0;
+  background:#000;
 }
 .video-wrap iframe {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  border: none;
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  border:none;
+}
+.video-no-url {
+  padding:2rem;
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
 }
 
-/* ── SESSION PANEL (RPE + Tiempo) ── */
-.session-panel {
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  border-radius: var(--r);
-  padding: 16px;
-  margin-top: 1.5rem;
-}
-.panel-section { margin-bottom: 18px; }
-.panel-section:last-child { margin-bottom: 0; }
-.panel-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
-.panel-sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+/* ── SESSION PANEL ── */
+.session-panel { background:var(--surface2); border:1px solid var(--border2); border-radius:var(--r); padding:16px; margin-top:1.5rem; }
+.panel-section { margin-bottom:18px; }
+.panel-section:last-child { margin-bottom:0; }
+.panel-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:3px; }
+.panel-sub { font-size:12px; color:var(--muted); margin-bottom:12px; }
 
-/* RPE grid */
-.rpe-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
-.rpe-btn { background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 4px; cursor: pointer; color: var(--muted); font-family: var(--font-body); transition: all .15s; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.rpe-btn .rpe-num  { font-size: 17px; font-weight: 600; }
-.rpe-btn .rpe-desc { font-size: 9px; }
-.rpe-btn:hover { color: var(--text); border-color: rgba(232,20,42,.4); }
-.rpe-btn.sel { background: var(--accent); color: #fff; border-color: var(--accent); }
+/* RPE */
+.rpe-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:12px; }
+.rpe-btn { background:var(--surface); border:1px solid var(--border2); border-radius:8px; padding:10px 4px; cursor:pointer; color:var(--muted); font-family:var(--font-body); transition:all .15s; text-align:center; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.rpe-btn .rpe-num  { font-size:17px; font-weight:600; }
+.rpe-btn .rpe-desc { font-size:9px; }
+.rpe-btn:hover { color:var(--text); border-color:rgba(232,20,42,.4); }
+.rpe-btn.sel { background:var(--accent); color:#fff; border-color:var(--accent); }
 
-/* Tiempo — teclado numérico */
+/* Numpad — más compacto */
 .time-display {
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-family: var(--font-head);
-  font-size: 36px;
-  letter-spacing: 2px;
-  text-align: center;
-  margin-bottom: 10px;
-  color: var(--text);
-  min-height: 60px;
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:8px;
+  padding:8px 16px;
+  font-family:var(--font-head);
+  font-size:28px;
+  letter-spacing:2px;
+  text-align:center;
+  margin-bottom:8px;
+  color:var(--text);
 }
-.time-display.has-value { color: var(--accent2); }
-.numpad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
+.time-display.has-value { color:var(--accent2); }
+.numpad { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; max-width:220px; margin:0 auto; }
 .numpad-btn {
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-radius: 8px;
-  padding: 12px 4px;
-  font-size: 18px;
-  font-family: var(--font-body);
-  font-weight: 500;
-  color: var(--text);
-  cursor: pointer;
-  transition: all .12s;
-  text-align: center;
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:7px;
+  padding:9px 4px;
+  font-size:16px;
+  font-family:var(--font-body);
+  font-weight:500;
+  color:var(--text);
+  cursor:pointer;
+  transition:all .12s;
+  text-align:center;
 }
-.numpad-btn:hover { background: var(--surface2); border-color: var(--border2); }
-.numpad-btn:active { transform: scale(.96); }
-.numpad-btn.del { color: var(--muted); font-size: 15px; }
-.numpad-btn.wide { grid-column: span 2; }
-.numpad-hint { font-size: 11px; color: var(--muted); text-align: center; margin-top: 6px; }
+.numpad-btn:hover { background:var(--surface2); }
+.numpad-btn:active { transform:scale(.95); }
+.numpad-btn.del { color:var(--muted); font-size:14px; }
+.numpad-hint { font-size:11px; color:var(--muted); text-align:center; margin-top:5px; }
 
-/* Save button */
-.btn-save-session {
-  width: 100%;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: var(--r);
-  padding: 13px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--font-body);
-  letter-spacing: .04em;
-  cursor: pointer;
-  margin-top: 16px;
-  transition: opacity .15s;
-}
-.btn-save-session:hover { opacity: .88; }
-.btn-save-session:disabled { opacity: .4; cursor: not-allowed; }
-.saved-msg { color: var(--accent2); font-size: 14px; font-weight: 600; text-align: center; padding: 8px 0; }
+.btn-save-session { width:100%; background:var(--accent); color:#fff; border:none; border-radius:var(--r); padding:13px; font-size:14px; font-weight:600; font-family:var(--font-body); letter-spacing:.04em; cursor:pointer; margin-top:16px; transition:opacity .15s; }
+.btn-save-session:hover { opacity:.88; }
+.btn-save-session:disabled { opacity:.4; cursor:not-allowed; }
+.saved-msg { color:var(--accent2); font-size:14px; font-weight:600; text-align:center; padding:8px 0; }
 
-.notes-banner { background: var(--surface2); border-left: 2px solid var(--accent); border-radius: 0 var(--r) var(--r) 0; padding: 10px 14px; font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 1.25rem; }
-.notes-banner strong { color: var(--text); }
-.loader { text-align: center; padding: 3rem; color: var(--muted); font-size: 13px; }
-.spinner { width: 28px; height: 28px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 1rem; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.empty { text-align: center; padding: 3rem 1rem; color: var(--muted); }
-.empty-icon { font-size: 36px; margin-bottom: .75rem; }
-@media (max-width: 500px) {
-  .session-title { font-size: 26px; }
-}
+.notes-banner { background:var(--surface2); border-left:2px solid var(--accent); border-radius:0 var(--r) var(--r) 0; padding:10px 14px; font-size:13px; color:var(--muted); line-height:1.6; margin-top:1.25rem; }
+.notes-banner strong { color:var(--text); }
+.loader { text-align:center; padding:3rem; color:var(--muted); font-size:13px; }
+.spinner { width:28px; height:28px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto 1rem; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.empty { text-align:center; padding:3rem 1rem; color:var(--muted); }
+.empty-icon { font-size:36px; margin-bottom:.75rem; }
+@media (max-width:500px) { .session-title { font-size:26px; } }
 </style>
 </head>
 <body>
+
+<!-- VIDEO MODAL (global, uno solo) -->
+<div class="video-modal-overlay" id="video-modal-overlay" onclick="closeVideoModal(event)">
+  <div class="video-modal">
+    <div class="video-modal-header">
+      <div class="video-modal-title" id="video-modal-title"></div>
+      <button class="video-modal-close" onclick="closeVideoModal()">✕</button>
+    </div>
+    <div id="video-modal-body"></div>
+  </div>
+</div>
 
 <!-- LOGIN -->
 <div id="screen-login">
   <div class="login-bg"></div>
   <div class="login-box">
-    <div class="login-logo">
-      <span class="cau">CAU</span><span class="rest">OFFSEASON</span>
-    </div>
+    <div class="login-logo"><span class="cau">CAU</span><span class="rest">OFFSEASON</span></div>
     <div class="login-sub">Club Planner · Summer 2026</div>
     <div class="field-group">
       <label>Usuario</label>
@@ -294,42 +319,37 @@ body {
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVyC8AFCalPyYy116XmEtzdSMYUc2tzW2c_Tm_H_TcJSt-FGvUWjfnflDS-GukmqpX/exec';
 
 let state = {
-  user: null,
-  dia: 1,
-  semana: 1,
-  semanas: [],
-  rpeSession: null,
-  tiempoSesion: '',   // string numérico en minutos
-  guardado: false
+  user: null, dia: 1, semana: 1, semanas: [],
+  rpeSession: null, tiempoSesion: '', guardado: false
 };
 
-// ── API ───────────────────────────────────────────────────────
+// ── API ──────────────────────────────────────────────────────
 async function api(payload) {
   try {
     const url = APPS_SCRIPT_URL + '?payload=' + encodeURIComponent(JSON.stringify(payload));
     const r   = await fetch(url, { redirect: 'follow' });
     const txt = await r.text();
     try { return JSON.parse(txt); }
-    catch { console.error('Respuesta no-JSON:', txt.substring(0, 300)); return { ok: false, error: 'Respuesta inesperada del servidor.' }; }
+    catch { return { ok: false, error: 'Respuesta inesperada del servidor.' }; }
   } catch(err) {
     return { ok: false, error: 'Error de red: ' + err.message };
   }
 }
 
-// ── LOGIN ─────────────────────────────────────────────────────
+// ── LOGIN ────────────────────────────────────────────────────
 async function doLogin() {
-  const btn      = document.getElementById('btn-login');
-  const errEl    = document.getElementById('login-error');
+  const btn = document.getElementById('btn-login');
+  const errEl = document.getElementById('login-error');
   const usuario  = document.getElementById('input-user').value.trim();
   const password = document.getElementById('input-pass').value;
   if (!usuario || !password) { errEl.textContent = 'Rellena usuario y contraseña'; return; }
   btn.disabled = true; btn.textContent = 'Entrando...'; errEl.textContent = '';
-  const res = await api({ action: 'login', usuario, password });
+  const res = await api({ action:'login', usuario, password });
   if (res.ok) {
     state.user = res;
     document.getElementById('player-name').textContent = res.nombre;
     document.getElementById('avatar-initials').textContent =
-      res.nombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+      res.nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
     document.getElementById('screen-login').style.display = 'none';
     document.getElementById('screen-app').style.display   = 'block';
     await loadSemanas();
@@ -339,55 +359,43 @@ async function doLogin() {
     btn.disabled = false; btn.textContent = 'Entrar';
   }
 }
+document.getElementById('input-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
-document.getElementById('input-pass').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
-});
-
-// ── SEMANAS ───────────────────────────────────────────────────
+// ── SEMANAS ──────────────────────────────────────────────────
 async function loadSemanas() {
-  const res    = await api({ action: 'getSemanas' });
+  const res = await api({ action:'getSemanas' });
   const select = document.getElementById('sel-semana');
   if (res.ok && res.semanas && res.semanas.length) {
     state.semanas = res.semanas;
-    select.innerHTML = res.semanas.map((s, i) =>
-      `<option value="${i + 1}">${s}</option>`
-    ).join('');
+    select.innerHTML = res.semanas.map((s,i)=>`<option value="${i+1}">${s}</option>`).join('');
   } else {
-    state.semanas = ['Semana 1'];
     select.innerHTML = '<option value="1">Semana 1</option>';
   }
   state.semana = 1;
 }
-
 function onSemanaChange() {
-  state.semana  = parseInt(document.getElementById('sel-semana').value);
-  resetSessionState();
-  loadRutina();
+  state.semana = parseInt(document.getElementById('sel-semana').value);
+  resetSessionState(); loadRutina();
 }
-
 function selectDay(dia, btn) {
   state.dia = dia;
   resetSessionState();
-  document.querySelectorAll('.day-pill').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.day-pill').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active');
   loadRutina();
 }
-
 function resetSessionState() {
-  state.rpeSession  = null;
-  state.tiempoSesion = '';
-  state.guardado    = false;
+  state.rpeSession = null; state.tiempoSesion = ''; state.guardado = false;
 }
 
-// ── RUTINA ────────────────────────────────────────────────────
+// ── RUTINA ───────────────────────────────────────────────────
 async function loadRutina() {
   state.semana = parseInt(document.getElementById('sel-semana').value);
   const container = document.getElementById('session-container');
   container.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando sesión...</div>';
-  const res = await api({ action: 'getRutina', semana: state.semana, dia: state.dia });
+  const res = await api({ action:'getRutina', semana:state.semana, dia:state.dia });
   if (!res.ok) {
-    container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${res.error || 'Error al cargar'}</div>`;
+    container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${res.error||'Error al cargar'}</div>`;
     return;
   }
   if (!res.ejercicios || !res.ejercicios.length) {
@@ -397,161 +405,127 @@ async function loadRutina() {
   renderSession(res.ejercicios, res.nombreSemana || '');
 }
 
-// ── RENDER ────────────────────────────────────────────────────
+// ── HELPERS ──────────────────────────────────────────────────
 const DAY_NAMES = ['','Lunes — Day 1','Martes — Day 2','Miércoles — Day 3','Jueves — Day 4','Sábado — Extra'];
 
-const patternTag = p => {
-  const map = {
-    Squat:'tag-squat', Hinge:'tag-hinge',
-    Horizontal_push:'tag-push', Horizontal_row:'tag-row',
-    Vertical_push:'tag-push',   Vertical_pull:'tag-pull',
-    Plyo:'tag-plyo', Iso:'tag-iso',
-    Olympics:'tag-other', Anti_rotation:'tag-other',
-    Anti_extension:'tag-other', Reset:'tag-neutral'
-  };
-  return map[p] || 'tag-neutral';
+const PATTERN_TAG = {
+  Squat:'tag-squat', Hinge:'tag-hinge',
+  Horizontal_push:'tag-push', Horizontal_row:'tag-row',
+  Vertical_push:'tag-push',   Vertical_pull:'tag-pull',
+  Plyo:'tag-plyo', Iso:'tag-iso',
+  Olympics:'tag-other', Anti_rotation:'tag-other',
+  Anti_extension:'tag-other', Reset:'tag-iso', Prep:'tag-iso'
 };
 
-// Convierte una URL de YouTube a embed
+function patternTag(p) { return PATTERN_TAG[p] || 'tag-iso'; }
+
+// Extrae la letra de bloque (A de A1, B de B2, etc.)
+function blockLetter(bloque) {
+  if (!bloque) return 'X';
+  const m = bloque.match(/^([A-Za-z]+)/);
+  return m ? m[1].toUpperCase() : 'X';
+}
+
 function toEmbedUrl(url) {
   if (!url) return '';
   let id = '';
   try {
     const u = new URL(url);
     if (u.hostname.includes('youtu.be')) {
-      id = u.pathname.slice(1);
+      id = u.pathname.slice(1).split('?')[0];
     } else if (u.hostname.includes('youtube.com')) {
       id = u.searchParams.get('v') || '';
-      // soporte /shorts/ID
-      if (!id && u.pathname.includes('/shorts/')) {
+      if (!id && u.pathname.includes('/shorts/'))
         id = u.pathname.split('/shorts/')[1].split('/')[0];
-      }
     }
   } catch(_) {}
-  return id ? `https://www.youtube.com/embed/${id}` : '';
+  return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : '';
 }
 
-let _cardId = 0;
-function renderCard(e) {
-  const uid      = 'ex-' + (++_cardId);
-  const embedUrl = toEmbedUrl(e.video);
-  const hasVideo = !!embedUrl;
+// ── VIDEO MODAL ──────────────────────────────────────────────
+function openVideoModal(nombre, videoUrl) {
+  const overlay = document.getElementById('video-modal-overlay');
+  const title   = document.getElementById('video-modal-title');
+  const body    = document.getElementById('video-modal-body');
+  title.textContent = nombre;
+  const embedUrl = toEmbedUrl(videoUrl);
+  if (embedUrl) {
+    body.innerHTML = `<div class="video-wrap">
+      <iframe src="${embedUrl}" allowfullscreen
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+      </iframe></div>`;
+  } else {
+    body.innerHTML = `<div class="video-no-url">
+      📹 Aún no hay vídeo para este ejercicio.<br>
+      <small>Añade la URL de YouTube en la columna VIDEO del Sheet.</small>
+    </div>`;
+  }
+  overlay.classList.add('open');
+}
+function closeVideoModal(e) {
+  if (e && e.target !== document.getElementById('video-modal-overlay')) return;
+  const overlay = document.getElementById('video-modal-overlay');
+  overlay.classList.remove('open');
+  document.getElementById('video-modal-body').innerHTML = '';
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeVideoModal(); });
 
-  const tags = [
-    e.patron      ? `<span class="tag ${patternTag(e.patron)}">${e.patron.replace(/_/g,' ')}</span>` : '',
-    e.contraccion ? `<span class="tag tag-neutral">${e.contraccion}</span>` : '',
-    e.sets        ? `<span class="tag tag-neutral">${e.sets} sets</span>` : '',
-    e.reps        ? `<span class="tag tag-neutral">${e.reps}</span>` : '',
-    e.tempo       ? `<span class="tag tag-neutral">Tempo ${e.tempo}</span>` : '',
-    e.load_objetivo ? `<span class="tag tag-neutral">${e.load_objetivo}</span>` : '',
-  ].filter(Boolean).join('');
+// ── RENDER CARD ──────────────────────────────────────────────
+function renderCard(e) {
+  const letra    = blockLetter(e.bloque);
+  const letraOk  = ['A','B','C','D','E'].includes(letra) ? letra : 'X';
+  const blockCls = `block-${letraOk}`;
+  const superCls = `super-${letraOk}`;
+
+  // Tag patrón
+  const tagPatron = e.patron
+    ? `<span class="tag ${patternTag(e.patron)}">${e.patron.replace(/_/g,' ')}</span>` : '';
+
+  // Tags volumen (sets + reps) — azul
+  const tagSets = e.sets ? `<span class="tag tag-volume">${e.sets} sets</span>` : '';
+  const tagReps = e.reps ? `<span class="tag tag-volume">${e.reps}</span>` : '';
+
+  // Tags método (contraction + tempo + load) — verde
+  const tagContr = e.contraccion   ? `<span class="tag tag-method">${e.contraccion}</span>` : '';
+  const tagTempo = e.tempo         ? `<span class="tag tag-method">Tempo ${e.tempo}</span>` : '';
+  const tagLoad  = e.load_objetivo ? `<span class="tag tag-method">${e.load_objetivo}</span>` : '';
+
+  // Tag notas — amarillo
+  const tagNotas = e.notas ? `<span class="tag tag-notes">📝 ${e.notas}</span>` : '';
+
+  const tags = [tagPatron, tagSets, tagReps, tagContr, tagTempo, tagLoad, tagNotas].filter(Boolean).join('');
+
+  // Escapar comillas para el onclick
+  const nombreEsc = e.ejercicio.replace(/'/g,"\\'");
+  const videoEsc  = (e.video||'').replace(/'/g,"\\'");
+  const hasVideo  = !!(e.video && e.video.startsWith('http'));
 
   return `
-  <div class="ex-card">
+  <div class="ex-card ${superCls}">
     <div class="ex-header">
-      <div class="block-id">${e.bloque}</div>
+      <div class="block-id ${blockCls}">${e.bloque}</div>
       <div class="ex-info">
         <div class="ex-name">${e.ejercicio}</div>
         ${tags ? `<div class="ex-tags">${tags}</div>` : ''}
       </div>
-      <button class="btn-video ${hasVideo ? '' : 'no-video'}"
-              onclick="toggleVideo('${uid}','${embedUrl}')"
-              title="${hasVideo ? 'Ver vídeo' : 'Sin vídeo'}">
-        ▶
-      </button>
-    </div>
-    <div class="video-embed" id="${uid}">
-      <div class="video-wrap">
-        <iframe id="${uid}-iframe" src="" allowfullscreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-        </iframe>
-      </div>
+      <button class="btn-video${hasVideo ? '' : ' no-video'}"
+              onclick="openVideoModal('${nombreEsc}','${videoEsc}')"
+              title="${hasVideo ? 'Ver vídeo' : 'Sin vídeo aún'}">▶</button>
     </div>
   </div>`;
 }
 
-function toggleVideo(uid, embedUrl) {
-  const panel  = document.getElementById(uid);
-  const iframe = document.getElementById(uid + '-iframe');
-  const isOpen = panel.classList.contains('open');
-  // Cerrar todos los demás
-  document.querySelectorAll('.video-embed.open').forEach(el => {
-    el.classList.remove('open');
-    el.querySelector('iframe').src = '';
-  });
-  if (!isOpen) {
-    panel.classList.add('open');
-    iframe.src = embedUrl;
-  }
-}
-
-// ── SESSION PANEL ─────────────────────────────────────────────
-function renderSessionPanel() {
-  if (state.guardado) {
-    return `<div class="session-panel"><div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion ? ' · ' + state.tiempoSesion + ' min' : ''}</div></div>`;
-  }
-
-  const rpeDescs = { 6:'Fácil', 7:'Moderado', 8:'Difícil', 9:'Muy duro', 10:'Máximo' };
-
-  const rpeButtons = [6,7,8,9,10].map(n => `
-    <button class="rpe-btn${state.rpeSession===n?' sel':''}" onclick="selectRpe(${n},this)">
-      <span class="rpe-num">${n}</span>
-      <span class="rpe-desc">${rpeDescs[n]}</span>
-    </button>`).join('');
-
-  const tiempoDisplay = state.tiempoSesion
-    ? `${state.tiempoSesion} min`
-    : '— min';
-  const tiempoHasVal  = !!state.tiempoSesion;
-
-  const numpad = [
-    '1','2','3',
-    '4','5','6',
-    '7','8','9',
-    '⌫','0',''
-  ].map(k => {
-    if (k === '') return '';
-    if (k === '⌫') return `<button class="numpad-btn del" onclick="numpadInput('del')">⌫</button>`;
-    return `<button class="numpad-btn" onclick="numpadInput('${k}')">${k}</button>`;
-  }).join('');
-
-  const canSave = state.rpeSession !== null;
-
-  return `
-  <div class="session-panel" id="session-panel">
-    <div class="panel-section">
-      <div class="panel-title">¿Cómo ha sido la sesión?</div>
-      <div class="panel-sub">RPE global del entrenamiento</div>
-      <div class="rpe-grid">${rpeButtons}</div>
-    </div>
-
-    <div class="panel-section">
-      <div class="panel-title">Tiempo de sesión</div>
-      <div class="panel-sub">Introduce los minutos totales</div>
-      <div class="time-display${tiempoHasVal?' has-value':''}" id="time-display">${tiempoDisplay}</div>
-      <div class="numpad">${numpad}</div>
-      <div class="numpad-hint">Minutos totales de entrenamiento</div>
-    </div>
-
-    <button class="btn-save-session" id="btn-save-session"
-            onclick="saveSession()" ${canSave?'':'disabled'}>
-      Guardar sesión
-    </button>
-  </div>`;
-}
-
+// ── RENDER SESSION ───────────────────────────────────────────
 function renderSession(ejercicios, nombreSemana) {
   const container = document.getElementById('session-container');
-  _cardId = 0;
-  const prep = ejercicios.filter(e => e.fase === 'prep');
-  const main = ejercicios.filter(e => e.fase !== 'prep');
+  const prep = ejercicios.filter(e=>e.fase==='prep');
+  const main = ejercicios.filter(e=>e.fase!=='prep');
   const semanaTxt = nombreSemana ||
     document.getElementById('sel-semana').options[
-      document.getElementById('sel-semana').selectedIndex
-    ]?.text || '';
+      document.getElementById('sel-semana').selectedIndex]?.text || '';
 
   container.innerHTML = `
-    <div class="session-title">${DAY_NAMES[state.dia] || 'Sesión'}</div>
+    <div class="session-title">${DAY_NAMES[state.dia]||'Sesión'}</div>
     <div class="session-meta">${semanaTxt}</div>
     ${prep.length ? `<div class="phase-header">Prep</div>${prep.map(renderCard).join('')}` : ''}
     <div class="phase-header">Main Block</div>
@@ -562,79 +536,93 @@ function renderSession(ejercicios, nombreSemana) {
     ${renderSessionPanel()}`;
 }
 
-// ── RPE ───────────────────────────────────────────────────────
+// ── SESSION PANEL ────────────────────────────────────────────
+function renderSessionPanel() {
+  if (state.guardado) {
+    return `<div class="session-panel"><div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion?' · '+state.tiempoSesion+' min':''}</div></div>`;
+  }
+  const rpeDescs = {6:'Fácil',7:'Moderado',8:'Difícil',9:'Muy duro',10:'Máximo'};
+  const rpeButtons = [6,7,8,9,10].map(n=>`
+    <button class="rpe-btn${state.rpeSession===n?' sel':''}" onclick="selectRpe(${n},this)">
+      <span class="rpe-num">${n}</span>
+      <span class="rpe-desc">${rpeDescs[n]}</span>
+    </button>`).join('');
+
+  const tiempoTxt = state.tiempoSesion ? state.tiempoSesion+' min' : '— min';
+  const numpad = ['1','2','3','4','5','6','7','8','9','⌫','0',''].map(k=>{
+    if (k==='') return '<div></div>';
+    if (k==='⌫') return `<button class="numpad-btn del" onclick="numpadInput('del')">⌫</button>`;
+    return `<button class="numpad-btn" onclick="numpadInput('${k}')">${k}</button>`;
+  }).join('');
+
+  return `
+  <div class="session-panel" id="session-panel">
+    <div class="panel-section">
+      <div class="panel-title">¿Cómo ha sido la sesión?</div>
+      <div class="panel-sub">RPE global del entrenamiento</div>
+      <div class="rpe-grid">${rpeButtons}</div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-title">Tiempo de sesión</div>
+      <div class="panel-sub">Minutos totales</div>
+      <div class="time-display${state.tiempoSesion?' has-value':''}" id="time-display">${tiempoTxt}</div>
+      <div class="numpad">${numpad}</div>
+      <div class="numpad-hint">Minutos totales de entrenamiento</div>
+    </div>
+    <button class="btn-save-session" id="btn-save-session"
+            onclick="saveSession()" ${state.rpeSession!==null?'':'disabled'}>
+      Guardar sesión
+    </button>
+  </div>`;
+}
+
 function selectRpe(val, btn) {
   state.rpeSession = val;
-  document.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('sel'));
+  document.querySelectorAll('.rpe-btn').forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
-  const saveBtn = document.getElementById('btn-save-session');
-  if (saveBtn) saveBtn.disabled = false;
+  const s = document.getElementById('btn-save-session');
+  if (s) s.disabled = false;
 }
 
-// ── NUMPAD ────────────────────────────────────────────────────
 function numpadInput(key) {
-  if (key === 'del') {
-    state.tiempoSesion = state.tiempoSesion.slice(0, -1);
-  } else {
-    if (state.tiempoSesion.length >= 3) return; // max 999 min
-    state.tiempoSesion += key;
-  }
-  updateTimeDisplay();
-}
-
-function updateTimeDisplay() {
+  if (key==='del') state.tiempoSesion = state.tiempoSesion.slice(0,-1);
+  else { if(state.tiempoSesion.length>=3) return; state.tiempoSesion += key; }
   const el = document.getElementById('time-display');
   if (!el) return;
-  if (state.tiempoSesion) {
-    el.textContent = state.tiempoSesion + ' min';
-    el.classList.add('has-value');
-  } else {
-    el.textContent = '— min';
-    el.classList.remove('has-value');
-  }
+  if (state.tiempoSesion) { el.textContent=state.tiempoSesion+' min'; el.classList.add('has-value'); }
+  else { el.textContent='— min'; el.classList.remove('has-value'); }
 }
 
-// ── GUARDAR SESIÓN ────────────────────────────────────────────
 async function saveSession() {
   if (!state.rpeSession) return;
   const btn = document.getElementById('btn-save-session');
-  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
-
+  if (btn) { btn.disabled=true; btn.textContent='Guardando...'; }
   const res = await api({
-    action:        'saveRegistro',
-    usuario:       state.user.usuario,
-    semana:        state.semana,
-    dia:           state.dia,
-    bloque:        'SESION',
-    ejercicio:     'RPE_GLOBAL',
-    carga_real:    '',
-    rpe:           state.rpeSession,
-    notas_jugador: '',
+    action:'saveRegistro', usuario:state.user.usuario,
+    semana:state.semana, dia:state.dia,
+    bloque:'SESION', ejercicio:'RPE_GLOBAL',
+    carga_real:'', rpe:state.rpeSession, notas_jugador:'',
     tiempo_sesion: state.tiempoSesion ? parseInt(state.tiempoSesion) : ''
   });
-
   if (res.ok) {
     state.guardado = true;
     const panel = document.getElementById('session-panel');
-    if (panel) {
-      panel.innerHTML = `<div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion ? ' · ' + state.tiempoSesion + ' min' : ''}</div>`;
-    }
+    if (panel) panel.innerHTML = `<div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion?' · '+state.tiempoSesion+' min':''}</div>`;
   } else {
-    if (btn) { btn.disabled = false; btn.textContent = 'Guardar sesión'; }
-    alert('Error al guardar: ' + (res.error || 'inténtalo de nuevo'));
+    if (btn) { btn.disabled=false; btn.textContent='Guardar sesión'; }
+    alert('Error al guardar: '+(res.error||'inténtalo de nuevo'));
   }
 }
 
-// ── LOGOUT ────────────────────────────────────────────────────
 function logout() {
-  state = { user:null, dia:1, semana:1, semanas:[], rpeSession:null, tiempoSesion:'', guardado:false };
+  state = {user:null,dia:1,semana:1,semanas:[],rpeSession:null,tiempoSesion:'',guardado:false};
   document.getElementById('screen-app').style.display  = 'none';
   document.getElementById('screen-login').style.display = 'flex';
-  document.getElementById('input-user').value  = '';
-  document.getElementById('input-pass').value  = '';
+  document.getElementById('input-user').value = '';
+  document.getElementById('input-pass').value = '';
   const btn = document.getElementById('btn-login');
-  btn.disabled = false; btn.textContent = 'Entrar';
-  document.getElementById('login-error').textContent = '';
+  btn.disabled=false; btn.textContent='Entrar';
+  document.getElementById('login-error').textContent='';
 }
 </script>
 </body>
