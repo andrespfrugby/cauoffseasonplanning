@@ -27,25 +27,26 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 
 /* ── LOGIN ── */
 #screen-login { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem; position:relative; overflow:hidden; }
-.login-bg { position:absolute; inset:0; background: radial-gradient(ellipse 60% 50% at 80% 20%, rgba(232,20,42,0.08) 0%, transparent 60%), radial-gradient(ellipse 40% 60% at 10% 80%, rgba(232,20,42,0.04) 0%, transparent 60%); pointer-events:none; }
-.login-box { width:100%; max-width:380px; position:relative; z-index:1; }
-.login-logo { font-family:var(--font-head); font-size:56px; letter-spacing:2px; line-height:1; margin-bottom:4px; }
+.login-bg { position:absolute; inset:0; background: radial-gradient(ellipse 60% 50% at 80% 20%, rgba(232,20,42,0.10) 0%, transparent 60%), radial-gradient(ellipse 40% 60% at 10% 80%, rgba(232,20,42,0.05) 0%, transparent 60%); pointer-events:none; }
+.login-box { width:100%; max-width:360px; position:relative; z-index:1; }
+.login-shield { display:block; width:90px; height:90px; object-fit:contain; margin:0 auto 18px; filter:drop-shadow(0 0 18px rgba(232,20,42,0.35)); }
+.login-logo { font-family:var(--font-head); font-size:48px; letter-spacing:2px; line-height:1; margin-bottom:3px; text-align:center; }
 .login-logo .cau  { color:#e8142a; }
 .login-logo .rest { color:#ffffff; }
-.login-sub { color:var(--muted); font-size:12px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:2.5rem; }
-.field-group { margin-bottom:1rem; }
-.field-group label { display:block; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
-.field-group input { width:100%; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--r); padding:12px 14px; font-size:15px; font-family:var(--font-body); color:var(--text); outline:none; transition:border-color .2s; }
+.login-sub { color:var(--muted); font-size:11px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:2rem; text-align:center; }
+.field-group { margin-bottom:.85rem; }
+.field-group label { display:block; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; }
+.field-group input { width:100%; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--r); padding:11px 13px; font-size:15px; font-family:var(--font-body); color:var(--text); outline:none; transition:border-color .2s; }
 .field-group input:focus { border-color:var(--accent); }
-.btn-primary { width:100%; background:var(--accent); color:#fff; border:none; border-radius:var(--r); padding:13px; font-size:14px; font-weight:600; font-family:var(--font-body); letter-spacing:.04em; cursor:pointer; transition:opacity .15s, transform .1s; margin-top:.5rem; }
+.btn-primary { width:100%; background:var(--accent); color:#fff; border:none; border-radius:var(--r); padding:12px; font-size:14px; font-weight:600; font-family:var(--font-body); letter-spacing:.04em; cursor:pointer; transition:opacity .15s, transform .1s; margin-top:.4rem; }
 .btn-primary:hover { opacity:.88; }
 .btn-primary:active { transform:scale(.98); }
 .btn-primary:disabled { opacity:.4; cursor:not-allowed; }
-.error-msg { color:var(--danger); font-size:13px; margin-top:.75rem; text-align:center; min-height:20px; }
+.error-msg { color:var(--danger); font-size:13px; margin-top:.65rem; text-align:center; min-height:18px; }
 
 /* ── APP ── */
 #screen-app { display:none; min-height:100vh; padding-bottom:5rem; }
-.topbar { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(13,15,18,.93); backdrop-filter:blur(12px); z-index:10; }
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:.85rem 1.25rem; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(13,15,18,.93); backdrop-filter:blur(12px); z-index:10; }
 .topbar-logo { font-family:var(--font-head); font-size:20px; letter-spacing:1px; }
 .topbar-logo .cau  { color:#e8142a; }
 .topbar-logo .rest { color:#ffffff; }
@@ -54,34 +55,25 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .avatar { width:24px; height:24px; background:var(--accent); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
 .btn-logout { background:none; border:1px solid var(--border2); border-radius:8px; color:var(--muted); padding:5px 10px; font-size:12px; cursor:pointer; font-family:var(--font-body); }
 .btn-logout:hover { color:var(--text); }
-.content { padding:1.5rem 1.25rem; max-width:680px; margin:0 auto; }
-.week-header { margin-bottom:1.5rem; }
-.week-label { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:.75rem; }
-.semana-select { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:8px 14px; color:var(--text); font-family:var(--font-body); font-size:13px; outline:none; cursor:pointer; margin-bottom:1rem; min-width:220px; }
+.content { padding:1.25rem 1.25rem; max-width:680px; margin:0 auto; }
+.week-header { margin-bottom:1.25rem; }
+.week-label { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:.65rem; }
+.semana-select { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:7px 13px; color:var(--text); font-family:var(--font-body); font-size:13px; outline:none; cursor:pointer; margin-bottom:.85rem; min-width:220px; }
 .semana-select:focus { border-color:var(--accent); }
-.day-pills { display:flex; gap:8px; flex-wrap:wrap; }
-.day-pill { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:6px 16px; font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; color:var(--muted); font-family:var(--font-body); }
+.day-pills { display:flex; gap:7px; flex-wrap:wrap; }
+.day-pill { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:5px 14px; font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; color:var(--muted); font-family:var(--font-body); }
 .day-pill:hover { border-color:rgba(232,20,42,.4); color:var(--text); }
 .day-pill.active { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
-.session-title { font-family:var(--font-head); font-size:34px; letter-spacing:1px; line-height:1; margin-bottom:.25rem; }
-.session-meta { color:var(--muted); font-size:13px; margin-bottom:1.5rem; }
-.phase-header { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:1.5rem 0 .75rem; display:flex; align-items:center; gap:8px; }
+.session-title { font-family:var(--font-head); font-size:30px; letter-spacing:1px; line-height:1; margin-bottom:.2rem; }
+.session-meta { color:var(--muted); font-size:13px; margin-bottom:1.25rem; }
+.phase-header { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:1.25rem 0 .65rem; display:flex; align-items:center; gap:8px; }
 .phase-header::after { content:''; flex:1; height:1px; background:var(--border); }
 
 /* ── EXERCISE CARD ── */
 .ex-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); margin-bottom:8px; overflow:hidden; }
-.ex-header { display:flex; align-items:center; gap:10px; padding:12px 14px; }
+.ex-header { display:flex; align-items:center; gap:10px; padding:11px 13px; }
 
-/* Block ID — color por letra de bloque */
-.block-id {
-  border-radius:6px;
-  width:36px; height:36px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:12px; font-weight:700;
-  flex-shrink:0;
-  border:1px solid transparent;
-}
-/* colores por letra — A=azul, B=verde, C=naranja, D=morado, E=rosa, resto=gris */
+.block-id { border-radius:6px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; border:1px solid transparent; }
 .block-A { background:rgba(55,138,221,.18);  color:#5fb3f5; border-color:rgba(55,138,221,.35); }
 .block-B { background:rgba(29,158,117,.18);  color:#3ecfa0; border-color:rgba(29,158,117,.35); }
 .block-C { background:rgba(239,159,39,.18);  color:#ffc04d; border-color:rgba(239,159,39,.35); }
@@ -89,14 +81,18 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .block-E { background:rgba(212,83,126,.18);  color:#f07aaa; border-color:rgba(212,83,126,.35); }
 .block-X { background:var(--surface2); color:var(--muted); border-color:var(--border2); }
 
+.ex-card.super-A { border-left:3px solid rgba(55,138,221,.6); }
+.ex-card.super-B { border-left:3px solid rgba(29,158,117,.6); }
+.ex-card.super-C { border-left:3px solid rgba(239,159,39,.6); }
+.ex-card.super-D { border-left:3px solid rgba(127,119,221,.6); }
+.ex-card.super-E { border-left:3px solid rgba(212,83,126,.6); }
+
 .ex-info { flex:1; min-width:0; }
 .ex-name { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.ex-tags { display:flex; gap:5px; flex-wrap:wrap; margin-top:5px; }
+.ex-tags { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
 
-/* ── TAGS por grupo ── */
-.tag { font-size:11px; padding:2px 8px; border-radius:4px; font-weight:500; }
-
-/* patrón — colores vivos por categoría */
+/* ── TAGS ── */
+.tag { font-size:10px; padding:2px 7px; border-radius:4px; font-weight:500; }
 .tag-squat   { background:rgba(55,138,221,.15);  color:#5fb3f5; }
 .tag-hinge   { background:rgba(29,158,117,.15);  color:#3ecfa0; }
 .tag-push    { background:rgba(239,159,39,.15);  color:#ffc04d; }
@@ -105,127 +101,97 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .tag-plyo    { background:rgba(226,75,74,.15);   color:#ff7070; }
 .tag-iso     { background:rgba(136,135,128,.15); color:#aaa; }
 .tag-other   { background:rgba(212,83,126,.15);  color:#f07aaa; }
+/* sets + reps — verde agua */
+.tag-volume  { background:rgba(0,229,160,.10);  color:#00e5a0; border:1px solid rgba(0,229,160,.2); font-weight:600; }
+/* contraction + tempo + load — ámbar */
+.tag-method  { background:rgba(239,159,39,.10); color:#ffc04d; border:1px solid rgba(239,159,39,.2); }
+/* notas — azul suave */
+.tag-notes   { background:rgba(100,160,255,.08); color:#7fb3ff; border:1px solid rgba(100,160,255,.18); font-style:italic; }
 
-/* sets + reps — azul claro */
-.tag-volume  { background:rgba(55,138,221,.10); color:#7ec8ff; border:1px solid rgba(55,138,221,.2); }
-
-/* contraction + tempo + load — verde apagado */
-.tag-method  { background:rgba(0,200,140,.08);  color:#00c88c; border:1px solid rgba(0,200,140,.18); }
-
-/* notas — amarillo suave */
-.tag-notes   { background:rgba(255,200,60,.08); color:#ffc83c; border:1px solid rgba(255,200,60,.18); }
-
-/* superserie badge — barra lateral coloreada */
-.ex-card.super-A { border-left:3px solid #5fb3f5; }
-.ex-card.super-B { border-left:3px solid #3ecfa0; }
-.ex-card.super-C { border-left:3px solid #ffc04d; }
-.ex-card.super-D { border-left:3px solid #a99ff5; }
-.ex-card.super-E { border-left:3px solid #f07aaa; }
-
-/* ── VIDEO BUTTON & EMBED ── */
+/* ── VIDEO BUTTON ── */
 .btn-video {
   flex-shrink:0;
-  background:rgba(255,255,255,0.06);
-  border:1px solid var(--border2);
   border-radius:8px;
-  width:34px; height:34px;
+  width:32px; height:32px;
   display:flex; align-items:center; justify-content:center;
   cursor:pointer;
-  transition:background .15s, border-color .15s;
-  color:var(--muted);
-  font-size:14px;
+  transition:all .15s;
+  font-size:12px;
 }
-.btn-video:hover { background:rgba(232,20,42,.15); border-color:rgba(232,20,42,.4); color:var(--accent); }
-.btn-video.active { background:rgba(232,20,42,.2); border-color:var(--accent); color:var(--accent); }
-.btn-video.no-video { opacity:.2; cursor:default; pointer-events:none; }
+.btn-video.has-url {
+  background:rgba(232,20,42,.12);
+  border:1px solid rgba(232,20,42,.35);
+  color:var(--accent);
+}
+.btn-video.has-url:hover { background:rgba(232,20,42,.25); border-color:rgba(232,20,42,.6); transform:scale(1.05); }
+.btn-video.has-url:active { transform:scale(.95); }
+.btn-video.no-url {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  color:rgba(255,255,255,.2);
+  cursor:default;
+  pointer-events:none;
+}
 
-/* Modal de vídeo */
-.video-modal-overlay {
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.75);
-  z-index:100;
-  align-items:center;
-  justify-content:center;
-  padding:1rem;
-}
+/* ── VIDEO MODAL ── */
+.video-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.80); z-index:100; align-items:center; justify-content:center; padding:1rem; }
 .video-modal-overlay.open { display:flex; }
-.video-modal {
-  width:100%;
-  max-width:640px;
-  background:var(--surface);
-  border:1px solid var(--border2);
-  border-radius:12px;
-  overflow:hidden;
-}
-.video-modal-header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:12px 16px;
-  border-bottom:1px solid var(--border);
-}
+.video-modal { width:100%; max-width:640px; background:var(--surface); border:1px solid var(--border2); border-radius:12px; overflow:hidden; }
+.video-modal-header { display:flex; align-items:center; justify-content:space-between; padding:11px 15px; border-bottom:1px solid var(--border); }
 .video-modal-title { font-size:13px; font-weight:600; color:var(--text); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.video-modal-close {
-  background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; padding:0 4px; line-height:1;
-}
+.video-modal-close { background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; padding:0 4px; line-height:1; }
 .video-modal-close:hover { color:var(--text); }
-.video-wrap {
-  position:relative;
-  padding-bottom:56.25%;
-  height:0;
-  background:#000;
-}
-.video-wrap iframe {
-  position:absolute;
-  top:0; left:0;
-  width:100%; height:100%;
-  border:none;
-}
-.video-no-url {
-  padding:2rem;
-  text-align:center;
-  color:var(--muted);
-  font-size:13px;
-}
+.video-wrap { position:relative; padding-bottom:56.25%; height:0; background:#000; }
+.video-wrap iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; }
+.video-no-url { padding:2rem; text-align:center; color:var(--muted); font-size:13px; }
 
-/* ── SESSION PANEL ── */
-.session-panel { background:var(--surface2); border:1px solid var(--border2); border-radius:var(--r); padding:16px; margin-top:1.5rem; }
-.panel-section { margin-bottom:18px; }
+/* ── SESSION PANEL — más compacto ── */
+.session-panel { background:var(--surface2); border:1px solid var(--border2); border-radius:var(--r); padding:13px; margin-top:1.25rem; }
+.panel-section { margin-bottom:14px; }
 .panel-section:last-child { margin-bottom:0; }
-.panel-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:3px; }
-.panel-sub { font-size:12px; color:var(--muted); margin-bottom:12px; }
+.panel-title { font-size:12px; font-weight:600; color:var(--text); margin-bottom:1px; }
+.panel-sub   { font-size:11px; color:var(--muted); margin-bottom:8px; }
 
-/* RPE */
-.rpe-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:12px; }
-.rpe-btn { background:var(--surface); border:1px solid var(--border2); border-radius:8px; padding:10px 4px; cursor:pointer; color:var(--muted); font-family:var(--font-body); transition:all .15s; text-align:center; display:flex; flex-direction:column; align-items:center; gap:2px; }
-.rpe-btn .rpe-num  { font-size:17px; font-weight:600; }
-.rpe-btn .rpe-desc { font-size:9px; }
-.rpe-btn:hover { color:var(--text); border-color:rgba(232,20,42,.4); }
-.rpe-btn.sel { background:var(--accent); color:#fff; border-color:var(--accent); }
-
-/* Numpad — más compacto */
-.time-display {
-  background:var(--surface);
-  border:1px solid var(--border2);
-  border-radius:8px;
-  padding:8px 16px;
-  font-family:var(--font-head);
-  font-size:28px;
-  letter-spacing:2px;
-  text-align:center;
-  margin-bottom:8px;
-  color:var(--text);
-}
-.time-display.has-value { color:var(--accent2); }
-.numpad { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; max-width:220px; margin:0 auto; }
-.numpad-btn {
+/* ── RPE 1–10 en 2 filas ── */
+.rpe-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-bottom:10px; }
+.rpe-btn {
   background:var(--surface);
   border:1px solid var(--border2);
   border-radius:7px;
-  padding:9px 4px;
-  font-size:16px;
+  padding:6px 2px;
+  cursor:pointer;
+  color:var(--muted);
+  font-family:var(--font-body);
+  transition:all .15s;
+  text-align:center;
+  display:flex; flex-direction:column; align-items:center; gap:1px;
+}
+.rpe-btn .rpe-num  { font-size:15px; font-weight:700; line-height:1; }
+.rpe-btn .rpe-desc { font-size:8px; line-height:1.2; }
+.rpe-btn:hover { color:var(--text); border-color:rgba(232,20,42,.4); }
+.rpe-btn.sel { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+/* ── NUMPAD — compacto ── */
+.time-display {
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:7px;
+  padding:6px 12px;
+  font-family:var(--font-head);
+  font-size:22px;
+  letter-spacing:2px;
+  text-align:center;
+  margin-bottom:6px;
+  color:var(--text);
+}
+.time-display.has-value { color:var(--accent2); }
+.numpad { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; max-width:190px; margin:0 auto; }
+.numpad-btn {
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:7px 2px;
+  font-size:14px;
   font-family:var(--font-body);
   font-weight:500;
   color:var(--text);
@@ -233,29 +199,31 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   transition:all .12s;
   text-align:center;
 }
-.numpad-btn:hover { background:var(--surface2); }
-.numpad-btn:active { transform:scale(.95); }
-.numpad-btn.del { color:var(--muted); font-size:14px; }
-.numpad-hint { font-size:11px; color:var(--muted); text-align:center; margin-top:5px; }
+.numpad-btn:hover { background:rgba(255,255,255,.06); }
+.numpad-btn:active { transform:scale(.93); }
+.numpad-btn.del { color:var(--muted); font-size:12px; }
+.numpad-hint { font-size:10px; color:var(--muted); text-align:center; margin-top:4px; }
 
-.btn-save-session { width:100%; background:var(--accent); color:#fff; border:none; border-radius:var(--r); padding:13px; font-size:14px; font-weight:600; font-family:var(--font-body); letter-spacing:.04em; cursor:pointer; margin-top:16px; transition:opacity .15s; }
+.btn-save-session { width:100%; background:var(--accent); color:#fff; border:none; border-radius:var(--r); padding:11px; font-size:14px; font-weight:600; font-family:var(--font-body); letter-spacing:.04em; cursor:pointer; margin-top:13px; transition:opacity .15s; }
 .btn-save-session:hover { opacity:.88; }
 .btn-save-session:disabled { opacity:.4; cursor:not-allowed; }
-.saved-msg { color:var(--accent2); font-size:14px; font-weight:600; text-align:center; padding:8px 0; }
+.saved-msg { color:var(--accent2); font-size:14px; font-weight:600; text-align:center; padding:6px 0; }
 
-.notes-banner { background:var(--surface2); border-left:2px solid var(--accent); border-radius:0 var(--r) var(--r) 0; padding:10px 14px; font-size:13px; color:var(--muted); line-height:1.6; margin-top:1.25rem; }
-.notes-banner strong { color:var(--text); }
+/* Session notes del sheet */
+.notes-banner { background:rgba(232,20,42,.05); border-left:2px solid var(--accent); border-radius:0 var(--r) var(--r) 0; padding:10px 14px; font-size:12px; color:var(--muted); line-height:1.65; margin-top:1rem; white-space:pre-line; }
+.notes-banner strong { color:rgba(240,242,245,.7); display:block; font-size:11px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px; }
+
 .loader { text-align:center; padding:3rem; color:var(--muted); font-size:13px; }
-.spinner { width:28px; height:28px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto 1rem; }
+.spinner { width:26px; height:26px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto .85rem; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .empty { text-align:center; padding:3rem 1rem; color:var(--muted); }
-.empty-icon { font-size:36px; margin-bottom:.75rem; }
-@media (max-width:500px) { .session-title { font-size:26px; } }
+.empty-icon { font-size:32px; margin-bottom:.65rem; }
+@media (max-width:500px) { .session-title { font-size:24px; } }
 </style>
 </head>
 <body>
 
-<!-- VIDEO MODAL (global, uno solo) -->
+<!-- VIDEO MODAL -->
 <div class="video-modal-overlay" id="video-modal-overlay" onclick="closeVideoModal(event)">
   <div class="video-modal">
     <div class="video-modal-header">
@@ -270,6 +238,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 <div id="screen-login">
   <div class="login-bg"></div>
   <div class="login-box">
+    <img class="login-shield" id="login-shield-img" alt="CAU Rugby Valencia">
     <div class="login-logo"><span class="cau">CAU</span><span class="rest">OFFSEASON</span></div>
     <div class="login-sub">Club Planner · Summer 2026</div>
     <div class="field-group">
@@ -316,6 +285,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 </div>
 
 <script>
+// ── Inyectar escudo CAU como base64 ──────────────────────────
+(function(){
+  const img = document.getElementById('login-shield-img');
+  if (img) img.src = 'data:image/jpeg;base64,';
+})();
+
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVyC8AFCalPyYy116XmEtzdSMYUc2tzW2c_Tm_H_TcJSt-FGvUWjfnflDS-GukmqpX/exec';
 
 let state = {
@@ -402,7 +377,7 @@ async function loadRutina() {
     container.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>No hay ejercicios para este día todavía.</div>';
     return;
   }
-  renderSession(res.ejercicios, res.nombreSemana || '');
+  renderSession(res.ejercicios, res.nombreSemana || '', res.sessionNotes || '');
 }
 
 // ── HELPERS ──────────────────────────────────────────────────
@@ -414,12 +389,13 @@ const PATTERN_TAG = {
   Vertical_push:'tag-push',   Vertical_pull:'tag-pull',
   Plyo:'tag-plyo', Iso:'tag-iso',
   Olympics:'tag-other', Anti_rotation:'tag-other',
-  Anti_extension:'tag-other', Reset:'tag-iso', Prep:'tag-iso'
+  Anti_extension:'tag-other', Reset:'tag-iso', Prep:'tag-iso',
+  Lb_aux:'tag-iso', Up_aux:'tag-iso', Carry:'tag-other',
+  Rotation:'tag-other'
 };
 
 function patternTag(p) { return PATTERN_TAG[p] || 'tag-iso'; }
 
-// Extrae la letra de bloque (A de A1, B de B2, etc.)
 function blockLetter(bloque) {
   if (!bloque) return 'X';
   const m = bloque.match(/^([A-Za-z]+)/);
@@ -456,59 +432,54 @@ function openVideoModal(nombre, videoUrl) {
       </iframe></div>`;
   } else {
     body.innerHTML = `<div class="video-no-url">
-      📹 Aún no hay vídeo para este ejercicio.<br>
-      <small>Añade la URL de YouTube en la columna VIDEO del Sheet.</small>
+      📹 Vídeo no disponible aún.<br>
+      <small>Añade la URL real en la columna VIDEO del Sheet.</small>
     </div>`;
   }
   overlay.classList.add('open');
 }
 function closeVideoModal(e) {
   if (e && e.target !== document.getElementById('video-modal-overlay')) return;
-  const overlay = document.getElementById('video-modal-overlay');
-  overlay.classList.remove('open');
+  document.getElementById('video-modal-overlay').classList.remove('open');
   document.getElementById('video-modal-body').innerHTML = '';
 }
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeVideoModal(); });
 
 // ── RENDER CARD ──────────────────────────────────────────────
 function renderCard(e) {
-  const letra    = blockLetter(e.bloque);
-  const letraOk  = ['A','B','C','D','E'].includes(letra) ? letra : 'X';
-  const blockCls = `block-${letraOk}`;
-  const superCls = `super-${letraOk}`;
+  const letra   = blockLetter(e.bloque);
+  const letraOk = ['A','B','C','D','E'].includes(letra) ? letra : 'X';
 
-  // Tag patrón
   const tagPatron = e.patron
     ? `<span class="tag ${patternTag(e.patron)}">${e.patron.replace(/_/g,' ')}</span>` : '';
 
-  // Tags volumen (sets + reps) — azul
+  // Volume: sets + reps (verde agua)
   const tagSets = e.sets ? `<span class="tag tag-volume">${e.sets} sets</span>` : '';
   const tagReps = e.reps ? `<span class="tag tag-volume">${e.reps}</span>` : '';
 
-  // Tags método (contraction + tempo + load) — verde
+  // Method: contraction + tempo + load (ámbar)
   const tagContr = e.contraccion   ? `<span class="tag tag-method">${e.contraccion}</span>` : '';
-  const tagTempo = e.tempo         ? `<span class="tag tag-method">Tempo ${e.tempo}</span>` : '';
+  const tagTempo = e.tempo         ? `<span class="tag tag-method">⏱ ${e.tempo}</span>` : '';
   const tagLoad  = e.load_objetivo ? `<span class="tag tag-method">${e.load_objetivo}</span>` : '';
 
-  // Tag notas — amarillo
+  // Notes (azul)
   const tagNotas = e.notas ? `<span class="tag tag-notes">📝 ${e.notas}</span>` : '';
 
   const tags = [tagPatron, tagSets, tagReps, tagContr, tagTempo, tagLoad, tagNotas].filter(Boolean).join('');
 
-  // Escapar comillas para el onclick
   const nombreEsc = e.ejercicio.replace(/'/g,"\\'");
   const videoEsc  = (e.video||'').replace(/'/g,"\\'");
   const hasVideo  = !!(e.video && e.video.startsWith('http'));
 
   return `
-  <div class="ex-card ${superCls}">
+  <div class="ex-card super-${letraOk}">
     <div class="ex-header">
-      <div class="block-id ${blockCls}">${e.bloque}</div>
+      <div class="block-id block-${letraOk}">${e.bloque}</div>
       <div class="ex-info">
         <div class="ex-name">${e.ejercicio}</div>
         ${tags ? `<div class="ex-tags">${tags}</div>` : ''}
       </div>
-      <button class="btn-video${hasVideo ? '' : ' no-video'}"
+      <button class="btn-video ${hasVideo ? 'has-url' : 'no-url'}"
               onclick="openVideoModal('${nombreEsc}','${videoEsc}')"
               title="${hasVideo ? 'Ver vídeo' : 'Sin vídeo aún'}">▶</button>
     </div>
@@ -516,7 +487,7 @@ function renderCard(e) {
 }
 
 // ── RENDER SESSION ───────────────────────────────────────────
-function renderSession(ejercicios, nombreSemana) {
+function renderSession(ejercicios, nombreSemana, sessionNotes) {
   const container = document.getElementById('session-container');
   const prep = ejercicios.filter(e=>e.fase==='prep');
   const main = ejercicios.filter(e=>e.fase!=='prep');
@@ -524,15 +495,17 @@ function renderSession(ejercicios, nombreSemana) {
     document.getElementById('sel-semana').options[
       document.getElementById('sel-semana').selectedIndex]?.text || '';
 
+  const notesBanner = sessionNotes
+    ? `<div class="notes-banner"><strong>📝 Notas de sesión</strong>${sessionNotes}</div>`
+    : '';
+
   container.innerHTML = `
     <div class="session-title">${DAY_NAMES[state.dia]||'Sesión'}</div>
     <div class="session-meta">${semanaTxt}</div>
     ${prep.length ? `<div class="phase-header">Prep</div>${prep.map(renderCard).join('')}` : ''}
     <div class="phase-header">Main Block</div>
     ${main.map(renderCard).join('')}
-    <div class="notes-banner">
-      <strong>Tempo ECC-ISO-CC.</strong> Ejemplo 510: 5'' excéntrica · 1'' pausa · 0'' concéntrica explosiva.
-    </div>
+    ${notesBanner}
     ${renderSessionPanel()}`;
 }
 
@@ -541,14 +514,20 @@ function renderSessionPanel() {
   if (state.guardado) {
     return `<div class="session-panel"><div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion?' · '+state.tiempoSesion+' min':''}</div></div>`;
   }
-  const rpeDescs = {6:'Fácil',7:'Moderado',8:'Difícil',9:'Muy duro',10:'Máximo'};
-  const rpeButtons = [6,7,8,9,10].map(n=>`
+
+  // RPE 1–10 con descripciones
+  const rpeData = [
+    [1,'Reposo'],[2,'Muy fácil'],[3,'Ligero'],[4,'Cómodo'],
+    [5,'Moderado'],[6,'Algo duro'],[7,'Duro'],[8,'Muy duro'],
+    [9,'Casi máx'],[10,'Máximo']
+  ];
+  const rpeButtons = rpeData.map(([n,d])=>`
     <button class="rpe-btn${state.rpeSession===n?' sel':''}" onclick="selectRpe(${n},this)">
       <span class="rpe-num">${n}</span>
-      <span class="rpe-desc">${rpeDescs[n]}</span>
+      <span class="rpe-desc">${d}</span>
     </button>`).join('');
 
-  const tiempoTxt = state.tiempoSesion ? state.tiempoSesion+' min' : '— min';
+  const tiempoTxt = state.tiempoSesion ? state.tiempoSesion+' min' : '—';
   const numpad = ['1','2','3','4','5','6','7','8','9','⌫','0',''].map(k=>{
     if (k==='') return '<div></div>';
     if (k==='⌫') return `<button class="numpad-btn del" onclick="numpadInput('del')">⌫</button>`;
@@ -558,8 +537,8 @@ function renderSessionPanel() {
   return `
   <div class="session-panel" id="session-panel">
     <div class="panel-section">
-      <div class="panel-title">¿Cómo ha sido la sesión?</div>
-      <div class="panel-sub">RPE global del entrenamiento</div>
+      <div class="panel-title">¿Cómo fue la sesión?</div>
+      <div class="panel-sub">RPE global — esfuerzo percibido (1–10)</div>
       <div class="rpe-grid">${rpeButtons}</div>
     </div>
     <div class="panel-section">
@@ -567,7 +546,7 @@ function renderSessionPanel() {
       <div class="panel-sub">Minutos totales</div>
       <div class="time-display${state.tiempoSesion?' has-value':''}" id="time-display">${tiempoTxt}</div>
       <div class="numpad">${numpad}</div>
-      <div class="numpad-hint">Minutos totales de entrenamiento</div>
+      <div class="numpad-hint">minutos totales</div>
     </div>
     <button class="btn-save-session" id="btn-save-session"
             onclick="saveSession()" ${state.rpeSession!==null?'':'disabled'}>
@@ -590,7 +569,7 @@ function numpadInput(key) {
   const el = document.getElementById('time-display');
   if (!el) return;
   if (state.tiempoSesion) { el.textContent=state.tiempoSesion+' min'; el.classList.add('has-value'); }
-  else { el.textContent='— min'; el.classList.remove('has-value'); }
+  else { el.textContent='—'; el.classList.remove('has-value'); }
 }
 
 async function saveSession() {
