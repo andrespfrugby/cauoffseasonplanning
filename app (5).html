@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAU Offseason Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:        #0d0f12;
+  --surface:   #151920;
+  --surface2:  #1c2330;
+  --border:    rgba(255,255,255,0.08);
+  --border2:   rgba(255,255,255,0.14);
+  --accent:    #e8142a;
+  --accent2:   #00e5a0;
+  --text:      #f0f2f5;
+  --muted:     #7a8494;
+  --danger:    #ff4d4d;
+  --font-head: 'Bebas Neue', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --r:         10px;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+.hidden { display: none !important; }
+#screen-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.login-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(232,20,42,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 10% 80%, rgba(232,20,42,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+.login-box {
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+  z-index: 1;
+}
+.login-logo {
+  font-family: var(--font-head);
+  font-size: 56px;
+  letter-spacing: 2px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.login-logo .cau  { color: #e8142a; }
+.login-logo .rest { color: #ffffff; }
+.login-sub {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 2.5rem;
+}
+.field-group { margin-bottom: 1rem; }
+.field-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.field-group input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s;
+}
+.field-group input:focus { border-color: var(--accent); }
+.btn-primary {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--r);
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  margin-top: .5rem;
+}
+.btn-primary:hover { opacity: .88; }
+.btn-primary:active { transform: scale(.98); }
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+.error-msg {
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: .75rem;
+  text-align: center;
+  min-height: 20px;
+}
+#screen-app { display: none; min-height: 100vh; padding-bottom: 5rem; }
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: rgba(13,15,18,.93);
+  backdrop-filter: blur(12px);
+  z-index: 10;
+}
+.topbar-logo { font-family: var(--font-head); font-size: 20px; letter-spacing: 1px; }
+.topbar-logo .cau  { color: #e8142a; }
+.topbar-logo .rest { color: #ffffff; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.player-badge {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 99px;
+  padding: 4px 12px 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.avatar {
+  width: 24px; height: 24px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+.btn-logout {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--muted);
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+.btn-logout:hover { color: var(--text); }
+.content { padding: 1.5rem 1.25rem; max-width: 680px; margin: 0 auto; }
+.week-header { margin-bottom: 1.5rem; }
+.week-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: .75rem;
+}
+.semana-select {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  min-width: 220px;
+}
+.semana-select:focus { border-color: var(--accent); }
+.day-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.day-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  color: var(--muted);
+  font-family: var(--font-body);
+}
+.day-pill:hover { border-color: rgba(232,20,42,.4); color: var(--text); }
+.day-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+.session-title {
+  font-family: var(--font-head);
+  font-size: 34px;
+  letter-spacing: 1px;
+  line-height: 1;
+  margin-bottom: .25rem;
+}
+.session-meta { color: var(--muted); font-size: 13px; margin-bottom: 1.5rem; }
+.phase-header {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 1.5rem 0 .75rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.phase-header::after { content:''; flex:1; height:1px; background:var(--border); }
+.ex-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.ex-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+.block-id {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.ex-info { flex: 1; min-width: 0; }
+.ex-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ex-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.tag { font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
+.tag-squat   { background: rgba(55,138,221,.15);  color: #5fb3f5; }
+.tag-hinge   { background: rgba(29,158,117,.15);  color: #3ecfa0; }
+.tag-push    { background: rgba(239,159,39,.15);  color: #ffc04d; }
+.tag-row     { background: rgba(127,119,221,.15); color: #a99ff5; }
+.tag-pull    { background: rgba(99,153,34,.15);   color: #9acf44; }
+.tag-plyo    { background: rgba(226,75,74,.15);   color: #ff7070; }
+.tag-iso     { background: rgba(136,135,128,.15); color: #aaa; }
+.tag-other   { background: rgba(212,83,126,.15);  color: #f07aaa; }
+.tag-neutral { background: var(--surface2); color: var(--muted); }
+.rpe-panel {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 16px;
+  margin-top: 1.5rem;
+}
+.rpe-panel-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.rpe-panel-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.rpe-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.rpe-btn {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 10px 4px;
+  cursor: pointer;
+  color: var(--muted);
+  font-family: var(--font-body);
+  transition: all .15s;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.rpe-btn .rpe-num  { font-size: 17px; font-weight: 600; }
+.rpe-btn .rpe-desc { font-size: 9px; }
+.rpe-btn:hover { color: var(--text); border-color: rgba(232,20,42,.4); }
+.rpe-btn.sel { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-save-rpe {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.btn-save-rpe:hover { opacity: .88; }
+.btn-save-rpe:disabled { opacity: .35; cursor: not-allowed; }
+.saved-msg {
+  text-align: center;
+  color: var(--accent2);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px;
+  display: none;
+}
+.notes-banner {
+  background: var(--surface2);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--r) var(--r) 0;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-top: 1.25rem;
+}
+.notes-banner strong { color: var(--text); }
+.loader { text-align: center; padding: 3rem; color: var(--muted); font-size: 13px; }
+.spinner {
+  width: 28px; height: 28px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  margin: 0 auto 1rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+.empty-icon { font-size: 36px; margin-bottom: .75rem; }
+@media (max-width: 500px) {
+  .session-title { font-size: 26px; }
+}
+</style>
+</head>
+<body>
+
+<div id="screen-login">
+  <div class="login-bg"></div>
+  <div class="login-box">
+    <div class="login-logo">
+      <span class="cau">CAU</span><span class="rest">OFFSEASON</span>
+    </div>
+    <div class="login-sub">Club Planner · Summer 2026</div>
+    <div class="field-group">
+      <label>Usuario</label>
+      <input type="text" id="input-user" placeholder="tu_usuario" autocomplete="username">
+    </div>
+    <div class="field-group">
+      <label>Contraseña</label>
+      <input type="password" id="input-pass" placeholder="••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="btn-login" onclick="doLogin()">Entrar</button>
+    <div class="error-msg" id="login-error"></div>
+  </div>
+</div>
+
+<div id="screen-app">
+  <div class="topbar">
+    <div class="topbar-logo"><span class="cau">CAU</span><span class="rest">OFFSEASON</span></div>
+    <div class="topbar-right">
+      <div class="player-badge">
+        <div class="avatar" id="avatar-initials">?</div>
+        <span id="player-name">Jugador</span>
+      </div>
+      <button class="btn-logout" onclick="logout()">Salir</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="week-header">
+      <div class="week-label">Semana activa</div>
+      <select id="sel-semana" class="semana-select" onchange="onSemanaChange()">
+        <option value="1">Cargando...</option>
+      </select>
+      <div class="day-pills">
+        <button class="day-pill active" onclick="selectDay(1,this)">Day 1</button>
+        <button class="day-pill" onclick="selectDay(2,this)">Day 2</button>
+        <button class="day-pill" onclick="selectDay(3,this)">Day 3</button>
+        <button class="day-pill" onclick="selectDay(4,this)">Day 4</button>
+        <button class="day-pill" onclick="selectDay(5,this)">Extra</button>
+      </div>
+    </div>
+    <div id="session-container"></div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVyC8AFCalPyYy116XmEtzdSMYUc2tzW2c_Tm_H_TcJSt-FGvUWjfnflDS-GukmqpX/exec';
+
+let state = {
+  user: null,
+  dia: 1,
+  semana: 1,
+  semanas: [],
+  rpeSession: null,
+  rpeGuardado: false
+};
+
+async function api(payload) {
+  try {
+    const url = APPS_SCRIPT_URL + '?payload=' + encodeURIComponent(JSON.stringify(payload));
+    const r = await fetch(url, { redirect: 'follow' });
+    const text = await r.text();
+    try { return JSON.parse(text); }
+    catch { console.error('Respuesta no-JSON:', text.substring(0, 300)); return { ok: false, error: 'Respuesta inesperada del servidor.' }; }
+  } catch(err) {
+    return { ok: false, error: 'Error de red: ' + err.message };
+  }
+}
+
+async function doLogin() {
+  const btn      = document.getElementById('btn-login');
+  const errEl    = document.getElementById('login-error');
+  const usuario  = document.getElementById('input-user').value.trim();
+  const password = document.getElementById('input-pass').value;
+  if (!usuario || !password) { errEl.textContent = 'Rellena usuario y contraseña'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+  errEl.textContent = '';
+  const res = await api({ action: 'login', usuario, password });
+  if (res.ok) {
+    state.user = res;
+    document.getElementById('player-name').textContent = res.nombre;
+    document.getElementById('avatar-initials').textContent =
+      res.nombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    document.getElementById('screen-login').style.display = 'none';
+    document.getElementById('screen-app').style.display  = 'block';
+    await loadSemanas();
+    loadRutina();
+  } else {
+    errEl.textContent = res.error || 'Error al iniciar sesión';
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+  }
+}
+
+document.getElementById('input-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+async function loadSemanas() {
+  const res = await api({ action: 'getSemanas' });
+  const select = document.getElementById('sel-semana');
+  if (res.ok && res.semanas && res.semanas.length) {
+    state.semanas = res.semanas;
+    select.innerHTML = res.semanas.map((s, i) =>
+      `<option value="${i + 1}">${s}</option>`
+    ).join('');
+  } else {
+    state.semanas = ['Semana 1'];
+    select.innerHTML = '<option value="1">Semana 1</option>';
+  }
+  state.semana = 1;
+}
+
+function onSemanaChange() {
+  state.semana = parseInt(document.getElementById('sel-semana').value);
+  state.rpeSession = null;
+  state.rpeGuardado = false;
+  loadRutina();
+}
+
+function selectDay(dia, btn) {
+  state.dia = dia;
+  state.rpeSession = null;
+  state.rpeGuardado = false;
+  document.querySelectorAll('.day-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  loadRutina();
+}
+
+async function loadRutina() {
+  state.semana = parseInt(document.getElementById('sel-semana').value);
+  const container = document.getElementById('session-container');
+  container.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando sesión...</div>';
+  const res = await api({ action: 'getRutina', semana: state.semana, dia: state.dia });
+  if (!res.ok) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${res.error || 'Error al cargar'}</div>`;
+    return;
+  }
+  if (!res.ejercicios || !res.ejercicios.length) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>No hay ejercicios para este día todavía.</div>';
+    return;
+  }
+  renderSession(res.ejercicios, res.nombreSemana || '');
+}
+
+const DAY_NAMES = ['', 'Lunes — Day 1', 'Martes — Day 2', 'Miércoles — Day 3', 'Jueves — Day 4', 'Sábado — Extra'];
+
+const patternTag = p => {
+  const map = {
+    Squat:'tag-squat', Hinge:'tag-hinge',
+    Horizontal_push:'tag-push', Horizontal_row:'tag-row',
+    Vertical_push:'tag-push',   Vertical_pull:'tag-pull',
+    Plyo:'tag-plyo', Iso:'tag-iso',
+    Olympics:'tag-other', Anti_rotation:'tag-other',
+    Anti_extension:'tag-other', Reset:'tag-neutral'
+  };
+  return map[p] || 'tag-neutral';
+};
+
+function renderSession(ejercicios, nombreSemana) {
+  const container = document.getElementById('session-container');
+  const prep = ejercicios.filter(e => e.fase === 'prep');
+  const main = ejercicios.filter(e => e.fase !== 'prep');
+  const semanaTxt = nombreSemana ||
+    document.getElementById('sel-semana').options[
+      document.getElementById('sel-semana').selectedIndex
+    ]?.text || '';
+
+  const renderCard = (e) => {
+    const tags = [
+      e.patron        ? `<span class="tag ${patternTag(e.patron)}">${e.patron.replace(/_/g,' ')}</span>` : '',
+      e.contraccion   ? `<span class="tag tag-neutral">${e.contraccion}</span>` : '',
+      e.sets          ? `<span class="tag tag-neutral">${e.sets} sets</span>` : '',
+      e.reps          ? `<span class="tag tag-neutral">${e.reps}</span>` : '',
+      e.tempo         ? `<span class="tag tag-neutral">Tempo ${e.tempo}</span>` : '',
+      e.load_objetivo ? `<span class="tag tag-neutral">${e.load_objetivo}</span>` : '',
+    ].filter(Boolean).join('');
+    return `
+    <div class="ex-card">
+      <div class="ex-header">
+        <div class="block-id">${e.bloque}</div>
+        <div class="ex-info">
+          <div class="ex-name">${e.ejercicio}</div>
+          ${tags ? `<div class="ex-tags">${tags}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+  };
+
+  const rpeDescs = { 6:'Fácil', 7:'Moderado', 8:'Difícil', 9:'Muy duro', 10:'Máximo' };
+
+  const rpePanel = state.rpeGuardado
+    ? `<div class="rpe-panel"><div class="saved-msg" style="display:block">✓ RPE ${state.rpeSession} guardado</div></div>`
+    : `<div class="rpe-panel" id="rpe-session-panel">
+        <div class="rpe-panel-title">¿Cómo ha sido la sesión?</div>
+        <div class="rpe-panel-sub">RPE global del entrenamiento</div>
+        <div class="rpe-grid">
+          ${[6,7,8,9,10].map(n => `
+            <button class="rpe-btn${state.rpeSession===n?' sel':''}" onclick="selectSessionRpe(${n},this)">
+              <span class="rpe-num">${n}</span>
+              <span class="rpe-desc">${rpeDescs[n]}</span>
+            </button>`).join('')}
+        </div>
+        <button class="btn-save-rpe" id="btn-save-rpe" onclick="saveSessionRpe()" ${state.rpeSession===null?'disabled':''}>
+          Guardar RPE de sesión
+        </button>
+      </div>`;
+
+  container.innerHTML = `
+    <div class="session-title">${DAY_NAMES[state.dia] || 'Sesión'}</div>
+    <div class="session-meta">${semanaTxt}</div>
+    ${prep.length ? `<div class="phase-header">Prep</div>${prep.map(renderCard).join('')}` : ''}
+    <div class="phase-header">Main Block</div>
+    ${main.map(renderCard).join('')}
+    <div class="notes-banner">
+      <strong>Tempo ECC-ISO-CC.</strong> Ejemplo 510: 5'' excéntrica · 1'' pausa · 0'' concéntrica explosiva.
+    </div>
+    ${rpePanel}`;
+}
+
+function selectSessionRpe(val, btn) {
+  state.rpeSession = val;
+  document.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  const saveBtn = document.getElementById('btn-save-rpe');
+  if (saveBtn) saveBtn.disabled = false;
+}
+
+async function saveSessionRpe() {
+  if (!state.rpeSession) return;
+  const btn = document.getElementById('btn-save-rpe');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+  const res = await api({
+    action:        'saveRegistro',
+    usuario:       state.user.usuario,
+    semana:        state.semana,
+    dia:           state.dia,
+    bloque:        'SESION',
+    ejercicio:     'RPE_GLOBAL',
+    carga_real:    '',
+    rpe:           state.rpeSession,
+    notas_jugador: ''
+  });
+  if (res.ok) {
+    state.rpeGuardado = true;
+    const panel = document.getElementById('rpe-session-panel');
+    if (panel) {
+      panel.innerHTML = `<div class="saved-msg" style="display:block">✓ RPE ${state.rpeSession} guardado</div>`;
+    }
+  } else {
+    if (btn) { btn.disabled = false; btn.textContent = 'Guardar RPE de sesión'; }
+    alert('Error al guardar: ' + (res.error || 'inténtalo de nuevo'));
+  }
+}
+
+function logout() {
+  state = { user:null, dia:1, semana:1, semanas:[], rpeSession:null, rpeGuardado:false };
+  document.getElementById('screen-app').style.display  = 'none';
+  document.getElementById('screen-login').style.display = 'flex';
+  document.getElementById('input-user').value  = '';
+  document.getElementById('input-pass').value  = '';
+  const btn = document.getElementById('btn-login');
+  btn.disabled = false;
+  btn.textContent = 'Entrar';
+  document.getElementById('login-error').textContent = '';
+}
+</script>
+</body>
+</html>
