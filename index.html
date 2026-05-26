@@ -910,29 +910,18 @@ async function saveLoad(cardId, ejercicio) {
 
 // ── COACH PANEL ───────────────────────────────────────────────
 async function loadCoachPanel() {
-  // Get all registros via getHistorial without filtering by exercise
-  const res = await api({ action:'getHistorial', usuario:'__ALL__' });
-  // Fallback: get historial for coach user (won't have session data)
-  // We build a simulated roster from what we know + data
-  // Since the sheet only returns data for one usuario, we simulate with demo data
-  // that mirrors the design from the screenshots
   const semanaNombre = (state.semanas && state.semanas[state.semana-1]) || ('Sem '+state.semana);
   document.getElementById('coach-sem-label').textContent = semanaNombre;
   document.getElementById('coach-sem-num').textContent = state.semana;
 
-  // Demo roster — in production this would come from a getEquipo action
-  const roster = [
-    { nombre:'José López',   estado:'guardada', rpe:7, tiempo:65, sesiones:3 },
-    { nombre:'Marc Riera',   estado:'guardada', rpe:9, tiempo:70, sesiones:4 },
-    { nombre:'Pau Ferrer',   estado:'guardada', rpe:5, tiempo:55, sesiones:3 },
-    { nombre:'Adrià Costa',  estado:'pendiente', rpe:null, tiempo:null, sesiones:2 },
-    { nombre:'Tomàs Puig',   estado:'pendiente', rpe:null, tiempo:null, sesiones:3 },
-    { nombre:'Nil Valls',    estado:'inactivo',  rpe:null, tiempo:null, sesiones:0 },
-  ];
-  const total   = roster.length;
-  const hoy     = roster.filter(j=>j.estado==='guardada').length;
-  const pend    = roster.filter(j=>j.estado==='pendiente').length;
-  const inact   = roster.filter(j=>j.estado==='inactivo').length;
+  const res = await api({ action:'getEquipo', semana: state.semana });
+  if (!res.ok) return;
+
+  const equipo = res.equipo;
+  const total  = equipo.length;
+  const hoy    = equipo.filter(j=>j.estado==='guardada').length;
+  const pend   = equipo.filter(j=>j.estado==='pendiente').length;
+  const inact  = equipo.filter(j=>j.estado==='inactivo').length;
 
   document.getElementById('kpi-total').textContent = total;
   document.getElementById('kpi-hoy').textContent   = hoy;
@@ -940,42 +929,39 @@ async function loadCoachPanel() {
   document.getElementById('kpi-sin').textContent   = inact;
 
   const tbody = document.getElementById('coach-tbody');
-  tbody.innerHTML = roster.map(j => {
+  tbody.innerHTML = equipo.map(j => {
     const dotCls = j.estado==='guardada' ? 'dot-green' : j.estado==='pendiente' ? 'dot-amber' : 'dot-red';
     const estadoTxt = j.estado==='guardada' ? 'Guardada' : j.estado==='pendiente' ? 'Sin registrar' : 'Sin actividad';
     const estadoColor = j.estado==='guardada' ? 'var(--accent2)' : j.estado==='pendiente' ? '#ffc04d' : 'var(--danger)';
-    const rpeNum = j.rpe;
-    let rpeCls = 'rpe-none'; let rpeTxt = '—';
-    if (rpeNum !== null) {
+    const rpeNum = j.rpe ? parseFloat(j.rpe) : null;
+    let rpeCls = 'rpe-none', rpeTxt = '—';
+    if (rpeNum !== null && !isNaN(rpeNum)) {
       rpeTxt = rpeNum;
       rpeCls = rpeNum <= 5 ? 'rpe-low' : rpeNum <= 7 ? 'rpe-mid' : 'rpe-high';
     }
-    const sesMax = 4;
     return `<tr>
       <td><span class="status-dot ${dotCls}"></span>${j.nombre}</td>
       <td style="color:${estadoColor}">${estadoTxt}</td>
       <td><span class="rpe-chip ${rpeCls}">${rpeTxt}</span></td>
       <td>${j.tiempo ? j.tiempo+' min' : '—'}</td>
-      <td>${j.sesiones}/${sesMax}</td>
+      <td>${j.sesiones}/4</td>
     </tr>`;
   }).join('');
 
-  // RPE chart (semanas simuladas)
-  const rpeSemanasDemo = [
-    {sem:'S1',val:6.2}, {sem:'S2',val:7.1}, {sem:'S3',val:7.4,current:true}
-  ];
-  const maxRpe = Math.max(...rpeSemanasDemo.map(s=>s.val));
-  const barsHtml = rpeSemanasDemo.map(s => {
-    const pct = Math.round((s.val/10)*100);
-    return `<div class="rpe-bar-item">
-      <div class="rpe-bar-val">${s.val}</div>
-      <div class="rpe-bar-fill${s.current?' current':''}" style="height:${pct}%"></div>
-      <div class="rpe-bar-sem">${s.sem}</div>
-    </div>`;
-  }).join('');
-  document.getElementById('coach-rpe-semana-label').textContent = semanaNombre;
-  document.getElementById('coach-rpe-bars').innerHTML = barsHtml;
-  document.getElementById('coach-rpe-chart').style.display = 'block';
+  if (res.rpeChart && res.rpeChart.length) {
+    const barsHtml = res.rpeChart.map(s => {
+      const pct = Math.round((s.rpeMedia/10)*100);
+      const isCurrent = String(s.semana) === String(state.semana);
+      return `<div class="rpe-bar-item">
+        <div class="rpe-bar-val">${s.rpeMedia}</div>
+        <div class="rpe-bar-fill${isCurrent?' current':''}" style="height:${pct}%"></div>
+        <div class="rpe-bar-sem">S${s.semana}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('coach-rpe-semana-label').textContent = semanaNombre;
+    document.getElementById('coach-rpe-bars').innerHTML = barsHtml;
+    document.getElementById('coach-rpe-chart').style.display = 'block';
+  }
 }
 
 function logout() {
