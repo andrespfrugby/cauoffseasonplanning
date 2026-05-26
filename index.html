@@ -108,7 +108,37 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 /* notas — azul suave */
 .tag-notes   { background:rgba(100,160,255,.08); color:#7fb3ff; border:1px solid rgba(100,160,255,.18); font-style:italic; }
 
-/* ── VIDEO BUTTON ── */
+/* ── CARD ACTION BUTTONS ── */
+.card-actions { display:flex; align-items:center; gap:5px; flex-shrink:0; }
+
+.btn-card {
+  flex-shrink:0;
+  border-radius:8px;
+  width:32px; height:32px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  transition:all .15s;
+  font-size:12px;
+}
+/* History button */
+.btn-hist {
+  background:rgba(0,229,160,.10);
+  border:1px solid rgba(0,229,160,.28);
+  color:#00e5a0;
+}
+.btn-hist:hover { background:rgba(0,229,160,.22); border-color:rgba(0,229,160,.55); transform:scale(1.05); }
+.btn-hist:active { transform:scale(.95); }
+
+/* Load button */
+.btn-load {
+  background:rgba(239,159,39,.12);
+  border:1px solid rgba(239,159,39,.35);
+  color:#ffc04d;
+}
+.btn-load:hover { background:rgba(239,159,39,.24); border-color:rgba(239,159,39,.6); transform:scale(1.05); }
+.btn-load:active { transform:scale(.95); }
+
+/* VIDEO BUTTON (kept for compat) */
 .btn-video {
   flex-shrink:0;
   border-radius:8px;
@@ -132,6 +162,98 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   cursor:default;
   pointer-events:none;
 }
+
+/* ── INLINE PANELS (history + load) inside card ── */
+.card-panel {
+  border-top:1px solid var(--border);
+  padding:10px 13px 11px;
+  animation:slideDown .18s ease;
+}
+@keyframes slideDown { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+
+/* History panel */
+.hist-panel {}
+.hist-title { font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:7px; }
+.hist-empty { font-size:12px; color:var(--muted); font-style:italic; }
+.hist-bar-wrap { margin-bottom:8px; }
+.hist-bar-track { display:flex; gap:3px; align-items:flex-end; height:40px; margin-bottom:4px; }
+.hist-bar { flex:1; border-radius:3px 3px 0 0; background:var(--accent2); opacity:.7; min-height:3px; position:relative; transition:opacity .15s; }
+.hist-bar.current { opacity:1; background:var(--accent2); }
+.hist-bar:hover { opacity:1; }
+.hist-bar-labels { display:flex; gap:3px; }
+.hist-bar-lbl { flex:1; font-size:9px; color:var(--muted); text-align:center; }
+.hist-table { width:100%; border-collapse:collapse; font-size:11px; }
+.hist-table td { padding:2px 4px; color:var(--muted); }
+.hist-table td:first-child { color:var(--text); font-weight:500; }
+.hist-table td:last-child { color:var(--accent2); font-weight:600; text-align:right; }
+.hist-prev-lbl { font-size:10px; color:var(--muted); }
+.hist-prev-val { font-size:13px; font-weight:700; color:var(--accent2); }
+.hist-delta { font-size:10px; padding:1px 5px; border-radius:3px; }
+.hist-delta.up   { background:rgba(0,229,160,.12); color:#00e5a0; }
+.hist-delta.down { background:rgba(255,77,77,.12);  color:#ff7070; }
+.hist-delta.eq   { background:rgba(255,255,255,.06); color:var(--muted); }
+
+/* Load input panel */
+.load-panel {}
+.load-row { display:flex; align-items:center; gap:8px; }
+.load-display {
+  flex:1; background:var(--surface); border:1px solid var(--border2);
+  border-radius:7px; padding:5px 10px;
+  font-family:var(--font-head); font-size:20px; letter-spacing:2px;
+  color:var(--text); text-align:center; min-width:80px;
+}
+.load-display.has-value { color:var(--accent2); }
+.load-unit { font-size:11px; color:var(--muted); }
+.load-numpad { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-top:8px; max-width:200px; }
+.load-numpad .numpad-btn { padding:6px 2px; font-size:13px; }
+.load-hint { font-size:10px; color:var(--muted); margin-top:4px; }
+.btn-save-load {
+  background:var(--accent2); color:#0d0f12; border:none; border-radius:8px;
+  padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer;
+  font-family:var(--font-body); margin-top:8px; transition:opacity .15s;
+  width:100%;
+}
+.btn-save-load:hover { opacity:.85; }
+.btn-save-load:disabled { opacity:.4; cursor:not-allowed; }
+.load-saved-lbl { font-size:12px; color:var(--accent2); font-weight:600; padding:4px 0; }
+
+/* ── COACH PANEL ── */
+#coach-panel { display:none; }
+#coach-panel.visible { display:block; }
+.coach-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+.coach-title { font-family:var(--font-head); font-size:26px; letter-spacing:1px; }
+.coach-badge { background:var(--accent); color:#fff; border-radius:5px; padding:2px 10px; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+.coach-sem-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+.kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:1rem; }
+.kpi-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:10px 12px; text-align:center; }
+.kpi-num { font-family:var(--font-head); font-size:28px; line-height:1; }
+.kpi-num.green { color:var(--accent2); }
+.kpi-num.amber { color:#ffc04d; }
+.kpi-num.red   { color:var(--danger); }
+.kpi-lbl { font-size:9px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-top:3px; }
+.coach-table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; margin-bottom:1rem; }
+.coach-table { width:100%; border-collapse:collapse; font-size:12px; }
+.coach-table th { font-size:9px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); padding:7px 10px; border-bottom:1px solid var(--border); text-align:left; }
+.coach-table td { padding:9px 10px; border-bottom:1px solid var(--border); }
+.coach-table tr:last-child td { border-bottom:none; }
+.coach-table tr:hover td { background:rgba(255,255,255,.02); }
+.status-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; }
+.dot-green { background:var(--accent2); box-shadow:0 0 5px rgba(0,229,160,.5); }
+.dot-amber { background:#ffc04d; }
+.dot-red   { background:var(--danger); }
+.rpe-chip { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:5px; font-size:11px; font-weight:700; }
+.rpe-low  { background:rgba(0,229,160,.15);  color:#00e5a0; }
+.rpe-mid  { background:rgba(239,159,39,.15);  color:#ffc04d; }
+.rpe-high { background:rgba(232,20,42,.15);   color:#ff7070; }
+.rpe-none { background:rgba(255,255,255,.06); color:var(--muted); }
+.coach-rpe-chart { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; }
+.coach-rpe-chart-title { font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+.rpe-bars { display:flex; gap:6px; align-items:flex-end; height:50px; }
+.rpe-bar-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; }
+.rpe-bar-fill { width:100%; border-radius:3px 3px 0 0; background:var(--accent2); opacity:.6; min-height:3px; }
+.rpe-bar-fill.current { opacity:1; }
+.rpe-bar-sem { font-size:9px; color:var(--muted); }
+.rpe-bar-val { font-size:9px; color:var(--accent2); font-weight:600; }
 
 /* ── VIDEO MODAL ── */
 .video-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.80); z-index:100; align-items:center; justify-content:center; padding:1rem; }
@@ -263,10 +385,45 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         <div class="avatar" id="avatar-initials">?</div>
         <span id="player-name">Jugador</span>
       </div>
+      <span id="coach-topbar-badge" class="hidden" style="background:var(--accent);color:#fff;border-radius:5px;padding:2px 9px;font-size:11px;font-weight:700;letter-spacing:.06em;">COACH</span>
       <button class="btn-logout" onclick="logout()">Salir</button>
     </div>
   </div>
   <div class="content">
+    <!-- COACH PANEL -->
+    <div id="coach-panel">
+      <div class="coach-header">
+        <div>
+          <div class="coach-title">Panel Coach</div>
+          <div class="coach-sem-label" id="coach-sem-label">Semana activa</div>
+        </div>
+        <span class="coach-badge">Coach</span>
+      </div>
+      <div class="kpi-row" id="coach-kpis">
+        <div class="kpi-card"><div class="kpi-num" id="kpi-total">—</div><div class="kpi-lbl">Jugadores</div></div>
+        <div class="kpi-card"><div class="kpi-num green" id="kpi-hoy">—</div><div class="kpi-lbl">Sesión hoy</div></div>
+        <div class="kpi-card"><div class="kpi-num amber" id="kpi-pend">—</div><div class="kpi-lbl">Pendientes</div></div>
+        <div class="kpi-card"><div class="kpi-num red" id="kpi-sin">—</div><div class="kpi-lbl">Sin actividad</div></div>
+      </div>
+      <div class="coach-table-wrap">
+        <table class="coach-table">
+          <thead><tr>
+            <th>Jugador</th>
+            <th>Estado hoy</th>
+            <th>RPE</th>
+            <th>Tiempo</th>
+            <th>Sesiones S<span id="coach-sem-num">?</span></th>
+          </tr></thead>
+          <tbody id="coach-tbody"></tbody>
+        </table>
+      </div>
+      <div class="coach-rpe-chart" id="coach-rpe-chart" style="display:none">
+        <div class="coach-rpe-chart-title">RPE Medio del Equipo — <span id="coach-rpe-semana-label">Semana actual</span></div>
+        <div class="rpe-bars" id="coach-rpe-bars"></div>
+      </div>
+      <div style="height:1.25rem"></div>
+      <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;display:flex;align-items:center;gap:8px;">Vista sesión jugadores <span style="flex:1;height:1px;background:var(--border);display:inline-block"></span></div>
+    </div>
     <div class="week-header">
       <div class="week-label">Semana activa</div>
       <select id="sel-semana" class="semana-select" onchange="onSemanaChange()">
@@ -285,6 +442,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 </div>
 
 <script>
+
 // ── Inyectar escudo CAU como base64 ──────────────────────────
 (function(){
   const img = document.getElementById('login-shield-img');
@@ -295,7 +453,10 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVyC8AFCalPyYy
 
 let state = {
   user: null, dia: 1, semana: 1, semanas: [],
-  rpeSession: null, tiempoSesion: '', guardado: false
+  rpeSession: null, tiempoSesion: '', guardado: false,
+  isCoach: false,
+  // Per-card state: cardId → { loadVal, loadSaved, histOpen, loadOpen }
+  cards: {}
 };
 
 // ── API ──────────────────────────────────────────────────────
@@ -322,13 +483,19 @@ async function doLogin() {
   const res = await api({ action:'login', usuario, password });
   if (res.ok) {
     state.user = res;
+    state.isCoach = (String(res.posicion||'').toLowerCase() === 'coach');
     document.getElementById('player-name').textContent = res.nombre;
     document.getElementById('avatar-initials').textContent =
       res.nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
     document.getElementById('screen-login').style.display = 'none';
     document.getElementById('screen-app').style.display   = 'block';
+    if (state.isCoach) {
+      document.getElementById('coach-topbar-badge').classList.remove('hidden');
+      document.getElementById('coach-panel').classList.add('visible');
+    }
     await loadSemanas();
     loadRutina();
+    if (state.isCoach) loadCoachPanel();
   } else {
     errEl.textContent = res.error || 'Error al iniciar sesión';
     btn.disabled = false; btn.textContent = 'Entrar';
@@ -360,7 +527,7 @@ function selectDay(dia, btn) {
   loadRutina();
 }
 function resetSessionState() {
-  state.rpeSession = null; state.tiempoSesion = ''; state.guardado = false;
+  state.rpeSession = null; state.tiempoSesion = ''; state.guardado = false; state.cards = {};
 }
 
 // ── RUTINA ───────────────────────────────────────────────────
@@ -471,18 +638,30 @@ function renderCard(e) {
   const videoEsc  = (e.video||'').replace(/'/g,"\\'");
   const hasVideo  = !!(e.video && e.video.startsWith('http'));
 
+  // card id — unique per exercise per session
+  const cardId = (e.bloque + '_' + e.ejercicio).replace(/\W/g,'_');
+
+  // show load button only if load_objetivo contains %, RPE or RIR
+  const hasLoadBtn = /(%|RPE|RIR)/i.test(e.load_objetivo||'');
+
   return `
-  <div class="ex-card super-${letraOk}">
+  <div class="ex-card super-${letraOk}" id="card-${cardId}">
     <div class="ex-header">
       <div class="block-id block-${letraOk}">${e.bloque}</div>
       <div class="ex-info">
         <div class="ex-name">${e.ejercicio}</div>
         ${tags ? `<div class="ex-tags">${tags}</div>` : ''}
       </div>
-      <button class="btn-video ${hasVideo ? 'has-url' : 'no-url'}"
-              onclick="openVideoModal('${nombreEsc}','${videoEsc}')"
-              title="${hasVideo ? 'Ver vídeo' : 'Sin vídeo aún'}">▶</button>
+      <div class="card-actions">
+        <button class="btn-card btn-hist" title="Historial" onclick="toggleCardPanel('hist','${cardId}','${nombreEsc}')">⟳</button>
+        ${hasLoadBtn ? `<button class="btn-card btn-load" title="Registrar carga" onclick="toggleCardPanel('load','${cardId}','${nombreEsc}')">＋</button>` : ''}
+        <button class="btn-video ${hasVideo ? 'has-url' : 'no-url'}"
+                onclick="openVideoModal('${nombreEsc}','${videoEsc}')"
+                title="${hasVideo ? 'Ver vídeo' : 'Sin vídeo aún'}">▶</button>
+      </div>
     </div>
+    <div id="panel-hist-${cardId}" class="card-panel hist-panel hidden"></div>
+    <div id="panel-load-${cardId}" class="card-panel load-panel hidden"></div>
   </div>`;
 }
 
@@ -593,8 +772,218 @@ async function saveSession() {
   }
 }
 
+// ── CARD PANEL TOGGLE ────────────────────────────────────────
+function toggleCardPanel(type, cardId, ejercicio) {
+  const histEl = document.getElementById('panel-hist-'+cardId);
+  const loadEl = document.getElementById('panel-load-'+cardId);
+  const isOpen = type==='hist'
+    ? !histEl.classList.contains('hidden')
+    : !loadEl.classList.contains('hidden');
+
+  // close both first
+  histEl.classList.add('hidden');
+  loadEl.classList.add('hidden');
+
+  if (!isOpen) {
+    if (type === 'hist') {
+      histEl.classList.remove('hidden');
+      renderHistPanel(cardId, ejercicio, histEl);
+    } else {
+      loadEl.classList.remove('hidden');
+      renderLoadPanel(cardId, ejercicio, loadEl);
+    }
+  }
+}
+
+// ── HISTORY PANEL ─────────────────────────────────────────────
+async function renderHistPanel(cardId, ejercicio, el) {
+  el.innerHTML = '<div class="hist-title">Cargando historial…</div>';
+  const res = await api({ action:'getHistorial', usuario:state.user.usuario, ejercicio });
+  if (!res.ok || !res.historial) {
+    el.innerHTML = '<div class="hist-empty">No se pudo cargar el historial.</div>';
+    return;
+  }
+  const hist = res.historial
+    .filter(h => h.carga && parseFloat(h.carga) > 0)
+    .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+
+  if (!hist.length) {
+    el.innerHTML = `<div class="hist-title">Historial — ${ejercicio}</div><div class="hist-empty">Sin registros de carga aún. Regístralos con ＋</div>`;
+    return;
+  }
+
+  const maxCarga = Math.max(...hist.map(h=>parseFloat(h.carga)));
+  const last = hist[hist.length-1];
+  const prev = hist.length > 1 ? hist[hist.length-2] : null;
+  const delta = prev ? (parseFloat(last.carga) - parseFloat(prev.carga)) : 0;
+  const deltaClass = delta > 0 ? 'up' : delta < 0 ? 'down' : 'eq';
+  const deltaSign  = delta > 0 ? '+' : '';
+
+  const bars = hist.map((h,i) => {
+    const pct = Math.round((parseFloat(h.carga)/maxCarga)*100);
+    const isCurrent = i === hist.length-1;
+    return `<div class="hist-bar${isCurrent?' current':''}" style="height:${pct}%" title="S${h.semana}: ${h.carga}kg"></div>`;
+  }).join('');
+
+  const lbls = hist.map(h=>`<div class="hist-bar-lbl">S${h.semana}</div>`).join('');
+
+  const rows = [...hist].reverse().slice(0,5).map(h=>`
+    <tr><td>Sem ${h.semana}</td><td>${h.carga} kg</td><td>${h.rpe ? 'RPE '+h.rpe : '—'}</td></tr>`).join('');
+
+  el.innerHTML = `
+    <div class="hist-title">Historial — ${ejercicio}</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+      <div>
+        <div class="hist-prev-lbl">Último registro</div>
+        <div class="hist-prev-val">${last.carga} kg <span class="hist-delta ${deltaClass}">${deltaSign}${delta} kg</span></div>
+      </div>
+    </div>
+    <div class="hist-bar-wrap">
+      <div class="hist-bar-track">${bars}</div>
+      <div class="hist-bar-labels">${lbls}</div>
+    </div>
+    <table class="hist-table"><tbody>${rows}</tbody></table>`;
+}
+
+// ── LOAD INPUT PANEL ──────────────────────────────────────────
+function renderLoadPanel(cardId, ejercicio, el) {
+  if (!state.cards[cardId]) state.cards[cardId] = { loadVal:'', loadSaved:false };
+  const cs = state.cards[cardId];
+
+  if (cs.loadSaved) {
+    el.innerHTML = `<div class="load-saved-lbl">✓ Carga guardada — ${cs.loadVal} kg</div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="hist-title">Registrar carga — ${ejercicio}</div>
+    <div class="load-display${cs.loadVal?' has-value':''}" id="ld-disp-${cardId}">${cs.loadVal||'—'}</div>
+    <div class="load-unit">kg</div>
+    <div class="load-numpad">
+      ${['1','2','3','4','5','6','7','8','9','⌫','0',''].map(k => {
+        if (k==='') return '<div></div>';
+        if (k==='⌫') return `<button class="numpad-btn del" onclick="loadNumpad('${cardId}','del')">⌫</button>`;
+        return `<button class="numpad-btn" onclick="loadNumpad('${cardId}','${k}')">${k}</button>`;
+      }).join('')}
+    </div>
+    <div class="load-hint">Introduce el peso en kg</div>
+    <button class="btn-save-load" id="btn-sv-load-${cardId}"
+            onclick="saveLoad('${cardId}','${ejercicio.replace(/'/g,"\\'")}','${(ejercicio||'').replace(/'/g,"\\'")}')">
+      Guardar carga
+    </button>`;
+}
+
+function loadNumpad(cardId, key) {
+  if (!state.cards[cardId]) state.cards[cardId] = { loadVal:'', loadSaved:false };
+  const cs = state.cards[cardId];
+  if (key==='del') cs.loadVal = cs.loadVal.slice(0,-1);
+  else { if(cs.loadVal.length>=5) return; cs.loadVal += key; }
+  const disp = document.getElementById('ld-disp-'+cardId);
+  if (disp) {
+    disp.textContent = cs.loadVal||'—';
+    disp.classList.toggle('has-value', !!cs.loadVal);
+  }
+}
+
+async function saveLoad(cardId, ejercicio) {
+  const cs = state.cards[cardId];
+  if (!cs || !cs.loadVal) return;
+  const btn = document.getElementById('btn-sv-load-'+cardId);
+  if (btn) { btn.disabled=true; btn.textContent='Guardando…'; }
+  const res = await api({
+    action:'saveRegistro', usuario:state.user.usuario,
+    semana:state.semana, dia:state.dia,
+    bloque: cardId.split('_')[0],
+    ejercicio,
+    carga_real: cs.loadVal,
+    rpe:'', notas_jugador:'', tiempo_sesion:''
+  });
+  if (res.ok) {
+    cs.loadSaved = true;
+    const el = document.getElementById('panel-load-'+cardId);
+    if (el) el.innerHTML = `<div class="load-saved-lbl">✓ Carga guardada — ${cs.loadVal} kg</div>`;
+  } else {
+    if (btn) { btn.disabled=false; btn.textContent='Guardar carga'; }
+    alert('Error al guardar: '+(res.error||'inténtalo de nuevo'));
+  }
+}
+
+// ── COACH PANEL ───────────────────────────────────────────────
+async function loadCoachPanel() {
+  // Get all registros via getHistorial without filtering by exercise
+  const res = await api({ action:'getHistorial', usuario:'__ALL__' });
+  // Fallback: get historial for coach user (won't have session data)
+  // We build a simulated roster from what we know + data
+  // Since the sheet only returns data for one usuario, we simulate with demo data
+  // that mirrors the design from the screenshots
+  const semanaNombre = (state.semanas && state.semanas[state.semana-1]) || ('Sem '+state.semana);
+  document.getElementById('coach-sem-label').textContent = semanaNombre;
+  document.getElementById('coach-sem-num').textContent = state.semana;
+
+  // Demo roster — in production this would come from a getEquipo action
+  const roster = [
+    { nombre:'José López',   estado:'guardada', rpe:7, tiempo:65, sesiones:3 },
+    { nombre:'Marc Riera',   estado:'guardada', rpe:9, tiempo:70, sesiones:4 },
+    { nombre:'Pau Ferrer',   estado:'guardada', rpe:5, tiempo:55, sesiones:3 },
+    { nombre:'Adrià Costa',  estado:'pendiente', rpe:null, tiempo:null, sesiones:2 },
+    { nombre:'Tomàs Puig',   estado:'pendiente', rpe:null, tiempo:null, sesiones:3 },
+    { nombre:'Nil Valls',    estado:'inactivo',  rpe:null, tiempo:null, sesiones:0 },
+  ];
+  const total   = roster.length;
+  const hoy     = roster.filter(j=>j.estado==='guardada').length;
+  const pend    = roster.filter(j=>j.estado==='pendiente').length;
+  const inact   = roster.filter(j=>j.estado==='inactivo').length;
+
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-hoy').textContent   = hoy;
+  document.getElementById('kpi-pend').textContent  = pend;
+  document.getElementById('kpi-sin').textContent   = inact;
+
+  const tbody = document.getElementById('coach-tbody');
+  tbody.innerHTML = roster.map(j => {
+    const dotCls = j.estado==='guardada' ? 'dot-green' : j.estado==='pendiente' ? 'dot-amber' : 'dot-red';
+    const estadoTxt = j.estado==='guardada' ? 'Guardada' : j.estado==='pendiente' ? 'Sin registrar' : 'Sin actividad';
+    const estadoColor = j.estado==='guardada' ? 'var(--accent2)' : j.estado==='pendiente' ? '#ffc04d' : 'var(--danger)';
+    const rpeNum = j.rpe;
+    let rpeCls = 'rpe-none'; let rpeTxt = '—';
+    if (rpeNum !== null) {
+      rpeTxt = rpeNum;
+      rpeCls = rpeNum <= 5 ? 'rpe-low' : rpeNum <= 7 ? 'rpe-mid' : 'rpe-high';
+    }
+    const sesMax = 4;
+    return `<tr>
+      <td><span class="status-dot ${dotCls}"></span>${j.nombre}</td>
+      <td style="color:${estadoColor}">${estadoTxt}</td>
+      <td><span class="rpe-chip ${rpeCls}">${rpeTxt}</span></td>
+      <td>${j.tiempo ? j.tiempo+' min' : '—'}</td>
+      <td>${j.sesiones}/${sesMax}</td>
+    </tr>`;
+  }).join('');
+
+  // RPE chart (semanas simuladas)
+  const rpeSemanasDemo = [
+    {sem:'S1',val:6.2}, {sem:'S2',val:7.1}, {sem:'S3',val:7.4,current:true}
+  ];
+  const maxRpe = Math.max(...rpeSemanasDemo.map(s=>s.val));
+  const barsHtml = rpeSemanasDemo.map(s => {
+    const pct = Math.round((s.val/10)*100);
+    return `<div class="rpe-bar-item">
+      <div class="rpe-bar-val">${s.val}</div>
+      <div class="rpe-bar-fill${s.current?' current':''}" style="height:${pct}%"></div>
+      <div class="rpe-bar-sem">${s.sem}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('coach-rpe-semana-label').textContent = semanaNombre;
+  document.getElementById('coach-rpe-bars').innerHTML = barsHtml;
+  document.getElementById('coach-rpe-chart').style.display = 'block';
+}
+
 function logout() {
-  state = {user:null,dia:1,semana:1,semanas:[],rpeSession:null,tiempoSesion:'',guardado:false};
+  state = {user:null,dia:1,semana:1,semanas:[],rpeSession:null,tiempoSesion:'',guardado:false,isCoach:false,cards:{}};
+  document.getElementById('screen-app').style.display  = 'none';
+  document.getElementById('screen-login').style.display = 'flex';
+  document.getElementById('coach-panel').classList.remove('visible');
+  document.getElementById('coach-topbar-badge').classList.add('hidden');
   document.getElementById('screen-app').style.display  = 'none';
   document.getElementById('screen-login').style.display = 'flex';
   document.getElementById('input-user').value = '';
@@ -606,4 +995,3 @@ function logout() {
 </script>
 </body>
 </html>
-
