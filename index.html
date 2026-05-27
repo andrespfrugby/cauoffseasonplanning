@@ -70,22 +70,33 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .phase-header::after { content:''; flex:1; height:1px; background:var(--border); }
 
 /* ── EXERCISE CARD ── */
-.ex-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); margin-bottom:8px; overflow:hidden; }
-.ex-header { display:flex; align-items:center; gap:10px; padding:11px 13px; }
-.block-id { border-radius:6px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; border:1px solid transparent; }
-.block-A { background:rgba(55,138,221,.18);  color:#5fb3f5; border-color:rgba(55,138,221,.35); }
-.block-B { background:rgba(29,158,117,.18);  color:#3ecfa0; border-color:rgba(29,158,117,.35); }
-.block-C { background:rgba(239,159,39,.18);  color:#ffc04d; border-color:rgba(239,159,39,.35); }
-.block-D { background:rgba(127,119,221,.18); color:#a99ff5; border-color:rgba(127,119,221,.35); }
-.block-E { background:rgba(212,83,126,.18);  color:#f07aaa; border-color:rgba(212,83,126,.35); }
-.block-X { background:var(--surface2); color:var(--muted); border-color:var(--border2); }
-.ex-card.super-A { border-left:3px solid rgba(55,138,221,.6); }
-.ex-card.super-B { border-left:3px solid rgba(29,158,117,.6); }
-.ex-card.super-C { border-left:3px solid rgba(239,159,39,.6); }
-.ex-card.super-D { border-left:3px solid rgba(127,119,221,.6); }
-.ex-card.super-E { border-left:3px solid rgba(212,83,126,.6); }
+.ex-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-top:2px solid transparent;
+  border-radius:var(--r); margin-bottom:8px; overflow:hidden;
+}
+.ex-card.accent-A { border-top-color:rgba(55,138,221,.75); }
+.ex-card.accent-B { border-top-color:rgba(29,158,117,.75); }
+.ex-card.accent-C { border-top-color:rgba(239,159,39,.85); }
+.ex-card.accent-D { border-top-color:rgba(127,119,221,.75); }
+.ex-card.accent-E { border-top-color:rgba(212,83,126,.75); }
+.ex-card.accent-X { border-top-color:rgba(255,255,255,.18); }
+.ex-header { display:flex; align-items:flex-start; gap:10px; padding:12px 13px 8px; }
+.block-id {
+  border-radius:7px; width:36px; height:36px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700; flex-shrink:0;
+  background:rgba(0,0,0,.25); border:1px solid transparent;
+}
+.block-A { color:#5fb3f5; border-color:rgba(55,138,221,.45); }
+.block-B { color:#3ecfa0; border-color:rgba(29,158,117,.45); }
+.block-C { color:#ffc04d; border-color:rgba(239,159,39,.5); }
+.block-D { color:#a99ff5; border-color:rgba(127,119,221,.45); }
+.block-E { color:#f07aaa; border-color:rgba(212,83,126,.45); }
+.block-X { color:var(--muted); border-color:var(--border2); }
 .ex-info { flex:1; min-width:0; }
-.ex-name { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ex-name { font-size:15px; font-weight:600; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ex-patron { font-size:11px; color:#8b95a3; margin-top:3px; line-height:1.3; }
 .ex-tags { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
 .tag { font-size:10px; padding:2px 7px; border-radius:4px; font-weight:500; }
 .tag-squat   { background:rgba(55,138,221,.15);  color:#5fb3f5; }
@@ -96,8 +107,77 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .tag-plyo    { background:rgba(226,75,74,.15);   color:#ff7070; }
 .tag-iso     { background:rgba(136,135,128,.15); color:#aaa; }
 .tag-other   { background:rgba(212,83,126,.15);  color:#f07aaa; }
-.tag-volume  { background:rgba(0,229,160,.10);  color:#00e5a0; border:1px solid rgba(0,229,160,.2); font-weight:600; }
-.tag-method  { background:rgba(239,159,39,.10); color:#ffc04d; border:1px solid rgba(239,159,39,.2); }
+/* ── PRESCRIPTION (todo el color del bloque: A azul, B verde, C amarillo…) ── */
+.ex-prescription {
+  display:flex; flex-wrap:wrap; gap:6px;
+  padding:0 13px 10px;
+}
+.presc-chip {
+  font-size:11px; font-weight:500;
+  padding:5px 10px; border-radius:8px;
+  letter-spacing:.01em; line-height:1.2;
+}
+.presc-A .presc-chip {
+  background:linear-gradient(145deg, rgba(55,138,221,.24) 0%, rgba(55,138,221,.10) 100%);
+  color:#8ecfff; border:1px solid rgba(55,138,221,.28);
+}
+.presc-B .presc-chip {
+  background:linear-gradient(145deg, rgba(29,158,117,.24) 0%, rgba(29,158,117,.10) 100%);
+  color:#4dd9a8; border:1px solid rgba(29,158,117,.28);
+}
+.presc-C .presc-chip {
+  background:linear-gradient(145deg, rgba(239,159,39,.24) 0%, rgba(239,159,39,.10) 100%);
+  color:#ffc04d; border:1px solid rgba(239,159,39,.28);
+}
+.presc-D .presc-chip {
+  background:linear-gradient(145deg, rgba(127,119,221,.24) 0%, rgba(127,119,221,.10) 100%);
+  color:#b8afff; border:1px solid rgba(127,119,221,.28);
+}
+.presc-E .presc-chip {
+  background:linear-gradient(145deg, rgba(212,83,126,.24) 0%, rgba(212,83,126,.10) 100%);
+  color:#ff9ec4; border:1px solid rgba(212,83,126,.28);
+}
+.presc-X .presc-chip {
+  background:linear-gradient(145deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.04) 100%);
+  color:#a8b0bc; border:1px solid rgba(255,255,255,.12);
+}
+/* ── CARD ACTIONS (debajo prescripción) ── */
+.ex-card-actions {
+  display:flex; gap:6px;
+  padding:0 13px 11px;
+}
+.btn-action {
+  flex:1; min-width:0;
+  display:flex; align-items:center; justify-content:center; gap:5px;
+  padding:7px 6px; border-radius:8px;
+  font-size:11px; font-weight:600; font-family:var(--font-body);
+  cursor:pointer; transition:background .15s, border-color .15s, color .15s, transform .1s;
+}
+.btn-action:active { transform:scale(.97); }
+.btn-action-hist, .btn-action-load {
+  background:linear-gradient(180deg, rgba(255,255,255,.09) 0%, rgba(255,255,255,.04) 100%);
+  border:1px solid rgba(255,255,255,.13);
+  color:#8b95a3;
+}
+.btn-action-hist:hover, .btn-action-load:hover {
+  background:rgba(255,255,255,.11);
+  border-color:rgba(255,255,255,.20);
+  color:#b8c0cc;
+}
+.btn-action-video {
+  background:linear-gradient(180deg, rgba(232,20,42,.22) 0%, rgba(232,20,42,.09) 100%);
+  border:1px solid rgba(232,20,42,.38);
+  color:#ff5c6e;
+}
+.btn-action-video:hover:not(.no-url) {
+  background:linear-gradient(180deg, rgba(232,20,42,.32) 0%, rgba(232,20,42,.14) 100%);
+  border-color:rgba(232,20,42,.55);
+  color:#fff;
+}
+.btn-action-video.no-url {
+  opacity:.32; cursor:default; pointer-events:none;
+}
+.btn-action-icon { font-size:12px; line-height:1; opacity:.9; }
 /* ── EXERCISE NOTES STRIP ── */
 .ex-notes-strip {
   display:flex; align-items:center; gap:10px;
@@ -159,19 +239,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   font-size:12px; color:var(--muted); line-height:1.7;
   white-space:pre-line;
 }
-.card-actions { display:flex; align-items:center; gap:5px; flex-shrink:0; }
-.btn-card { flex-shrink:0; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s; font-size:12px; }
-.btn-hist { background:rgba(0,229,160,.10); border:1px solid rgba(0,229,160,.28); color:#00e5a0; }
-.btn-hist:hover { background:rgba(0,229,160,.22); border-color:rgba(0,229,160,.55); transform:scale(1.05); }
-.btn-hist:active { transform:scale(.95); }
-.btn-load { background:rgba(239,159,39,.12); border:1px solid rgba(239,159,39,.35); color:#ffc04d; }
-.btn-load:hover { background:rgba(239,159,39,.24); border-color:rgba(239,159,39,.6); transform:scale(1.05); }
-.btn-load:active { transform:scale(.95); }
-.btn-video { flex-shrink:0; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s; font-size:12px; }
-.btn-video.has-url { background:rgba(232,20,42,.12); border:1px solid rgba(232,20,42,.35); color:var(--accent); }
-.btn-video.has-url:hover { background:rgba(232,20,42,.25); border-color:rgba(232,20,42,.6); transform:scale(1.05); }
-.btn-video.has-url:active { transform:scale(.95); }
-.btn-video.no-url { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); color:rgba(255,255,255,.2); cursor:default; pointer-events:none; }
 .card-panel { border-top:1px solid var(--border); padding:10px 13px 11px; animation:slideDown .18s ease; }
 @keyframes slideDown { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
 .hist-title { font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:7px; }
@@ -719,14 +786,18 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeVideoModal()
 function renderCard(e) {
   const letra   = blockLetter(e.bloque);
   const letraOk = ['A','B','C','D','E'].includes(letra) ? letra : 'X';
-  const tagPatron = e.patron ? `<span class="tag ${patternTag(e.patron)}">${e.patron.replace(/_/g,' ')}</span>` : '';
-  const tagSets   = e.sets        ? `<span class="tag tag-volume">${e.sets} sets</span>` : '';
-  const tagReps   = e.reps        ? `<span class="tag tag-volume">${e.reps}</span>` : '';
-  const tagContr  = e.contraccion ? `<span class="tag tag-method">${e.contraccion}</span>` : '';
-  const tagTempo  = e.tempo       ? `<span class="tag tag-method">⏱ ${e.tempo}</span>` : '';
-  const tagLoad   = e.load_objetivo ? `<span class="tag tag-method">${e.load_objetivo}</span>` : '';
-  const tagNotas  = ''; // notes shown separately below
-  const tags = [tagPatron,tagSets,tagReps,tagContr,tagTempo,tagLoad].filter(Boolean).join('');
+  const patronHtml = e.patron ? `<div class="ex-patron">${e.patron.replace(/_/g,' ')}</div>` : '';
+  const prescItems = [
+    e.contraccion   ? `${e.contraccion}` : null,
+    e.sets          ? `${e.sets} sets` : null,
+    e.reps          ? e.reps : null,
+    e.tempo         ? e.tempo : null,
+    e.load_objetivo ? e.load_objetivo : null,
+  ].filter(Boolean);
+  const prescHtml = prescItems.length ? `
+    <div class="ex-prescription presc-${letraOk}">
+      ${prescItems.map(label => `<span class="presc-chip">${label}</span>`).join('')}
+    </div>` : '';
   const notasStrip = e.notas ? `
   <div class="ex-notes-strip ex-notes-${letraOk}">
     <div class="ex-notes-icon-wrap">ℹ</div>
@@ -737,20 +808,33 @@ function renderCard(e) {
   const hasVideo  = !!(e.video && e.video.startsWith('http'));
   const cardId    = (e.bloque+'_'+e.ejercicio).replace(/\W/g,'_');
   const hasLoadBtn = /(%|RPE|RIR)/i.test(e.load_objetivo||'');
+  const actionsHtml = `
+    <div class="ex-card-actions">
+      <button type="button" class="btn-action btn-action-hist" title="Historial de carga"
+              onclick="toggleCardPanel('hist','${cardId}','${nombreEsc}')">
+        <span class="btn-action-icon">⟳</span><span>Historial</span>
+      </button>
+      ${hasLoadBtn ? `<button type="button" class="btn-action btn-action-load" title="Registrar carga"
+              onclick="toggleCardPanel('load','${cardId}','${nombreEsc}')">
+        <span class="btn-action-icon">＋</span><span>Carga</span>
+      </button>` : ''}
+      <button type="button" class="btn-action btn-action-video ${hasVideo?'':'no-url'}"
+              onclick="openVideoModal('${nombreEsc}','${videoEsc}')"
+              title="${hasVideo?'Ver vídeo':'Sin vídeo aún'}">
+        <span class="btn-action-icon">▶</span><span>Vídeo</span>
+      </button>
+    </div>`;
   return `
-  <div class="ex-card super-${letraOk}" id="card-${cardId}">
+  <div class="ex-card accent-${letraOk}" id="card-${cardId}">
     <div class="ex-header">
       <div class="block-id block-${letraOk}">${e.bloque}</div>
       <div class="ex-info">
         <div class="ex-name">${e.ejercicio}</div>
-        ${tags ? `<div class="ex-tags">${tags}</div>` : ''}
-      </div>
-      <div class="card-actions">
-        <button class="btn-card btn-hist" title="Historial" onclick="toggleCardPanel('hist','${cardId}','${nombreEsc}')">⟳</button>
-        ${hasLoadBtn ? `<button class="btn-card btn-load" title="Registrar carga" onclick="toggleCardPanel('load','${cardId}','${nombreEsc}')">＋</button>` : ''}
-        <button class="btn-video ${hasVideo?'has-url':'no-url'}" onclick="openVideoModal('${nombreEsc}','${videoEsc}')" title="${hasVideo?'Ver vídeo':'Sin vídeo aún'}">▶</button>
+        ${patronHtml}
       </div>
     </div>
+    ${prescHtml}
+    ${actionsHtml}
     ${notasStrip}
     <div id="panel-hist-${cardId}" class="card-panel hidden"></div>
     <div id="panel-load-${cardId}" class="card-panel hidden"></div>
