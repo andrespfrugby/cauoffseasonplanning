@@ -64,6 +64,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .day-pill { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:5px 14px; font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; color:var(--muted); font-family:var(--font-body); }
 .day-pill:hover { border-color:rgba(232,20,42,.4); color:var(--text); }
 .day-pill.active { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
+
+/* session title — solo "Day N" sin día de semana */
 .session-title { font-family:var(--font-head); font-size:30px; letter-spacing:1px; line-height:1; margin-bottom:.2rem; }
 .session-meta { color:var(--muted); font-size:13px; margin-bottom:1.25rem; }
 .phase-header { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:1.25rem 0 .65rem; display:flex; align-items:center; gap:8px; }
@@ -177,30 +179,36 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .dot-amber { background:#ffc04d; }
 .dot-red   { background:var(--danger); }
 
-/* ── CUADRADITOS DE SESIÓN ── */
-.session-squares { display:flex; gap:3px; align-items:center; }
-.sq {
-  width:18px; height:18px;
+/* ── 7 cuadraditos L-M-X-J-V-S-D ── */
+.week-squares { display:flex; gap:3px; align-items:center; }
+.wsq {
+  width:20px; height:20px;
   border-radius:3px;
-  border:1px solid rgba(255,255,255,.15);
   display:flex; align-items:center; justify-content:center;
   font-size:8px; font-weight:700;
-  position:relative;
   cursor:default;
   transition:transform .1s;
+  position:relative;
+  flex-direction: column;
 }
-.sq:hover { transform:scale(1.15); }
-.sq.sq-empty  { background:rgba(255,255,255,.05); color:rgba(255,255,255,.2); border-color:rgba(255,255,255,.08); }
-.sq.sq-low    { background:rgba(0,229,160,.18);   color:#00e5a0; border-color:rgba(0,229,160,.4); }
-.sq.sq-mid    { background:rgba(239,159,39,.18);  color:#ffc04d; border-color:rgba(239,159,39,.4); }
-.sq.sq-high   { background:rgba(232,20,42,.18);   color:#ff7070; border-color:rgba(232,20,42,.4); }
+.wsq:hover { transform:scale(1.15); }
+/* Sin datos */
+.wsq-empty { background:rgba(255,255,255,.04); color:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.08); }
+/* Entrenado, colores por RPE */
+.wsq-low  { background:rgba(0,229,160,.18);  color:#00e5a0; border:1px solid rgba(0,229,160,.4); }
+.wsq-mid  { background:rgba(239,159,39,.18); color:#ffc04d; border:1px solid rgba(239,159,39,.4); }
+.wsq-high { background:rgba(232,20,42,.18);  color:#ff7070; border:1px solid rgba(232,20,42,.4); }
+/* Hoy sin registro */
+.wsq-hoy  { background:rgba(255,255,255,.06); color:rgba(255,255,255,.35); border:1px dashed rgba(255,255,255,.25); }
+.wsq-label { font-size:7px; font-weight:600; letter-spacing:.03em; opacity:.7; line-height:1; }
+.wsq-val   { font-size:8px; font-weight:700; line-height:1; }
 
-/* ── RPE 7 DÍAS CHIP ── */
+/* ── RPE chip ── */
 .rpe7-chip {
   display:inline-flex; align-items:center; justify-content:center;
-  min-width:32px; height:22px;
+  min-width:34px; height:22px;
   border-radius:5px; font-size:11px; font-weight:700;
-  padding:0 5px;
+  padding:0 6px;
 }
 .rpe7-low  { background:rgba(0,229,160,.15);  color:#00e5a0; }
 .rpe7-mid  { background:rgba(239,159,39,.15);  color:#ffc04d; }
@@ -211,11 +219,9 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .coach-rpe-chart { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px; margin-bottom:1rem; }
 .coach-rpe-chart-title { font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
 .coach-rpe-chart-subtitle { font-size:12px; font-weight:600; color:var(--text); margin-bottom:12px; }
-
-/* semanas — fila de columnas por semana */
 .rpe-weeks-wrap { display:flex; flex-direction:column; gap:10px; }
 .rpe-week-row { display:flex; align-items:flex-end; gap:4px; }
-.rpe-week-label { font-size:9px; color:var(--muted); width:70px; flex-shrink:0; padding-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rpe-week-label { font-size:9px; color:var(--muted); width:80px; flex-shrink:0; padding-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .rpe-sessions-bars { display:flex; gap:4px; align-items:flex-end; flex:1; }
 .rpe-session-col { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:28px; }
 .rpe-bar-fill { width:100%; border-radius:3px 3px 0 0; min-height:3px; }
@@ -323,6 +329,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     </div>
   </div>
   <div class="content">
+
     <!-- COACH PANEL -->
     <div id="coach-panel">
       <div class="coach-header">
@@ -334,29 +341,36 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       </div>
       <div class="kpi-row" id="coach-kpis">
         <div class="kpi-card"><div class="kpi-num" id="kpi-total">—</div><div class="kpi-lbl">Jugadores</div></div>
-        <div class="kpi-card"><div class="kpi-num green" id="kpi-hoy">—</div><div class="kpi-lbl">Completaron</div></div>
+        <div class="kpi-card"><div class="kpi-num green" id="kpi-hoy">—</div><div class="kpi-lbl">Hoy</div></div>
         <div class="kpi-card"><div class="kpi-num amber" id="kpi-pend">—</div><div class="kpi-lbl">Pendientes</div></div>
         <div class="kpi-card"><div class="kpi-num red" id="kpi-sin">—</div><div class="kpi-lbl">Sin actividad</div></div>
       </div>
+
+      <!-- Tabla equipo -->
       <div class="coach-table-wrap">
         <table class="coach-table">
           <thead><tr>
             <th>Jugador</th>
-            <th>RPE (últ. 7 días)</th>
-            <th id="th-sesiones">Sesiones</th>
-            <th>Tiempo</th>
+            <th>RPE media (7 días)</th>
+            <th>Esta semana</th>
+            <th>Tiempo (última)</th>
           </tr></thead>
           <tbody id="coach-tbody"></tbody>
         </table>
       </div>
-      <!-- RPE por sesión -->
+
+      <!-- RPE chart por sesión -->
       <div class="coach-rpe-chart" id="coach-rpe-chart" style="display:none">
-        <div class="coach-rpe-chart-title">RPE por sesión</div>
+        <div class="coach-rpe-chart-title">RPE medio por sesión</div>
         <div class="coach-rpe-chart-subtitle" id="coach-rpe-semana-label"></div>
         <div class="rpe-weeks-wrap" id="coach-rpe-weeks"></div>
       </div>
+
       <div style="height:1.25rem"></div>
-      <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;display:flex;align-items:center;gap:8px;">Vista sesión jugadores <span style="flex:1;height:1px;background:var(--border);display:inline-block"></span></div>
+      <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;display:flex;align-items:center;gap:8px;">
+        Vista sesión jugadores
+        <span style="flex:1;height:1px;background:var(--border);display:inline-block"></span>
+      </div>
     </div>
 
     <!-- SELECTOR SEMANA + DÍAS -->
@@ -378,19 +392,39 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 </div>
 
 <script>
-// ── Escudo CAU base64 ─────────────────────────────────────────
+// ── Escudo CAU base64 (placeholder) ─────────────────────────
 (function(){
   const img = document.getElementById('login-shield-img');
-  if (img) img.src = 'data:image/png;base64,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';
+  if (img) img.src = 'data:image/png;base64,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';
 })();
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVyC8AFCalPyYy116XmEtzdSMYUc2tzW2c_Tm_H_TcJSt-FGvUWjfnflDS-GukmqpX/exec';
 
+// ── UTILIDADES DE FECHA ───────────────────────────────────────
+function fmtDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+function getLunesDeSemana(fecha) {
+  const d = new Date(fecha);
+  const dia = d.getDay();
+  const diffToLun = (dia === 0) ? -6 : 1 - dia;
+  d.setDate(d.getDate() + diffToLun);
+  d.setHours(0,0,0,0);
+  return d;
+}
+// Formato corto de fecha: "27/5"
+function fmtShort(dateStr) {
+  const d = new Date(dateStr);
+  return `${d.getDate()}/${d.getMonth()+1}`;
+}
+
 let state = {
   user: null, dia: 1, semana: 1, semanas: [],
   rpeSession: null, tiempoSesion: '', guardado: false,
-  isCoach: false,
-  cards: {}
+  isCoach: false, cards: {}
 };
 
 // ── API ───────────────────────────────────────────────────────
@@ -406,9 +440,7 @@ async function api(payload) {
   }
 }
 
-// ── Nombre de semana actual ───────────────────────────────────
 function getNombreSemana(idx) {
-  // idx 1-based
   const sel = document.getElementById('sel-semana');
   if (!sel) return 'Semana ' + idx;
   const opt = sel.options[idx - 1];
@@ -492,7 +524,8 @@ async function loadRutina() {
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
-const DAY_NAMES = ['','Lunes — Day 1','Martes — Day 2','Miércoles — Day 3','Jueves — Day 4','Sábado — Extra'];
+// Solo "Day N" — sin día de la semana
+const DAY_NAMES = ['','Day 1','Day 2','Day 3','Day 4','Extra'];
 
 const PATTERN_TAG = {
   Squat:'tag-squat', Hinge:'tag-hinge',
@@ -534,24 +567,18 @@ function rpeClass(rpe) {
   if (rpe <= 7) return 'mid';
   return 'high';
 }
-function sqClass(rpe, guardada) {
-  if (!guardada) return 'sq-empty';
-  const c = rpeClass(rpe);
-  return 'sq-' + c;
-}
 
 // ── VIDEO MODAL ───────────────────────────────────────────────
 function openVideoModal(nombre, videoUrl) {
-  const overlay = document.getElementById('video-modal-overlay');
   document.getElementById('video-modal-title').textContent = nombre;
   const embedUrl = toEmbedUrl(videoUrl);
   const body = document.getElementById('video-modal-body');
   if (embedUrl) {
     body.innerHTML = `<div class="video-wrap"><iframe src="${embedUrl}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>`;
   } else {
-    body.innerHTML = `<div class="video-no-url">📹 Vídeo no disponible aún.<br><small>Añade la URL real en la columna VIDEO del Sheet.</small></div>`;
+    body.innerHTML = `<div class="video-no-url">📹 Vídeo no disponible aún.</div>`;
   }
-  overlay.classList.add('open');
+  document.getElementById('video-modal-overlay').classList.add('open');
 }
 function closeVideoModal(e) {
   if (e && e.target !== document.getElementById('video-modal-overlay')) return;
@@ -565,12 +592,12 @@ function renderCard(e) {
   const letra   = blockLetter(e.bloque);
   const letraOk = ['A','B','C','D','E'].includes(letra) ? letra : 'X';
   const tagPatron = e.patron ? `<span class="tag ${patternTag(e.patron)}">${e.patron.replace(/_/g,' ')}</span>` : '';
-  const tagSets  = e.sets         ? `<span class="tag tag-volume">${e.sets} sets</span>` : '';
-  const tagReps  = e.reps         ? `<span class="tag tag-volume">${e.reps}</span>` : '';
-  const tagContr = e.contraccion  ? `<span class="tag tag-method">${e.contraccion}</span>` : '';
-  const tagTempo = e.tempo        ? `<span class="tag tag-method">⏱ ${e.tempo}</span>` : '';
-  const tagLoad  = e.load_objetivo? `<span class="tag tag-method">${e.load_objetivo}</span>` : '';
-  const tagNotas = e.notas        ? `<span class="tag tag-notes">📝 ${e.notas}</span>` : '';
+  const tagSets   = e.sets          ? `<span class="tag tag-volume">${e.sets} sets</span>` : '';
+  const tagReps   = e.reps          ? `<span class="tag tag-volume">${e.reps}</span>` : '';
+  const tagContr  = e.contraccion   ? `<span class="tag tag-method">${e.contraccion}</span>` : '';
+  const tagTempo  = e.tempo         ? `<span class="tag tag-method">⏱ ${e.tempo}</span>` : '';
+  const tagLoad   = e.load_objetivo ? `<span class="tag tag-method">${e.load_objetivo}</span>` : '';
+  const tagNotas  = e.notas         ? `<span class="tag tag-notes">📝 ${e.notas}</span>` : '';
   const tags = [tagPatron,tagSets,tagReps,tagContr,tagTempo,tagLoad,tagNotas].filter(Boolean).join('');
   const nombreEsc = e.ejercicio.replace(/'/g,"\\'");
   const videoEsc  = (e.video||'').replace(/'/g,"\\'");
@@ -677,7 +704,6 @@ async function saveSession() {
   if (!state.rpeSession) return;
   const btn = document.getElementById('btn-save-session');
   if (btn) { btn.disabled=true; btn.textContent='Guardando...'; }
-  const semanaNombre = getNombreSemana(state.semana);
   const res = await api({
     action:'saveRegistro', usuario:state.user.usuario,
     semana:state.semana, dia:state.dia,
@@ -695,7 +721,7 @@ async function saveSession() {
   }
 }
 
-// ── CARD PANEL TOGGLE ──────────────────────────────────────────
+// ── CARD PANEL TOGGLE ─────────────────────────────────────────
 function toggleCardPanel(type, cardId, ejercicio) {
   const histEl = document.getElementById('panel-hist-'+cardId);
   const loadEl = document.getElementById('panel-load-'+cardId);
@@ -736,13 +762,11 @@ async function renderHistPanel(cardId, ejercicio, el) {
   const deltaSign  = delta>0?'+':'';
   const bars = hist.map((h,i)=>{
     const pct = Math.round((parseFloat(h.carga)/maxCarga)*100);
-    // use real week name from semanas array
     const semNom = (state.semanas && state.semanas[parseInt(h.semana)-1]) || ('S'+h.semana);
     return `<div class="hist-bar${i===hist.length-1?' current':''}" style="height:${pct}%" title="${semNom}: ${h.carga}kg"></div>`;
   }).join('');
   const lbls = hist.map(h=>{
     const semNom = (state.semanas && state.semanas[parseInt(h.semana)-1]) || ('S'+h.semana);
-    // use short label: first word of week name
     const short = semNom.split('_')[0] || semNom;
     return `<div class="hist-bar-lbl" title="${semNom}">${short.length>6?short.slice(0,6)+'…':short}</div>`;
   }).join('');
@@ -765,7 +789,7 @@ async function renderHistPanel(cardId, ejercicio, el) {
     <table class="hist-table"><tbody>${rows}</tbody></table>`;
 }
 
-// ── LOAD PANEL ─────────────────────────────────────────────────
+// ── LOAD PANEL ────────────────────────────────────────────────
 function renderLoadPanel(cardId, ejercicio, el) {
   if (!state.cards[cardId]) state.cards[cardId] = { loadVal:'', loadSaved:false };
   const cs = state.cards[cardId];
@@ -797,7 +821,7 @@ function loadNumpad(cardId, key) {
 async function saveLoad(cardId, ejercicio) {
   const cs = state.cards[cardId];
   if (!cs || !cs.loadVal) return;
-  const btn = document.getElementById('btn-sv-load-'+cardId) || document.querySelector(`#panel-load-${cardId} .btn-save-load`);
+  const btn = document.querySelector(`#panel-load-${cardId} .btn-save-load`);
   if (btn) { btn.disabled=true; btn.textContent='Guardando…'; }
   const res = await api({
     action:'saveRegistro', usuario:state.user.usuario,
@@ -825,60 +849,69 @@ async function loadCoachPanel() {
   if (!res.ok) return;
 
   const equipo = res.equipo;
-  const nombreSemana = res.nombreSemana || semanaNombre;
 
   // KPIs
-  const total  = equipo.length;
-  const complet = equipo.filter(j=>j.estado==='guardada').length;
-  const pend   = equipo.filter(j=>j.estado==='pendiente').length;
-  const inact  = equipo.filter(j=>j.estado==='inactivo').length;
+  const hoyStr = fmtDate(new Date());
+  const total   = equipo.length;
+  const complet = equipo.filter(j => j.sesiones7dias && j.sesiones7dias.some(s => s.fecha === hoyStr && s.guardada)).length;
+  const pend    = equipo.filter(j => j.estado === 'pendiente').length;
+  const inact   = equipo.filter(j => j.estado === 'inactivo').length;
   document.getElementById('kpi-total').textContent = total;
   document.getElementById('kpi-hoy').textContent   = complet;
   document.getElementById('kpi-pend').textContent  = pend;
   document.getElementById('kpi-sin').textContent   = inact;
-
-  // Cabecera columna sesiones con nombre real
-  document.getElementById('th-sesiones').textContent = 'RPE ' + nombreSemana;
 
   // Tabla jugadores
   const tbody = document.getElementById('coach-tbody');
   tbody.innerHTML = equipo.map(j => {
     const dotCls = j.estado==='guardada' ? 'dot-green' : j.estado==='pendiente' ? 'dot-amber' : 'dot-red';
 
-    // RPE últimos 7 días
+    // RPE media últimos 7 días
     let rpe7Html = '<span class="rpe7-chip rpe7-none">—</span>';
     if (j.rpe7dias !== null && j.rpe7dias !== undefined) {
       const c = rpeClass(j.rpe7dias);
       rpe7Html = `<span class="rpe7-chip rpe7-${c}">${j.rpe7dias}</span>`;
     }
 
-    // Cuadraditos de sesión con RPE semáforo
-    const squares = (j.sesionesDetalle || []).map(s => {
-      const cls = sqClass(s.rpe, s.guardada);
-      const rpeLabel = s.guardada && s.rpe ? Math.round(s.rpe) : '';
-      return `<div class="sq ${cls}" title="Day ${s.dia}${s.guardada?' · RPE '+s.rpe:' · pendiente'}">${rpeLabel}</div>`;
+    // 7 cuadraditos L-M-X-J-V-S-D con fecha real
+    const squares = (j.sesiones7dias || []).map(s => {
+      let cls = 'wsq-empty';
+      if (s.guardada) {
+        const c = rpeClass(s.rpe);
+        cls = c === 'none' ? 'wsq-low' : `wsq-${c}`;
+      } else if (s.fecha === hoyStr) {
+        cls = 'wsq-hoy';
+      }
+      const rpeLabel = s.guardada && s.rpe && !isNaN(s.rpe) ? Math.round(s.rpe) : '';
+      const tooltip  = `${s.label} ${fmtShort(s.fecha)}${s.guardada?' · RPE '+(s.rpe||''):''}`;
+      return `<div class="wsq ${cls}" title="${tooltip}">
+        <span class="wsq-label">${s.label}</span>
+        <span class="wsq-val">${rpeLabel}</span>
+      </div>`;
     }).join('');
+
+    // Tiempo última sesión
+    const tiempoTxt = j.tiempoUltima ? j.tiempoUltima + ' min' : '—';
 
     return `<tr>
       <td><span class="status-dot ${dotCls}"></span>${j.nombre}</td>
       <td>${rpe7Html}</td>
-      <td><div class="session-squares">${squares}</div></td>
-      <td>${j.tiempo ? j.tiempo+' min' : '—'}</td>
+      <td><div class="week-squares">${squares}</div></td>
+      <td>${tiempoTxt}</td>
     </tr>`;
   }).join('');
 
-  // Gráfico RPE por sesión
+  // Gráfico RPE por sesión con nombre real de semana
   if (res.rpeChart && res.rpeChart.length) {
     const semanaActual = String(state.semana);
-    // Altura máxima para escalar barras
-    const allRpes = res.rpeChart.flatMap(s => s.sesiones.map(ss => ss.rpeMedia));
+    const allRpes = res.rpeChart.flatMap(s => (s.sesiones||[]).map(ss => ss.rpeMedia));
     const maxRpe  = allRpes.length ? Math.max(...allRpes) : 10;
 
     const weeksHtml = res.rpeChart.map(sem => {
       const isCurrent = sem.semana === semanaActual;
-      const sesionesHtml = sem.sesiones.map(ss => {
+      const sesionesHtml = (sem.sesiones||[]).map(ss => {
         const c = rpeClass(ss.rpeMedia);
-        const pct = Math.round((ss.rpeMedia / maxRpe) * 44); // max 44px
+        const pct = Math.round((ss.rpeMedia / maxRpe) * 44);
         return `<div class="rpe-session-col">
           <div class="rpe-bar-val rpe-${c}-val">${ss.rpeMedia}</div>
           <div class="rpe-bar-fill rpe-${c}-bar${isCurrent?' current-week':''}" style="height:${Math.max(pct,3)}px"></div>
@@ -886,8 +919,7 @@ async function loadCoachPanel() {
         </div>`;
       }).join('');
 
-      // Media total semana
-      const mediaTxt = sem.rpeMedia ? ` · media ${sem.rpeMedia}` : '';
+      const mediaTxt = sem.rpeMedia ? ` · ${sem.rpeMedia}` : '';
 
       return `<div class="rpe-week-row">
         <div class="rpe-week-label" title="${sem.nombreSemana}">${sem.nombreSemana}${mediaTxt}</div>
@@ -895,7 +927,7 @@ async function loadCoachPanel() {
       </div>`;
     }).join('');
 
-    document.getElementById('coach-rpe-semana-label').textContent = nombreSemana;
+    document.getElementById('coach-rpe-semana-label').textContent = semanaNombre + ' · Semana activa';
     document.getElementById('coach-rpe-weeks').innerHTML = weeksHtml;
     document.getElementById('coach-rpe-chart').style.display = 'block';
   }
