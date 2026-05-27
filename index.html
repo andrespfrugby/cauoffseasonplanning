@@ -100,16 +100,41 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .tag-method  { background:rgba(239,159,39,.10); color:#ffc04d; border:1px solid rgba(239,159,39,.2); }
 /* ── EXERCISE NOTES STRIP ── */
 .ex-notes-strip {
-  display:flex; align-items:flex-start; gap:7px;
-  padding:6px 13px 8px;
-  background:linear-gradient(90deg, rgba(100,160,255,.06) 0%, transparent 100%);
-  border-top:1px dashed rgba(100,160,255,.18);
+  display:flex; align-items:center; gap:10px;
+  padding:7px 13px 9px;
+  border-top:1px solid transparent;
 }
-.ex-notes-icon { font-size:12px; flex-shrink:0; margin-top:1px; opacity:.8; }
-.ex-notes-text {
-  font-size:11px; color:rgba(127,179,255,.85); line-height:1.55;
-  font-style:italic;
+.ex-notes-icon-wrap {
+  width:24px; height:24px; border-radius:5px;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; font-size:13px;
 }
+.ex-notes-text { font-size:12px; line-height:1.5; }
+
+/* per-block tints */
+.ex-notes-A { background:rgba(55,138,221,.08);  border-top-color:rgba(55,138,221,.18); }
+.ex-notes-A .ex-notes-icon-wrap { background:rgba(55,138,221,.18); color:#5fb3f5; }
+.ex-notes-A .ex-notes-text { color:#7ec8ff; }
+
+.ex-notes-B { background:rgba(29,158,117,.08);  border-top-color:rgba(29,158,117,.18); }
+.ex-notes-B .ex-notes-icon-wrap { background:rgba(29,158,117,.18); color:#3ecfa0; }
+.ex-notes-B .ex-notes-text { color:#3ecfa0; }
+
+.ex-notes-C { background:rgba(239,159,39,.08);  border-top-color:rgba(239,159,39,.18); }
+.ex-notes-C .ex-notes-icon-wrap { background:rgba(239,159,39,.18); color:#ffc04d; }
+.ex-notes-C .ex-notes-text { color:#e0a830; }
+
+.ex-notes-D { background:rgba(127,119,221,.08); border-top-color:rgba(127,119,221,.18); }
+.ex-notes-D .ex-notes-icon-wrap { background:rgba(127,119,221,.18); color:#a99ff5; }
+.ex-notes-D .ex-notes-text { color:#a99ff5; }
+
+.ex-notes-E { background:rgba(212,83,126,.08);  border-top-color:rgba(212,83,126,.18); }
+.ex-notes-E .ex-notes-icon-wrap { background:rgba(212,83,126,.18); color:#f07aaa; }
+.ex-notes-E .ex-notes-text { color:#f07aaa; }
+
+.ex-notes-X { background:rgba(255,255,255,.03); border-top-color:rgba(255,255,255,.08); }
+.ex-notes-X .ex-notes-icon-wrap { background:rgba(255,255,255,.08); color:var(--muted); }
+.ex-notes-X .ex-notes-text { color:var(--muted); }
 /* ── NOTES BANNER — redesigned ── */
 .notes-banner {
   margin-top:1rem;
@@ -336,7 +361,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   display:flex; align-items:center; gap:7px;
 }
 .week-summary-title::after { content:''; flex:1; height:1px; background:var(--border); }
-.week-summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.week-summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
 .wsumm-card {
   background:var(--surface); border:1px solid var(--border);
   border-radius:8px; padding:9px 10px; text-align:center;
@@ -703,8 +728,8 @@ function renderCard(e) {
   const tagNotas  = ''; // notes shown separately below
   const tags = [tagPatron,tagSets,tagReps,tagContr,tagTempo,tagLoad].filter(Boolean).join('');
   const notasStrip = e.notas ? `
-  <div class="ex-notes-strip">
-    <span class="ex-notes-icon">💬</span>
+  <div class="ex-notes-strip ex-notes-${letraOk}">
+    <div class="ex-notes-icon-wrap">ℹ</div>
     <span class="ex-notes-text">${e.notas}</span>
   </div>` : '';
   const nombreEsc = e.ejercicio.replace(/'/g,"\\'");
@@ -840,18 +865,33 @@ async function saveSession() {
 async function renderWeekSummary() {
   const container = document.getElementById('week-summary-box');
   if (!container) return;
-  // Cargar historial RPE_GLOBAL del jugador para calcular resumen semana actual
-  const res = await api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' });
-  if (!res.ok || !res.historial) return;
-
   const semStr = String(state.semana);
-  const sesiones = res.historial.filter(h => String(h.semana).trim() === semStr);
+
+  // Dos llamadas en paralelo: RPE_GLOBAL para sesiones, todo para cargas
+  const [resRpe, resCarga] = await Promise.all([
+    api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' }),
+    api({ action:'getHistorial', usuario:state.user.usuario })
+  ]);
+  if (!resRpe.ok || !resRpe.historial) return;
+
+  const sesiones = resRpe.historial.filter(h => String(h.semana).trim() === semStr);
 
   const totalDias = sesiones.length;
   const rpes = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
   const rpeMedia = rpes.length ? Math.round((rpes.reduce((s,v)=>s+v,0)/rpes.length)*10)/10 : null;
   const tiempos = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
   const tiempoTotal = tiempos.length ? tiempos.reduce((s,v)=>s+v,0) : null;
+
+  // Kg totales: suma de carga_real * reps * sets de todos los ejercicios de la semana
+  // Como no tenemos sets/reps en el historial, sumamos carga_real directamente (kg registrados)
+  let kgTotal = null;
+  if (resCarga.ok && resCarga.historial) {
+    const cargas = resCarga.historial
+      .filter(h => String(h.semana).trim() === semStr && h.ejercicio !== 'RPE_GLOBAL')
+      .map(h => parseFloat(h.carga))
+      .filter(v => !isNaN(v) && v > 0);
+    if (cargas.length) kgTotal = Math.round(cargas.reduce((s,v)=>s+v,0));
+  }
 
   // Compliance: dias guardados / días transcurridos esta semana
   const hoyDow = new Date().getDay();
@@ -876,6 +916,10 @@ async function renderWeekSummary() {
         <div class="wsumm-card">
           <div class="wsumm-val green">${tiempoTotal !== null ? tiempoTotal : '—'}</div>
           <div class="wsumm-lbl">Min totales</div>
+        </div>
+        <div class="wsumm-card">
+          <div class="wsumm-val amber">${kgTotal !== null ? kgTotal : '—'}</div>
+          <div class="wsumm-lbl">Kg totales</div>
         </div>
       </div>
     </div>`;
