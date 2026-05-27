@@ -98,7 +98,31 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .tag-other   { background:rgba(212,83,126,.15);  color:#f07aaa; }
 .tag-volume  { background:rgba(0,229,160,.10);  color:#00e5a0; border:1px solid rgba(0,229,160,.2); font-weight:600; }
 .tag-method  { background:rgba(239,159,39,.10); color:#ffc04d; border:1px solid rgba(239,159,39,.2); }
-.tag-notes   { background:rgba(100,160,255,.08); color:#7fb3ff; border:1px solid rgba(100,160,255,.18); font-style:italic; }
+.tag-notes   { background:rgba(100,160,255,.10); color:#7fb3ff; border:1px solid rgba(100,160,255,.22); font-style:normal; display:inline-flex; align-items:center; gap:3px; }
+/* ── NOTES BANNER — redesigned ── */
+.notes-banner {
+  margin-top:1rem;
+  border-radius:var(--r);
+  overflow:hidden;
+  border:1px solid rgba(232,20,42,.18);
+}
+.notes-banner-head {
+  background:rgba(232,20,42,.10);
+  border-bottom:1px solid rgba(232,20,42,.15);
+  padding:7px 14px;
+  display:flex; align-items:center; gap:7px;
+}
+.notes-banner-head-icon { font-size:14px; }
+.notes-banner-head-label {
+  font-size:10px; font-weight:700; letter-spacing:.08em;
+  text-transform:uppercase; color:rgba(232,20,42,.85);
+}
+.notes-banner-body {
+  background:rgba(232,20,42,.04);
+  padding:10px 14px;
+  font-size:12px; color:var(--muted); line-height:1.7;
+  white-space:pre-line;
+}
 .card-actions { display:flex; align-items:center; gap:5px; flex-shrink:0; }
 .btn-card { flex-shrink:0; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s; font-size:12px; }
 .btn-hist { background:rgba(0,229,160,.10); border:1px solid rgba(0,229,160,.28); color:#00e5a0; }
@@ -183,6 +207,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .rpe7-mid  { background:rgba(239,159,39,.15);  color:#ffc04d; }
 .rpe7-high { background:rgba(232,20,42,.15);   color:#ff7070; }
 .rpe7-none { background:rgba(255,255,255,.06); color:var(--muted); font-size:10px; }
+/* center chip in its table cell */
+.coach-table td:nth-child(2) { text-align:center; }
 
 /* ── COACH CHARTS — contenedor compartido ── */
 .coach-chart-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px; margin-bottom:1rem; }
@@ -190,9 +216,9 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .chart-section-subtitle { font-size:13px; font-weight:600; color:var(--text); margin-bottom:12px; }
 
 /* ─── 1. RPE por sesión (igual que antes) ─── */
-.rpe-weeks-wrap { display:flex; flex-direction:column; gap:10px; }
-.rpe-week-row { display:flex; align-items:flex-end; gap:4px; }
-.rpe-week-label { font-size:9px; color:var(--muted); width:80px; flex-shrink:0; padding-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rpe-weeks-wrap { display:flex; flex-direction:column; gap:12px; }
+.rpe-week-row { display:flex; align-items:flex-end; gap:8px; }
+.rpe-week-label { font-size:9px; color:var(--muted); width:auto; min-width:60px; max-width:120px; flex-shrink:0; padding-bottom:2px; white-space:normal; word-break:break-word; line-height:1.3; }
 .rpe-sessions-bars { display:flex; gap:4px; align-items:flex-end; flex:1; }
 .rpe-session-col { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:28px; }
 .rpe-bar-fill { width:100%; border-radius:3px 3px 0 0; min-height:3px; }
@@ -209,7 +235,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 /* ─── 2. Carga equipo semana a semana ─── */
 .team-load-bars { display:flex; flex-direction:column; gap:8px; }
 .tl-row { display:flex; align-items:center; gap:8px; }
-.tl-sem-lbl { font-size:9px; color:var(--muted); width:80px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tl-sem-lbl { font-size:9px; color:var(--muted); width:auto; min-width:60px; max-width:120px; flex-shrink:0; white-space:normal; word-break:break-word; line-height:1.3; }
 .tl-bar-wrap { flex:1; position:relative; height:18px; }
 .tl-bar-bg { position:absolute; top:50%; transform:translateY(-50%); height:6px; border-radius:3px; background:rgba(255,255,255,.06); width:100%; }
 /* franja min-max: posicionada por JS con left/width % */
@@ -233,7 +259,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .player-select:focus { border-color:var(--accent); }
 .player-evo-wrap { display:flex; flex-direction:column; gap:8px; }
 .pevo-row { display:flex; align-items:center; gap:8px; }
-.pevo-sem-lbl { font-size:9px; color:var(--muted); width:80px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pevo-sem-lbl { font-size:9px; color:var(--muted); width:auto; min-width:60px; max-width:120px; flex-shrink:0; white-space:normal; word-break:break-word; line-height:1.3; }
 .pevo-bars { display:flex; gap:4px; align-items:flex-end; flex:1; }
 .pevo-col { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:28px; }
 .pevo-bar { width:100%; border-radius:3px 3px 0 0; min-height:3px; }
@@ -272,7 +298,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .btn-save-session:disabled { opacity:.4; cursor:not-allowed; }
 .saved-msg { color:var(--accent2); font-size:14px; font-weight:600; text-align:center; padding:6px 0; }
 .notes-banner { background:rgba(232,20,42,.05); border-left:2px solid var(--accent); border-radius:0 var(--r) var(--r) 0; padding:10px 14px; font-size:12px; color:var(--muted); line-height:1.65; margin-top:1rem; white-space:pre-line; }
-.notes-banner strong { color:rgba(240,242,245,.7); display:block; font-size:11px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px; }
+  /* notes-banner-head-label replaces old strong rule */
 
 /* ── VIDEO MODAL ── */
 .video-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.80); z-index:100; align-items:center; justify-content:center; padding:1rem; }
@@ -392,14 +418,14 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <!-- ── 2. Carga del equipo semana a semana ── -->
       <div class="coach-chart-box" id="coach-team-load-chart" style="display:none">
         <div class="chart-section-title">Carga del equipo</div>
-        <div class="chart-section-subtitle">RPE medio semana a semana · Media + rango min/max</div>
+        <div class="chart-section-subtitle">RPE Medio Semanal · media + rango min/max</div>
         <div class="team-load-bars" id="coach-team-load-bars"></div>
       </div>
 
       <!-- ── 3. Evolución individual por jugador ── -->
       <div class="coach-chart-box" id="coach-player-evo-chart" style="display:none">
         <div class="chart-section-title">Evolución individual</div>
-        <div class="chart-section-subtitle">RPE por sesión del jugador seleccionado</div>
+        <div class="chart-section-subtitle">RPE por sesión (individual)</div>
         <div class="player-select-wrap">
           <select class="player-select" id="coach-player-select" onchange="renderPlayerEvo()">
             <option value="">— Selecciona un jugador —</option>
@@ -436,7 +462,29 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 // ── escudo placeholder ────────────────────────────────────────
 (function(){
   const img = document.getElementById('login-shield-img');
-  if (img) img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTIwIj48cGF0aCBkPSJNNTAgNUw5NSAyNXY0NWMwIDMwLTIwIDQ1LTQ1IDUwQzI1IDExNSA1IDEwMCA1IDcwVjI1eiIgZmlsbD0iIzE1MTkyMCIgc3Ryb2tlPSIjZTgxNDJhIiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI1MCIgeT0iNzAiIGZvbnQtZmFtaWx5PSJCZWJhcyBOZXVlLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzIiIGZpbGw9IiNlODE0MmEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkNBVTwvdGV4dD48L3N2Zz4=';
+  // SVG escudo CAU inline
+  const svgShield = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120">
+    <defs>
+      <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1c2330"/>
+        <stop offset="100%" stop-color="#0d0f12"/>
+      </linearGradient>
+    </defs>
+    <path d="M50 4 L94 22 L94 62 C94 88 74 106 50 116 C26 106 6 88 6 62 L6 22 Z"
+          fill="url(#sg)" stroke="#e8142a" stroke-width="3"/>
+    <path d="M50 4 L94 22 L94 62 C94 88 74 106 50 116 C26 106 6 88 6 62 L6 22 Z"
+          fill="none" stroke="rgba(232,20,42,0.25)" stroke-width="1" transform="translate(0,2)"/>
+    <line x1="50" y1="4" x2="50" y2="116" stroke="rgba(232,20,42,0.3)" stroke-width="1"/>
+    <line x1="6" y1="55" x2="94" y2="55" stroke="rgba(232,20,42,0.3)" stroke-width="1"/>
+    <text x="50" y="46" font-family="Bebas Neue,sans-serif" font-size="28" fill="#e8142a"
+          text-anchor="middle" letter-spacing="2">CAU</text>
+    <text x="50" y="80" font-family="Bebas Neue,sans-serif" font-size="11" fill="rgba(240,242,245,0.6)"
+          text-anchor="middle" letter-spacing="1">RUGBY</text>
+    <text x="50" y="94" font-family="Bebas Neue,sans-serif" font-size="9" fill="rgba(240,242,245,0.4)"
+          text-anchor="middle" letter-spacing="1">VALENCIA</text>
+  </svg>`;
+  const blob = new Blob([svgShield], {type:'image/svg+xml'});
+  if (img) img.src = URL.createObjectURL(blob);
 })();
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVyC8AFCalPyYy116XmEtzdSMYUc2tzW2c_Tm_H_TcJSt-FGvUWjfnflDS-GukmqpX/exec';
@@ -658,7 +706,13 @@ function renderSession(ejercicios, nombreSemana, sessionNotes) {
   const semanaTxt = nombreSemana ||
     document.getElementById('sel-semana').options[document.getElementById('sel-semana').selectedIndex]?.text || '';
   const notesBanner = sessionNotes
-    ? `<div class="notes-banner"><strong>📝 Notas de sesión</strong>${sessionNotes}</div>` : '';
+    ? `<div class="notes-banner">
+        <div class="notes-banner-head">
+          <span class="notes-banner-head-icon">📝</span>
+          <span class="notes-banner-head-label">Notas de sesión</span>
+        </div>
+        <div class="notes-banner-body">${sessionNotes}</div>
+       </div>` : '';
   container.innerHTML = `
     <div class="session-title">${DAY_NAMES[state.dia]||'Sesión'}</div>
     <div class="session-meta">${semanaTxt}</div>
