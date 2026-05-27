@@ -64,8 +64,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .day-pill { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:5px 14px; font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; color:var(--muted); font-family:var(--font-body); }
 .day-pill:hover { border-color:rgba(232,20,42,.4); color:var(--text); }
 .day-pill.active { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
-
-/* session title — solo "Day N" sin día de semana */
 .session-title { font-family:var(--font-head); font-size:30px; letter-spacing:1px; line-height:1; margin-bottom:.2rem; }
 .session-meta { color:var(--muted); font-size:13px; margin-bottom:1.25rem; }
 .phase-header { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:1.25rem 0 .65rem; display:flex; align-items:center; gap:8px; }
@@ -89,8 +87,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .ex-info { flex:1; min-width:0; }
 .ex-name { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .ex-tags { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
-
-/* ── TAGS ── */
 .tag { font-size:10px; padding:2px 7px; border-radius:4px; font-weight:500; }
 .tag-squat   { background:rgba(55,138,221,.15);  color:#5fb3f5; }
 .tag-hinge   { background:rgba(29,158,117,.15);  color:#3ecfa0; }
@@ -103,8 +99,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .tag-volume  { background:rgba(0,229,160,.10);  color:#00e5a0; border:1px solid rgba(0,229,160,.2); font-weight:600; }
 .tag-method  { background:rgba(239,159,39,.10); color:#ffc04d; border:1px solid rgba(239,159,39,.2); }
 .tag-notes   { background:rgba(100,160,255,.08); color:#7fb3ff; border:1px solid rgba(100,160,255,.18); font-style:italic; }
-
-/* ── CARD ACTION BUTTONS ── */
 .card-actions { display:flex; align-items:center; gap:5px; flex-shrink:0; }
 .btn-card { flex-shrink:0; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s; font-size:12px; }
 .btn-hist { background:rgba(0,229,160,.10); border:1px solid rgba(0,229,160,.28); color:#00e5a0; }
@@ -118,8 +112,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .btn-video.has-url:hover { background:rgba(232,20,42,.25); border-color:rgba(232,20,42,.6); transform:scale(1.05); }
 .btn-video.has-url:active { transform:scale(.95); }
 .btn-video.no-url { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); color:rgba(255,255,255,.2); cursor:default; pointer-events:none; }
-
-/* ── INLINE PANELS ── */
 .card-panel { border-top:1px solid var(--border); padding:10px 13px 11px; animation:slideDown .18s ease; }
 @keyframes slideDown { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
 .hist-title { font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:7px; }
@@ -166,8 +158,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .kpi-num.amber { color:#ffc04d; }
 .kpi-num.red   { color:var(--danger); }
 .kpi-lbl { font-size:9px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-top:3px; }
-
-/* ── TABLA EQUIPO ── */
 .coach-table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; margin-bottom:1rem; }
 .coach-table { width:100%; border-collapse:collapse; font-size:12px; }
 .coach-table th { font-size:9px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); padding:7px 10px; border-bottom:1px solid var(--border); text-align:left; }
@@ -178,47 +168,28 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .dot-green { background:var(--accent2); box-shadow:0 0 5px rgba(0,229,160,.5); }
 .dot-amber { background:#ffc04d; }
 .dot-red   { background:var(--danger); }
-
-/* ── 7 cuadraditos L-M-X-J-V-S-D ── */
 .week-squares { display:flex; gap:3px; align-items:center; }
-.wsq {
-  width:20px; height:20px;
-  border-radius:3px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:8px; font-weight:700;
-  cursor:default;
-  transition:transform .1s;
-  position:relative;
-  flex-direction: column;
-}
+.wsq { width:20px; height:20px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700; cursor:default; transition:transform .1s; position:relative; flex-direction:column; }
 .wsq:hover { transform:scale(1.15); }
-/* Sin datos */
 .wsq-empty { background:rgba(255,255,255,.04); color:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.08); }
-/* Entrenado, colores por RPE */
 .wsq-low  { background:rgba(0,229,160,.18);  color:#00e5a0; border:1px solid rgba(0,229,160,.4); }
 .wsq-mid  { background:rgba(239,159,39,.18); color:#ffc04d; border:1px solid rgba(239,159,39,.4); }
 .wsq-high { background:rgba(232,20,42,.18);  color:#ff7070; border:1px solid rgba(232,20,42,.4); }
-/* Hoy sin registro */
 .wsq-hoy  { background:rgba(255,255,255,.06); color:rgba(255,255,255,.35); border:1px dashed rgba(255,255,255,.25); }
 .wsq-label { font-size:7px; font-weight:600; letter-spacing:.03em; opacity:.7; line-height:1; }
 .wsq-val   { font-size:8px; font-weight:700; line-height:1; }
-
-/* ── RPE chip ── */
-.rpe7-chip {
-  display:inline-flex; align-items:center; justify-content:center;
-  min-width:34px; height:22px;
-  border-radius:5px; font-size:11px; font-weight:700;
-  padding:0 6px;
-}
+.rpe7-chip { display:inline-flex; align-items:center; justify-content:center; min-width:34px; height:22px; border-radius:5px; font-size:11px; font-weight:700; padding:0 6px; }
 .rpe7-low  { background:rgba(0,229,160,.15);  color:#00e5a0; }
 .rpe7-mid  { background:rgba(239,159,39,.15);  color:#ffc04d; }
 .rpe7-high { background:rgba(232,20,42,.15);   color:#ff7070; }
 .rpe7-none { background:rgba(255,255,255,.06); color:var(--muted); font-size:10px; }
 
-/* ── RPE CHART POR SESIÓN ── */
-.coach-rpe-chart { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px; margin-bottom:1rem; }
-.coach-rpe-chart-title { font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
-.coach-rpe-chart-subtitle { font-size:12px; font-weight:600; color:var(--text); margin-bottom:12px; }
+/* ── COACH CHARTS — contenedor compartido ── */
+.coach-chart-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px; margin-bottom:1rem; }
+.chart-section-title { font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:3px; }
+.chart-section-subtitle { font-size:13px; font-weight:600; color:var(--text); margin-bottom:12px; }
+
+/* ─── 1. RPE por sesión (igual que antes) ─── */
 .rpe-weeks-wrap { display:flex; flex-direction:column; gap:10px; }
 .rpe-week-row { display:flex; align-items:flex-end; gap:4px; }
 .rpe-week-label { font-size:9px; color:var(--muted); width:80px; flex-shrink:0; padding-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -234,6 +205,47 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .rpe-bar-val.rpe-mid-val  { color:#ffc04d; }
 .rpe-bar-val.rpe-high-val { color:#ff7070; }
 .rpe-bar-dia  { font-size:8px; color:var(--muted); }
+
+/* ─── 2. Carga equipo semana a semana ─── */
+.team-load-bars { display:flex; flex-direction:column; gap:8px; }
+.tl-row { display:flex; align-items:center; gap:8px; }
+.tl-sem-lbl { font-size:9px; color:var(--muted); width:80px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tl-bar-wrap { flex:1; position:relative; height:18px; }
+.tl-bar-bg { position:absolute; top:50%; transform:translateY(-50%); height:6px; border-radius:3px; background:rgba(255,255,255,.06); width:100%; }
+/* franja min-max: posicionada por JS con left/width % */
+.tl-bar-range { position:absolute; top:50%; transform:translateY(-50%); height:6px; border-radius:3px; background:rgba(0,229,160,.18); }
+/* barra de media: desde 0 hasta pct de media */
+.tl-bar-avg { position:absolute; top:50%; transform:translateY(-50%); height:6px; border-radius:3px; }
+.tl-bar-avg.tl-low  { background:rgba(0,229,160,.7); }
+.tl-bar-avg.tl-mid  { background:rgba(239,159,39,.7); }
+.tl-bar-avg.tl-high { background:rgba(232,20,42,.7); }
+/* tick de media: línea vertical */
+.tl-tick { position:absolute; top:50%; transform:translateY(-50%); width:2px; height:12px; border-radius:1px; background:#fff; opacity:.5; }
+.tl-val { font-size:10px; font-weight:700; width:28px; text-align:right; flex-shrink:0; }
+.tl-val.tl-low  { color:#00e5a0; }
+.tl-val.tl-mid  { color:#ffc04d; }
+.tl-val.tl-high { color:#ff7070; }
+.tl-range-lbl { font-size:8px; color:var(--muted); width:48px; flex-shrink:0; text-align:right; }
+
+/* ─── 3. Evolución jugador individual ─── */
+.player-select-wrap { margin-bottom:12px; }
+.player-select { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:7px 13px; color:var(--text); font-family:var(--font-body); font-size:13px; outline:none; cursor:pointer; width:100%; }
+.player-select:focus { border-color:var(--accent); }
+.player-evo-wrap { display:flex; flex-direction:column; gap:8px; }
+.pevo-row { display:flex; align-items:center; gap:8px; }
+.pevo-sem-lbl { font-size:9px; color:var(--muted); width:80px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pevo-bars { display:flex; gap:4px; align-items:flex-end; flex:1; }
+.pevo-col { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:28px; }
+.pevo-bar { width:100%; border-radius:3px 3px 0 0; min-height:3px; }
+.pevo-bar.rpe-low-bar  { background:rgba(0,229,160,.6); }
+.pevo-bar.rpe-mid-bar  { background:rgba(239,159,39,.6); }
+.pevo-bar.rpe-high-bar { background:rgba(232,20,42,.6); }
+.pevo-val { font-size:9px; font-weight:700; }
+.pevo-val.rpe-low-val  { color:#00e5a0; }
+.pevo-val.rpe-mid-val  { color:#ffc04d; }
+.pevo-val.rpe-high-val { color:#ff7070; }
+.pevo-dia { font-size:8px; color:var(--muted); }
+.pevo-empty { font-size:12px; color:var(--muted); font-style:italic; padding:8px 0; }
 
 /* ── SESSION PANEL ── */
 .session-panel { background:var(--surface2); border:1px solid var(--border2); border-radius:var(--r); padding:13px; margin-top:1.25rem; }
@@ -280,6 +292,15 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .empty { text-align:center; padding:3rem 1rem; color:var(--muted); }
 .empty-icon { font-size:32px; margin-bottom:.65rem; }
 @media (max-width:500px) { .session-title { font-size:24px; } }
+
+/* coach section divider */
+.coach-section-divider {
+  font-size:10px; font-weight:600; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--muted);
+  margin:.75rem 0 .6rem;
+  display:flex; align-items:center; gap:8px;
+}
+.coach-section-divider::after { content:''; flex:1; height:1px; background:var(--border); display:inline-block; }
 </style>
 </head>
 <body>
@@ -330,7 +351,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   </div>
   <div class="content">
 
-    <!-- COACH PANEL -->
+    <!-- ══ COACH PANEL ══ -->
     <div id="coach-panel">
       <div class="coach-header">
         <div>
@@ -339,6 +360,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         </div>
         <span class="coach-badge">Coach</span>
       </div>
+
+      <!-- KPIs -->
       <div class="kpi-row" id="coach-kpis">
         <div class="kpi-card"><div class="kpi-num" id="kpi-total">—</div><div class="kpi-lbl">Jugadores</div></div>
         <div class="kpi-card"><div class="kpi-num green" id="kpi-hoy">—</div><div class="kpi-lbl">Hoy</div></div>
@@ -359,21 +382,39 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         </table>
       </div>
 
-      <!-- RPE chart por sesión -->
-      <div class="coach-rpe-chart" id="coach-rpe-chart" style="display:none">
-        <div class="coach-rpe-chart-title">RPE medio por sesión</div>
-        <div class="coach-rpe-chart-subtitle" id="coach-rpe-semana-label"></div>
+      <!-- ── 1. RPE medio por sesión ── -->
+      <div class="coach-chart-box" id="coach-rpe-chart" style="display:none">
+        <div class="chart-section-title">RPE medio por sesión</div>
+        <div class="chart-section-subtitle" id="coach-rpe-semana-label"></div>
         <div class="rpe-weeks-wrap" id="coach-rpe-weeks"></div>
       </div>
 
-      <div style="height:1.25rem"></div>
-      <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;display:flex;align-items:center;gap:8px;">
-        Vista sesión jugadores
-        <span style="flex:1;height:1px;background:var(--border);display:inline-block"></span>
+      <!-- ── 2. Carga del equipo semana a semana ── -->
+      <div class="coach-chart-box" id="coach-team-load-chart" style="display:none">
+        <div class="chart-section-title">Carga del equipo</div>
+        <div class="chart-section-subtitle">RPE medio semana a semana · Media + rango min/max</div>
+        <div class="team-load-bars" id="coach-team-load-bars"></div>
       </div>
-    </div>
 
-    <!-- SELECTOR SEMANA + DÍAS -->
+      <!-- ── 3. Evolución individual por jugador ── -->
+      <div class="coach-chart-box" id="coach-player-evo-chart" style="display:none">
+        <div class="chart-section-title">Evolución individual</div>
+        <div class="chart-section-subtitle">RPE por sesión del jugador seleccionado</div>
+        <div class="player-select-wrap">
+          <select class="player-select" id="coach-player-select" onchange="renderPlayerEvo()">
+            <option value="">— Selecciona un jugador —</option>
+          </select>
+        </div>
+        <div id="coach-player-evo-content">
+          <div class="pevo-empty">Selecciona un jugador para ver su evolución.</div>
+        </div>
+      </div>
+
+      <div style="height:.5rem"></div>
+      <div class="coach-section-divider">Vista sesión jugadores</div>
+    </div><!-- /coach-panel -->
+
+    <!-- SELECTOR SEMANA + DÍAS (jugadores) -->
     <div class="week-header">
       <div class="week-label">Semana activa</div>
       <select id="sel-semana" class="semana-select" onchange="onSemanaChange()">
@@ -392,15 +433,15 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 </div>
 
 <script>
-// ── Escudo CAU base64 (placeholder) ─────────────────────────
+// ── escudo placeholder ────────────────────────────────────────
 (function(){
   const img = document.getElementById('login-shield-img');
-  if (img) img.src = 'data:image/png;base64,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';
+  if (img) img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTIwIj48cGF0aCBkPSJNNTAgNUw5NSAyNXY0NWMwIDMwLTIwIDQ1LTQ1IDUwQzI1IDExNSA1IDEwMCA1IDcwVjI1eiIgZmlsbD0iIzE1MTkyMCIgc3Ryb2tlPSIjZTgxNDJhIiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI1MCIgeT0iNzAiIGZvbnQtZmFtaWx5PSJCZWJhcyBOZXVlLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzIiIGZpbGw9IiNlODE0MmEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkNBVTwvdGV4dD48L3N2Zz4=';
 })();
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVyC8AFCalPyYy116XmEtzdSMYUc2tzW2c_Tm_H_TcJSt-FGvUWjfnflDS-GukmqpX/exec';
 
-// ── UTILIDADES DE FECHA ───────────────────────────────────────
+// ── UTILIDADES ────────────────────────────────────────────────
 function fmtDate(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth()+1).padStart(2,'0');
@@ -410,41 +451,41 @@ function fmtDate(d) {
 function getLunesDeSemana(fecha) {
   const d = new Date(fecha);
   const dia = d.getDay();
-  const diffToLun = (dia === 0) ? -6 : 1 - dia;
-  d.setDate(d.getDate() + diffToLun);
+  const diff = (dia===0) ? -6 : 1-dia;
+  d.setDate(d.getDate()+diff);
   d.setHours(0,0,0,0);
   return d;
 }
-// Formato corto de fecha: "27/5"
 function fmtShort(dateStr) {
   const d = new Date(dateStr);
   return `${d.getDate()}/${d.getMonth()+1}`;
 }
+function rpeClass(rpe) {
+  if (rpe===null||rpe===undefined||isNaN(rpe)) return 'none';
+  if (rpe<=5) return 'low';
+  if (rpe<=7) return 'mid';
+  return 'high';
+}
 
+// ── STATE ─────────────────────────────────────────────────────
 let state = {
-  user: null, dia: 1, semana: 1, semanas: [],
-  rpeSession: null, tiempoSesion: '', guardado: false,
-  isCoach: false, cards: {}
+  user:null, dia:1, semana:1, semanas:[],
+  rpeSession:null, tiempoSesion:'', guardado:false,
+  isCoach:false, cards:{},
+  // datos coach cacheados
+  coachEquipo: [], coachRpeChart: []
 };
 
 // ── API ───────────────────────────────────────────────────────
 async function api(payload) {
   try {
     const url = APPS_SCRIPT_URL + '?payload=' + encodeURIComponent(JSON.stringify(payload));
-    const r   = await fetch(url, { redirect: 'follow' });
+    const r   = await fetch(url, { redirect:'follow' });
     const txt = await r.text();
-    try { return JSON.parse(txt); }
-    catch { return { ok: false, error: 'Respuesta inesperada del servidor.' }; }
+    try { return JSON.parse(txt); } catch { return { ok:false, error:'Respuesta inesperada.' }; }
   } catch(err) {
-    return { ok: false, error: 'Error de red: ' + err.message };
+    return { ok:false, error:'Error de red: '+err.message };
   }
-}
-
-function getNombreSemana(idx) {
-  const sel = document.getElementById('sel-semana');
-  if (!sel) return 'Semana ' + idx;
-  const opt = sel.options[idx - 1];
-  return opt ? opt.text : ('Semana ' + idx);
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────
@@ -453,17 +494,17 @@ async function doLogin() {
   const errEl = document.getElementById('login-error');
   const usuario  = document.getElementById('input-user').value.trim();
   const password = document.getElementById('input-pass').value;
-  if (!usuario || !password) { errEl.textContent = 'Rellena usuario y contraseña'; return; }
-  btn.disabled = true; btn.textContent = 'Entrando...'; errEl.textContent = '';
+  if (!usuario||!password) { errEl.textContent='Rellena usuario y contraseña'; return; }
+  btn.disabled=true; btn.textContent='Entrando...'; errEl.textContent='';
   const res = await api({ action:'login', usuario, password });
   if (res.ok) {
     state.user = res;
-    state.isCoach = (String(res.posicion||'').toLowerCase() === 'coach');
+    state.isCoach = (String(res.posicion||'').toLowerCase()==='coach');
     document.getElementById('player-name').textContent = res.nombre;
     document.getElementById('avatar-initials').textContent =
       res.nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-    document.getElementById('screen-login').style.display = 'none';
-    document.getElementById('screen-app').style.display   = 'block';
+    document.getElementById('screen-login').style.display='none';
+    document.getElementById('screen-app').style.display='block';
     if (state.isCoach) {
       document.getElementById('coach-topbar-badge').classList.remove('hidden');
       document.getElementById('coach-panel').classList.add('visible');
@@ -472,15 +513,15 @@ async function doLogin() {
     loadRutina();
     if (state.isCoach) loadCoachPanel();
   } else {
-    errEl.textContent = res.error || 'Error al iniciar sesión';
-    btn.disabled = false; btn.textContent = 'Entrar';
+    errEl.textContent = res.error||'Error al iniciar sesión';
+    btn.disabled=false; btn.textContent='Entrar';
   }
 }
-document.getElementById('input-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('input-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
 
 // ── SEMANAS ───────────────────────────────────────────────────
 async function loadSemanas() {
-  const res = await api({ action:'getSemanas' });
+  const res    = await api({ action:'getSemanas' });
   const select = document.getElementById('sel-semana');
   if (res.ok && res.semanas && res.semanas.length) {
     state.semanas = res.semanas;
@@ -503,7 +544,7 @@ function selectDay(dia, btn) {
   loadRutina();
 }
 function resetSessionState() {
-  state.rpeSession = null; state.tiempoSesion = ''; state.guardado = false; state.cards = {};
+  state.rpeSession=null; state.tiempoSesion=''; state.guardado=false; state.cards={};
 }
 
 // ── RUTINA ────────────────────────────────────────────────────
@@ -516,29 +557,25 @@ async function loadRutina() {
     container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${res.error||'Error al cargar'}</div>`;
     return;
   }
-  if (!res.ejercicios || !res.ejercicios.length) {
+  if (!res.ejercicios||!res.ejercicios.length) {
     container.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>No hay ejercicios para este día todavía.</div>';
     return;
   }
-  renderSession(res.ejercicios, res.nombreSemana || '', res.sessionNotes || '');
+  renderSession(res.ejercicios, res.nombreSemana||'', res.sessionNotes||'');
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
-// Solo "Day N" — sin día de la semana
 const DAY_NAMES = ['','Day 1','Day 2','Day 3','Day 4','Extra'];
-
 const PATTERN_TAG = {
   Squat:'tag-squat', Hinge:'tag-hinge',
   Horizontal_push:'tag-push', Horizontal_row:'tag-row',
-  Vertical_push:'tag-push',   Vertical_pull:'tag-pull',
+  Vertical_push:'tag-push', Vertical_pull:'tag-pull',
   Plyo:'tag-plyo', Iso:'tag-iso',
   Olympics:'tag-other', Anti_rotation:'tag-other',
   Anti_extension:'tag-other', Reset:'tag-iso', Prep:'tag-iso',
-  Lb_aux:'tag-iso', Up_aux:'tag-iso', Carry:'tag-other',
-  Rotation:'tag-other'
+  Lb_aux:'tag-iso', Up_aux:'tag-iso', Carry:'tag-other', Rotation:'tag-other'
 };
-
-function patternTag(p) { return PATTERN_TAG[p] || 'tag-iso'; }
+function patternTag(p) { return PATTERN_TAG[p]||'tag-iso'; }
 function blockLetter(bloque) {
   if (!bloque) return 'X';
   const m = bloque.match(/^([A-Za-z]+)/);
@@ -546,26 +583,16 @@ function blockLetter(bloque) {
 }
 function toEmbedUrl(url) {
   if (!url) return '';
-  let id = '';
+  let id='';
   try {
     const u = new URL(url);
-    if (u.hostname.includes('youtu.be')) {
-      id = u.pathname.slice(1).split('?')[0];
-    } else if (u.hostname.includes('youtube.com')) {
-      id = u.searchParams.get('v') || '';
-      if (!id && u.pathname.includes('/shorts/'))
-        id = u.pathname.split('/shorts/')[1].split('/')[0];
+    if (u.hostname.includes('youtu.be')) { id=u.pathname.slice(1).split('?')[0]; }
+    else if (u.hostname.includes('youtube.com')) {
+      id=u.searchParams.get('v')||'';
+      if (!id&&u.pathname.includes('/shorts/')) id=u.pathname.split('/shorts/')[1].split('/')[0];
     }
-  } catch(_) {}
+  } catch(_){}
   return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : '';
-}
-
-// ── RPE color helpers ──────────────────────────────────────────
-function rpeClass(rpe) {
-  if (rpe === null || rpe === undefined || isNaN(rpe)) return 'none';
-  if (rpe <= 5) return 'low';
-  if (rpe <= 7) return 'mid';
-  return 'high';
 }
 
 // ── VIDEO MODAL ───────────────────────────────────────────────
@@ -581,23 +608,23 @@ function openVideoModal(nombre, videoUrl) {
   document.getElementById('video-modal-overlay').classList.add('open');
 }
 function closeVideoModal(e) {
-  if (e && e.target !== document.getElementById('video-modal-overlay')) return;
+  if (e && e.target!==document.getElementById('video-modal-overlay')) return;
   document.getElementById('video-modal-overlay').classList.remove('open');
-  document.getElementById('video-modal-body').innerHTML = '';
+  document.getElementById('video-modal-body').innerHTML='';
 }
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeVideoModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeVideoModal(); });
 
 // ── RENDER CARD ───────────────────────────────────────────────
 function renderCard(e) {
   const letra   = blockLetter(e.bloque);
   const letraOk = ['A','B','C','D','E'].includes(letra) ? letra : 'X';
   const tagPatron = e.patron ? `<span class="tag ${patternTag(e.patron)}">${e.patron.replace(/_/g,' ')}</span>` : '';
-  const tagSets   = e.sets          ? `<span class="tag tag-volume">${e.sets} sets</span>` : '';
-  const tagReps   = e.reps          ? `<span class="tag tag-volume">${e.reps}</span>` : '';
-  const tagContr  = e.contraccion   ? `<span class="tag tag-method">${e.contraccion}</span>` : '';
-  const tagTempo  = e.tempo         ? `<span class="tag tag-method">⏱ ${e.tempo}</span>` : '';
+  const tagSets   = e.sets        ? `<span class="tag tag-volume">${e.sets} sets</span>` : '';
+  const tagReps   = e.reps        ? `<span class="tag tag-volume">${e.reps}</span>` : '';
+  const tagContr  = e.contraccion ? `<span class="tag tag-method">${e.contraccion}</span>` : '';
+  const tagTempo  = e.tempo       ? `<span class="tag tag-method">⏱ ${e.tempo}</span>` : '';
   const tagLoad   = e.load_objetivo ? `<span class="tag tag-method">${e.load_objetivo}</span>` : '';
-  const tagNotas  = e.notas         ? `<span class="tag tag-notes">📝 ${e.notas}</span>` : '';
+  const tagNotas  = e.notas       ? `<span class="tag tag-notes">📝 ${e.notas}</span>` : '';
   const tags = [tagPatron,tagSets,tagReps,tagContr,tagTempo,tagLoad,tagNotas].filter(Boolean).join('');
   const nombreEsc = e.ejercicio.replace(/'/g,"\\'");
   const videoEsc  = (e.video||'').replace(/'/g,"\\'");
@@ -629,8 +656,7 @@ function renderSession(ejercicios, nombreSemana, sessionNotes) {
   const prep = ejercicios.filter(e=>e.fase==='prep');
   const main = ejercicios.filter(e=>e.fase!=='prep');
   const semanaTxt = nombreSemana ||
-    document.getElementById('sel-semana').options[
-      document.getElementById('sel-semana').selectedIndex]?.text || '';
+    document.getElementById('sel-semana').options[document.getElementById('sel-semana').selectedIndex]?.text || '';
   const notesBanner = sessionNotes
     ? `<div class="notes-banner"><strong>📝 Notas de sesión</strong>${sessionNotes}</div>` : '';
   container.innerHTML = `
@@ -690,11 +716,11 @@ function selectRpe(val, btn) {
   document.querySelectorAll('.rpe-btn').forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
   const s = document.getElementById('btn-save-session');
-  if (s) s.disabled = false;
+  if (s) s.disabled=false;
 }
 function numpadInput(key) {
-  if (key==='del') state.tiempoSesion = state.tiempoSesion.slice(0,-1);
-  else { if(state.tiempoSesion.length>=3) return; state.tiempoSesion += key; }
+  if (key==='del') state.tiempoSesion=state.tiempoSesion.slice(0,-1);
+  else { if(state.tiempoSesion.length>=3) return; state.tiempoSesion+=key; }
   const el = document.getElementById('time-display');
   if (!el) return;
   if (state.tiempoSesion) { el.textContent=state.tiempoSesion+' min'; el.classList.add('has-value'); }
@@ -712,9 +738,9 @@ async function saveSession() {
     tiempo_sesion: state.tiempoSesion ? parseInt(state.tiempoSesion) : ''
   });
   if (res.ok) {
-    state.guardado = true;
+    state.guardado=true;
     const panel = document.getElementById('session-panel');
-    if (panel) panel.innerHTML = `<div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion?' · '+state.tiempoSesion+' min':''}</div>`;
+    if (panel) panel.innerHTML=`<div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion?' · '+state.tiempoSesion+' min':''}</div>`;
   } else {
     if (btn) { btn.disabled=false; btn.textContent='Guardar sesión'; }
     alert('Error al guardar: '+(res.error||'inténtalo de nuevo'));
@@ -731,50 +757,43 @@ function toggleCardPanel(type, cardId, ejercicio) {
   histEl.classList.add('hidden');
   loadEl.classList.add('hidden');
   if (!isOpen) {
-    if (type==='hist') {
-      histEl.classList.remove('hidden');
-      renderHistPanel(cardId, ejercicio, histEl);
-    } else {
-      loadEl.classList.remove('hidden');
-      renderLoadPanel(cardId, ejercicio, loadEl);
-    }
+    if (type==='hist') { histEl.classList.remove('hidden'); renderHistPanel(cardId, ejercicio, histEl); }
+    else               { loadEl.classList.remove('hidden'); renderLoadPanel(cardId, ejercicio, loadEl); }
   }
 }
 
 // ── HISTORY PANEL ─────────────────────────────────────────────
 async function renderHistPanel(cardId, ejercicio, el) {
-  el.innerHTML = '<div class="hist-title">Cargando historial…</div>';
+  el.innerHTML='<div class="hist-title">Cargando historial…</div>';
   const res = await api({ action:'getHistorial', usuario:state.user.usuario, ejercicio });
-  if (!res.ok || !res.historial) {
-    el.innerHTML = '<div class="hist-empty">No se pudo cargar el historial.</div>'; return;
-  }
+  if (!res.ok||!res.historial) { el.innerHTML='<div class="hist-empty">No se pudo cargar el historial.</div>'; return; }
   const hist = res.historial
-    .filter(h => h.carga && parseFloat(h.carga) > 0)
-    .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+    .filter(h=>h.carga&&parseFloat(h.carga)>0)
+    .sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
   if (!hist.length) {
-    el.innerHTML = `<div class="hist-title">Historial — ${ejercicio}</div><div class="hist-empty">Sin registros de carga aún.</div>`; return;
+    el.innerHTML=`<div class="hist-title">Historial — ${ejercicio}</div><div class="hist-empty">Sin registros de carga aún.</div>`; return;
   }
   const maxCarga = Math.max(...hist.map(h=>parseFloat(h.carga)));
   const last = hist[hist.length-1];
-  const prev = hist.length > 1 ? hist[hist.length-2] : null;
+  const prev = hist.length>1 ? hist[hist.length-2] : null;
   const delta = prev ? (parseFloat(last.carga)-parseFloat(prev.carga)) : 0;
   const deltaClass = delta>0?'up':delta<0?'down':'eq';
   const deltaSign  = delta>0?'+':'';
   const bars = hist.map((h,i)=>{
     const pct = Math.round((parseFloat(h.carga)/maxCarga)*100);
-    const semNom = (state.semanas && state.semanas[parseInt(h.semana)-1]) || ('S'+h.semana);
+    const semNom = (state.semanas&&state.semanas[parseInt(h.semana)-1])||('S'+h.semana);
     return `<div class="hist-bar${i===hist.length-1?' current':''}" style="height:${pct}%" title="${semNom}: ${h.carga}kg"></div>`;
   }).join('');
   const lbls = hist.map(h=>{
-    const semNom = (state.semanas && state.semanas[parseInt(h.semana)-1]) || ('S'+h.semana);
-    const short = semNom.split('_')[0] || semNom;
+    const semNom = (state.semanas&&state.semanas[parseInt(h.semana)-1])||('S'+h.semana);
+    const short = semNom.split('_')[0]||semNom;
     return `<div class="hist-bar-lbl" title="${semNom}">${short.length>6?short.slice(0,6)+'…':short}</div>`;
   }).join('');
   const rows = [...hist].reverse().slice(0,5).map(h=>{
-    const semNom = (state.semanas && state.semanas[parseInt(h.semana)-1]) || ('Sem '+h.semana);
+    const semNom = (state.semanas&&state.semanas[parseInt(h.semana)-1])||('Sem '+h.semana);
     return `<tr><td>${semNom}</td><td>${h.carga} kg</td><td>${h.rpe?'RPE '+h.rpe:'—'}</td></tr>`;
   }).join('');
-  el.innerHTML = `
+  el.innerHTML=`
     <div class="hist-title">Historial — ${ejercicio}</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
       <div>
@@ -791,12 +810,10 @@ async function renderHistPanel(cardId, ejercicio, el) {
 
 // ── LOAD PANEL ────────────────────────────────────────────────
 function renderLoadPanel(cardId, ejercicio, el) {
-  if (!state.cards[cardId]) state.cards[cardId] = { loadVal:'', loadSaved:false };
+  if (!state.cards[cardId]) state.cards[cardId]={ loadVal:'', loadSaved:false };
   const cs = state.cards[cardId];
-  if (cs.loadSaved) {
-    el.innerHTML = `<div class="load-saved-lbl">✓ Carga guardada — ${cs.loadVal} kg</div>`; return;
-  }
-  el.innerHTML = `
+  if (cs.loadSaved) { el.innerHTML=`<div class="load-saved-lbl">✓ Carga guardada — ${cs.loadVal} kg</div>`; return; }
+  el.innerHTML=`
     <div class="hist-title">Registrar carga — ${ejercicio}</div>
     <div class="load-display${cs.loadVal?' has-value':''}" id="ld-disp-${cardId}">${cs.loadVal||'—'}</div>
     <div class="load-unit">kg</div>
@@ -811,77 +828,74 @@ function renderLoadPanel(cardId, ejercicio, el) {
     <button class="btn-save-load" onclick="saveLoad('${cardId}','${ejercicio.replace(/'/g,"\\'")}')">Guardar carga</button>`;
 }
 function loadNumpad(cardId, key) {
-  if (!state.cards[cardId]) state.cards[cardId] = { loadVal:'', loadSaved:false };
+  if (!state.cards[cardId]) state.cards[cardId]={ loadVal:'', loadSaved:false };
   const cs = state.cards[cardId];
-  if (key==='del') cs.loadVal = cs.loadVal.slice(0,-1);
-  else { if(cs.loadVal.length>=5) return; cs.loadVal += key; }
+  if (key==='del') cs.loadVal=cs.loadVal.slice(0,-1);
+  else { if(cs.loadVal.length>=5) return; cs.loadVal+=key; }
   const disp = document.getElementById('ld-disp-'+cardId);
   if (disp) { disp.textContent=cs.loadVal||'—'; disp.classList.toggle('has-value',!!cs.loadVal); }
 }
 async function saveLoad(cardId, ejercicio) {
   const cs = state.cards[cardId];
-  if (!cs || !cs.loadVal) return;
+  if (!cs||!cs.loadVal) return;
   const btn = document.querySelector(`#panel-load-${cardId} .btn-save-load`);
   if (btn) { btn.disabled=true; btn.textContent='Guardando…'; }
   const res = await api({
     action:'saveRegistro', usuario:state.user.usuario,
     semana:state.semana, dia:state.dia,
     bloque: cardId.split('_')[0], ejercicio,
-    carga_real: cs.loadVal, rpe:'', notas_jugador:'', tiempo_sesion:''
+    carga_real:cs.loadVal, rpe:'', notas_jugador:'', tiempo_sesion:''
   });
   if (res.ok) {
-    cs.loadSaved = true;
+    cs.loadSaved=true;
     const el = document.getElementById('panel-load-'+cardId);
-    if (el) el.innerHTML = `<div class="load-saved-lbl">✓ Carga guardada — ${cs.loadVal} kg</div>`;
+    if (el) el.innerHTML=`<div class="load-saved-lbl">✓ Carga guardada — ${cs.loadVal} kg</div>`;
   } else {
     if (btn) { btn.disabled=false; btn.textContent='Guardar carga'; }
     alert('Error al guardar: '+(res.error||'inténtalo de nuevo'));
   }
 }
 
-// ── COACH PANEL ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+// ── COACH PANEL ──────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
 async function loadCoachPanel() {
-  const semanaIdx = state.semana - 1;
+  const semanaIdx    = state.semana - 1;
   const semanaNombre = (state.semanas && state.semanas[semanaIdx]) || ('Semana ' + state.semana);
   document.getElementById('coach-sem-label').textContent = semanaNombre;
 
-  const res = await api({ action:'getEquipo', semana: state.semana });
+  const res = await api({ action:'getEquipo', semana:state.semana });
   if (!res.ok) return;
 
-  const equipo = res.equipo;
+  state.coachEquipo    = res.equipo    || [];
+  state.coachRpeChart  = res.rpeChart  || [];
 
-  // KPIs
-  const hoyStr = fmtDate(new Date());
-  const total   = equipo.length;
-  const complet = equipo.filter(j => j.sesiones7dias && j.sesiones7dias.some(s => s.fecha === hoyStr && s.guardada)).length;
-  const pend    = equipo.filter(j => j.estado === 'pendiente').length;
-  const inact   = equipo.filter(j => j.estado === 'inactivo').length;
+  // ── KPIs ──
+  const hoyStr  = fmtDate(new Date());
+  const total   = state.coachEquipo.length;
+  const complet = state.coachEquipo.filter(j =>
+    j.sesiones7dias && j.sesiones7dias.some(s => s.fecha===hoyStr && s.guardada)
+  ).length;
+  const pend    = state.coachEquipo.filter(j => j.estado==='pendiente').length;
+  const inact   = state.coachEquipo.filter(j => j.estado==='inactivo').length;
   document.getElementById('kpi-total').textContent = total;
   document.getElementById('kpi-hoy').textContent   = complet;
   document.getElementById('kpi-pend').textContent  = pend;
   document.getElementById('kpi-sin').textContent   = inact;
 
-  // Tabla jugadores
+  // ── Tabla jugadores ──
   const tbody = document.getElementById('coach-tbody');
-  tbody.innerHTML = equipo.map(j => {
+  tbody.innerHTML = state.coachEquipo.map(j => {
     const dotCls = j.estado==='guardada' ? 'dot-green' : j.estado==='pendiente' ? 'dot-amber' : 'dot-red';
-
-    // RPE media últimos 7 días
     let rpe7Html = '<span class="rpe7-chip rpe7-none">—</span>';
     if (j.rpe7dias !== null && j.rpe7dias !== undefined) {
       const c = rpeClass(j.rpe7dias);
       rpe7Html = `<span class="rpe7-chip rpe7-${c}">${j.rpe7dias}</span>`;
     }
-
-    // 7 cuadraditos L-M-X-J-V-S-D con fecha real
-    const squares = (j.sesiones7dias || []).map(s => {
+    const squares = (j.sesiones7dias||[]).map(s => {
       let cls = 'wsq-empty';
-      if (s.guardada) {
-        const c = rpeClass(s.rpe);
-        cls = c === 'none' ? 'wsq-low' : `wsq-${c}`;
-      } else if (s.fecha === hoyStr) {
-        cls = 'wsq-hoy';
-      }
+      if (s.guardada) { const c=rpeClass(s.rpe); cls = c==='none'?'wsq-low':`wsq-${c}`; }
+      else if (s.fecha===hoyStr) { cls='wsq-hoy'; }
       const rpeLabel = s.guardada && s.rpe && !isNaN(s.rpe) ? Math.round(s.rpe) : '';
       const tooltip  = `${s.label} ${fmtShort(s.fecha)}${s.guardada?' · RPE '+(s.rpe||''):''}`;
       return `<div class="wsq ${cls}" title="${tooltip}">
@@ -889,10 +903,7 @@ async function loadCoachPanel() {
         <span class="wsq-val">${rpeLabel}</span>
       </div>`;
     }).join('');
-
-    // Tiempo última sesión
-    const tiempoTxt = j.tiempoUltima ? j.tiempoUltima + ' min' : '—';
-
+    const tiempoTxt = j.tiempoUltima ? j.tiempoUltima+' min' : '—';
     return `<tr>
       <td><span class="status-dot ${dotCls}"></span>${j.nombre}</td>
       <td>${rpe7Html}</td>
@@ -901,46 +912,180 @@ async function loadCoachPanel() {
     </tr>`;
   }).join('');
 
-  // Gráfico RPE por sesión con nombre real de semana
-  if (res.rpeChart && res.rpeChart.length) {
+  // ── 1. Gráfico RPE por sesión ──
+  if (state.coachRpeChart.length) {
     const semanaActual = String(state.semana);
-    const allRpes = res.rpeChart.flatMap(s => (s.sesiones||[]).map(ss => ss.rpeMedia));
+    const allRpes = state.coachRpeChart.flatMap(s=>(s.sesiones||[]).map(ss=>ss.rpeMedia));
     const maxRpe  = allRpes.length ? Math.max(...allRpes) : 10;
-
-    const weeksHtml = res.rpeChart.map(sem => {
-      const isCurrent = sem.semana === semanaActual;
+    const weeksHtml = state.coachRpeChart.map(sem => {
+      const isCurrent = sem.semana===semanaActual;
       const sesionesHtml = (sem.sesiones||[]).map(ss => {
-        const c = rpeClass(ss.rpeMedia);
-        const pct = Math.round((ss.rpeMedia / maxRpe) * 44);
+        const c   = rpeClass(ss.rpeMedia);
+        const pct = Math.round((ss.rpeMedia/maxRpe)*44);
         return `<div class="rpe-session-col">
           <div class="rpe-bar-val rpe-${c}-val">${ss.rpeMedia}</div>
           <div class="rpe-bar-fill rpe-${c}-bar${isCurrent?' current-week':''}" style="height:${Math.max(pct,3)}px"></div>
           <div class="rpe-bar-dia">D${ss.dia}</div>
         </div>`;
       }).join('');
-
       const mediaTxt = sem.rpeMedia ? ` · ${sem.rpeMedia}` : '';
-
       return `<div class="rpe-week-row">
         <div class="rpe-week-label" title="${sem.nombreSemana}">${sem.nombreSemana}${mediaTxt}</div>
         <div class="rpe-sessions-bars">${sesionesHtml}</div>
       </div>`;
     }).join('');
-
     document.getElementById('coach-rpe-semana-label').textContent = semanaNombre + ' · Semana activa';
     document.getElementById('coach-rpe-weeks').innerHTML = weeksHtml;
     document.getElementById('coach-rpe-chart').style.display = 'block';
   }
+
+  // ── 2. Carga del equipo semana a semana ──
+  renderTeamLoadChart(semanaNombre);
+
+  // ── 3. Desplegable jugadores ──
+  renderPlayerSelector();
 }
 
+// ─── 2. Team load chart ───────────────────────────────────────
+function renderTeamLoadChart(semanaNombre) {
+  const chart = state.coachRpeChart;
+  if (!chart.length) return;
+
+  // Para cada semana necesitamos: media, min, max del equipo
+  // El rpeChart tiene { semana, nombreSemana, sesiones:[{dia,rpeMedia}], rpeMedia }
+  // rpeMedia en rpeChart ya es la media del EQUIPO en esa semana
+  // Para min/max necesitamos acceder a los datos del equipo por jugador → usamos coachEquipo
+  // Construimos: para cada semana, recogemos los RPE_GLOBAL de todos los jugadores
+  // agrupados de getEquipo → cada jugador tiene sesiones7dias (sólo semana actual)
+  // y rpe7dias. Para historial completo por semana usamos rpeChart que ya tiene las medias.
+  // Si no tenemos min/max por jugador, los omitimos y mostramos solo la media.
+
+  // Calculamos min/max aproximados: rango de rpeMedia por sesión dentro de cada semana
+  const allRpes = chart.flatMap(s=>(s.sesiones||[]).map(ss=>ss.rpeMedia));
+  const maxVal  = allRpes.length ? Math.max(...allRpes) : 10;
+  const minVal  = 0;
+  const range   = maxVal - minVal || 10;
+
+  const barsHtml = chart.map(sem => {
+    if (!sem.rpeMedia) return '';
+    const sesRpes   = (sem.sesiones||[]).map(ss=>ss.rpeMedia);
+    const semMin    = sesRpes.length ? Math.min(...sesRpes) : sem.rpeMedia;
+    const semMax    = sesRpes.length ? Math.max(...sesRpes) : sem.rpeMedia;
+    const avgPct    = ((sem.rpeMedia - minVal)/range*100).toFixed(1);
+    const minPct    = ((semMin       - minVal)/range*100).toFixed(1);
+    const maxPct    = ((semMax       - minVal)/range*100).toFixed(1);
+    const rangePct  = (maxPct - minPct).toFixed(1);
+    const c         = rpeClass(sem.rpeMedia);
+    const isCurrent = String(sem.semana) === String(state.semana);
+    return `<div class="tl-row">
+      <div class="tl-sem-lbl" title="${sem.nombreSemana}">${sem.nombreSemana}${isCurrent?' ●':''}</div>
+      <div class="tl-bar-wrap">
+        <div class="tl-bar-bg"></div>
+        <div class="tl-bar-range" style="left:${minPct}%;width:${Math.max(rangePct,1)}%"></div>
+        <div class="tl-bar-avg tl-${c}" style="width:${avgPct}%"></div>
+        <div class="tl-tick" style="left:${avgPct}%"></div>
+      </div>
+      <div class="tl-val tl-${c}">${sem.rpeMedia}</div>
+      <div class="tl-range-lbl">${semMin}–${semMax}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('coach-team-load-bars').innerHTML = barsHtml;
+  document.getElementById('coach-team-load-chart').style.display = 'block';
+}
+
+// ─── 3. Evolución individual ──────────────────────────────────
+function renderPlayerSelector() {
+  const select = document.getElementById('coach-player-select');
+  const jugadores = state.coachEquipo;
+  select.innerHTML = '<option value="">— Selecciona un jugador —</option>' +
+    jugadores.map(j=>`<option value="${j.usuario}">${j.nombre}</option>`).join('');
+  document.getElementById('coach-player-evo-chart').style.display = 'block';
+}
+
+function renderPlayerEvo() {
+  const usuario = document.getElementById('coach-player-select').value;
+  const content = document.getElementById('coach-player-evo-content');
+  if (!usuario) {
+    content.innerHTML = '<div class="pevo-empty">Selecciona un jugador para ver su evolución.</div>';
+    return;
+  }
+
+  // Buscamos los datos en rpeChart filtrados por jugador
+  // El rpeChart actual es la MEDIA DEL EQUIPO, no por jugador individual.
+  // Para la evolución individual usamos los datos de equipo (sesiones7dias) para la semana actual,
+  // y para semanas anteriores necesitamos getHistorial del jugador con RPE_GLOBAL.
+  // Como no tenemos ese endpoint filtrado por usuario+RPE_GLOBAL por semana directamente,
+  // reconstruimos: en getEquipo el backend agrupa todos los RPE_GLOBAL por semana/día.
+  // Para el jugador individual, usamos getHistorial con ejercicio='RPE_GLOBAL'.
+
+  content.innerHTML = '<div class="pevo-empty" id="pevo-loading">Cargando…</div>';
+  loadPlayerEvoData(usuario, content);
+}
+
+async function loadPlayerEvoData(usuario, content) {
+  const res = await api({ action:'getHistorial', usuario, ejercicio:'RPE_GLOBAL' });
+  if (!res.ok || !res.historial) {
+    content.innerHTML = '<div class="pevo-empty">No se pudo cargar el historial del jugador.</div>';
+    return;
+  }
+
+  // Agrupar por semana → día
+  const byWeek = {};
+  for (const h of res.historial) {
+    const sem = String(h.semana).trim();
+    const dia = String(h.dia).trim();
+    const rpe = parseFloat(h.rpe);
+    if (!sem||isNaN(rpe)) continue;
+    if (!byWeek[sem]) byWeek[sem] = {};
+    if (!byWeek[sem][dia]) byWeek[sem][dia] = [];
+    byWeek[sem][dia].push(rpe);
+  }
+
+  const semKeys = Object.keys(byWeek).sort((a,b)=>parseInt(a)-parseInt(b));
+  if (!semKeys.length) {
+    content.innerHTML = '<div class="pevo-empty">Este jugador no tiene sesiones registradas aún.</div>';
+    return;
+  }
+
+  // Calcular max para escala
+  const allRpes = semKeys.flatMap(s => Object.values(byWeek[s]).flatMap(v=>v));
+  const maxRpe  = allRpes.length ? Math.max(...allRpes) : 10;
+
+  const weeksHtml = semKeys.map(sem => {
+    const semIdx    = parseInt(sem) - 1;
+    const semNombre = (state.semanas && state.semanas[semIdx]) || ('Semana ' + sem);
+    const isCurrent = sem === String(state.semana);
+    const diasData  = byWeek[sem];
+    const diasHtml  = Object.keys(diasData).sort((a,b)=>parseInt(a)-parseInt(b)).map(dia => {
+      const vals  = diasData[dia];
+      const media = Math.round((vals.reduce((s,v)=>s+v,0)/vals.length)*10)/10;
+      const c     = rpeClass(media);
+      const pct   = Math.round((media/maxRpe)*44);
+      return `<div class="pevo-col">
+        <div class="pevo-val rpe-${c}-val">${media}</div>
+        <div class="pevo-bar rpe-${c}-bar${isCurrent?' current-week':''}" style="height:${Math.max(pct,3)}px"></div>
+        <div class="pevo-dia">D${dia}</div>
+      </div>`;
+    }).join('');
+    return `<div class="pevo-row">
+      <div class="pevo-sem-lbl" title="${semNombre}">${semNombre}${isCurrent?' ●':''}</div>
+      <div class="pevo-bars">${diasHtml}</div>
+    </div>`;
+  }).join('');
+
+  content.innerHTML = `<div class="player-evo-wrap">${weeksHtml}</div>`;
+}
+
+// ── LOGOUT ────────────────────────────────────────────────────
 function logout() {
-  state = {user:null,dia:1,semana:1,semanas:[],rpeSession:null,tiempoSesion:'',guardado:false,isCoach:false,cards:{}};
-  document.getElementById('screen-app').style.display   = 'none';
-  document.getElementById('screen-login').style.display = 'flex';
+  state = {user:null,dia:1,semana:1,semanas:[],rpeSession:null,tiempoSesion:'',guardado:false,isCoach:false,cards:{},coachEquipo:[],coachRpeChart:[]};
+  document.getElementById('screen-app').style.display  ='none';
+  document.getElementById('screen-login').style.display='flex';
   document.getElementById('coach-panel').classList.remove('visible');
   document.getElementById('coach-topbar-badge').classList.add('hidden');
-  document.getElementById('input-user').value = '';
-  document.getElementById('input-pass').value = '';
+  document.getElementById('input-user').value='';
+  document.getElementById('input-pass').value='';
   const btn = document.getElementById('btn-login');
   btn.disabled=false; btn.textContent='Entrar';
   document.getElementById('login-error').textContent='';
