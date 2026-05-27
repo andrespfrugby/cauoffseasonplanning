@@ -98,7 +98,18 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .tag-other   { background:rgba(212,83,126,.15);  color:#f07aaa; }
 .tag-volume  { background:rgba(0,229,160,.10);  color:#00e5a0; border:1px solid rgba(0,229,160,.2); font-weight:600; }
 .tag-method  { background:rgba(239,159,39,.10); color:#ffc04d; border:1px solid rgba(239,159,39,.2); }
-.tag-notes   { background:rgba(100,160,255,.10); color:#7fb3ff; border:1px solid rgba(100,160,255,.22); font-style:normal; display:inline-flex; align-items:center; gap:3px; }
+/* ── EXERCISE NOTES STRIP ── */
+.ex-notes-strip {
+  display:flex; align-items:flex-start; gap:7px;
+  padding:6px 13px 8px;
+  background:linear-gradient(90deg, rgba(100,160,255,.06) 0%, transparent 100%);
+  border-top:1px dashed rgba(100,160,255,.18);
+}
+.ex-notes-icon { font-size:12px; flex-shrink:0; margin-top:1px; opacity:.8; }
+.ex-notes-text {
+  font-size:11px; color:rgba(127,179,255,.85); line-height:1.55;
+  font-style:italic;
+}
 /* ── NOTES BANNER — redesigned ── */
 .notes-banner {
   margin-top:1rem;
@@ -207,8 +218,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .rpe7-mid  { background:rgba(239,159,39,.15);  color:#ffc04d; }
 .rpe7-high { background:rgba(232,20,42,.15);   color:#ff7070; }
 .rpe7-none { background:rgba(255,255,255,.06); color:var(--muted); font-size:10px; }
-/* center chip in its table cell */
-.coach-table td:nth-child(2) { text-align:center; }
+/* RPE media chip left-aligned */
+.coach-table td:nth-child(2) { text-align:left; }
 
 /* ── COACH CHARTS — contenedor compartido ── */
 .coach-chart-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px; margin-bottom:1rem; }
@@ -218,7 +229,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 /* ─── 1. RPE por sesión (igual que antes) ─── */
 .rpe-weeks-wrap { display:flex; flex-direction:column; gap:12px; }
 .rpe-week-row { display:flex; align-items:flex-end; gap:8px; }
-.rpe-week-label { font-size:9px; color:var(--muted); width:auto; min-width:60px; max-width:120px; flex-shrink:0; padding-bottom:2px; white-space:normal; word-break:break-word; line-height:1.3; }
+.rpe-week-label { font-size:9px; color:var(--muted); width:80px; min-width:80px; max-width:80px; flex-shrink:0; padding-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.3; }
 .rpe-sessions-bars { display:flex; gap:4px; align-items:flex-end; flex:1; }
 .rpe-session-col { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:28px; }
 .rpe-bar-fill { width:100%; border-radius:3px 3px 0 0; min-height:3px; }
@@ -235,7 +246,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 /* ─── 2. Carga equipo semana a semana ─── */
 .team-load-bars { display:flex; flex-direction:column; gap:8px; }
 .tl-row { display:flex; align-items:center; gap:8px; }
-.tl-sem-lbl { font-size:9px; color:var(--muted); width:auto; min-width:60px; max-width:120px; flex-shrink:0; white-space:normal; word-break:break-word; line-height:1.3; }
+.tl-sem-lbl { font-size:9px; color:var(--muted); width:80px; min-width:80px; max-width:80px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.3; }
 .tl-bar-wrap { flex:1; position:relative; height:18px; }
 .tl-bar-bg { position:absolute; top:50%; transform:translateY(-50%); height:6px; border-radius:3px; background:rgba(255,255,255,.06); width:100%; }
 /* franja min-max: posicionada por JS con left/width % */
@@ -259,7 +270,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .player-select:focus { border-color:var(--accent); }
 .player-evo-wrap { display:flex; flex-direction:column; gap:8px; }
 .pevo-row { display:flex; align-items:center; gap:8px; }
-.pevo-sem-lbl { font-size:9px; color:var(--muted); width:auto; min-width:60px; max-width:120px; flex-shrink:0; white-space:normal; word-break:break-word; line-height:1.3; }
+.pevo-sem-lbl { font-size:9px; color:var(--muted); width:80px; min-width:80px; max-width:80px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.3; }
 .pevo-bars { display:flex; gap:4px; align-items:flex-end; flex:1; }
 .pevo-col { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:28px; }
 .pevo-bar { width:100%; border-radius:3px 3px 0 0; min-height:3px; }
@@ -418,14 +429,14 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <!-- ── 2. Carga del equipo semana a semana ── -->
       <div class="coach-chart-box" id="coach-team-load-chart" style="display:none">
         <div class="chart-section-title">Carga del equipo</div>
-        <div class="chart-section-subtitle">RPE Medio Semanal · media + rango min/max</div>
+        <div class="chart-section-subtitle">RPE promedio semanal</div>
         <div class="team-load-bars" id="coach-team-load-bars"></div>
       </div>
 
       <!-- ── 3. Evolución individual por jugador ── -->
       <div class="coach-chart-box" id="coach-player-evo-chart" style="display:none">
         <div class="chart-section-title">Evolución individual</div>
-        <div class="chart-section-subtitle">RPE por sesión (individual)</div>
+        <div class="chart-section-subtitle">RPE por sesión</div>
         <div class="player-select-wrap">
           <select class="player-select" id="coach-player-select" onchange="renderPlayerEvo()">
             <option value="">— Selecciona un jugador —</option>
@@ -650,8 +661,13 @@ function renderCard(e) {
   const tagContr  = e.contraccion ? `<span class="tag tag-method">${e.contraccion}</span>` : '';
   const tagTempo  = e.tempo       ? `<span class="tag tag-method">⏱ ${e.tempo}</span>` : '';
   const tagLoad   = e.load_objetivo ? `<span class="tag tag-method">${e.load_objetivo}</span>` : '';
-  const tagNotas  = e.notas       ? `<span class="tag tag-notes">📝 ${e.notas}</span>` : '';
-  const tags = [tagPatron,tagSets,tagReps,tagContr,tagTempo,tagLoad,tagNotas].filter(Boolean).join('');
+  const tagNotas  = ''; // notes shown separately below
+  const tags = [tagPatron,tagSets,tagReps,tagContr,tagTempo,tagLoad].filter(Boolean).join('');
+  const notasStrip = e.notas ? `
+  <div class="ex-notes-strip">
+    <span class="ex-notes-icon">💬</span>
+    <span class="ex-notes-text">${e.notas}</span>
+  </div>` : '';
   const nombreEsc = e.ejercicio.replace(/'/g,"\\'");
   const videoEsc  = (e.video||'').replace(/'/g,"\\'");
   const hasVideo  = !!(e.video && e.video.startsWith('http'));
@@ -671,6 +687,7 @@ function renderCard(e) {
         <button class="btn-video ${hasVideo?'has-url':'no-url'}" onclick="openVideoModal('${nombreEsc}','${videoEsc}')" title="${hasVideo?'Ver vídeo':'Sin vídeo aún'}">▶</button>
       </div>
     </div>
+    ${notasStrip}
     <div id="panel-hist-${cardId}" class="card-panel hidden"></div>
     <div id="panel-load-${cardId}" class="card-panel hidden"></div>
   </div>`;
@@ -1018,7 +1035,6 @@ function renderTeamLoadChart(semanaNombre) {
         <div class="tl-tick" style="left:${avgPct}%"></div>
       </div>
       <div class="tl-val tl-${c}">${sem.rpeMedia}</div>
-      <div class="tl-range-lbl">${semMin}–${semMax}</div>
     </div>`;
   }).join('');
 
