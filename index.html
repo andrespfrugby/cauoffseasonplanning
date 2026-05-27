@@ -168,6 +168,14 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .hist-delta.up   { background:rgba(0,229,160,.12); color:#00e5a0; }
 .hist-delta.down { background:rgba(255,77,77,.12);  color:#ff7070; }
 .hist-delta.eq   { background:rgba(255,255,255,.06); color:var(--muted); }
+.hist-delta-big  { font-size:12px; font-weight:700; padding:2px 7px; }
+.hist-progression { display:flex; flex-direction:column; gap:2px; }
+.hist-pct-lbl { font-size:9px; color:var(--muted); }
+.hist-bar { position:relative; }
+.hist-bar-tip {
+  position:absolute; top:-16px; left:50%; transform:translateX(-50%);
+  font-size:8px; font-weight:700; color:var(--accent2); white-space:nowrap;
+}
 .load-display { flex:1; background:var(--surface); border:1px solid var(--border2); border-radius:7px; padding:5px 10px; font-family:var(--font-head); font-size:20px; letter-spacing:2px; color:var(--text); text-align:center; min-width:80px; }
 .load-display.has-value { color:var(--accent2); }
 .load-unit { font-size:11px; color:var(--muted); }
@@ -218,6 +226,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .rpe7-mid  { background:rgba(239,159,39,.15);  color:#ffc04d; }
 .rpe7-high { background:rgba(232,20,42,.15);   color:#ff7070; }
 .rpe7-none { background:rgba(255,255,255,.06); color:var(--muted); font-size:10px; }
+/* compliance chip */
+.comp-chip { display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:22px; border-radius:5px; font-size:11px; font-weight:700; padding:0 6px; }
+.comp-high { background:rgba(0,229,160,.15);  color:#00e5a0; }
+.comp-mid  { background:rgba(239,159,39,.15); color:#ffc04d; }
+.comp-low  { background:rgba(232,20,42,.15);  color:#ff7070; }
+.comp-none { background:rgba(255,255,255,.06); color:var(--muted); font-size:10px; }
 /* RPE media chip left-aligned */
 .coach-table td:nth-child(2) { text-align:left; }
 
@@ -311,7 +325,28 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .notes-banner { background:rgba(232,20,42,.05); border-left:2px solid var(--accent); border-radius:0 var(--r) var(--r) 0; padding:10px 14px; font-size:12px; color:var(--muted); line-height:1.65; margin-top:1rem; white-space:pre-line; }
   /* notes-banner-head-label replaces old strong rule */
 
-/* ── VIDEO MODAL ── */
+/* ── WEEK SUMMARY ── */
+.week-summary {
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:var(--r); padding:13px 14px; margin-top:1rem;
+}
+.week-summary-title {
+  font-size:10px; font-weight:600; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:10px;
+  display:flex; align-items:center; gap:7px;
+}
+.week-summary-title::after { content:''; flex:1; height:1px; background:var(--border); }
+.week-summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.wsumm-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:9px 10px; text-align:center;
+}
+.wsumm-val { font-family:var(--font-head); font-size:24px; line-height:1; }
+.wsumm-val.green { color:var(--accent2); }
+.wsumm-val.amber { color:#ffc04d; }
+.wsumm-val.red   { color:#ff7070; }
+.wsumm-val.muted { color:var(--muted); }
+.wsumm-lbl { font-size:9px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:3px; }
 .video-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.80); z-index:100; align-items:center; justify-content:center; padding:1rem; }
 .video-modal-overlay.open { display:flex; }
 .video-modal { width:100%; max-width:640px; background:var(--surface); border:1px solid var(--border2); border-radius:12px; overflow:hidden; }
@@ -414,6 +449,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
             <th>RPE media (7 días)</th>
             <th>Esta semana</th>
             <th>Tiempo (última)</th>
+            <th>% Compliance</th>
           </tr></thead>
           <tbody id="coach-tbody"></tbody>
         </table>
@@ -466,8 +502,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       </div>
     </div>
     <div id="session-container"></div>
-  </div>
-</div>
+    <div id="week-summary-box" style="display:none"></div>
 
 <script>
 // ── escudo placeholder ────────────────────────────────────────
@@ -548,6 +583,7 @@ async function doLogin() {
     }
     await loadSemanas();
     loadRutina();
+    renderWeekSummary();
     if (state.isCoach) loadCoachPanel();
   } else {
     errEl.textContent = res.error||'Error al iniciar sesión';
@@ -571,6 +607,9 @@ async function loadSemanas() {
 function onSemanaChange() {
   state.semana = parseInt(document.getElementById('sel-semana').value);
   resetSessionState(); loadRutina();
+  const wb = document.getElementById('week-summary-box');
+  if (wb) wb.style.display='none';
+  renderWeekSummary();
   if (state.isCoach) loadCoachPanel();
 }
 function selectDay(dia, btn) {
@@ -790,10 +829,57 @@ async function saveSession() {
     state.guardado=true;
     const panel = document.getElementById('session-panel');
     if (panel) panel.innerHTML=`<div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion?' · '+state.tiempoSesion+' min':''}</div>`;
+    // Actualizar resumen de semana
+    await renderWeekSummary();
   } else {
     if (btn) { btn.disabled=false; btn.textContent='Guardar sesión'; }
     alert('Error al guardar: '+(res.error||'inténtalo de nuevo'));
   }
+}
+
+async function renderWeekSummary() {
+  const container = document.getElementById('week-summary-box');
+  if (!container) return;
+  // Cargar historial RPE_GLOBAL del jugador para calcular resumen semana actual
+  const res = await api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' });
+  if (!res.ok || !res.historial) return;
+
+  const semStr = String(state.semana);
+  const sesiones = res.historial.filter(h => String(h.semana).trim() === semStr);
+
+  const totalDias = sesiones.length;
+  const rpes = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
+  const rpeMedia = rpes.length ? Math.round((rpes.reduce((s,v)=>s+v,0)/rpes.length)*10)/10 : null;
+  const tiempos = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
+  const tiempoTotal = tiempos.length ? tiempos.reduce((s,v)=>s+v,0) : null;
+
+  // Compliance: dias guardados / días transcurridos esta semana
+  const hoyDow = new Date().getDay();
+  const diasTrans = hoyDow === 0 ? 7 : hoyDow;
+  const compliance = diasTrans > 0 ? Math.round((totalDias / diasTrans) * 100) : null;
+
+  const rpeClass2 = (v) => v===null?'muted':v<=5?'green':v<=7?'amber':'red';
+  const compClass = (v) => v===null?'muted':v>=80?'green':v>=50?'amber':'red';
+
+  container.innerHTML = `
+    <div class="week-summary">
+      <div class="week-summary-title">📊 Resumen de semana</div>
+      <div class="week-summary-grid">
+        <div class="wsumm-card">
+          <div class="wsumm-val ${rpeClass2(rpeMedia)}">${rpeMedia !== null ? rpeMedia : '—'}</div>
+          <div class="wsumm-lbl">RPE medio</div>
+        </div>
+        <div class="wsumm-card">
+          <div class="wsumm-val ${compClass(compliance)}">${compliance !== null ? compliance+'%' : '—'}</div>
+          <div class="wsumm-lbl">Compliance</div>
+        </div>
+        <div class="wsumm-card">
+          <div class="wsumm-val green">${tiempoTotal !== null ? tiempoTotal : '—'}</div>
+          <div class="wsumm-lbl">Min totales</div>
+        </div>
+      </div>
+    </div>`;
+  container.style.display = 'block';
 }
 
 // ── CARD PANEL TOGGLE ─────────────────────────────────────────
@@ -826,29 +912,46 @@ async function renderHistPanel(cardId, ejercicio, el) {
   const last = hist[hist.length-1];
   const prev = hist.length>1 ? hist[hist.length-2] : null;
   const delta = prev ? (parseFloat(last.carga)-parseFloat(prev.carga)) : 0;
+  const deltaPct = prev ? Math.round((delta/parseFloat(prev.carga))*100) : 0;
   const deltaClass = delta>0?'up':delta<0?'down':'eq';
   const deltaSign  = delta>0?'+':'';
+  const trendArrow = delta>0?'↑':delta<0?'↓':'→';
   const bars = hist.map((h,i)=>{
     const pct = Math.round((parseFloat(h.carga)/maxCarga)*100);
     const semNom = (state.semanas&&state.semanas[parseInt(h.semana)-1])||('S'+h.semana);
-    return `<div class="hist-bar${i===hist.length-1?' current':''}" style="height:${pct}%" title="${semNom}: ${h.carga}kg"></div>`;
+    const isCurr = i===hist.length-1;
+    return `<div class="hist-bar${isCurr?' current':''}" style="height:${pct}%" title="${semNom}: ${h.carga}kg">
+      ${isCurr?`<span class="hist-bar-tip">${h.carga}</span>`:''}
+    </div>`;
   }).join('');
   const lbls = hist.map(h=>{
     const semNom = (state.semanas&&state.semanas[parseInt(h.semana)-1])||('S'+h.semana);
     const short = semNom.split('_')[0]||semNom;
     return `<div class="hist-bar-lbl" title="${semNom}">${short.length>6?short.slice(0,6)+'…':short}</div>`;
   }).join('');
-  const rows = [...hist].reverse().slice(0,5).map(h=>{
+  const rows = [...hist].reverse().slice(0,5).map((h,i)=>{
     const semNom = (state.semanas&&state.semanas[parseInt(h.semana)-1])||('Sem '+h.semana);
-    return `<tr><td>${semNom}</td><td>${h.carga} kg</td><td>${h.rpe?'RPE '+h.rpe:'—'}</td></tr>`;
+    const hPrev = [...hist].reverse()[i+1];
+    let progHtml = '';
+    if (hPrev) {
+      const d = parseFloat(h.carga)-parseFloat(hPrev.carga);
+      const pct2 = Math.round((d/parseFloat(hPrev.carga))*100);
+      const cls2 = d>0?'up':d<0?'down':'eq';
+      progHtml = `<span class="hist-delta ${cls2}">${d>0?'+':''}${pct2}%</span>`;
+    }
+    return `<tr><td>${semNom}</td><td>${h.carga} kg</td><td>${h.rpe?'RPE '+h.rpe:'—'}</td><td>${progHtml}</td></tr>`;
   }).join('');
   el.innerHTML=`
     <div class="hist-title">Historial — ${ejercicio}</div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
       <div>
         <div class="hist-prev-lbl">Último registro</div>
-        <div class="hist-prev-val">${last.carga} kg <span class="hist-delta ${deltaClass}">${deltaSign}${delta} kg</span></div>
+        <div class="hist-prev-val">${last.carga} kg</div>
       </div>
+      ${prev ? `<div class="hist-progression">
+        <span class="hist-delta ${deltaClass} hist-delta-big">${trendArrow} ${deltaSign}${delta} kg</span>
+        <span class="hist-pct-lbl">${deltaSign}${deltaPct}% vs anterior</span>
+      </div>` : ''}
     </div>
     <div class="hist-bar-wrap">
       <div class="hist-bar-track">${bars}</div>
@@ -953,11 +1056,25 @@ async function loadCoachPanel() {
       </div>`;
     }).join('');
     const tiempoTxt = j.tiempoUltima ? j.tiempoUltima+' min' : '—';
+    // Compliance: sesiones guardadas vs días transcurridos de la semana (hasta hoy)
+    const hoyDow = new Date().getDay(); // 0=dom
+    const diasTranscurridos = hoyDow === 0 ? 7 : hoyDow; // lun=1…dom=7
+    const sesGuardadas = (j.sesiones7dias||[]).filter(s=>s.guardada).length;
+    // Esperamos 1 sesión por día transcurrido como referencia (coach puede ajustar)
+    // Usamos días con sesión posible (solo L-V = 5 días laborables de la semana)
+    const diasEsperados = Math.min(diasTranscurridos, 7);
+    const compliance = diasEsperados > 0 ? Math.round((sesGuardadas / diasEsperados) * 100) : null;
+    let compHtml = '<span class="comp-chip comp-none">—</span>';
+    if (compliance !== null) {
+      const compCls = compliance >= 80 ? 'comp-high' : compliance >= 50 ? 'comp-mid' : 'comp-low';
+      compHtml = `<span class="comp-chip ${compCls}">${compliance}%</span>`;
+    }
     return `<tr>
       <td><span class="status-dot ${dotCls}"></span>${j.nombre}</td>
       <td>${rpe7Html}</td>
       <td><div class="week-squares">${squares}</div></td>
       <td>${tiempoTxt}</td>
+      <td>${compHtml}</td>
     </tr>`;
   }).join('');
 
