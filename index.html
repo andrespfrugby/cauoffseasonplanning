@@ -313,6 +313,67 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .btn-save-load:disabled { opacity:.4; cursor:not-allowed; }
 .load-saved-lbl { font-size:12px; color:var(--accent2); font-weight:600; padding:4px 0; }
 
+/* ── HISTORIAL — OPCIÓN C (tarjetas scroll horizontal) ── */
+.hist-cards-scroll {
+  display:flex; gap:7px; overflow-x:auto;
+  padding-bottom:4px; margin-bottom:2px;
+  scrollbar-width:none;
+}
+.hist-cards-scroll::-webkit-scrollbar { display:none; }
+.hist-card {
+  min-width:80px; flex-shrink:0;
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:9px; padding:8px 9px;
+  cursor:default;
+}
+.hist-card-date {
+  font-size:11px; font-weight:600; color:var(--muted);
+  margin-bottom:5px; display:flex; align-items:center; gap:5px;
+}
+.hist-card-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.hist-card-sets { display:flex; flex-direction:column; gap:3px; }
+.hist-card-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.hist-card-pct { font-size:9px; color:var(--muted); }
+.hist-card-kg  { font-size:12px; font-weight:600; color:var(--text); }
+.hist-card-single-kg {
+  font-family:var(--font-head); font-size:20px;
+  letter-spacing:1px; line-height:1; margin-top:2px;
+}
+.hist-card-kg-unit { font-size:9px; color:var(--muted); margin-top:1px; }
+/* latest por bloque */
+.hist-card.latest-A { border-color:rgba(55,138,221,.5);  background:rgba(55,138,221,.05); }
+.hist-card.latest-A .hist-card-date { color:#5fb3f5; }
+.hist-card.latest-A .hist-card-dot  { background:#5fb3f5; }
+.hist-card.latest-A .hist-card-kg   { color:#5fb3f5; }
+.hist-card.latest-A .hist-card-single-kg { color:#5fb3f5; }
+.hist-card.latest-B { border-color:rgba(29,158,117,.5);  background:rgba(29,158,117,.05); }
+.hist-card.latest-B .hist-card-date { color:#3ecfa0; }
+.hist-card.latest-B .hist-card-dot  { background:#3ecfa0; }
+.hist-card.latest-B .hist-card-kg   { color:#3ecfa0; }
+.hist-card.latest-B .hist-card-single-kg { color:#3ecfa0; }
+.hist-card.latest-C { border-color:rgba(239,159,39,.5);  background:rgba(239,159,39,.05); }
+.hist-card.latest-C .hist-card-date { color:#ffc04d; }
+.hist-card.latest-C .hist-card-dot  { background:#ffc04d; }
+.hist-card.latest-C .hist-card-kg   { color:#ffc04d; }
+.hist-card.latest-C .hist-card-single-kg { color:#ffc04d; }
+.hist-card.latest-D { border-color:rgba(127,119,221,.5); background:rgba(127,119,221,.05); }
+.hist-card.latest-D .hist-card-date { color:#a99ff5; }
+.hist-card.latest-D .hist-card-dot  { background:#a99ff5; }
+.hist-card.latest-D .hist-card-kg   { color:#a99ff5; }
+.hist-card.latest-D .hist-card-single-kg { color:#a99ff5; }
+.hist-card.latest-E { border-color:rgba(212,83,126,.5);  background:rgba(212,83,126,.05); }
+.hist-card.latest-E .hist-card-date { color:#f07aaa; }
+.hist-card.latest-E .hist-card-dot  { background:#f07aaa; }
+.hist-card.latest-E .hist-card-kg   { color:#f07aaa; }
+.hist-card.latest-E .hist-card-single-kg { color:#f07aaa; }
+.hist-card.latest-X { border-color:rgba(255,255,255,.25); background:rgba(255,255,255,.03); }
+.hist-card.latest-X .hist-card-date { color:var(--text); }
+.hist-card.latest-X .hist-card-dot  { background:var(--muted); }
+.hist-card.latest-X .hist-card-kg   { color:var(--text); }
+.hist-card.latest-X .hist-card-single-kg { color:var(--text); }
+/* hint scroll */
+.hist-scroll-hint { font-size:9px; color:var(--muted); text-align:center; margin-top:5px; }
+
 /* ── COACH PANEL ── */
 #coach-panel { display:none; }
 #coach-panel.visible { display:block; }
@@ -505,7 +566,31 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 <div id="screen-login">
   <div class="login-bg"></div>
   <div class="login-box">
-    <img class="login-shield" id="login-shield-img" alt="CAU Rugby Valencia">
+    <div class="login-shield" id="login-shield-img">
+      <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg" width="90" height="90">
+        <defs>
+          <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#e8142a;stop-opacity:1"/>
+            <stop offset="100%" style="stop-color:#a00d1e;stop-opacity:1"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- Shield shape -->
+        <path d="M45 6 L78 18 L78 46 C78 64 62 77 45 84 C28 77 12 64 12 46 L12 18 Z"
+              fill="url(#sg)" filter="url(#glow)"/>
+        <path d="M45 12 L74 22 L74 46 C74 62 59 74 45 80 C31 74 16 62 16 46 L16 22 Z"
+              fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+        <!-- CAU letters -->
+        <text x="45" y="52" font-family="'Bebas Neue', Impact, sans-serif" font-size="22"
+              font-weight="700" fill="white" text-anchor="middle" letter-spacing="2"
+              style="text-shadow:0 1px 4px rgba(0,0,0,0.4)">CAU</text>
+        <!-- Top accent line -->
+        <path d="M30 30 L60 30" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-linecap="round"/>
+      </svg>
+    </div>
     <div class="login-logo"><span class="cau">CAU</span><span class="rest">OFFSEASON</span></div>
     <div class="login-sub">Club Planner · Summer 2026</div>
     <div class="field-group">
@@ -838,7 +923,7 @@ function renderCard(e) {
   const actionsHtml = `
     <div class="ex-card-actions">
       <button type="button" class="btn-action btn-action-hist" title="Historial de carga"
-              onclick="toggleCardPanel('hist','${cardId}','${nombreEsc}')">
+              onclick="toggleCardPanel('hist','${cardId}','${nombreEsc}','${loadObjEsc}')">
         <span class="btn-action-icon">⟳</span><span>Historial</span>
       </button>
       ${hasLoadBtn ? `<button type="button" class="btn-action btn-action-load" title="Registrar carga"
@@ -1044,67 +1129,80 @@ function toggleCardPanel(type, cardId, ejercicio, loadObj) {
   }
 }
 
-// ── HISTORY PANEL ─────────────────────────────────────────────
+// ── HISTORY PANEL — Opción C (tarjetas scroll, más reciente a la izquierda) ──
 async function renderHistPanel(cardId, ejercicio, el) {
-  el.innerHTML='<div class="hist-title">Cargando historial…</div>';
+  el.innerHTML = '<div class="hist-empty" style="padding:6px 0">Cargando…</div>';
   const res = await api({ action:'getHistorial', usuario:state.user.usuario, ejercicio });
-  if (!res.ok||!res.historial) { el.innerHTML='<div class="hist-empty">No se pudo cargar el historial.</div>'; return; }
-  const hist = res.historial
-    .filter(h=>h.carga&&parseFloat(h.carga)>0)
-    .sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
-  if (!hist.length) {
-    el.innerHTML=`<div class="hist-title">Historial — ${ejercicio}</div><div class="hist-empty">Sin registros de carga aún.</div>`; return;
+  if (!res.ok || !res.historial) {
+    el.innerHTML = '<div class="hist-empty">No se pudo cargar el historial.</div>'; return;
   }
-  const maxCarga = Math.max(...hist.map(h=>parseFloat(h.carga)));
-  const last = hist[hist.length-1];
-  const prev = hist.length>1 ? hist[hist.length-2] : null;
-  const delta = prev ? (parseFloat(last.carga)-parseFloat(prev.carga)) : 0;
-  const deltaPct = prev ? Math.round((delta/parseFloat(prev.carga))*100) : 0;
-  const deltaClass = delta>0?'up':delta<0?'down':'eq';
-  const deltaSign  = delta>0?'+':'';
-  const trendArrow = delta>0?'↑':delta<0?'↓':'→';
-  const bars = hist.map((h,i)=>{
-    const pct = Math.round((parseFloat(h.carga)/maxCarga)*100);
-    const semNom = (state.semanas&&state.semanas[parseInt(h.semana)-1])||('S'+h.semana);
-    const isCurr = i===hist.length-1;
-    return `<div class="hist-bar${isCurr?' current':''}" style="height:${pct}%" title="${semNom}: ${h.carga}kg">
-      ${isCurr?`<span class="hist-bar-tip">${h.carga}</span>`:''}
+
+  // Filtrar registros con carga y ordenar por fecha más reciente primero
+  const hist = res.historial
+    .filter(h => h.carga && String(h.carga).trim() !== '')
+    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+  if (!hist.length) {
+    el.innerHTML = '<div class="hist-empty">Sin registros de carga aún.</div>'; return;
+  }
+
+  // Letra del bloque desde cardId (p.ej. "B2_Back_squat" → "B")
+  const letraRaw  = (cardId.match(/^([A-Za-z]+)/) || [])[1] || 'X';
+  const letraOk   = ['A','B','C','D','E'].includes(letraRaw.toUpperCase()) ? letraRaw.toUpperCase() : 'X';
+
+  // Targets del ejercicio para etiquetar series
+  const cs      = state.cards[cardId] || {};
+  const targets = cs.targets || parseLoadTargets(cs.loadObj || '');
+
+  // Formatear fecha como dd/mm
+  function dd_mm(fechaRaw) {
+    const d = new Date(fechaRaw);
+    if (isNaN(d)) return String(fechaRaw).slice(0, 5);
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+
+  // Opacidad decreciente para sesiones antiguas (más de 2 atrás)
+  function cardOpacity(i) {
+    if (i === 0) return '';
+    if (i === 1) return '';
+    if (i === 2) return 'opacity:.7';
+    return 'opacity:.45';
+  }
+
+  const cardsHtml = hist.map((h, i) => {
+    const isLatest  = i === 0;
+    const dateLabel = dd_mm(h.fecha);
+    const rawCarga  = String(h.carga).trim();
+    const setVals   = rawCarga.includes('/') ? rawCarga.split('/') : [rawCarga];
+
+    let setsHtml;
+    if (setVals.length > 1) {
+      setsHtml = setVals.map((v, si) => {
+        const label = targets[si] ? targets[si] : `S${si+1}`;
+        return `<div class="hist-card-row">
+          <span class="hist-card-pct">${label}</span>
+          <span class="hist-card-kg">${v} kg</span>
+        </div>`;
+      }).join('');
+    } else {
+      setsHtml = `<div class="hist-card-single-kg">${rawCarga}</div>
+                  <div class="hist-card-kg-unit">kg</div>`;
+    }
+
+    const latestClass = isLatest ? ` latest-${letraOk}` : '';
+    const dotHtml     = isLatest ? `<div class="hist-card-dot"></div>` : '';
+    const opacity     = cardOpacity(i);
+
+    return `<div class="hist-card${latestClass}" style="${opacity}">
+      <div class="hist-card-date">${dotHtml}${dateLabel}</div>
+      <div class="hist-card-sets">${setsHtml}</div>
     </div>`;
   }).join('');
-  const lbls = hist.map(h=>{
-    const semNom = (state.semanas&&state.semanas[parseInt(h.semana)-1])||('S'+h.semana);
-    const short = semNom.split('_')[0]||semNom;
-    return `<div class="hist-bar-lbl" title="${semNom}">${short.length>6?short.slice(0,6)+'…':short}</div>`;
-  }).join('');
-  const rows = [...hist].reverse().slice(0,5).map((h,i)=>{
-    const semNom = (state.semanas&&state.semanas[parseInt(h.semana)-1])||('Sem '+h.semana);
-    const hPrev = [...hist].reverse()[i+1];
-    let progHtml = '';
-    if (hPrev) {
-      const d = parseFloat(h.carga)-parseFloat(hPrev.carga);
-      const pct2 = Math.round((d/parseFloat(hPrev.carga))*100);
-      const cls2 = d>0?'up':d<0?'down':'eq';
-      progHtml = `<span class="hist-delta ${cls2}">${d>0?'+':''}${pct2}%</span>`;
-    }
-    return `<tr><td>${semNom}</td><td>${h.carga} kg</td><td>${h.rpe?'RPE '+h.rpe:'—'}</td><td>${progHtml}</td></tr>`;
-  }).join('');
-  el.innerHTML=`
-    <div class="hist-title">Historial — ${ejercicio}</div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-      <div>
-        <div class="hist-prev-lbl">Último registro</div>
-        <div class="hist-prev-val">${last.carga} kg</div>
-      </div>
-      ${prev ? `<div class="hist-progression">
-        <span class="hist-delta ${deltaClass} hist-delta-big">${trendArrow} ${deltaSign}${delta} kg</span>
-        <span class="hist-pct-lbl">${deltaSign}${deltaPct}% vs anterior</span>
-      </div>` : ''}
-    </div>
-    <div class="hist-bar-wrap">
-      <div class="hist-bar-track">${bars}</div>
-      <div class="hist-bar-labels">${lbls}</div>
-    </div>
-    <table class="hist-table"><tbody>${rows}</tbody></table>`;
+
+  const hintScroll = hist.length > 2
+    ? `<div class="hist-scroll-hint">← desliza para ver más</div>` : '';
+
+  el.innerHTML = `<div class="hist-cards-scroll">${cardsHtml}</div>${hintScroll}`;
 }
 
 // ── LOAD PANEL (MULTI-SET) ────────────────────────────────────
