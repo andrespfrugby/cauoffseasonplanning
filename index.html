@@ -24,7 +24,7 @@
 }
 body { background:var(--bg); color:var(--text); font-family:var(--font-body); font-size:15px; min-height:100vh; line-height:1.5; }
 .hidden { display:none !important; }
- 
+
 /* ── LOGIN ── */
 #screen-login { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem; position:relative; overflow:hidden; }
 .login-bg { position:absolute; inset:0; background: radial-gradient(ellipse 60% 50% at 80% 20%, rgba(232,20,42,0.10) 0%, transparent 60%), radial-gradient(ellipse 40% 60% at 10% 80%, rgba(232,20,42,0.05) 0%, transparent 60%); pointer-events:none; }
@@ -43,7 +43,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .btn-primary:active { transform:scale(.98); }
 .btn-primary:disabled { opacity:.4; cursor:not-allowed; }
 .error-msg { color:var(--danger); font-size:13px; margin-top:.65rem; text-align:center; min-height:18px; }
- 
+
 /* ── APP ── */
 #screen-app { display:none; min-height:100vh; padding-bottom:5rem; }
 .topbar { display:flex; align-items:center; justify-content:space-between; padding:.85rem 1.25rem; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(13,15,18,.93); backdrop-filter:blur(12px); z-index:10; }
@@ -68,7 +68,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .session-meta { color:var(--muted); font-size:13px; margin-bottom:1.25rem; }
 .phase-header { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:1.25rem 0 .65rem; display:flex; align-items:center; gap:8px; }
 .phase-header::after { content:''; flex:1; height:1px; background:var(--border); }
- 
+
 /* ── EXERCISE CARD ── */
 .ex-card {
   background:var(--surface); border:1px solid var(--border);
@@ -260,16 +260,16 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   position:absolute; top:-16px; left:50%; transform:translateX(-50%);
   font-size:8px; font-weight:700; color:var(--accent2); white-space:nowrap;
 }
- 
+
 /* ── LOAD PANEL — MULTI-SET ── */
 .load-sets-row {
-  display:flex; gap:8px; flex-wrap:wrap;
+  display:flex; gap:6px; flex-wrap:wrap;
   margin-bottom:10px;
 }
 .load-set-box {
-  flex:1; min-width:68px; max-width:110px;
+  flex:1; min-width:62px; max-width:110px;
   background:var(--surface); border:2px solid var(--border2);
-  border-radius:10px; padding:9px 6px 7px;
+  border-radius:10px; padding:9px 5px 8px;
   text-align:center; cursor:pointer;
   transition:border-color .15s, background .15s, transform .1s;
   user-select:none;
@@ -279,29 +279,52 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   border-color:var(--accent2);
   background:rgba(0,229,160,.06);
 }
+.load-set-box.done-set {
+  border-color:rgba(0,229,160,.3);
+  background:rgba(0,229,160,.03);
+}
+/* % grande */
 .load-set-target {
-  font-size:10px; font-weight:600; letter-spacing:.04em;
-  color:var(--muted); margin-bottom:4px;
-  text-transform:uppercase;
+  font-size:17px; font-weight:500; line-height:1;
+  color:var(--muted); margin-bottom:5px;
 }
 .load-set-box.active .load-set-target { color:var(--accent2); }
+.load-set-box.done-set .load-set-target { color:var(--muted); font-size:13px; }
+/* puntos reps */
+.load-rep-dots {
+  display:flex; justify-content:center; gap:2px;
+  flex-wrap:wrap; max-width:52px; margin:0 auto 3px;
+}
+.load-rep-dot {
+  width:5px; height:5px; border-radius:50%;
+  background:rgba(255,255,255,.12);
+  flex-shrink:0;
+}
+.load-set-box.active .load-rep-dot { background:rgba(0,229,160,.45); }
+.load-set-box.done-set .load-rep-dot { background:rgba(0,229,160,.25); }
+/* etiqueta reps */
+.load-rep-lbl {
+  font-size:9px; color:var(--muted); margin-bottom:5px; line-height:1;
+}
+.load-set-box.active .load-rep-lbl { color:rgba(0,229,160,.7); }
+/* kg valor */
 .load-set-val {
-  font-family:var(--font-head); font-size:22px; line-height:1;
-  color:rgba(255,255,255,.2); letter-spacing:1px;
+  font-size:13px; font-weight:600; line-height:1;
+  color:rgba(255,255,255,.18); letter-spacing:.5px;
 }
 .load-set-val.has-value { color:var(--accent2); }
 .load-set-unit {
-  font-size:9px; color:var(--muted); margin-top:2px;
+  font-size:8px; color:var(--muted); margin-top:2px;
   letter-spacing:.04em; text-transform:uppercase;
 }
-/* Active set indicator pulse */
+/* Active set blink */
 .load-set-box.active .load-set-val:not(.has-value) {
   animation: cursorBlink .9s step-end infinite;
 }
 @keyframes cursorBlink {
-  0%,100% { opacity:.25; } 50% { opacity:.6; }
+  0%,100% { opacity:.2; } 50% { opacity:.55; }
 }
- 
+
 .load-display { flex:1; background:var(--surface); border:1px solid var(--border2); border-radius:7px; padding:5px 10px; font-family:var(--font-head); font-size:20px; letter-spacing:2px; color:var(--text); text-align:center; min-width:80px; }
 .load-display.has-value { color:var(--accent2); }
 .load-unit { font-size:11px; color:var(--muted); }
@@ -312,7 +335,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .btn-save-load:hover { opacity:.85; }
 .btn-save-load:disabled { opacity:.4; cursor:not-allowed; }
 .load-saved-lbl { font-size:12px; color:var(--accent2); font-weight:600; padding:4px 0; }
- 
+
 /* ── HISTORIAL — OPCIÓN C (tarjetas scroll horizontal) ── */
 .hist-cards-scroll {
   display:flex; gap:7px; overflow-x:auto;
@@ -373,7 +396,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .hist-card.latest-X .hist-card-single-kg { color:var(--text); }
 /* hint scroll */
 .hist-scroll-hint { font-size:9px; color:var(--muted); text-align:center; margin-top:5px; }
- 
+
 /* ── COACH PANEL ── */
 #coach-panel { display:none; }
 #coach-panel.visible { display:block; }
@@ -419,7 +442,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .comp-low  { background:rgba(232,20,42,.15);  color:#ff7070; }
 .comp-none { background:rgba(255,255,255,.06); color:var(--muted); font-size:10px; }
 .coach-table td:nth-child(2) { text-align:left; }
- 
+
 /* ── COACH CHARTS ── */
 .coach-chart-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px; margin-bottom:1rem; }
 .chart-section-title { font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:3px; }
@@ -473,7 +496,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .pevo-val.rpe-high-val { color:#ff7070; }
 .pevo-dia { font-size:8px; color:var(--muted); }
 .pevo-empty { font-size:12px; color:var(--muted); font-style:italic; padding:8px 0; }
- 
+
 /* ── SESSION PANEL ── */
 .session-panel { background:var(--surface2); border:1px solid var(--border2); border-radius:var(--r); padding:13px; margin-top:1.25rem; }
 .panel-section { margin-bottom:14px; }
@@ -505,7 +528,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .btn-save-session:disabled { opacity:.4; cursor:not-allowed; }
 .saved-msg { color:var(--accent2); font-size:14px; font-weight:600; text-align:center; padding:6px 0; }
 .notes-banner { background:rgba(232,20,42,.05); border-left:2px solid var(--accent); border-radius:0 var(--r) var(--r) 0; padding:10px 14px; font-size:12px; color:var(--muted); line-height:1.65; margin-top:1rem; white-space:pre-line; }
- 
+
 /* ── TICK CONFIRMACIÓN ── */
 .ex-tick-btn {
   width:28px; height:28px; border-radius:50%; flex-shrink:0;
@@ -535,7 +558,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   display:none;
 }
 .ex-card.done .ex-done-meta { display:block; }
- 
+
 /* ── TIMER COMPACTO ── */
 .timer-compact-wrap {
   border-top:1px solid var(--border);
@@ -579,7 +602,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .t-run-btn.running { background:rgba(255,77,77,.1); border-color:rgba(255,77,77,.3); color:#ff7070; }
 .t-run-btn.done-btn { background:rgba(0,229,160,.12); border-color:rgba(0,229,160,.3); color:var(--accent2); }
 .t-reset-lnk { font-size:9px; color:var(--muted); cursor:pointer; background:none; border:none; font-family:var(--font-body); }
- 
+
 /* ── WEEK SUMMARY ── */
 .week-summary {
   background:var(--surface2); border:1px solid var(--border2);
@@ -612,14 +635,14 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .video-wrap { position:relative; padding-bottom:56.25%; height:0; background:#000; }
 .video-wrap iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; }
 .video-no-url { padding:2rem; text-align:center; color:var(--muted); font-size:13px; }
- 
+
 .loader { text-align:center; padding:3rem; color:var(--muted); font-size:13px; }
 .spinner { width:26px; height:26px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto .85rem; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .empty { text-align:center; padding:3rem 1rem; color:var(--muted); }
 .empty-icon { font-size:32px; margin-bottom:.65rem; }
 @media (max-width:500px) { .session-title { font-size:24px; } }
- 
+
 .coach-section-divider {
   font-size:10px; font-weight:600; letter-spacing:.08em;
   text-transform:uppercase; color:var(--muted);
@@ -630,7 +653,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 </style>
 </head>
 <body>
- 
+
 <!-- VIDEO MODAL -->
 <div class="video-modal-overlay" id="video-modal-overlay" onclick="closeVideoModal(event)">
   <div class="video-modal">
@@ -641,7 +664,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     <div id="video-modal-body"></div>
   </div>
 </div>
- 
+
 <!-- LOGIN -->
 <div id="screen-login">
   <div class="login-bg"></div>
@@ -685,7 +708,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     <div class="error-msg" id="login-error"></div>
   </div>
 </div>
- 
+
 <!-- APP -->
 <div id="screen-app">
   <div class="topbar">
@@ -700,7 +723,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     </div>
   </div>
   <div class="content">
- 
+
     <!-- ══ COACH PANEL ══ -->
     <div id="coach-panel">
       <div class="coach-header">
@@ -708,7 +731,15 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
           <div class="coach-title">Panel Coach</div>
           <div class="coach-sem-label" id="coach-sem-label">Semana activa</div>
         </div>
-        <span class="coach-badge">Coach</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select id="coach-squad-filter" class="semana-select" style="min-width:140px;margin-bottom:0" onchange="onCoachSquadChange()">
+            <option value="">Todos los squads</option>
+            <option value="men's xv">Men's XV</option>
+            <option value="women's">Women's</option>
+            <option value="academy">Academy</option>
+          </select>
+          <span class="coach-badge">Coach</span>
+        </div>
       </div>
       <div class="kpi-row" id="coach-kpis">
         <div class="kpi-card"><div class="kpi-num" id="kpi-total">—</div><div class="kpi-lbl">Jugadores</div></div>
@@ -753,7 +784,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div style="height:.5rem"></div>
       <div class="coach-section-divider">Vista sesión jugadores</div>
     </div><!-- /coach-panel -->
- 
+
     <!-- SELECTOR SEMANA + DÍAS -->
     <div class="week-header">
       <div class="week-label">Semana activa</div>
@@ -770,16 +801,16 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     </div>
     <div id="session-container"></div>
     <div id="week-summary-box" style="display:none"></div>
- 
+
 <script>
 // ── escudo placeholder ────────────────────────────────────────
 (function(){
   const img = document.getElementById('login-shield-img');
   if (img) img.src = 'data:image/png;base64,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';
 })();
- 
+
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVyC8AFCalPyYy116XmEtzdSMYUc2tzW2c_Tm_H_TcJSt-FGvUWjfnflDS-GukmqpX/exec';
- 
+
 // ── UTILIDADES ────────────────────────────────────────────────
 function fmtDate(d) {
   const y = d.getFullYear();
@@ -805,7 +836,7 @@ function rpeClass(rpe) {
   if (rpe<=7) return 'mid';
   return 'high';
 }
- 
+
 // ── PARSE LOAD TARGETS ────────────────────────────────────────
 // Extrae un array de targets desde load_objetivo.
 // "70%80%82.5%"  → ["70%","80%","82.5%"]
@@ -819,15 +850,16 @@ function parseLoadTargets(loadObjetivo) {
   if (pctMatches && pctMatches.length > 0) return pctMatches;
   return [loadObjetivo.trim() || ''];
 }
- 
+
 // ── STATE ─────────────────────────────────────────────────────
 let state = {
   user:null, dia:1, semana:1, semanas:[],
   rpeSession:null, tiempoSesion:'', guardado:false,
   isCoach:false, cards:{},
-  coachEquipo: [], coachRpeChart: []
+  coachEquipo: [], coachRpeChart: [], coachSquadFilter: '',
+  squad: ''
 };
- 
+
 // ── API ───────────────────────────────────────────────────────
 async function api(payload) {
   try {
@@ -839,7 +871,7 @@ async function api(payload) {
     return { ok:false, error:'Error de red: '+err.message };
   }
 }
- 
+
 // ── LOGIN ─────────────────────────────────────────────────────
 async function doLogin() {
   const btn   = document.getElementById('btn-login');
@@ -851,6 +883,7 @@ async function doLogin() {
   const res = await api({ action:'login', usuario, password });
   if (res.ok) {
     state.user = res;
+    state.squad = res.squad || '';
     state.isCoach = (String(res.posicion||'').toLowerCase()==='coach');
     document.getElementById('player-name').textContent = res.nombre;
     document.getElementById('avatar-initials').textContent =
@@ -871,10 +904,11 @@ async function doLogin() {
   }
 }
 document.getElementById('input-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
- 
+
 // ── SEMANAS ───────────────────────────────────────────────────
 async function loadSemanas() {
-  const res    = await api({ action:'getSemanas' });
+  const squad  = state.isCoach ? (state.coachSquadFilter || "men's xv") : state.squad;
+  const res    = await api({ action:'getSemanas', squad });
   const select = document.getElementById('sel-semana');
   if (res.ok && res.semanas && res.semanas.length) {
     state.semanas = res.semanas;
@@ -902,13 +936,14 @@ function selectDay(dia, btn) {
 function resetSessionState() {
   state.rpeSession=null; state.tiempoSesion=''; state.guardado=false; state.cards={};
 }
- 
+
 // ── RUTINA ────────────────────────────────────────────────────
 async function loadRutina() {
   state.semana = parseInt(document.getElementById('sel-semana').value);
   const container = document.getElementById('session-container');
   container.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando sesión...</div>';
-  const res = await api({ action:'getRutina', semana:state.semana, dia:state.dia });
+  const squad = state.isCoach ? (state.coachSquadFilter || "men's xv") : state.squad;
+  const res = await api({ action:'getRutina', semana:state.semana, dia:state.dia, squad });
   if (!res.ok) {
     container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${res.error||'Error al cargar'}</div>`;
     return;
@@ -919,7 +954,7 @@ async function loadRutina() {
   }
   renderSession(res.ejercicios, res.nombreSemana||'', res.sessionNotes||'');
 }
- 
+
 // ── HELPERS ───────────────────────────────────────────────────
 const DAY_NAMES = ['','Day 1','Day 2','Day 3','Day 4','Extra'];
 const PATTERN_TAG = {
@@ -950,7 +985,7 @@ function toEmbedUrl(url) {
   } catch(_){}
   return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : '';
 }
- 
+
 // ── VIDEO MODAL ───────────────────────────────────────────────
 function openVideoModal(nombre, videoUrl) {
   document.getElementById('video-modal-title').textContent = nombre;
@@ -969,7 +1004,7 @@ function closeVideoModal(e) {
   document.getElementById('video-modal-body').innerHTML='';
 }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeVideoModal(); });
- 
+
 // ── RENDER CARD ───────────────────────────────────────────────
 function renderCard(e) {
   const letra   = blockLetter(e.bloque);
@@ -996,18 +1031,20 @@ function renderCard(e) {
   const hasVideo  = !!(e.video && e.video.startsWith('http'));
   const cardId    = (e.bloque+'_'+e.ejercicio).replace(/\W/g,'_');
   const hasLoadBtn = /(%|RPE|RIR)/i.test(e.load_objetivo||'');
- 
+
   // Escapar load_objetivo para el atributo onclick (entre comillas simples)
   const loadObjEsc = (e.load_objetivo||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
- 
+
+  const repsEsc    = (e.reps||'').replace(/'/g,"\\'");
+
   const actionsHtml = `
     <div class="ex-card-actions">
       <button type="button" class="btn-action btn-action-hist" title="Historial de carga"
-              onclick="toggleCardPanel('hist','${cardId}','${nombreEsc}','${loadObjEsc}')">
+              onclick="toggleCardPanel('hist','${cardId}','${nombreEsc}','${loadObjEsc}','${repsEsc}')">
         <span class="btn-action-icon">⟳</span><span>Historial</span>
       </button>
       ${hasLoadBtn ? `<button type="button" class="btn-action btn-action-load" title="Registrar carga"
-              onclick="toggleCardPanel('load','${cardId}','${nombreEsc}','${loadObjEsc}')">
+              onclick="toggleCardPanel('load','${cardId}','${nombreEsc}','${loadObjEsc}','${repsEsc}')">
         <span class="btn-action-icon">＋</span><span>Carga</span>
       </button>` : ''}
       <button type="button" class="btn-action btn-action-hist" title="Timer descanso"
@@ -1039,7 +1076,7 @@ function renderCard(e) {
     <div id="panel-timer-${cardId}" class="hidden">${renderTimerStrip(cardId)}</div>
   </div>`;
 }
- 
+
 // ── RENDER SESSION ────────────────────────────────────────────
 function renderSession(ejercicios, nombreSemana, sessionNotes) {
   const container = document.getElementById('session-container');
@@ -1064,13 +1101,13 @@ function renderSession(ejercicios, nombreSemana, sessionNotes) {
     ${notesBanner}
     ${renderSessionPanel()}`;
 }
- 
+
 // ── SESSION PANEL ─────────────────────────────────────────────
 function renderSessionPanel() {
   if (state.guardado) {
     return `<div class="session-panel"><div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion?' · '+state.tiempoSesion+' min':''}</div></div>`;
   }
- 
+
   // Alturas y colores de la barra RPE
   const RPE_H    = [10,14,18,22,26,28,30,34,38,44];
   const RPE_COL  = ['#00e5a0','#00e5a0','#00e5a0','#00e5a0',
@@ -1078,7 +1115,7 @@ function renderSessionPanel() {
                     '#ff7070','#ff7070','#ff7070'];
   const RPE_LBL  = ['','Reposo','Muy fácil','Ligero','Cómodo',
                     'Moderado','Algo duro','Duro','Muy duro','Casi máx','Máximo'];
- 
+
   const segs = Array.from({length:10},(_,i)=>{
     const n     = i+1;
     const isSel = state.rpeSession === n;
@@ -1088,19 +1125,19 @@ function renderSessionPanel() {
       onclick="selectRpeBar(${n})"
       title="RPE ${n} — ${RPE_LBL[n]}"></div>`;
   }).join('');
- 
+
   const selColor = state.rpeSession ? RPE_COL[state.rpeSession-1] : 'var(--muted)';
   const selText  = state.rpeSession
     ? `<span style="color:${selColor}">RPE ${state.rpeSession} — ${RPE_LBL[state.rpeSession]}</span>`
     : '<span style="color:var(--muted)">Toca una barra para seleccionar</span>';
- 
+
   const tiempoTxt = state.tiempoSesion ? state.tiempoSesion+' min' : '—';
   const numpad = ['1','2','3','4','5','6','7','8','9','⌫','0',''].map(k=>{
     if (k==='') return '<div></div>';
     if (k==='⌫') return `<button class="numpad-btn del" onclick="numpadInput('del')">⌫</button>`;
     return `<button class="numpad-btn" onclick="numpadInput('${k}')">${k}</button>`;
   }).join('');
- 
+
   return `
   <div class="session-panel" id="session-panel">
     <div class="panel-section">
@@ -1125,7 +1162,7 @@ function renderSessionPanel() {
     </button>
   </div>`;
 }
- 
+
 function selectRpeBar(val) {
   const RPE_H   = [10,14,18,22,26,28,30,34,38,44];
   const RPE_COL = ['#00e5a0','#00e5a0','#00e5a0','#00e5a0',
@@ -1175,7 +1212,7 @@ async function saveSession() {
     alert('Error al guardar: '+(res.error||'inténtalo de nuevo'));
   }
 }
- 
+
 async function renderWeekSummary() {
   const container = document.getElementById('week-summary-box');
   if (!container) return;
@@ -1228,9 +1265,9 @@ async function renderWeekSummary() {
     </div>`;
   container.style.display = 'block';
 }
- 
+
 // ── CARD PANEL TOGGLE ─────────────────────────────────────────
-function toggleCardPanel(type, cardId, ejercicio, loadObj) {
+function toggleCardPanel(type, cardId, ejercicio, loadObj, reps) {
   const histEl = document.getElementById('panel-hist-'+cardId);
   const loadEl = document.getElementById('panel-load-'+cardId);
   const isOpen = type==='hist'
@@ -1238,16 +1275,16 @@ function toggleCardPanel(type, cardId, ejercicio, loadObj) {
     : !loadEl.classList.contains('hidden');
   histEl.classList.add('hidden');
   loadEl.classList.add('hidden');
-  // Guardar contexto en state
   if (!state.cards[cardId]) state.cards[cardId] = {};
   state.cards[cardId].ejercicio = ejercicio;
   if (loadObj !== undefined) state.cards[cardId].loadObj = loadObj;
+  if (reps   !== undefined) state.cards[cardId].reps    = reps;
   if (!isOpen) {
     if (type==='hist') { histEl.classList.remove('hidden'); renderHistPanel(cardId, ejercicio, histEl); }
     else               { loadEl.classList.remove('hidden'); renderLoadPanel(cardId, loadEl); }
   }
 }
- 
+
 // ── HISTORY PANEL — Opción C (tarjetas scroll, más reciente a la izquierda) ──
 async function renderHistPanel(cardId, ejercicio, el) {
   el.innerHTML = '<div class="hist-empty" style="padding:6px 0">Cargando…</div>';
@@ -1255,31 +1292,31 @@ async function renderHistPanel(cardId, ejercicio, el) {
   if (!res.ok || !res.historial) {
     el.innerHTML = '<div class="hist-empty">No se pudo cargar el historial.</div>'; return;
   }
- 
+
   // Filtrar registros con carga y ordenar por fecha más reciente primero
   const hist = res.historial
     .filter(h => h.carga && String(h.carga).trim() !== '')
     .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
- 
+
   if (!hist.length) {
     el.innerHTML = '<div class="hist-empty">Sin registros de carga aún.</div>'; return;
   }
- 
+
   // Letra del bloque desde cardId (p.ej. "B2_Back_squat" → "B")
   const letraRaw  = (cardId.match(/^([A-Za-z]+)/) || [])[1] || 'X';
   const letraOk   = ['A','B','C','D','E'].includes(letraRaw.toUpperCase()) ? letraRaw.toUpperCase() : 'X';
- 
+
   // Targets del ejercicio para etiquetar series
   const cs      = state.cards[cardId] || {};
   const targets = cs.targets || parseLoadTargets(cs.loadObj || '');
- 
+
   // Formatear fecha como dd/mm
   function dd_mm(fechaRaw) {
     const d = new Date(fechaRaw);
     if (isNaN(d)) return String(fechaRaw).slice(0, 5);
     return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
   }
- 
+
   // Opacidad decreciente para sesiones antiguas (más de 2 atrás)
   function cardOpacity(i) {
     if (i === 0) return '';
@@ -1287,13 +1324,13 @@ async function renderHistPanel(cardId, ejercicio, el) {
     if (i === 2) return 'opacity:.7';
     return 'opacity:.45';
   }
- 
+
   const cardsHtml = hist.map((h, i) => {
     const isLatest  = i === 0;
     const dateLabel = dd_mm(h.fecha);
     const rawCarga  = String(h.carga).trim();
     const setVals   = rawCarga.includes('/') ? rawCarga.split('/') : [rawCarga];
- 
+
     let setsHtml;
     if (setVals.length > 1) {
       setsHtml = setVals.map((v, si) => {
@@ -1307,29 +1344,45 @@ async function renderHistPanel(cardId, ejercicio, el) {
       setsHtml = `<div class="hist-card-single-kg">${rawCarga}</div>
                   <div class="hist-card-kg-unit">kg</div>`;
     }
- 
+
     const latestClass = isLatest ? ` latest-${letraOk}` : '';
     const dotHtml     = isLatest ? `<div class="hist-card-dot"></div>` : '';
     const opacity     = cardOpacity(i);
- 
+
     return `<div class="hist-card${latestClass}" style="${opacity}">
       <div class="hist-card-date">${dotHtml}${dateLabel}</div>
       <div class="hist-card-sets">${setsHtml}</div>
     </div>`;
   }).join('');
- 
+
   const hintScroll = hist.length > 2
     ? `<div class="hist-scroll-hint">← desliza para ver más</div>` : '';
- 
+
   el.innerHTML = `<div class="hist-cards-scroll">${cardsHtml}</div>${hintScroll}`;
 }
- 
+
 // ── LOAD PANEL (MULTI-SET) ────────────────────────────────────
+// ── Parsear reps por serie ────────────────────────────────────
+// "5"         → [5, 5, 5, 5]  (rellena hasta n series)
+// "6-4-2"     → [6, 4, 2]
+// "6 4 2"     → [6, 4, 2]
+// "8-6-5-4"   → [8, 6, 5, 4]
+function parseRepsPerSet(repsStr, nSets) {
+  if (!repsStr) return Array(nSets).fill(null);
+  // intentar split por - o espacio (solo dígitos)
+  const parts = repsStr.split(/[-\s]+/).map(p => parseInt(p)).filter(v => !isNaN(v));
+  if (parts.length >= nSets) return parts.slice(0, nSets);
+  if (parts.length === 1)    return Array(nSets).fill(parts[0]);
+  // menos partes que series: rellenar con el último valor
+  while (parts.length < nSets) parts.push(parts[parts.length-1]);
+  return parts;
+}
+
 function renderLoadPanel(cardId, el) {
   if (!state.cards[cardId]) state.cards[cardId] = {};
-  const cs  = state.cards[cardId];
-  const ej  = cs.ejercicio || '';
- 
+  const cs = state.cards[cardId];
+  const ej = cs.ejercicio || '';
+
   // ── Si ya está guardado ──
   if (cs.loadSaved) {
     const targets = cs.targets || [''];
@@ -1338,44 +1391,55 @@ function renderLoadPanel(cardId, el) {
     el.innerHTML = `<div class="load-saved-lbl">✓ Carga guardada — ${summary || '—'}</div>`;
     return;
   }
- 
-  // ── Parsear targets desde loadObj ──
-  const targets = parseLoadTargets(cs.loadObj || '');
-  cs.targets = targets;
- 
-  // Inicializar array de valores si no existe o cambió número de series
+
+  // ── Parsear targets y reps ──
+  const targets  = parseLoadTargets(cs.loadObj || '');
+  cs.targets     = targets;
+  const repsArr  = parseRepsPerSet(cs.reps || '', targets.length);
+
   if (!cs.loadVals || cs.loadVals.length !== targets.length) {
     cs.loadVals = targets.map(() => '');
   }
   if (cs.activeIdx === undefined || cs.activeIdx >= targets.length) {
     cs.activeIdx = 0;
   }
- 
+
   // ── Cuadros de series ──
   const setsHtml = targets.map((target, idx) => {
     const isActive = cs.activeIdx === idx;
     const val      = cs.loadVals[idx];
-    return `<div class="load-set-box${isActive?' active':''}"
-                 onclick="selectLoadSet('${cardId}',${idx})"
-                 title="Serie ${idx+1}: ${target}">
+    const isDone   = !!val;
+    const reps     = repsArr[idx];
+    const maxDots  = 8; // cap visual
+    const dotsN    = reps ? Math.min(reps, maxDots) : 0;
+    const dots     = dotsN > 0
+      ? Array(dotsN).fill('<div class="load-rep-dot"></div>').join('')
+      : '';
+    const repLbl   = reps ? `${reps} rep${reps>1?'s':''}` : '';
+    const cls      = `load-set-box${isActive?' active':''}${isDone&&!isActive?' done-set':''}`;
+
+    return `<div class="${cls}" onclick="selectLoadSet('${cardId}',${idx})" title="${target}${reps?' · '+reps+' reps':''}">
       <div class="load-set-target">${target}</div>
+      ${dots ? `<div class="load-rep-dots">${dots}</div>` : ''}
+      ${repLbl ? `<div class="load-rep-lbl">${repLbl}</div>` : ''}
       <div class="load-set-val${val?' has-value':''}" id="ld-set-${cardId}-${idx}">${val||'—'}</div>
       <div class="load-set-unit">kg</div>
     </div>`;
   }).join('');
- 
-  // ── Numpad compartido ──
+
+  // ── Numpad ──
   const ejEsc = ej.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  const numpad = ['1','2','3','4','5','6','7','8','9','⌫','0','.'].map(k=>{
-    if(k==='⌫') return `<button class="numpad-btn del" onclick="loadNumpad('${cardId}','del')">⌫</button>`;
-    if(k==='.') return `<button class="numpad-btn" onclick="loadNumpad('${cardId}','.')" style="font-size:16px;font-weight:700">·</button>`;
+  const numpad = ['1','2','3','4','5','6','7','8','9','⌫','0','.'].map(k => {
+    if (k==='⌫') return `<button class="numpad-btn del" onclick="loadNumpad('${cardId}','del')">⌫</button>`;
+    if (k==='.') return `<button class="numpad-btn" onclick="loadNumpad('${cardId}','.')" style="font-size:16px;font-weight:700">·</button>`;
     return `<button class="numpad-btn" onclick="loadNumpad('${cardId}','${k}')">${k}</button>`;
   }).join('');
- 
+
+  const activeReps = repsArr[cs.activeIdx];
   const serieLabel = targets.length > 1
-    ? `Serie activa: <strong>${targets[cs.activeIdx]}</strong> (toca otro cuadro para cambiar)`
+    ? `<strong>${targets[cs.activeIdx]}</strong>${activeReps?' · '+activeReps+' reps':''} — toca otro cuadro para cambiar`
     : 'Introduce el peso en kg';
- 
+
   el.innerHTML = `
     <div class="hist-title">Registrar carga — ${ej}</div>
     <div class="load-sets-row">${setsHtml}</div>
@@ -1383,32 +1447,34 @@ function renderLoadPanel(cardId, el) {
     <div class="load-hint">${serieLabel}</div>
     <button class="btn-save-load" onclick="saveLoad('${cardId}','${ejEsc}')">Guardar carga</button>`;
 }
- 
-// Seleccionar serie activa (sin re-renderizar todo el panel)
+
+// Seleccionar serie activa
 function selectLoadSet(cardId, idx) {
   if (!state.cards[cardId]) return;
-  state.cards[cardId].activeIdx = idx;
-  const targets = state.cards[cardId].targets || [];
+  const cs = state.cards[cardId];
+  cs.activeIdx = idx;
   const panel = document.getElementById('panel-load-' + cardId);
   if (!panel) return;
-  // Actualizar clases activo/inactivo
   panel.querySelectorAll('.load-set-box').forEach((box, i) => {
-    box.classList.toggle('active', i === idx);
+    const val = cs.loadVals && cs.loadVals[i];
+    box.classList.toggle('active',    i === idx);
+    box.classList.toggle('done-set',  !!val && i !== idx);
   });
-  // Actualizar hint
   const hint = panel.querySelector('.load-hint');
-  if (hint && targets.length > 1) {
-    hint.innerHTML = `Serie activa: <strong>${targets[idx]}</strong> (toca otro cuadro para cambiar)`;
+  if (hint && cs.targets && cs.targets.length > 1) {
+    const repsArr   = parseRepsPerSet(cs.reps || '', cs.targets.length);
+    const activeReps = repsArr[idx];
+    hint.innerHTML = `<strong>${cs.targets[idx]}</strong>${activeReps?' · '+activeReps+' reps':''} — toca otro cuadro para cambiar`;
   }
 }
- 
+
 // Teclado numérico para carga — actualiza solo el display de la serie activa
 function loadNumpad(cardId, key) {
   if (!state.cards[cardId]) state.cards[cardId] = { loadVals:[''], activeIdx:0 };
   const cs  = state.cards[cardId];
   const idx = (cs.activeIdx !== undefined) ? cs.activeIdx : 0;
   if (!cs.loadVals) cs.loadVals = [''];
- 
+
   if (key === 'del') {
     cs.loadVals[idx] = cs.loadVals[idx].slice(0, -1);
   } else if (key === '.') {
@@ -1420,14 +1486,14 @@ function loadNumpad(cardId, key) {
     if (cs.loadVals[idx].length >= 6) return;
     cs.loadVals[idx] += key;
   }
- 
+
   const disp = document.getElementById(`ld-set-${cardId}-${idx}`);
   if (disp) {
     disp.textContent = cs.loadVals[idx] || '—';
     disp.classList.toggle('has-value', !!cs.loadVals[idx]);
   }
 }
- 
+
 // Guardar carga (multi-serie: guarda como "val1/val2/val3" en carga_real)
 async function saveLoad(cardId, ejercicio) {
   const cs = state.cards[cardId];
@@ -1435,23 +1501,23 @@ async function saveLoad(cardId, ejercicio) {
   const ej      = ejercicio || cs.ejercicio || '';
   const targets = cs.targets || [''];
   const vals    = cs.loadVals || [''];
- 
+
   const hasAny = vals.some(v => v && v.trim().length > 0);
   if (!hasAny) return;
- 
+
   const btn = document.querySelector(`#panel-load-${cardId} .btn-save-load`);
   if (btn) { btn.disabled=true; btn.textContent='Guardando…'; }
- 
+
   // Combina los valores como "80/82.5/85" para almacenamiento
   const cargaStr = vals.filter(v => v && v.trim()).join('/');
- 
+
   const res = await api({
     action:'saveRegistro', usuario:state.user.usuario,
     semana:state.semana, dia:state.dia,
     bloque: cardId.split('_')[0], ejercicio: ej,
     carga_real: cargaStr, rpe:'', notas_jugador:'', tiempo_sesion:''
   });
- 
+
   if (res.ok) {
     cs.loadSaved = true;
     const el = document.getElementById('panel-load-'+cardId);
@@ -1464,7 +1530,18 @@ async function saveLoad(cardId, ejercicio) {
     alert('Error al guardar: '+(res.error||'inténtalo de nuevo'));
   }
 }
- 
+
+// ── COACH SQUAD FILTER ────────────────────────────────────────
+async function onCoachSquadChange() {
+  const sel = document.getElementById('coach-squad-filter');
+  state.coachSquadFilter = sel ? sel.value : '';
+  // Reload semanas para el squad seleccionado (vista rutinas del coach)
+  await loadSemanas();
+  resetSessionState();
+  loadRutina();
+  loadCoachPanel();
+}
+
 // ═══════════════════════════════════════════════════════════════
 // ── COACH PANEL ──────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -1474,21 +1551,35 @@ async function loadCoachPanel() {
   document.getElementById('coach-sem-label').textContent = semanaNombre;
   const res = await api({ action:'getEquipo', semana:state.semana });
   if (!res.ok) return;
-  state.coachEquipo    = res.equipo    || [];
-  state.coachRpeChart  = res.rpeChart  || [];
+  state.coachEquipo       = res.equipo         || [];
+  state.coachRpeChart     = res.rpeChart        || [];
+  state.coachRpeBySquad   = res.rpeChartBySquad || {};
+
+  // Filtrar por squad si hay uno seleccionado
+  const sqFilter = state.coachSquadFilter || '';
+  const equipoFiltrado = sqFilter
+    ? state.coachEquipo.filter(j => j.squad && j.squad.toLowerCase() === sqFilter.toLowerCase())
+    : state.coachEquipo;
+
+  // Usar rpeChart del squad seleccionado si existe, si no el global
+  const rpeChartActivo = sqFilter && state.coachRpeBySquad[sqFilter]
+    ? state.coachRpeBySquad[sqFilter]
+    : state.coachRpeChart;
+
   const hoyStr  = fmtDate(new Date());
-  const total   = state.coachEquipo.length;
-  const complet = state.coachEquipo.filter(j =>
+  const total   = equipoFiltrado.length;
+  const complet = equipoFiltrado.filter(j =>
     j.sesiones7dias && j.sesiones7dias.some(s => s.fecha===hoyStr && s.guardada)
   ).length;
-  const pend    = state.coachEquipo.filter(j => j.estado==='pendiente').length;
-  const inact   = state.coachEquipo.filter(j => j.estado==='inactivo').length;
+  const pend    = equipoFiltrado.filter(j => j.estado==='pendiente').length;
+  const inact   = equipoFiltrado.filter(j => j.estado==='inactivo').length;
   document.getElementById('kpi-total').textContent = total;
   document.getElementById('kpi-hoy').textContent   = complet;
   document.getElementById('kpi-pend').textContent  = pend;
   document.getElementById('kpi-sin').textContent   = inact;
+
   const tbody = document.getElementById('coach-tbody');
-  tbody.innerHTML = state.coachEquipo.map(j => {
+  tbody.innerHTML = equipoFiltrado.map(j => {
     const dotCls = j.estado==='guardada' ? 'dot-green' : j.estado==='pendiente' ? 'dot-amber' : 'dot-red';
     let rpe7Html = '<span class="rpe7-chip rpe7-none">—</span>';
     if (j.rpe7dias !== null && j.rpe7dias !== undefined) {
@@ -1517,19 +1608,22 @@ async function loadCoachPanel() {
       const compCls = compliance >= 80 ? 'comp-high' : compliance >= 50 ? 'comp-mid' : 'comp-low';
       compHtml = `<span class="comp-chip ${compCls}">${compliance}%</span>`;
     }
+    // Badge squad mini
+    const squadLabel = j.squad ? `<span style="font-size:9px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--muted);margin-left:5px">${j.squad}</span>` : '';
     return `<tr>
-      <td><span class="status-dot ${dotCls}"></span>${j.nombre}</td>
+      <td><span class="status-dot ${dotCls}"></span>${j.nombre}${sqFilter?'':squadLabel}</td>
       <td>${rpe7Html}</td>
       <td><div class="week-squares">${squares}</div></td>
       <td>${tiempoTxt}</td>
       <td>${compHtml}</td>
     </tr>`;
   }).join('');
-  if (state.coachRpeChart.length) {
+
+  if (rpeChartActivo.length) {
     const semanaActual = String(state.semana);
-    const allRpes = state.coachRpeChart.flatMap(s=>(s.sesiones||[]).map(ss=>ss.rpeMedia));
+    const allRpes = rpeChartActivo.flatMap(s=>(s.sesiones||[]).map(ss=>ss.rpeMedia));
     const maxRpe  = allRpes.length ? Math.max(...allRpes) : 10;
-    const weeksHtml = state.coachRpeChart.map(sem => {
+    const weeksHtml = rpeChartActivo.map(sem => {
       const isCurrent = sem.semana===semanaActual;
       const sesionesHtml = (sem.sesiones||[]).map(ss => {
         const c   = rpeClass(ss.rpeMedia);
@@ -1550,12 +1644,12 @@ async function loadCoachPanel() {
     document.getElementById('coach-rpe-weeks').innerHTML = weeksHtml;
     document.getElementById('coach-rpe-chart').style.display = 'block';
   }
-  renderTeamLoadChart(semanaNombre);
-  renderPlayerSelector();
+  renderTeamLoadChart(semanaNombre, rpeChartActivo);
+  renderPlayerSelector(equipoFiltrado);
 }
- 
-function renderTeamLoadChart(semanaNombre) {
-  const chart = state.coachRpeChart;
+
+function renderTeamLoadChart(semanaNombre, chart) {
+  if (!chart) chart = state.coachRpeChart;
   if (!chart.length) return;
   const allRpes = chart.flatMap(s=>(s.sesiones||[]).map(ss=>ss.rpeMedia));
   const maxVal  = allRpes.length ? Math.max(...allRpes) : 10;
@@ -1586,15 +1680,15 @@ function renderTeamLoadChart(semanaNombre) {
   document.getElementById('coach-team-load-bars').innerHTML = barsHtml;
   document.getElementById('coach-team-load-chart').style.display = 'block';
 }
- 
-function renderPlayerSelector() {
+
+function renderPlayerSelector(equipo) {
+  if (!equipo) equipo = state.coachEquipo;
   const select = document.getElementById('coach-player-select');
-  const jugadores = state.coachEquipo;
   select.innerHTML = '<option value="">— Selecciona un jugador —</option>' +
-    jugadores.map(j=>`<option value="${j.usuario}">${j.nombre}</option>`).join('');
+    equipo.map(j=>`<option value="${j.usuario}">${j.nombre}</option>`).join('');
   document.getElementById('coach-player-evo-chart').style.display = 'block';
 }
- 
+
 function renderPlayerEvo() {
   const usuario = document.getElementById('coach-player-select').value;
   const content = document.getElementById('coach-player-evo-content');
@@ -1605,7 +1699,7 @@ function renderPlayerEvo() {
   content.innerHTML = '<div class="pevo-empty" id="pevo-loading">Cargando…</div>';
   loadPlayerEvoData(usuario, content);
 }
- 
+
 async function loadPlayerEvoData(usuario, content) {
   const res = await api({ action:'getHistorial', usuario, ejercicio:'RPE_GLOBAL' });
   if (!res.ok || !res.historial) {
@@ -1652,7 +1746,7 @@ async function loadPlayerEvoData(usuario, content) {
   }).join('');
   content.innerHTML = `<div class="player-evo-wrap">${weeksHtml}</div>`;
 }
- 
+
 // ── TIMER STRIP ───────────────────────────────────────────────
 function renderTimerStrip(cardId) {
   const presets = [
@@ -1683,7 +1777,7 @@ function renderTimerStrip(cardId) {
     </div>
   </div>`;
 }
- 
+
 // Per-card timer state
 const timerState = {};
 function timerGet(id) {
@@ -1752,14 +1846,14 @@ function toggleTimerPanel(cardId) {
   panel.classList.toggle('hidden');
   if(!panel.classList.contains('hidden')) timerDraw(cardId);
 }
- 
+
 // ── TICK CONFIRMACIÓN ─────────────────────────────────────────
 function toggleTick(cardId) {
   const card = document.getElementById('card-' + cardId);
   if (!card) return;
- 
+
   const isDone = card.classList.contains('done');
- 
+
   if (!isDone) {
     // Cerrar todos los paneles abiertos antes de colapsar
     ['hist','load','timer'].forEach(type => {
@@ -1771,10 +1865,10 @@ function toggleTick(cardId) {
     card.classList.remove('done');
   }
 }
- 
+
 // ── LOGOUT ────────────────────────────────────────────────────
 function logout() {
-  state = {user:null,dia:1,semana:1,semanas:[],rpeSession:null,tiempoSesion:'',guardado:false,isCoach:false,cards:{},coachEquipo:[],coachRpeChart:[]};
+  state = {user:null,dia:1,semana:1,semanas:[],rpeSession:null,tiempoSesion:'',guardado:false,isCoach:false,cards:{},coachEquipo:[],coachRpeChart:[],coachRpeBySquad:{},coachSquadFilter:'',squad:''};
   document.getElementById('screen-app').style.display  ='none';
   document.getElementById('screen-login').style.display='flex';
   document.getElementById('coach-panel').classList.remove('visible');
