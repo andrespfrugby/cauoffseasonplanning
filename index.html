@@ -397,6 +397,37 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 /* hint scroll */
 .hist-scroll-hint { font-size:9px; color:var(--muted); text-align:center; margin-top:5px; }
 
+/* ── 1RM ESTIMADO en historial ── */
+.hist-card-1rm {
+  border-top:0.5px solid rgba(255,255,255,.08);
+  margin-top:6px; padding-top:5px;
+}
+.hist-card-1rm-lbl {
+  font-size:8px; color:var(--muted);
+  letter-spacing:.04em; text-transform:uppercase;
+  line-height:1; margin-bottom:2px;
+}
+.hist-card-1rm-val {
+  font-size:15px; font-weight:600;
+  line-height:1; color:var(--text);
+}
+.hist-card.latest-A .hist-card-1rm-val { color:#5fb3f5; }
+.hist-card.latest-B .hist-card-1rm-val { color:#3ecfa0; }
+.hist-card.latest-C .hist-card-1rm-val { color:#ffc04d; }
+.hist-card.latest-D .hist-card-1rm-val { color:#a99ff5; }
+.hist-card.latest-E .hist-card-1rm-val { color:#f07aaa; }
+.hist-card.latest-X .hist-card-1rm-val { color:var(--text); }
+.hist-card-1rm-unit {
+  font-size:8px; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.04em;
+}
+.hist-1rm-delta {
+  display:inline-block; font-size:8px; font-weight:600;
+  border-radius:3px; padding:1px 4px; margin-left:3px;
+}
+.hist-1rm-delta.up   { background:rgba(0,229,160,.12); color:#00e5a0; }
+.hist-1rm-delta.down { background:rgba(255,77,77,.12);  color:#ff7070; }
+
 /* ── COACH PANEL ── */
 #coach-panel { display:none; }
 #coach-panel.visible { display:block; }
@@ -1285,7 +1316,7 @@ function toggleCardPanel(type, cardId, ejercicio, loadObj, reps) {
   }
 }
 
-// ── HISTORY PANEL — Opción C (tarjetas scroll, más reciente a la izquierda) ──
+// ── HISTORY PANEL — Opción C + estimador 1RM ─────────────────
 async function renderHistPanel(cardId, ejercicio, el) {
   el.innerHTML = '<div class="hist-empty" style="padding:6px 0">Cargando…</div>';
   const res = await api({ action:'getHistorial', usuario:state.user.usuario, ejercicio });
@@ -1293,7 +1324,6 @@ async function renderHistPanel(cardId, ejercicio, el) {
     el.innerHTML = '<div class="hist-empty">No se pudo cargar el historial.</div>'; return;
   }
 
-  // Filtrar registros con carga y ordenar por fecha más reciente primero
   const hist = res.historial
     .filter(h => h.carga && String(h.carga).trim() !== '')
     .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
@@ -1302,25 +1332,44 @@ async function renderHistPanel(cardId, ejercicio, el) {
     el.innerHTML = '<div class="hist-empty">Sin registros de carga aún.</div>'; return;
   }
 
-  // Letra del bloque desde cardId (p.ej. "B2_Back_squat" → "B")
-  const letraRaw  = (cardId.match(/^([A-Za-z]+)/) || [])[1] || 'X';
-  const letraOk   = ['A','B','C','D','E'].includes(letraRaw.toUpperCase()) ? letraRaw.toUpperCase() : 'X';
+  const letraRaw = (cardId.match(/^([A-Za-z]+)/) || [])[1] || 'X';
+  const letraOk  = ['A','B','C','D','E'].includes(letraRaw.toUpperCase()) ? letraRaw.toUpperCase() : 'X';
+  const cs       = state.cards[cardId] || {};
+  const targets  = cs.targets || parseLoadTargets(cs.loadObj || '');
 
-  // Targets del ejercicio para etiquetar series
-  const cs      = state.cards[cardId] || {};
-  const targets = cs.targets || parseLoadTargets(cs.loadObj || '');
+  // Parsear reps del ejercicio — necesarias para el 1RM
+  const repsStr   = cs.reps || '';
+  const repsArr   = parseRepsPerSet(repsStr, Math.max(targets.length, 1));
 
-  // Formatear fecha como dd/mm
   function dd_mm(fechaRaw) {
     const d = new Date(fechaRaw);
     if (isNaN(d)) return String(fechaRaw).slice(0, 5);
     return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
   }
 
-  // Opacidad decreciente para sesiones antiguas (más de 2 atrás)
+  // Fórmula Epley: 1RM ≈ kg * (1 + reps/30)
+  // Para multi-serie: usa la serie con mayor peso
+  function calc1RM(rawCarga, repsArrLocal) {
+    const setVals = rawCarga.includes('/') ? rawCarga.split('/') : [rawCarga];
+    let best1rm = null;
+    setVals.forEach((v, si) => {
+      const kg   = parseFloat(v);
+      const reps = repsArrLocal[si] || repsArrLocal[0] || null;
+      if (isNaN(kg) || kg <= 0) return;
+      // Si tenemos reps y son > 1, aplicar Epley; si son 1 el 1RM es el propio peso
+      const rm = reps && reps > 1
+        ? Math.round(kg * (1 + reps / 30))
+        : (reps === 1 ? Math.round(kg) : null);
+      if (rm !== null && (best1rm === null || rm > best1rm)) best1rm = rm;
+    });
+    return best1rm;
+  }
+
+  // Pre-calcular 1RM de cada sesión
+  const rms = hist.map(h => calc1RM(String(h.carga).trim(), repsArr));
+
   function cardOpacity(i) {
-    if (i === 0) return '';
-    if (i === 1) return '';
+    if (i <= 1) return '';
     if (i === 2) return 'opacity:.7';
     return 'opacity:.45';
   }
@@ -1345,13 +1394,39 @@ async function renderHistPanel(cardId, ejercicio, el) {
                   <div class="hist-card-kg-unit">kg</div>`;
     }
 
+    // 1RM con delta vs sesión anterior si existe
+    let rmHtml = '';
+    const rm = rms[i];
+    if (rm !== null) {
+      let deltaHtml = '';
+      // buscar sesión anterior con 1rm
+      for (let j = i + 1; j < rms.length; j++) {
+        if (rms[j] !== null) {
+          const diff = rm - rms[j];
+          if (diff !== 0) {
+            const cls = diff > 0 ? 'up' : 'down';
+            deltaHtml = `<span class="hist-1rm-delta ${cls}">${diff > 0 ? '+' : ''}${diff}</span>`;
+          }
+          break;
+        }
+      }
+      rmHtml = `<div class="hist-card-1rm">
+        <div class="hist-card-1rm-lbl">1RM est.</div>
+        <div>
+          <span class="hist-card-1rm-val">${rm}</span>
+          <span class="hist-card-1rm-unit"> kg</span>
+          ${deltaHtml}
+        </div>
+      </div>`;
+    }
+
     const latestClass = isLatest ? ` latest-${letraOk}` : '';
     const dotHtml     = isLatest ? `<div class="hist-card-dot"></div>` : '';
-    const opacity     = cardOpacity(i);
 
-    return `<div class="hist-card${latestClass}" style="${opacity}">
+    return `<div class="hist-card${latestClass}" style="${cardOpacity(i)}">
       <div class="hist-card-date">${dotHtml}${dateLabel}</div>
       <div class="hist-card-sets">${setsHtml}</div>
+      ${rmHtml}
     </div>`;
   }).join('');
 
