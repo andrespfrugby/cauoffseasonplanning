@@ -658,6 +658,95 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .wsumm-lbl { font-size:9px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:3px; }
 .video-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.80); z-index:100; align-items:center; justify-content:center; padding:1rem; }
 .video-modal-overlay.open { display:flex; }
+
+/* ── PLAYER PROFILE MODAL ── */
+.player-modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.85); z-index:200;
+  align-items:flex-start; justify-content:center;
+  padding:1.5rem 1rem; overflow-y:auto;
+}
+.player-modal-overlay.open { display:flex; }
+.player-modal {
+  width:100%; max-width:680px;
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:14px; overflow:hidden;
+  animation:slideDown .2s ease;
+}
+.player-modal-header {
+  display:flex; align-items:center; gap:12px;
+  padding:16px 18px; border-bottom:1px solid var(--border);
+  position:sticky; top:0; background:var(--surface); z-index:2;
+}
+.player-modal-avatar {
+  width:42px; height:42px; border-radius:50%;
+  background:rgba(232,20,42,.15); border:2px solid rgba(232,20,42,.35);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-head); font-size:18px; color:var(--accent);
+  flex-shrink:0;
+}
+.player-modal-name { font-family:var(--font-head); font-size:22px; letter-spacing:.5px; color:var(--text); }
+.player-modal-sub  { font-size:11px; color:var(--muted); display:flex; align-items:center; gap:8px; margin-top:2px; }
+.player-modal-close {
+  margin-left:auto; background:none; border:1px solid var(--border2);
+  border-radius:8px; color:var(--muted); width:30px; height:30px;
+  cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center;
+}
+.player-modal-close:hover { color:var(--text); }
+.player-modal-body { padding:16px 18px; display:flex; flex-direction:column; gap:14px; }
+.pm-section-lbl {
+  font-size:9px; font-weight:600; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--muted);
+  margin-bottom:10px; display:flex; align-items:center; gap:7px;
+}
+.pm-section-lbl::after { content:''; flex:1; height:1px; background:var(--border); }
+/* Stat chips */
+.pm-stat-row { display:flex; gap:8px; flex-wrap:wrap; }
+.pm-stat-chip {
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:8px; padding:8px 12px; min-width:80px;
+}
+.pm-stat-val { font-family:var(--font-head); font-size:24px; line-height:1; }
+.pm-stat-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:2px; }
+/* Inline sparkline */
+.pm-spark { display:flex; gap:3px; align-items:flex-end; height:32px; }
+.pm-spark-bar { flex:1; border-radius:2px 2px 0 0; min-height:3px; min-width:8px; }
+/* Session picker */
+.pm-sess-pills { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
+.pm-sess-pill {
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:6px; padding:4px 10px; font-size:11px; font-weight:500;
+  cursor:pointer; color:var(--muted); transition:all .12s; font-family:var(--font-body);
+}
+.pm-sess-pill:hover { border-color:var(--accent2); color:var(--text); }
+.pm-sess-pill.active { background:rgba(0,229,160,.1); border-color:var(--accent2); color:var(--accent2); }
+/* Pattern 1RM table */
+.pm-rm-table { width:100%; border-collapse:collapse; font-size:11px; }
+.pm-rm-table th {
+  font-size:9px; font-weight:600; letter-spacing:.07em; text-transform:uppercase;
+  color:var(--muted); padding:5px 8px; border-bottom:1px solid var(--border); text-align:left;
+}
+.pm-rm-table td { padding:7px 8px; border-bottom:1px solid rgba(255,255,255,.04); }
+.pm-rm-table tr:last-child td { border-bottom:none; }
+.pm-ex-name { font-weight:500; color:var(--text); }
+.pm-rm-val  { font-weight:600; color:var(--accent2); text-align:right; }
+.pm-rpe-val { color:var(--muted); text-align:center; }
+/* Session detail */
+.pm-sess-detail { display:flex; flex-direction:column; gap:6px; }
+.pm-sess-row {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:9px 12px;
+  display:flex; align-items:center; gap:10px;
+}
+.pm-sess-blk {
+  width:28px; height:28px; border-radius:5px;
+  background:rgba(0,229,160,.1); border:1px solid rgba(0,229,160,.25);
+  display:flex; align-items:center; justify-content:center;
+  font-size:9px; font-weight:700; color:var(--accent2); flex-shrink:0;
+}
+.pm-sess-ex { font-size:12px; font-weight:500; color:var(--text); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pm-sess-kg { font-size:13px; font-weight:700; color:var(--accent2); }
+.pm-sess-rpe{ font-size:10px; color:var(--muted); }
 .video-modal { width:100%; max-width:640px; background:var(--surface); border:1px solid var(--border2); border-radius:12px; overflow:hidden; }
 .video-modal-header { display:flex; align-items:center; justify-content:space-between; padding:11px 15px; border-bottom:1px solid var(--border); }
 .video-modal-title { font-size:13px; font-weight:600; color:var(--text); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -693,6 +782,23 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <button class="video-modal-close" onclick="closeVideoModal()">✕</button>
     </div>
     <div id="video-modal-body"></div>
+  </div>
+</div>
+
+<!-- PLAYER PROFILE MODAL -->
+<div class="player-modal-overlay" id="player-modal-overlay" onclick="closePlayerModal(event)">
+  <div class="player-modal" id="player-modal">
+    <div class="player-modal-header">
+      <div class="player-modal-avatar" id="pm-avatar">?</div>
+      <div>
+        <div class="player-modal-name" id="pm-name">Jugador</div>
+        <div class="player-modal-sub" id="pm-sub">—</div>
+      </div>
+      <button class="player-modal-close" onclick="closePlayerModal()">✕</button>
+    </div>
+    <div class="player-modal-body" id="pm-body">
+      <div class="loader"><div class="spinner"></div>Cargando perfil...</div>
+    </div>
   </div>
 </div>
 
@@ -1347,16 +1453,23 @@ async function renderHistPanel(cardId, ejercicio, el) {
     return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
   }
 
+  // ¿Es un ejercicio con peso real (%) o solo RPE/BW/isométrico?
+  // Solo calculamos 1RM si al menos un target contiene %
+  const isWeightBased = targets.some(t => /%/.test(t));
+
   // Fórmula Epley: 1RM ≈ kg * (1 + reps/30)
-  // Para multi-serie: usa la serie con mayor peso
+  // Solo se aplica si es ejercicio con % y tiene reps > 1
+  // Ignora valores ≤ 10 que probablemente son RPE registrados, no kg
   function calc1RM(rawCarga, repsArrLocal) {
+    if (!isWeightBased) return null;
     const setVals = rawCarga.includes('/') ? rawCarga.split('/') : [rawCarga];
     let best1rm = null;
     setVals.forEach((v, si) => {
       const kg   = parseFloat(v);
       const reps = repsArrLocal[si] || repsArrLocal[0] || null;
       if (isNaN(kg) || kg <= 0) return;
-      // Si tenemos reps y son > 1, aplicar Epley; si son 1 el 1RM es el propio peso
+      // Si el valor es ≤ 10 es casi seguro un RPE registrado, no kg reales
+      if (kg <= 10) return;
       const rm = reps && reps > 1
         ? Math.round(kg * (1 + reps / 30))
         : (reps === 1 ? Math.round(kg) : null);
@@ -1684,10 +1797,16 @@ async function loadCoachPanel() {
       const compCls = compliance >= 80 ? 'comp-high' : compliance >= 50 ? 'comp-mid' : 'comp-low';
       compHtml = `<span class="comp-chip ${compCls}">${compliance}%</span>`;
     }
-    // Badge squad mini
     const squadLabel = j.squad ? `<span style="font-size:9px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--muted);margin-left:5px">${j.squad}</span>` : '';
+    const usuEsc = j.usuario.replace(/'/g,"\\'");
+    const nomEsc = j.nombre.replace(/'/g,"\\'");
     return `<tr>
-      <td><span class="status-dot ${dotCls}"></span>${j.nombre}${sqFilter?'':squadLabel}</td>
+      <td>
+        <span class="status-dot ${dotCls}"></span>
+        <span style="cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,255,255,.15);text-underline-offset:3px"
+              onclick="openPlayerModal('${usuEsc}','${nomEsc}')">${j.nombre}</span>
+        ${sqFilter?'':squadLabel}
+      </td>
       <td>${rpe7Html}</td>
       <td><div class="week-squares">${squares}</div></td>
       <td>${tiempoTxt}</td>
@@ -1954,6 +2073,299 @@ function toggleTick(cardId) {
   } else {
     card.classList.remove('done');
   }
+}
+
+// ── PLAYER PROFILE MODAL ─────────────────────────────────────
+function closePlayerModal(e) {
+  if (e && e.target !== document.getElementById('player-modal-overlay')) return;
+  document.getElementById('player-modal-overlay').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') { closeVideoModal(); closePlayerModal(); } });
+
+async function openPlayerModal(usuario, nombre) {
+  // Buscar datos del jugador en state
+  const jData = state.coachEquipo.find(j => j.usuario === usuario) || {};
+  // Header
+  document.getElementById('pm-avatar').textContent = nombre.split(',')[0][0] || '?';
+  document.getElementById('pm-name').textContent   = nombre;
+  const subParts = [jData.posicion, jData.squad].filter(Boolean);
+  document.getElementById('pm-sub').innerHTML = subParts.map(p =>
+    `<span style="background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:1px 7px;font-size:10px">${p}</span>`
+  ).join('');
+  document.getElementById('pm-body').innerHTML = '<div class="loader"><div class="spinner"></div>Cargando perfil...</div>';
+  document.getElementById('player-modal-overlay').classList.add('open');
+
+  // Cargar historial completo del jugador
+  const res = await api({ action:'getHistorial', usuario });
+  if (!res.ok || !res.historial) {
+    document.getElementById('pm-body').innerHTML = '<div class="hist-empty">No se pudo cargar el perfil.</div>';
+    return;
+  }
+
+  const hist = res.historial;
+
+  // ── RPE evolución (RPE_GLOBAL por sesión) ──────────────────
+  const rpeGlobal = hist
+    .filter(h => h.ejercicio === 'RPE_GLOBAL' && h.rpe)
+    .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+
+  // ── Semanas disponibles (para el selector) ─────────────────
+  const semanasDisp = [...new Set(
+    hist.filter(h => h.ejercicio !== 'RPE_GLOBAL' && h.carga)
+        .map(h => String(h.semana).trim())
+  )].sort((a,b) => parseInt(a)-parseInt(b));
+
+  // ── Estado del modal en closure ─────────────────────────────
+  let selSemana = semanasDisp[semanasDisp.length-1] || '';
+
+  function render() {
+    // RPE sparkline
+    const maxRpe = 10;
+    const sparkBars = rpeGlobal.slice(-12).map(h => {
+      const pct = Math.round((h.rpe/maxRpe)*32);
+      const c   = rpeClass(parseFloat(h.rpe));
+      const col = c==='low'?'#00e5a0':c==='mid'?'#ffc04d':'#ff7070';
+      const dd  = new Date(h.fecha); 
+      const lbl = `${String(dd.getDate()).padStart(2,'0')}/${String(dd.getMonth()+1).padStart(2,'0')}`;
+      return `<div class="pm-spark-bar" style="height:${Math.max(pct,3)}px;background:${col}" title="${lbl}: RPE ${h.rpe}"></div>`;
+    }).join('');
+    const avgRpe7 = rpeGlobal.length
+      ? Math.round((rpeGlobal.slice(-7).reduce((s,h)=>s+parseFloat(h.rpe),0) / Math.min(rpeGlobal.length,7))*10)/10
+      : null;
+    const ultimaSesion = rpeGlobal.length ? rpeGlobal[rpeGlobal.length-1] : null;
+
+    // ── Cargas con peso real (ejercicios con %) ────────────────
+    const loadHist = hist.filter(h =>
+      h.ejercicio !== 'RPE_GLOBAL' &&
+      h.carga && String(h.carga).trim() !== '' &&
+      parseFloat(String(h.carga).split('/')[0]) > 10
+    );
+
+    // Agrupar por ejercicio → historial de cargas
+    const byEj = {};
+    loadHist.forEach(h => {
+      const ej = h.ejercicio;
+      if (!byEj[ej]) byEj[ej] = [];
+      byEj[ej].push(h);
+    });
+
+    // Para cada ejercicio, calcular max kg y 1RM estimado (sin reps: usar Epley con 5 reps aprox)
+    const ejRows = Object.entries(byEj)
+      .map(([ej, registros]) => {
+        const last = registros.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+        const vals = String(last.carga).split('/').map(parseFloat).filter(v=>!isNaN(v)&&v>10);
+        const maxKg = vals.length ? Math.max(...vals) : null;
+        return { ej, last, maxKg, count: registros.length };
+      })
+      .filter(r => r.maxKg)
+      .sort((a,b) => b.maxKg - a.maxKg);
+
+    // ── Detalle sesión seleccionada ───────────────────────────
+    const sessRegistros = selSemana
+      ? hist.filter(h =>
+          String(h.semana).trim() === selSemana &&
+          h.ejercicio !== 'RPE_GLOBAL' &&
+          h.carga && String(h.carga).trim() !== ''
+        ).sort((a,b) => parseInt(a.dia)-parseInt(b.dia))
+      : [];
+
+    const rpeSession = selSemana
+      ? hist.find(h => String(h.semana).trim() === selSemana && h.ejercicio === 'RPE_GLOBAL')
+      : null;
+
+    // ── Selector de semanas ───────────────────────────────────
+    const semPills = semanasDisp.map((s,i) => {
+      const semNom = (state.semanas && state.semanas[parseInt(s)-1]) || `Sem ${s}`;
+      return `<button class="pm-sess-pill${s===selSemana?' active':''}" onclick="pmSelSemana('${usuario}','${nombre}','${s}')">${semNom}</button>`;
+    }).join('');
+
+    // Buildear HTML
+    document.getElementById('pm-body').innerHTML = `
+      <div>
+        <div class="pm-section-lbl">RPE evolución (últimas ${rpeGlobal.length} sesiones)</div>
+        <div style="display:flex;align-items:flex-end;gap:14px">
+          <div class="pm-spark" style="flex:1">${sparkBars || '<span style="color:var(--muted);font-size:11px">Sin sesiones registradas aún</span>'}</div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-family:var(--font-head);font-size:28px;line-height:1;color:${avgRpe7?rpeClass(avgRpe7)==='low'?'#00e5a0':rpeClass(avgRpe7)==='mid'?'#ffc04d':'#ff7070':'var(--muted)'}">${avgRpe7||'—'}</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">RPE 7d</div>
+          </div>
+          ${ultimaSesion ? `<div style="text-align:right;flex-shrink:0">
+            <div style="font-size:11px;color:var(--muted)">Última sesión</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${String(ultimaSesion.fecha).slice(0,10)}</div>
+          </div>` : ''}
+        </div>
+      </div>
+
+      ${ejRows.length ? `<div>
+        <div class="pm-section-lbl">Cargas por ejercicio</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+          <table class="pm-rm-table">
+            <thead><tr>
+              <th>Ejercicio</th>
+              <th style="text-align:right">Último máx.</th>
+              <th style="text-align:center">Registros</th>
+            </tr></thead>
+            <tbody>
+              ${ejRows.map(r => `<tr>
+                <td class="pm-ex-name">${r.ej}</td>
+                <td class="pm-rm-val">${r.maxKg} kg</td>
+                <td class="pm-rpe-val">${r.count}×</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>` : ''}
+
+      ${semanasDisp.length ? `<div>
+        <div class="pm-section-lbl">Detalle por semana</div>
+        <div class="pm-sess-pills">${semPills}</div>
+        ${rpeSession ? `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">RPE sesión: <strong style="color:${rpeClass(rpeSession.rpe)==='low'?'#00e5a0':rpeClass(rpeSession.rpe)==='mid'?'#ffc04d':'#ff7070'}">${rpeSession.rpe}</strong>${rpeSession.tiempo_sesion?' · '+rpeSession.tiempo_sesion+' min':''}</div>` : ''}
+        <div class="pm-sess-detail">
+          ${sessRegistros.length ? sessRegistros.map(h => {
+            const bloque = String(h.bloque||'').trim() || '—';
+            return `<div class="pm-sess-row">
+              <div class="pm-sess-blk">${bloque.slice(0,3)}</div>
+              <div class="pm-sess-ex">${h.ejercicio}</div>
+              <div style="text-align:right">
+                <div class="pm-sess-kg">${h.carga} kg</div>
+                ${h.rpe?`<div class="pm-sess-rpe">RPE ${h.rpe}</div>`:''}
+              </div>
+            </div>`;
+          }).join('') : '<div style="color:var(--muted);font-size:12px;font-style:italic">Sin cargas registradas esta semana</div>'}
+        </div>
+      </div>` : '<div style="color:var(--muted);font-size:12px;font-style:italic;padding:8px 0">Sin registros de carga aún.</div>'}
+    `;
+  }
+
+  // Guardar función render para reuso desde pills
+  window._pmRenderFn = render;
+  render();
+}
+
+// Llamado desde los pills de semana dentro del modal
+async function pmSelSemana(usuario, nombre, semana) {
+  // Actualizar selSemana es complicado sin closure, así que reabrimos el modal con la semana guardada
+  // Usamos un truco: guardamos la semana en state y re-renderizamos
+  state._pmSelSemana = state._pmSelSemana || {};
+  state._pmSelSemana[usuario] = semana;
+  // Re-abrir con la semana seleccionada
+  await openPlayerModalWithSemana(usuario, nombre, semana);
+}
+
+async function openPlayerModalWithSemana(usuario, nombre, forceSemana) {
+  const jData = state.coachEquipo.find(j => j.usuario === usuario) || {};
+  document.getElementById('pm-avatar').textContent = nombre.split(',')[0][0] || '?';
+  document.getElementById('pm-name').textContent   = nombre;
+  const subParts = [jData.posicion, jData.squad].filter(Boolean);
+  document.getElementById('pm-sub').innerHTML = subParts.map(p =>
+    `<span style="background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:1px 7px;font-size:10px">${p}</span>`
+  ).join('');
+
+  const res = await api({ action:'getHistorial', usuario });
+  if (!res.ok || !res.historial) return;
+  const hist = res.historial;
+
+  const rpeGlobal = hist
+    .filter(h => h.ejercicio === 'RPE_GLOBAL' && h.rpe)
+    .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+
+  const semanasDisp = [...new Set(
+    hist.filter(h => h.ejercicio !== 'RPE_GLOBAL' && h.carga)
+        .map(h => String(h.semana).trim())
+  )].sort((a,b) => parseInt(a)-parseInt(b));
+
+  const selSemana = forceSemana || semanasDisp[semanasDisp.length-1] || '';
+
+  const maxRpe = 10;
+  const sparkBars = rpeGlobal.slice(-12).map(h => {
+    const pct = Math.round((h.rpe/maxRpe)*32);
+    const c   = rpeClass(parseFloat(h.rpe));
+    const col = c==='low'?'#00e5a0':c==='mid'?'#ffc04d':'#ff7070';
+    const dd  = new Date(h.fecha);
+    const lbl = `${String(dd.getDate()).padStart(2,'0')}/${String(dd.getMonth()+1).padStart(2,'0')}`;
+    return `<div class="pm-spark-bar" style="height:${Math.max(pct,3)}px;background:${col}" title="${lbl}: RPE ${h.rpe}"></div>`;
+  }).join('');
+  const avgRpe7 = rpeGlobal.length
+    ? Math.round((rpeGlobal.slice(-7).reduce((s,h)=>s+parseFloat(h.rpe),0)/Math.min(rpeGlobal.length,7))*10)/10
+    : null;
+  const ultimaSesion = rpeGlobal.length ? rpeGlobal[rpeGlobal.length-1] : null;
+
+  const loadHist = hist.filter(h =>
+    h.ejercicio !== 'RPE_GLOBAL' &&
+    h.carga && String(h.carga).trim() !== '' &&
+    parseFloat(String(h.carga).split('/')[0]) > 10
+  );
+  const byEj = {};
+  loadHist.forEach(h => {
+    if (!byEj[h.ejercicio]) byEj[h.ejercicio] = [];
+    byEj[h.ejercicio].push(h);
+  });
+  const ejRows = Object.entries(byEj)
+    .map(([ej, registros]) => {
+      const last = registros.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+      const vals = String(last.carga).split('/').map(parseFloat).filter(v=>!isNaN(v)&&v>10);
+      const maxKg = vals.length ? Math.max(...vals) : null;
+      return { ej, last, maxKg, count: registros.length };
+    })
+    .filter(r => r.maxKg)
+    .sort((a,b) => b.maxKg - a.maxKg);
+
+  const sessRegistros = selSemana
+    ? hist.filter(h =>
+        String(h.semana).trim() === selSemana &&
+        h.ejercicio !== 'RPE_GLOBAL' &&
+        h.carga && String(h.carga).trim() !== ''
+      ).sort((a,b) => parseInt(a.dia)-parseInt(b.dia))
+    : [];
+
+  const rpeSession = selSemana
+    ? hist.find(h => String(h.semana).trim() === selSemana && h.ejercicio === 'RPE_GLOBAL')
+    : null;
+
+  const usuEsc = usuario.replace(/'/g,"\\'");
+  const nomEsc = nombre.replace(/'/g,"\\'");
+  const semPills = semanasDisp.map(s => {
+    const semNom = (state.semanas && state.semanas[parseInt(s)-1]) || `Sem ${s}`;
+    return `<button class="pm-sess-pill${s===selSemana?' active':''}" onclick="pmSelSemana('${usuEsc}','${nomEsc}','${s}')">${semNom}</button>`;
+  }).join('');
+
+  document.getElementById('pm-body').innerHTML = `
+    <div>
+      <div class="pm-section-lbl">RPE evolución (últimas ${rpeGlobal.length} sesiones)</div>
+      <div style="display:flex;align-items:flex-end;gap:14px">
+        <div class="pm-spark" style="flex:1">${sparkBars||'<span style="color:var(--muted);font-size:11px">Sin sesiones aún</span>'}</div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:var(--font-head);font-size:28px;line-height:1;color:${avgRpe7?rpeClass(avgRpe7)==='low'?'#00e5a0':rpeClass(avgRpe7)==='mid'?'#ffc04d':'#ff7070':'var(--muted)'}">${avgRpe7||'—'}</div>
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">RPE 7d</div>
+        </div>
+        ${ultimaSesion?`<div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:var(--muted)">Última sesión</div><div style="font-size:12px;font-weight:600;color:var(--text)">${String(ultimaSesion.fecha).slice(0,10)}</div></div>`:''}
+      </div>
+    </div>
+    ${ejRows.length?`<div>
+      <div class="pm-section-lbl">Cargas por ejercicio</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <table class="pm-rm-table">
+          <thead><tr><th>Ejercicio</th><th style="text-align:right">Último máx.</th><th style="text-align:center">Registros</th></tr></thead>
+          <tbody>${ejRows.map(r=>`<tr><td class="pm-ex-name">${r.ej}</td><td class="pm-rm-val">${r.maxKg} kg</td><td class="pm-rpe-val">${r.count}×</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`:''}
+    ${semanasDisp.length?`<div>
+      <div class="pm-section-lbl">Detalle por semana</div>
+      <div class="pm-sess-pills">${semPills}</div>
+      ${rpeSession?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">RPE sesión: <strong style="color:${rpeClass(rpeSession.rpe)==='low'?'#00e5a0':rpeClass(rpeSession.rpe)==='mid'?'#ffc04d':'#ff7070'}">${rpeSession.rpe}</strong>${rpeSession.tiempo_sesion?' · '+rpeSession.tiempo_sesion+' min':''}</div>`:''}
+      <div class="pm-sess-detail">
+        ${sessRegistros.length?sessRegistros.map(h=>`<div class="pm-sess-row">
+          <div class="pm-sess-blk">${String(h.bloque||'—').slice(0,3)}</div>
+          <div class="pm-sess-ex">${h.ejercicio}</div>
+          <div style="text-align:right">
+            <div class="pm-sess-kg">${h.carga} kg</div>
+            ${h.rpe?`<div class="pm-sess-rpe">RPE ${h.rpe}</div>`:''}
+          </div>
+        </div>`).join(''):'<div style="color:var(--muted);font-size:12px;font-style:italic">Sin cargas registradas esta semana</div>'}
+      </div>
+    </div>`:'<div style="color:var(--muted);font-size:12px;font-style:italic;padding:8px 0">Sin registros de carga aún.</div>'}
+  `;
 }
 
 // ── LOGOUT ────────────────────────────────────────────────────
