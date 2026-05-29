@@ -1561,9 +1561,10 @@ async function loadCoachPanel() {
     ? state.coachEquipo.filter(j => j.squad && j.squad.toLowerCase() === sqFilter.toLowerCase())
     : state.coachEquipo;
 
-  // Usar rpeChart del squad seleccionado si existe, si no el global
-  const rpeChartActivo = sqFilter && state.coachRpeBySquad[sqFilter]
-    ? state.coachRpeBySquad[sqFilter]
+  // Usar rpeChart del squad seleccionado si existe.
+  // Si hay filtro activo pero ese squad no tiene datos → array vacío (no mostrar datos de otros)
+  const rpeChartActivo = sqFilter
+    ? (state.coachRpeBySquad[sqFilter] || [])
     : state.coachRpeChart;
 
   const hoyStr  = fmtDate(new Date());
@@ -1619,6 +1620,10 @@ async function loadCoachPanel() {
     </tr>`;
   }).join('');
 
+  // ── Gráfico RPE por sesión ──
+  const rpeChartEl     = document.getElementById('coach-rpe-chart');
+  const teamLoadChartEl = document.getElementById('coach-team-load-chart');
+
   if (rpeChartActivo.length) {
     const semanaActual = String(state.semana);
     const allRpes = rpeChartActivo.flatMap(s=>(s.sesiones||[]).map(ss=>ss.rpeMedia));
@@ -1642,15 +1647,25 @@ async function loadCoachPanel() {
     }).join('');
     document.getElementById('coach-rpe-semana-label').textContent = semanaNombre + ' · Semana activa';
     document.getElementById('coach-rpe-weeks').innerHTML = weeksHtml;
-    document.getElementById('coach-rpe-chart').style.display = 'block';
+    rpeChartEl.style.display = 'block';
+  } else {
+    // Sin datos para este squad → ocultar y limpiar
+    rpeChartEl.style.display = 'none';
+    document.getElementById('coach-rpe-weeks').innerHTML = '';
   }
+
   renderTeamLoadChart(semanaNombre, rpeChartActivo);
   renderPlayerSelector(equipoFiltrado);
 }
 
 function renderTeamLoadChart(semanaNombre, chart) {
+  const el = document.getElementById('coach-team-load-chart');
   if (!chart) chart = state.coachRpeChart;
-  if (!chart.length) return;
+  if (!chart.length) {
+    el.style.display = 'none';
+    document.getElementById('coach-team-load-bars').innerHTML = '';
+    return;
+  }
   const allRpes = chart.flatMap(s=>(s.sesiones||[]).map(ss=>ss.rpeMedia));
   const maxVal  = allRpes.length ? Math.max(...allRpes) : 10;
   const minVal  = 0;
@@ -1678,7 +1693,7 @@ function renderTeamLoadChart(semanaNombre, chart) {
     </div>`;
   }).join('');
   document.getElementById('coach-team-load-bars').innerHTML = barsHtml;
-  document.getElementById('coach-team-load-chart').style.display = 'block';
+  el.style.display = 'block';
 }
 
 function renderPlayerSelector(equipo) {
