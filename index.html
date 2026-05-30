@@ -760,26 +760,30 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 /* days row */
 .wsumm-days {
   border-top:1px solid var(--border);
-  padding:11px 14px 14px;
-  display:flex; flex-direction:column; gap:10px;
+  padding:10px 14px 12px;
+  display:flex; flex-direction:column; gap:8px;
 }
 .wsumm-days-title {
   font-size:9px; font-weight:600; letter-spacing:.07em;
   text-transform:uppercase; color:var(--muted);
 }
-.wsumm-days-row { display:flex; gap:4px; }
+.wsumm-days-row { display:flex; gap:5px; align-items:center; }
 .wsumm-day {
-  flex:1; height:26px; border-radius:5px;
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; gap:3px;
+}
+.wsumm-day-dot {
+  width:28px; height:28px; border-radius:6px;
   display:flex; align-items:center; justify-content:center;
-  position:relative;
+  font-size:11px;
 }
 .wsumm-day-lbl {
-  position:absolute; bottom:-13px; left:50%; transform:translateX(-50%);
-  font-size:8px; color:var(--muted); white-space:nowrap;
+  font-size:8px; color:var(--muted);
 }
-.wsumm-day.done  { background:rgba(0,229,160,.15); border:1px solid rgba(0,229,160,.35); color:var(--accent2); font-size:12px; }
-.wsumm-day.empty { background:var(--surface2); border:1px solid var(--border); }
-.wsumm-day.today { background:var(--surface2); border:1px dashed var(--border2); color:var(--muted); font-size:11px; }
+.wsumm-day.done  .wsumm-day-dot { background:rgba(0,229,160,.15); border:1px solid rgba(0,229,160,.35); color:var(--accent2); }
+.wsumm-day.done  .wsumm-day-lbl { color:var(--accent2); }
+.wsumm-day.empty .wsumm-day-dot { background:var(--surface2); border:1px solid var(--border); }
+.wsumm-day.today .wsumm-day-dot { background:var(--surface2); border:1px dashed var(--border2); color:var(--muted); }
 /* ranking */
 .wsumm-ranking { border-top:1px solid var(--border); padding:12px 14px; }
 .wsumm-rank-title {
@@ -1235,6 +1239,7 @@ async function doLogin() {
     await loadSemanas();
     loadRutina();
     renderWeekSummary();
+    markCompletedDaysFromHistory(); // marcar días ya completados al entrar
     if (state.isCoach) loadCoachPanel();
   } else {
     errEl.textContent = res.error||'Error al iniciar sesión';
@@ -1273,10 +1278,24 @@ function onSemanaChange() {
   state.semana = parseInt(document.getElementById('sel-semana').value);
   updateWeekDropdown();
   resetSessionState();
+  // Reset todos los day cards
+  for (let i=1; i<=5; i++) {
+    const card = document.getElementById('daycard-'+i);
+    if (card) {
+      card.classList.remove('done','active');
+      const circle = card.querySelector('.day-card-circle');
+      if (circle) circle.innerHTML = i===5 ? 'EX' : String(i);
+    }
+  }
+  // Reactivar el day 1
+  const d1 = document.getElementById('daycard-1');
+  if (d1) d1.classList.add('active');
+  state.dia = 1;
   loadRutina();
   const wb = document.getElementById('week-summary-box');
   if (wb) wb.style.display='none';
   renderWeekSummary();
+  markCompletedDaysFromHistory();
   if (state.isCoach) loadCoachPanel();
 }
 function selectDayCard(dia, el) {
@@ -1577,10 +1596,15 @@ async function saveSession() {
   });
   if (res.ok) {
     state.guardado=true;
+    // 1. Tick en el selector de días
     markDayDone(state.dia);
+    // 2. Confirmación en el panel de sesión
     const panel = document.getElementById('session-panel');
     if (panel) panel.innerHTML=`<div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion?' · '+state.tiempoSesion+' min':''}</div>`;
+    // 3. Actualizar resumen semanal (círculos + ranking)
     await renderWeekSummary();
+    // 4. Si es coach, actualizar también su panel
+    if (state.isCoach) loadCoachPanel();
   } else {
     if (btn) { btn.disabled=false; btn.textContent='Guardar sesión'; }
     alert('Error al guardar: '+(res.error||'inténtalo de nuevo'));
@@ -1672,9 +1696,9 @@ async function renderWeekSummary() {
     let cls = 'wsumm-day empty', icon = '';
     if (done)       { cls = 'wsumm-day done'; icon = '✓'; }
     else if (isHoy) { cls = 'wsumm-day today'; icon = '·'; }
-    return `<div class="${cls}" style="position:relative">
-      ${icon ? `<span style="font-size:${done?'12':'14'}px">${icon}</span>` : ''}
-      <span class="wsumm-day-lbl">${lbl}</span>
+    return `<div class="${cls}">
+      <div class="wsumm-day-dot">${icon}</div>
+      <div class="wsumm-day-lbl">${lbl}</div>
     </div>`;
   }).join('');
 
@@ -2812,6 +2836,28 @@ async function openPlayerModalWithSemana(usuario, nombre, forceSemana) {
       </div>
     </div>`:'<div style="color:var(--muted);font-size:12px;font-style:italic;padding:8px 0">Sin registros de carga aún.</div>'}
   `;
+}
+
+// ── MARCAR DÍAS COMPLETADOS AL ENTRAR ────────────────────────
+// Consulta el historial de RPE_GLOBAL y marca los days cards
+// que ya tienen sesión guardada esta semana
+async function markCompletedDaysFromHistory() {
+  const res = await api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' });
+  if (!res.ok || !res.historial) return;
+  const semStr = String(state.semana);
+  const completedDias = new Set(
+    res.historial
+      .filter(h => String(h.semana).trim() === semStr && h.rpe)
+      .map(h => String(h.dia).trim())
+  );
+  completedDias.forEach(dia => {
+    const card = document.getElementById('daycard-' + dia);
+    if (card && !card.classList.contains('active')) {
+      card.classList.add('done');
+      const circle = card.querySelector('.day-card-circle');
+      if (circle) circle.innerHTML = '✓';
+    }
+  });
 }
 
 // ── LOGOUT ────────────────────────────────────────────────────
