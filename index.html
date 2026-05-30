@@ -634,28 +634,124 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .t-run-btn.done-btn { background:rgba(0,229,160,.12); border-color:rgba(0,229,160,.3); color:var(--accent2); }
 .t-reset-lnk { font-size:9px; color:var(--muted); cursor:pointer; background:none; border:none; font-family:var(--font-body); }
 
-/* ── WEEK SUMMARY ── */
+/* ── WEEK SUMMARY — diseño con círculos ── */
 .week-summary {
-  background:var(--surface2); border:1px solid var(--border2);
-  border-radius:var(--r); padding:13px 14px; margin-top:1rem;
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:var(--r); overflow:hidden; margin-bottom:1rem;
 }
 .week-summary-title {
   font-size:10px; font-weight:600; letter-spacing:.08em;
-  text-transform:uppercase; color:var(--muted); margin-bottom:10px;
+  text-transform:uppercase; color:var(--muted);
+  padding:12px 14px 10px;
   display:flex; align-items:center; gap:7px;
 }
 .week-summary-title::after { content:''; flex:1; height:1px; background:var(--border); }
-.week-summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-.wsumm-card {
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:8px; padding:9px 10px; text-align:center;
+/* hero top con nombre jugador */
+.wsumm-hero {
+  display:flex; align-items:center; gap:11px;
+  padding:10px 14px 0;
 }
-.wsumm-val { font-family:var(--font-head); font-size:24px; line-height:1; }
-.wsumm-val.green { color:var(--accent2); }
-.wsumm-val.amber { color:#ffc04d; }
-.wsumm-val.red   { color:#ff7070; }
-.wsumm-val.muted { color:var(--muted); }
-.wsumm-lbl { font-size:9px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:3px; }
+.wsumm-avatar {
+  width:40px; height:40px; border-radius:50%;
+  background:rgba(232,20,42,.15); border:2px solid rgba(232,20,42,.3);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-head); font-size:17px; color:var(--accent);
+  flex-shrink:0;
+}
+.wsumm-hero-name { font-family:var(--font-head); font-size:20px; letter-spacing:.5px; color:var(--text); }
+.wsumm-hero-sub  { font-size:10px; color:var(--muted); display:flex; align-items:center; gap:6px; margin-top:2px; }
+.wsumm-squad-tag {
+  font-size:9px; background:var(--surface2); border:1px solid var(--border2);
+  border-radius:4px; padding:1px 6px; color:var(--muted);
+}
+.wsumm-week-tag { font-size:10px; color:var(--muted); margin-left:auto; }
+/* circles row */
+.wsumm-circles {
+  display:flex; border-top:1px solid var(--border);
+  margin-top:12px;
+}
+.wsumm-circ {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; gap:5px; padding:12px 4px;
+}
+.wsumm-circ + .wsumm-circ { border-left:1px solid var(--border); }
+.wsumm-circ-lbl {
+  font-size:8px; color:var(--muted); text-transform:uppercase;
+  letter-spacing:.06em; text-align:center; line-height:1.3;
+}
+/* days row */
+.wsumm-days {
+  border-top:1px solid var(--border);
+  padding:11px 14px 14px;
+  display:flex; flex-direction:column; gap:10px;
+}
+.wsumm-days-title {
+  font-size:9px; font-weight:600; letter-spacing:.07em;
+  text-transform:uppercase; color:var(--muted);
+}
+.wsumm-days-row { display:flex; gap:4px; }
+.wsumm-day {
+  flex:1; height:26px; border-radius:5px;
+  display:flex; align-items:center; justify-content:center;
+  position:relative;
+}
+.wsumm-day-lbl {
+  position:absolute; bottom:-13px; left:50%; transform:translateX(-50%);
+  font-size:8px; color:var(--muted); white-space:nowrap;
+}
+.wsumm-day.done  { background:rgba(0,229,160,.15); border:1px solid rgba(0,229,160,.35); color:var(--accent2); font-size:12px; }
+.wsumm-day.empty { background:var(--surface2); border:1px solid var(--border); }
+.wsumm-day.today { background:var(--surface2); border:1px dashed var(--border2); color:var(--muted); font-size:11px; }
+/* ranking */
+.wsumm-ranking { border-top:1px solid var(--border); padding:12px 14px; }
+.wsumm-rank-title {
+  font-size:9px; font-weight:600; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--muted);
+  display:flex; align-items:center; gap:6px; margin-bottom:10px;
+}
+.wsumm-rank-title::after { content:''; flex:1; height:1px; background:var(--border); }
+.wsumm-rank-list { display:flex; flex-direction:column; gap:5px; }
+.wsumm-rank-row {
+  display:flex; align-items:center; gap:9px;
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:8px 10px;
+}
+.wsumm-rank-row.me {
+  border-color:rgba(232,20,42,.3);
+  background:rgba(232,20,42,.04);
+}
+.wsumm-rank-pos {
+  font-size:11px; font-weight:600; min-width:22px;
+  text-align:center; flex-shrink:0; color:var(--accent2);
+}
+.wsumm-rank-pos.me-pos { color:var(--accent); }
+.wsumm-rank-av {
+  width:26px; height:26px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:600; flex-shrink:0;
+}
+.wsumm-rank-name {
+  flex:1; font-size:12px; font-weight:500; color:var(--text);
+  display:flex; align-items:center; gap:5px; min-width:0;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.wsumm-you {
+  font-size:8px; background:rgba(232,20,42,.15); color:var(--accent);
+  border-radius:3px; padding:1px 5px; border:1px solid rgba(232,20,42,.3);
+  flex-shrink:0;
+}
+.wsumm-rank-bar { width:64px; flex-shrink:0; }
+.wsumm-rank-track { height:3px; border-radius:2px; background:var(--border); overflow:hidden; margin-bottom:3px; }
+.wsumm-rank-fill  { height:100%; border-radius:2px; }
+.wsumm-rank-pct   { font-size:10px; font-weight:600; text-align:right; }
+.wsumm-rank-sep   { height:1px; background:var(--border); margin:0; }
+.wsumm-motivation {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(255,192,77,.06); border:1px solid rgba(255,192,77,.15);
+  border-radius:8px; padding:9px 12px; margin-top:8px;
+  font-size:11px; color:var(--muted); line-height:1.5;
+}
+.wsumm-motivation strong { color:var(--text); font-weight:600; }
 .video-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.80); z-index:100; align-items:center; justify-content:center; padding:1rem; }
 .video-modal-overlay.open { display:flex; }
 
@@ -922,6 +1018,9 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div class="coach-section-divider">Vista sesión jugadores</div>
     </div><!-- /coach-panel -->
 
+    <!-- RESUMEN SEMANAL — va antes del selector -->
+    <div id="week-summary-box" style="display:none"></div>
+
     <!-- SELECTOR SEMANA + DÍAS -->
     <div class="week-header">
       <div class="week-label">Semana activa</div>
@@ -937,7 +1036,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       </div>
     </div>
     <div id="session-container"></div>
-    <div id="week-summary-box" style="display:none"></div>
 
 <script>
 // ── escudo placeholder ────────────────────────────────────────
@@ -1354,54 +1452,220 @@ async function renderWeekSummary() {
   const container = document.getElementById('week-summary-box');
   if (!container) return;
   const semStr = String(state.semana);
-  const [resRpe, resCarga] = await Promise.all([
+
+  const [resRpe, resCarga, resEquipo] = await Promise.all([
     api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' }),
-    api({ action:'getHistorial', usuario:state.user.usuario })
+    api({ action:'getHistorial', usuario:state.user.usuario }),
+    api({ action:'getEquipo', semana:state.semana })
   ]);
+
   if (!resRpe.ok || !resRpe.historial) return;
-  const sesiones = resRpe.historial.filter(h => String(h.semana).trim() === semStr);
-  const totalDias = sesiones.length;
-  const rpes = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
-  const rpeMedia = rpes.length ? Math.round((rpes.reduce((s,v)=>s+v,0)/rpes.length)*10)/10 : null;
-  const tiempos = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
+
+  const sesiones    = resRpe.historial.filter(h => String(h.semana).trim() === semStr);
+  const totalDias   = sesiones.length;
+  const rpes        = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
+  const rpeMedia    = rpes.length ? Math.round((rpes.reduce((s,v)=>s+v,0)/rpes.length)*10)/10 : null;
+  const tiempos     = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
   const tiempoTotal = tiempos.length ? tiempos.reduce((s,v)=>s+v,0) : null;
+
   let kgTotal = null;
   if (resCarga.ok && resCarga.historial) {
     const cargas = resCarga.historial
       .filter(h => String(h.semana).trim() === semStr && h.ejercicio !== 'RPE_GLOBAL')
-      .map(h => parseFloat(h.carga))
-      .filter(v => !isNaN(v) && v > 0);
+      .flatMap(h => String(h.carga).split('/').map(parseFloat))
+      .filter(v => !isNaN(v) && v > 10);
     if (cargas.length) kgTotal = Math.round(cargas.reduce((s,v)=>s+v,0));
   }
-  const hoyDow = new Date().getDay();
+
+  const hoyDow    = new Date().getDay();
   const diasTrans = hoyDow === 0 ? 7 : hoyDow;
-  const compliance = diasTrans > 0 ? Math.round((totalDias / diasTrans) * 100) : null;
-  const rpeClass2 = (v) => v===null?'muted':v<=5?'green':v<=7?'amber':'red';
-  const compClass = (v) => v===null?'muted':v>=80?'green':v>=50?'amber':'red';
+  const compliance = diasTrans > 0 ? Math.round((totalDias / diasTrans) * 100) : 0;
+
+  // ── Colores ──────────────────────────────────────────────
+  const rpeCol  = rpeMedia === null ? '#5a6475' : rpeMedia<=5 ? '#00e5a0' : rpeMedia<=7 ? '#ffc04d' : '#ff7070';
+  const compCol = compliance >= 80 ? '#00e5a0' : compliance >= 50 ? '#ffc04d' : '#ff7070';
+  const timeCol = '#00e5a0';
+  const kgCol   = '#ffc04d';
+
+  // ── Helper círculo SVG ────────────────────────────────────
+  function circle(pct, color, line1, line2, unit) {
+    const r = 29, cx = 36, cy = 36;
+    const circ = 2 * Math.PI * r;
+    const offset = circ * (1 - Math.min(pct, 1));
+    const textY1 = line2 ? '33' : '39';
+    return `<svg width="72" height="72" viewBox="0 0 72 72">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="5"
+        stroke-linecap="round"
+        stroke-dasharray="${circ.toFixed(1)}"
+        stroke-dashoffset="${offset.toFixed(1)}"
+        transform="rotate(-90 ${cx} ${cy})"/>
+      <text x="${cx}" y="${textY1}" text-anchor="middle" font-size="14" font-weight="500"
+        fill="${color}" font-family="'DM Sans',sans-serif">${line1}</text>
+      ${line2 ? `<text x="${cx}" y="46" text-anchor="middle" font-size="9"
+        fill="rgba(120,130,148,1)" font-family="'DM Sans',sans-serif">${line2}</text>` : ''}
+    </svg>`;
+  }
+
+  const rpePct   = rpeMedia !== null ? rpeMedia / 10 : 0;
+  const compPct  = compliance / 100;
+  const timePct  = tiempoTotal !== null ? Math.min(tiempoTotal / 90, 1) : 0;
+  const kgPct    = kgTotal !== null ? Math.min(kgTotal / 500, 1) : 0;
+
+  const rpeVal   = rpeMedia !== null ? rpeMedia : '—';
+  const compVal  = compliance + '%';
+  const timeVal  = tiempoTotal !== null ? tiempoTotal : '—';
+  const kgVal    = kgTotal !== null ? kgTotal : '—';
+
+  // ── Días de la semana ─────────────────────────────────────
+  const hoyStr   = fmtDate(new Date());
+  const lunes    = getLunesDeSemana(new Date());
+  const diasSem  = ['L','M','X','J','V','S','D'];
+  const daysHtml = diasSem.map((lbl, i) => {
+    const d = new Date(lunes);
+    d.setDate(d.getDate() + i);
+    const ds = fmtDate(d);
+    const isHoy = ds === hoyStr;
+    const done  = sesiones.some(h => {
+      const f = new Date(h.fecha);
+      return fmtDate(f) === ds;
+    });
+    let cls = 'wsumm-day empty', icon = '';
+    if (done)       { cls = 'wsumm-day done'; icon = '✓'; }
+    else if (isHoy) { cls = 'wsumm-day today'; icon = '·'; }
+    return `<div class="${cls}" style="position:relative">
+      ${icon ? `<span style="font-size:${done?'12':'14'}px">${icon}</span>` : ''}
+      <span class="wsumm-day-lbl">${lbl}</span>
+    </div>`;
+  }).join('');
+
+  // ── Ranking compliance del squad ──────────────────────────
+  let rankingHtml = '';
+  if (resEquipo.ok && resEquipo.equipo) {
+    const squad  = state.squad ? state.squad.toLowerCase() : null;
+    const equipo = resEquipo.equipo.filter(j =>
+      !squad || (j.squad && j.squad.toLowerCase() === squad)
+    );
+    const ranked = equipo.map(j => {
+      const seg  = (j.sesiones7dias||[]).filter(s=>s.guardada).length;
+      const comp = diasTrans > 0 ? Math.round((seg / diasTrans) * 100) : 0;
+      return { nombre: j.nombre, usuario: j.usuario, comp };
+    }).sort((a,b) => b.comp - a.comp);
+
+    const top3   = ranked.slice(0, 3);
+    const myRank = ranked.findIndex(j => j.usuario === state.user.usuario) + 1;
+    const myData = ranked.find(j => j.usuario === state.user.usuario);
+
+    const rowColor = c => c >= 80 ? '#00e5a0' : c >= 50 ? '#ffc04d' : '#ff7070';
+    const avInitials = n => n.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+
+    const topRows = top3.map((j, idx) => {
+      const isMe = j.usuario === state.user.usuario;
+      const col  = rowColor(j.comp);
+      return `<div class="wsumm-rank-row${isMe?' me':''}">
+        <div class="wsumm-rank-pos${isMe?' me-pos':''}">#${idx+1}</div>
+        <div class="wsumm-rank-av" style="background:${col}22;color:${col}">${avInitials(j.nombre)}</div>
+        <div class="wsumm-rank-name">
+          ${j.nombre.split(',')[0]}
+          ${isMe?'<span class="wsumm-you">tú</span>':''}
+        </div>
+        <div class="wsumm-rank-bar">
+          <div class="wsumm-rank-track"><div class="wsumm-rank-fill" style="width:${j.comp}%;background:${col}"></div></div>
+          <div class="wsumm-rank-pct" style="color:${col}">${j.comp}%</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Fila propia si no está en top 3
+    const myRow = myRank > 3 && myData ? `
+      <div class="wsumm-rank-sep"></div>
+      <div class="wsumm-rank-row me">
+        <div class="wsumm-rank-pos me-pos">#${myRank}</div>
+        <div class="wsumm-rank-av" style="background:rgba(232,20,42,.15);color:var(--accent)">${avInitials(myData.nombre)}</div>
+        <div class="wsumm-rank-name">
+          ${myData.nombre.split(',')[0]}
+          <span class="wsumm-you">tú</span>
+        </div>
+        <div class="wsumm-rank-bar">
+          <div class="wsumm-rank-track"><div class="wsumm-rank-fill" style="width:${myData.comp}%;background:${rowColor(myData.comp)}"></div></div>
+          <div class="wsumm-rank-pct" style="color:${rowColor(myData.comp)}">${myData.comp}%</div>
+        </div>
+      </div>` : '';
+
+    // Mensaje motivacional
+    const gapDays = top3[2] ? Math.max(0, Math.ceil((top3[2].comp * diasTrans / 100) - totalDias)) : 0;
+    const motMsg  = myRank <= 3
+      ? `Estás en el <strong>top 3 del equipo</strong> esta semana 💪`
+      : gapDays > 0
+        ? `Entrena <strong>${gapDays} día${gapDays>1?'s':''} más</strong> para entrar en el top 3`
+        : `¡Sigue así para escalar en el ranking!`;
+
+    rankingHtml = `
+      <div class="wsumm-ranking">
+        <div class="wsumm-rank-title">
+          <span style="font-size:12px">🏆</span>
+          Ranking compliance · ${squad ? squad : 'equipo'}
+        </div>
+        <div class="wsumm-rank-list">${topRows}${myRow}</div>
+        <div class="wsumm-motivation">
+          <span style="font-size:14px;flex-shrink:0">⚡</span>
+          <span class="mot-text">${motMsg}</span>
+        </div>
+      </div>`;
+  }
+
+  // ── Nombre e iniciales ────────────────────────────────────
+  const nombre   = state.user.nombre || '';
+  const initials = nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  const squad    = state.squad ? `<span class="wsumm-squad-tag">${state.squad}</span>` : '';
+  const semanaNom = (state.semanas && state.semanas[state.semana-1]) || `Semana ${state.semana}`;
+
   container.innerHTML = `
     <div class="week-summary">
-      <div class="week-summary-title">📊 Resumen de semana</div>
-      <div class="week-summary-grid">
-        <div class="wsumm-card">
-          <div class="wsumm-val ${rpeClass2(rpeMedia)}">${rpeMedia !== null ? rpeMedia : '—'}</div>
-          <div class="wsumm-lbl">RPE medio</div>
+      <div class="week-summary-title">📊 Resumen semanal</div>
+
+      <div class="wsumm-hero">
+        <div class="wsumm-avatar">${initials}</div>
+        <div>
+          <div class="wsumm-hero-name">${nombre}</div>
+          <div class="wsumm-hero-sub">
+            ${state.user.posicion ? `<span>${state.user.posicion}</span>` : ''}
+            ${squad}
+          </div>
         </div>
-        <div class="wsumm-card">
-          <div class="wsumm-val ${compClass(compliance)}">${compliance !== null ? compliance+'%' : '—'}</div>
-          <div class="wsumm-lbl">Compliance</div>
+        <div class="wsumm-week-tag">${semanaNom}</div>
+      </div>
+
+      <div class="wsumm-circles">
+        <div class="wsumm-circ">
+          ${circle(rpePct, rpeCol, rpeVal, '/10', '')}
+          <div class="wsumm-circ-lbl">RPE medio</div>
         </div>
-        <div class="wsumm-card">
-          <div class="wsumm-val green">${tiempoTotal !== null ? tiempoTotal : '—'}</div>
-          <div class="wsumm-lbl">Min totales</div>
+        <div class="wsumm-circ">
+          ${circle(compPct, compCol, compVal, '', '')}
+          <div class="wsumm-circ-lbl">Compliance</div>
         </div>
-        <div class="wsumm-card">
-          <div class="wsumm-val amber">${kgTotal !== null ? kgTotal : '—'}</div>
-          <div class="wsumm-lbl">Kg totales</div>
+        <div class="wsumm-circ">
+          ${circle(timePct, timeCol, timeVal !== '—' ? timeVal : '—', timeVal !== '—' ? 'min' : '', '')}
+          <div class="wsumm-circ-lbl">Tiempo total</div>
+        </div>
+        <div class="wsumm-circ">
+          ${circle(kgPct, kgCol, kgVal !== '—' ? kgVal : '—', kgVal !== '—' ? 'kg' : '', '')}
+          <div class="wsumm-circ-lbl">Kg semana</div>
         </div>
       </div>
+
+      <div class="wsumm-days">
+        <div class="wsumm-days-title">Sesiones esta semana</div>
+        <div class="wsumm-days-row">${daysHtml}</div>
+        <div style="height:6px"></div>
+      </div>
+
+      ${rankingHtml}
     </div>`;
   container.style.display = 'block';
 }
+
 
 // ── CARD PANEL TOGGLE ─────────────────────────────────────────
 function toggleCardPanel(type, cardId, ejercicio, loadObj, reps) {
