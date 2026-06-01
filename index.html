@@ -429,8 +429,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .hist-1rm-delta.down { background:rgba(255,77,77,.12);  color:#ff7070; }
 
 /* ── COACH PANEL ── */
-#coach-panel { display:none; }
-#coach-panel.visible { display:block; }
+/* coach-panel tabs managed by switchTab() */
 .coach-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
 .coach-title { font-family:var(--font-head); font-size:26px; letter-spacing:1px; }
 .coach-badge { background:var(--accent); color:#fff; border-radius:5px; padding:2px 10px; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
@@ -721,6 +720,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   background:rgba(0,229,160,.08);
 }
 .day-card.active.done .day-card-lbl { color:var(--accent2); }
+
+/* ── WEEK SUMMARY ── */
+.week-summary {
+  background:var(--surface); border:1px solid var(--border2);
   border-radius:var(--r); overflow:hidden; margin-bottom:1rem;
 }
 .week-summary-title {
@@ -953,6 +956,96 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .empty-icon { font-size:32px; margin-bottom:.65rem; }
 @media (max-width:500px) { .session-title { font-size:24px; } }
 
+/* ── GLASS BOTTOM NAV ── */
+.bottom-nav {
+  position:fixed; bottom:12px; left:50%;
+  transform:translateX(-50%);
+  width:calc(100% - 32px); max-width:420px;
+  background:rgba(10,12,16,.92);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;
+  display:flex; padding:8px 4px 10px;
+  z-index:90;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+}
+.bn-item {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; gap:4px; cursor:pointer;
+  padding:4px 2px; position:relative; border-radius:14px;
+  transition:all .15s;
+}
+.bn-active-bg {
+  position:absolute; inset:0; border-radius:14px;
+  background:rgba(232,20,42,.1);
+  border:1px solid rgba(232,20,42,.2);
+}
+.bn-icon {
+  font-size:20px; line-height:1;
+  position:relative; z-index:1; color:rgba(255,255,255,.28);
+}
+.bn-item.active .bn-icon { color:#e8142a; }
+.bn-lbl {
+  font-size:9px; font-weight:500;
+  position:relative; z-index:1; color:rgba(255,255,255,.28);
+}
+.bn-item.active .bn-lbl { color:#e8142a; }
+.bn-pip {
+  width:4px; height:4px; border-radius:50%;
+  background:#e8142a; position:relative; z-index:1;
+}
+/* Padding extra al fondo del contenido para que el nav no tape */
+.content { padding-bottom:90px; }
+
+/* ── REPORTS ── */
+.reports-wrap { display:flex; flex-direction:column; gap:10px; }
+.rep-period-row {
+  display:flex; gap:6px; align-items:center;
+  margin-bottom:4px;
+}
+.rep-period-btn {
+  padding:5px 12px; border-radius:8px; font-size:11px; font-weight:500;
+  cursor:pointer; border:0.5px solid var(--border2);
+  color:var(--muted); background:var(--surface2);
+  font-family:var(--font-body);
+  transition:all .15s;
+}
+.rep-period-btn-active {
+  background:rgba(232,20,42,.1);
+  border-color:rgba(232,20,42,.3);
+  color:var(--accent);
+}
+.rep-period-select {
+  flex:1; background:var(--surface2); border:0.5px solid var(--border2);
+  border-radius:8px; padding:5px 10px; font-size:11px;
+  color:var(--muted); font-family:var(--font-body); outline:none;
+}
+.rep-export-btn {
+  width:100%; padding:12px; border-radius:10px; margin-top:4px;
+  background:rgba(232,20,42,.08); border:1px solid rgba(232,20,42,.25);
+  color:var(--accent); font-size:12px; font-weight:600;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  gap:8px; font-family:var(--font-body);
+}
+.rep-export-btn:hover { background:rgba(232,20,42,.14); }
+
+/* ── MI SEMANA TOGGLE ── */
+.wsumm-toggle {
+  display:flex; background:var(--surface2); border-radius:8px;
+  padding:3px; gap:2px; margin-bottom:12px;
+}
+.wsumm-toggle-btn {
+  flex:1; padding:6px 8px; border-radius:6px; font-size:11px;
+  font-weight:500; text-align:center; cursor:pointer;
+  color:var(--muted); transition:all .15s; font-family:var(--font-body);
+  border:none; background:none;
+}
+.wsumm-toggle-btn.active {
+  background:var(--surface); color:var(--text);
+  box-shadow:0 1px 4px rgba(0,0,0,.12);
+}
+
 .coach-section-divider {
   font-size:10px; font-weight:600; letter-spacing:.08em;
   text-transform:uppercase; color:var(--muted);
@@ -1051,15 +1144,15 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   </div>
   <div class="content">
 
-    <!-- ══ COACH PANEL ══ -->
-    <div id="coach-panel">
+    <!-- ══ COACH: Jugadores ══ -->
+    <div id="tab-coach-jugadores" class="tab-section" style="display:none">
       <div class="coach-header">
         <div>
           <div class="coach-title">Panel Coach</div>
           <div class="coach-sem-label" id="coach-sem-label">Semana activa</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <select id="coach-squad-filter" class="semana-select" style="min-width:140px;margin-bottom:0" onchange="onCoachSquadChange()">
+          <select id="coach-squad-filter" class="semana-select" style="min-width:130px;margin-bottom:0" onchange="onCoachSquadChange()">
             <option value="">Todos los squads</option>
             <option value="men's xv">Men's XV</option>
             <option value="women's">Women's</option>
@@ -1086,6 +1179,25 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
           <tbody id="coach-tbody"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- ══ COACH: RPE ══ -->
+    <div id="tab-coach-rpe" class="tab-section" style="display:none">
+      <div class="coach-header">
+        <div>
+          <div class="coach-title">Análisis RPE</div>
+          <div class="coach-sem-label" id="coach-rpe-tab-label">Semana activa</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select id="coach-squad-filter-rpe" class="semana-select" style="min-width:130px;margin-bottom:0" onchange="onCoachSquadChangeRpe()">
+            <option value="">Todos los squads</option>
+            <option value="men's xv">Men's XV</option>
+            <option value="women's">Women's</option>
+            <option value="academy">Academy</option>
+          </select>
+          <span class="coach-badge">Coach</span>
+        </div>
+      </div>
       <div class="coach-chart-box" id="coach-rpe-chart" style="display:none">
         <div class="chart-section-title">RPE medio por sesión</div>
         <div class="chart-section-subtitle" id="coach-rpe-semana-label"></div>
@@ -1108,55 +1220,75 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
           <div class="pevo-empty">Selecciona un jugador para ver su evolución.</div>
         </div>
       </div>
-      <div style="height:.5rem"></div>
-      <div class="coach-section-divider">Vista sesión jugadores</div>
-    </div><!-- /coach-panel -->
-
-    <!-- 1. SEMANA ACTIVA — dropdown con contexto -->
-    <div class="week-dropdown" id="week-dropdown-btn">
-      <div class="week-dd-badge" id="week-dd-badge">WK</div>
-      <div class="week-dd-info">
-        <div class="week-dd-label">Semana activa</div>
-        <div class="week-dd-name" id="week-dd-name">Cargando...</div>
-        <div class="week-dd-sub" id="week-dd-sub">Selecciona tu semana</div>
-      </div>
-      <div class="week-dd-arrow">⌄</div>
-      <select id="sel-semana" class="week-dd-select" onchange="onSemanaChange()">
-        <option value="1">Cargando...</option>
-      </select>
     </div>
 
-    <!-- 2. RESUMEN JUGADOR -->
-    <div id="week-summary-box" style="display:none"></div>
-
-    <!-- 3. DÍAS — cards con círculo -->
-    <div class="day-cards-row" id="day-cards-row">
-      <div class="day-card active" id="daycard-1" onclick="selectDayCard(1,this)">
-        <div class="day-card-circle">1</div>
-        <div class="day-card-lbl">Day</div>
+    <!-- ══ COACH: Reports ══ -->
+    <div id="tab-coach-reports" class="tab-section" style="display:none">
+      <div class="coach-header">
+        <div>
+          <div class="coach-title">Reports</div>
+          <div class="coach-sem-label">Exportar informe del equipo</div>
+        </div>
+        <span class="coach-badge">Coach</span>
       </div>
-      <div class="day-card" id="daycard-2" onclick="selectDayCard(2,this)">
-        <div class="day-card-circle">2</div>
-        <div class="day-card-lbl">Day</div>
-      </div>
-      <div class="day-card" id="daycard-3" onclick="selectDayCard(3,this)">
-        <div class="day-card-circle">3</div>
-        <div class="day-card-lbl">Day</div>
-      </div>
-      <div class="day-card" id="daycard-4" onclick="selectDayCard(4,this)">
-        <div class="day-card-circle">4</div>
-        <div class="day-card-lbl">Day</div>
-      </div>
-      <div class="day-card" id="daycard-5" onclick="selectDayCard(5,this)">
-        <div class="day-card-circle" style="font-size:11px">EX</div>
-        <div class="day-card-lbl">Extra</div>
-      </div>
+      <div id="reports-content"></div>
     </div>
 
-    <!-- 4. SESIÓN -->
-    <div id="session-container"></div>
+    <!-- ══ SESIÓN (jugadores + coach) ══ -->
+    <div id="tab-sesion" class="tab-section" style="display:none">
+      <div class="week-dropdown" id="week-dropdown-btn">
+        <div class="week-dd-badge" id="week-dd-badge">WK</div>
+        <div class="week-dd-info">
+          <div class="week-dd-label">Semana activa</div>
+          <div class="week-dd-name" id="week-dd-name">Cargando...</div>
+          <div class="week-dd-sub" id="week-dd-sub">Selecciona tu semana</div>
+        </div>
+        <div class="week-dd-arrow">⌄</div>
+        <select id="sel-semana" class="week-dd-select" onchange="onSemanaChange()">
+          <option value="1">Cargando...</option>
+        </select>
+      </div>
+      <div id="session-container"></div>
+    </div>
 
-<script>
+    <!-- ══ JUGADOR: Mi semana ══ -->
+    <div id="tab-misemana" class="tab-section" style="display:none">
+      <div id="week-summary-box"></div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- ══ BOTTOM NAV ══ -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <!-- jugador -->
+    <div class="bn-item active" id="bn-sesion" onclick="switchTab('sesion')" style="display:none">
+      <div class="bn-icon"><i class="ti ti-dumbbell" aria-hidden="true"></i></div>
+      <div class="bn-lbl">Sesión</div>
+    </div>
+    <div class="bn-item" id="bn-misemana" onclick="switchTab('misemana')" style="display:none">
+      <div class="bn-icon"><i class="ti ti-chart-bar" aria-hidden="true"></i></div>
+      <div class="bn-lbl">Mi semana</div>
+    </div>
+    <!-- coach -->
+    <div class="bn-item" id="bn-jugadores" onclick="switchTab('jugadores')" style="display:none">
+      <div class="bn-icon"><i class="ti ti-users" aria-hidden="true"></i></div>
+      <div class="bn-lbl">Jugadores</div>
+    </div>
+    <div class="bn-item" id="bn-rpe" onclick="switchTab('rpe')" style="display:none">
+      <div class="bn-icon"><i class="ti ti-chart-dots" aria-hidden="true"></i></div>
+      <div class="bn-lbl">RPE</div>
+    </div>
+    <div class="bn-item" id="bn-reports" onclick="switchTab('reports')" style="display:none">
+      <div class="bn-icon"><i class="ti ti-file-analytics" aria-hidden="true"></i></div>
+      <div class="bn-lbl">Reports</div>
+    </div>
+    <div class="bn-item" id="bn-sesion-coach" onclick="switchTab('sesion')" style="display:none">
+      <div class="bn-icon"><i class="ti ti-dumbbell" aria-hidden="true"></i></div>
+      <div class="bn-lbl">Sesión</div>
+    </div>
+  </nav>
+
+</div><!-- /screen-app --><script>
 // ── escudo placeholder ────────────────────────────────────────
 (function(){
   const img = document.getElementById('login-shield-img');
@@ -1246,15 +1378,14 @@ async function doLogin() {
     document.getElementById('screen-app').style.display='block';
     if (state.isCoach) {
       document.getElementById('coach-topbar-badge').classList.remove('hidden');
-      document.getElementById('coach-panel').classList.add('visible');
+      // tab shown via initNav()
     }
     await loadSemanas();
     loadRutina();
+    initNav();
     if (!state.isCoach) {
-      renderWeekSummary();
       markCompletedDaysFromHistory();
     }
-    if (state.isCoach) loadCoachPanel();
   } else {
     errEl.textContent = res.error||'Error al iniciar sesión';
     btn.disabled=false; btn.textContent='Entrar';
@@ -1306,13 +1437,18 @@ function onSemanaChange() {
   if (d1) d1.classList.add('active');
   state.dia = 1;
   loadRutina();
-  const wb = document.getElementById('week-summary-box');
-  if (wb) wb.style.display='none';
   if (!state.isCoach) {
-    renderWeekSummary();
+    // Clear and re-render week summary if on that tab
+    const wb = document.getElementById('week-summary-box');
+    if (wb) wb.innerHTML = '';
+    if (state.activeTab === 'misemana') renderWeekSummary();
     markCompletedDaysFromHistory();
   }
-  if (state.isCoach) loadCoachPanel();
+  if (state.isCoach) {
+    const active = state.activeTab || 'jugadores';
+    if (active === 'jugadores' || active === 'rpe') loadCoachPanel();
+    if (active === 'reports') renderReportsPanel();
+  }
 }
 function selectDayCard(dia, el) {
   state.dia = dia;
@@ -1615,10 +1751,18 @@ async function saveSession() {
     // 2. Confirmación en el panel de sesión
     const panel = document.getElementById('session-panel');
     if (panel) panel.innerHTML=`<div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion?' · '+state.tiempoSesion+' min':''}</div>`;
-    // 3. Actualizar resumen semanal (círculos + ranking) — solo jugadores
-    if (!state.isCoach) await renderWeekSummary();
-    // 4. Si es coach, actualizar también su panel
-    if (state.isCoach) loadCoachPanel();
+    // 3. Actualizar resumen semanal — solo jugadores, solo si está en esa pestaña
+    if (!state.isCoach) {
+      const wb = document.getElementById('week-summary-box');
+      if (wb) wb.innerHTML = '';
+      await renderWeekSummary();
+      // Si no está en mi semana, pre-carga en background para que esté listo
+    }
+    // 4. Si es coach, actualizar panel activo
+    if (state.isCoach) {
+      const active = state.activeTab || 'jugadores';
+      if (active === 'jugadores' || active === 'rpe') loadCoachPanel();
+    }
   } else {
     if (btn) { btn.disabled=false; btn.textContent='Guardar sesión'; }
     alert('Error al guardar: '+(res.error||'inténtalo de nuevo'));
@@ -1843,6 +1987,10 @@ async function renderWeekSummary() {
   container.innerHTML = `
     <div class="week-summary">
       <div class="week-summary-title">📊 Resumen semanal</div>
+      <div class="wsumm-toggle">
+        <button class="wsumm-toggle-btn active" id="wsumm-btn-semana" onclick="wsummSwitch('semana')">Esta semana</button>
+        <button class="wsumm-toggle-btn" id="wsumm-btn-mes" onclick="wsummSwitch('mes')">Este mes</button>
+      </div>
 
       <div class="wsumm-hero">
         <div class="wsumm-avatar">${initials}</div>
@@ -1885,6 +2033,273 @@ async function renderWeekSummary() {
   container.style.display = 'block';
 }
 
+
+// ── NAVIGATION ───────────────────────────────────────────────
+const PLAYER_TABS = ['sesion','misemana'];
+const COACH_TABS  = ['jugadores','rpe','reports','sesion'];
+
+function initNav() {
+  if (state.isCoach) {
+    // Show coach nav items
+    ['bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = '';
+    });
+    ['bn-sesion','bn-misemana'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    switchTab('jugadores');
+  } else {
+    // Show player nav items
+    ['bn-sesion','bn-misemana'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = '';
+    });
+    ['bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    switchTab('sesion');
+  }
+}
+
+function switchTab(tab) {
+  state.activeTab = tab;
+  const allTabs = ['tab-sesion','tab-misemana','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports'];
+  allTabs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // Show selected tab
+  const tabMap = {
+    'sesion':    'tab-sesion',
+    'misemana':  'tab-misemana',
+    'jugadores': 'tab-coach-jugadores',
+    'rpe':       'tab-coach-rpe',
+    'reports':   'tab-coach-reports',
+  };
+  const el = document.getElementById(tabMap[tab]);
+  if (el) el.style.display = '';
+
+  // Update active nav item
+  const navMap = {
+    'sesion':    state.isCoach ? 'bn-sesion-coach' : 'bn-sesion',
+    'misemana':  'bn-misemana',
+    'jugadores': 'bn-jugadores',
+    'rpe':       'bn-rpe',
+    'reports':   'bn-reports',
+  };
+  document.querySelectorAll('.bn-item').forEach(el => el.classList.remove('active'));
+  const activeBtn = document.getElementById(navMap[tab]);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  // Load content on demand
+  if (tab === 'misemana') {
+    const wb = document.getElementById('week-summary-box');
+    if (wb && !wb.innerHTML.trim()) renderWeekSummary();
+    else if (wb) renderWeekSummary();
+  }
+  if (tab === 'jugadores' || tab === 'rpe') {
+    // sync squad filter from jugadores to rpe tab
+    const sqJ = document.getElementById('coach-squad-filter');
+    const sqR = document.getElementById('coach-squad-filter-rpe');
+    if (sqJ && sqR) sqR.value = sqJ.value;
+    loadCoachPanel();
+  }
+  if (tab === 'reports') renderReportsPanel();
+}
+
+function onCoachSquadChangeRpe() {
+  // Sync RPE tab squad filter back to main
+  const sqR = document.getElementById('coach-squad-filter-rpe');
+  const sqJ = document.getElementById('coach-squad-filter');
+  if (sqR && sqJ) sqJ.value = sqR.value;
+  onCoachSquadChange();
+}
+
+function wsummSwitch(mode) {
+  document.getElementById('wsumm-btn-semana')?.classList.toggle('active', mode==='semana');
+  document.getElementById('wsumm-btn-mes')?.classList.toggle('active', mode==='mes');
+  // Re-render with month data if needed (for now re-renders weekly, monthly calc future)
+  renderWeekSummary();
+}
+
+// ── REPORTS ──────────────────────────────────────────────────
+async function renderReportsPanel() {
+  const container = document.getElementById('reports-content');
+  if (!container) return;
+  container.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando datos...</div>';
+
+  const sqFilter = state.coachSquadFilter || '';
+  const semanas  = state.semanas || [];
+
+  // Build month list from semana names
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  const semOptions = semanas.map((s,i) => `<option value="${i+1}">${s}</option>`).join('');
+  const monOptions = monthNames.map((m,i) => `<option value="${i}">${m}</option>`).join('');
+
+  // Load all registros
+  const res = await api({ action:'getEquipo', semana: state.semana });
+  if (!res.ok) { container.innerHTML = '<div class="hist-empty">Error cargando datos.</div>'; return; }
+
+  const equipo = res.equipo || [];
+  const equipoFiltrado = sqFilter
+    ? equipo.filter(j => j.squad && j.squad.toLowerCase() === sqFilter.toLowerCase())
+    : equipo;
+
+  container.innerHTML = `
+    <div class="reports-wrap">
+      <div class="rep-period-row">
+        <button class="rep-period-btn rep-period-btn-active" id="rep-btn-semana" onclick="repSwitchMode('semana')">Semana</button>
+        <button class="rep-period-btn" id="rep-btn-mes" onclick="repSwitchMode('mes')">Mes</button>
+        <select class="rep-period-select" id="rep-sel-semana" onchange="repLoadData()">
+          ${semOptions}
+        </select>
+        <select class="rep-period-select" id="rep-sel-mes" style="display:none" onchange="repLoadData()">
+          ${monOptions}
+        </select>
+      </div>
+      <div id="rep-body"></div>
+    </div>`;
+
+  // Set current semana in selector
+  const semSel = document.getElementById('rep-sel-semana');
+  if (semSel) semSel.value = state.semana;
+
+  repLoadData();
+}
+
+window._repMode = 'semana';
+
+function repSwitchMode(mode) {
+  window._repMode = mode;
+  document.getElementById('rep-btn-semana').classList.toggle('rep-period-btn-active', mode==='semana');
+  document.getElementById('rep-btn-mes').classList.toggle('rep-period-btn-active', mode==='mes');
+  document.getElementById('rep-sel-semana').style.display = mode==='semana' ? '' : 'none';
+  document.getElementById('rep-sel-mes').style.display    = mode==='mes'    ? '' : 'none';
+  repLoadData();
+}
+
+async function repLoadData() {
+  const body = document.getElementById('rep-body');
+  if (!body) return;
+  body.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  const sqFilter = state.coachSquadFilter || '';
+  const mode     = window._repMode || 'semana';
+  const semSel   = document.getElementById('rep-sel-semana');
+  const monSel   = document.getElementById('rep-sel-mes');
+  const semIdx   = semSel ? parseInt(semSel.value) : state.semana;
+  const monIdx   = monSel ? parseInt(monSel.value) : new Date().getMonth();
+
+  const res = await api({ action:'getEquipo', semana: semIdx });
+  if (!res.ok) { body.innerHTML = '<div class="hist-empty">Error.</div>'; return; }
+
+  let equipo = res.equipo || [];
+  if (sqFilter) equipo = equipo.filter(j => j.squad && j.squad.toLowerCase() === sqFilter.toLowerCase());
+
+  // Get all RPE registros for deeper analysis
+  const hoyDow    = new Date().getDay();
+  const diasTrans = hoyDow === 0 ? 7 : hoyDow;
+  const monthNames= ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  let rows, kpis, periodLabel;
+
+  if (mode === 'semana') {
+    periodLabel = (state.semanas && state.semanas[semIdx-1]) || `Semana ${semIdx}`;
+    rows = equipo.map(j => {
+      const sesiones7 = (j.sesiones7dias||[]);
+      const rpes = sesiones7.filter(s=>s.guardada && s.rpe).map(s=>parseFloat(s.rpe));
+      const avgRpe = rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null;
+      const sesCount = sesiones7.filter(s=>s.guardada).length;
+      const comp = diasTrans > 0 ? Math.round(sesCount/diasTrans*100) : 0;
+      const tiempo = j.tiempoUltima || null;
+      return { nombre:j.nombre, usuario:j.usuario, avgRpe, sesCount, comp, tiempo };
+    }).sort((a,b)=>b.comp-a.comp);
+
+    const allRpes = rows.filter(r=>r.avgRpe).map(r=>r.avgRpe);
+    const avgRpeTotal = allRpes.length ? Math.round((allRpes.reduce((a,b)=>a+b,0)/allRpes.length)*10)/10 : null;
+    const avgComp = rows.length ? Math.round(rows.reduce((a,b)=>a+b.comp,0)/rows.length) : 0;
+    const activos = rows.filter(r=>r.sesCount>0).length;
+    kpis = { rpe:avgRpeTotal, comp:avgComp, total:equipo.length, activos };
+
+  } else {
+    periodLabel = monthNames[monIdx] + ' ' + new Date().getFullYear();
+    // Simplified month view — use available weekly data
+    rows = equipo.map(j => {
+      const sesiones7 = (j.sesiones7dias||[]);
+      const rpes = sesiones7.filter(s=>s.guardada && s.rpe).map(s=>parseFloat(s.rpe));
+      const avgRpe = rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null;
+      const sesCount = sesiones7.filter(s=>s.guardada).length;
+      const comp = diasTrans > 0 ? Math.round(sesCount/diasTrans*100) : 0;
+      return { nombre:j.nombre, usuario:j.usuario, avgRpe, sesCount, comp, tiempo:j.tiempoUltima };
+    }).sort((a,b)=>b.comp-a.comp);
+
+    const allRpes = rows.filter(r=>r.avgRpe).map(r=>r.avgRpe);
+    const avgRpeTotal = allRpes.length ? Math.round((allRpes.reduce((a,b)=>a+b,0)/allRpes.length)*10)/10 : null;
+    const avgComp = rows.length ? Math.round(rows.reduce((a,b)=>a+b.comp,0)/rows.length) : 0;
+    const activos = rows.filter(r=>r.sesCount>0).length;
+    kpis = { rpe:avgRpeTotal, comp:avgComp, total:equipo.length, activos };
+  }
+
+  const rpeCol  = v => v===null?'var(--muted)':v<=5?'var(--accent2)':v<=7?'#ffc04d':'#ff7070';
+  const compCol = v => v>=80?'var(--accent2)':v>=50?'#ffc04d':'#ff7070';
+  const avInit  = n => n.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+
+  const tableRows = rows.map(r => {
+    const cc = compCol(r.comp);
+    const rc = rpeCol(r.avgRpe);
+    return `<tr>
+      <td>
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:${cc}22;color:${cc};font-size:9px;font-weight:600;margin-right:6px;flex-shrink:0">${avInit(r.nombre)}</span>
+        ${r.nombre.split(',')[0]}
+      </td>
+      <td><span class="rpe7-chip rpe7-${r.avgRpe===null?'none':r.avgRpe<=5?'low':r.avgRpe<=7?'mid':'high'}">${r.avgRpe !== null ? r.avgRpe : '—'}</span></td>
+      <td style="color:var(--muted)">${r.sesCount}/${diasTrans}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;height:3px;border-radius:2px;background:var(--border);overflow:hidden">
+            <div style="height:100%;width:${r.comp}%;background:${cc};border-radius:2px"></div>
+          </div>
+          <span style="font-size:10px;font-weight:600;color:${cc};min-width:28px;text-align:right">${r.comp}%</span>
+        </div>
+      </td>
+      <td style="color:var(--muted)">${r.tiempo ? r.tiempo+' min' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const kpiRpeCol  = rpeCol(kpis.rpe);
+  const kpiCompCol = compCol(kpis.comp);
+
+  body.innerHTML = `
+    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">${periodLabel} · ${sqFilter||'Todos los squads'}</div>
+      <div class="kpi-row" style="margin-bottom:0">
+        <div class="kpi-card"><div class="kpi-num" style="color:${kpiRpeCol}">${kpis.rpe||'—'}</div><div class="kpi-lbl">RPE medio</div></div>
+        <div class="kpi-card"><div class="kpi-num" style="color:${kpiCompCol}">${kpis.comp}%</div><div class="kpi-lbl">Compliance</div></div>
+        <div class="kpi-card"><div class="kpi-num">${kpis.total}</div><div class="kpi-lbl">Jugadores</div></div>
+        <div class="kpi-card"><div class="kpi-num green">${kpis.activos}</div><div class="kpi-lbl">Activos</div></div>
+      </div>
+    </div>
+    <div class="coach-table-wrap">
+      <table class="coach-table">
+        <thead><tr>
+          <th>Jugador</th><th>RPE</th><th>Sesiones</th><th>Compliance</th><th>Tiempo</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+    <button class="rep-export-btn" onclick="exportReportPDF('${periodLabel}')">
+      <span style="font-size:15px">⬇</span> Exportar PDF
+    </button>`;
+}
+
+function exportReportPDF(label) {
+  window.print();
+}
 
 // ── CARD PANEL TOGGLE ─────────────────────────────────────────
 function toggleCardPanel(type, cardId, ejercicio, loadObj, reps) {
@@ -2205,12 +2620,16 @@ async function saveLoad(cardId, ejercicio) {
 // ── COACH SQUAD FILTER ────────────────────────────────────────
 async function onCoachSquadChange() {
   const sel = document.getElementById('coach-squad-filter');
+  const selR = document.getElementById('coach-squad-filter-rpe');
   state.coachSquadFilter = sel ? sel.value : '';
-  // Reload semanas para el squad seleccionado (vista rutinas del coach)
+  if (selR) selR.value = state.coachSquadFilter;
   await loadSemanas();
   resetSessionState();
   loadRutina();
-  loadCoachPanel();
+  // Reload whichever coach tab is visible
+  const active = state.activeTab || 'jugadores';
+  if (active === 'jugadores' || active === 'rpe') loadCoachPanel();
+  if (active === 'reports') renderReportsPanel();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2868,10 +3287,16 @@ async function markCompletedDaysFromHistory() {
 
 // ── LOGOUT ────────────────────────────────────────────────────
 function logout() {
-  state = {user:null,dia:1,semana:1,semanas:[],rpeSession:null,tiempoSesion:'',guardado:false,isCoach:false,cards:{},coachEquipo:[],coachRpeChart:[],coachRpeBySquad:{},coachSquadFilter:'',squad:''};
+  state = {user:null,dia:1,semana:1,semanas:[],rpeSession:null,tiempoSesion:'',guardado:false,isCoach:false,cards:{},coachEquipo:[],coachRpeChart:[],coachRpeBySquad:{},coachSquadFilter:'',squad:'',activeTab:''};
+  // Hide all tabs
+  ['tab-sesion','tab-misemana','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.querySelectorAll('.bn-item').forEach(el => el.style.display = 'none');
   document.getElementById('screen-app').style.display  ='none';
   document.getElementById('screen-login').style.display='flex';
-  document.getElementById('coach-panel').classList.remove('visible');
+  // tabs hidden via initNav() on next login
   document.getElementById('coach-topbar-badge').classList.add('hidden');
   document.getElementById('input-user').value='';
   document.getElementById('input-pass').value='';
@@ -2882,4 +3307,3 @@ function logout() {
 </script>
 </body>
 </html>
-  
