@@ -958,45 +958,63 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 
 /* ── GLASS BOTTOM NAV ── */
 .bottom-nav {
-  position:fixed; bottom:12px; left:50%;
+  position:fixed; bottom:10px; left:50%;
   transform:translateX(-50%);
-  width:calc(100% - 32px); max-width:420px;
-  background:rgba(10,12,16,.92);
+  width:calc(100% - 24px); max-width:440px;
+  background:rgba(10,12,16,.95);
   backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:20px;
-  display:flex; padding:8px 4px 10px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:22px;
+  display:flex; padding:8px 6px 14px;
   z-index:90;
-  box-shadow:0 8px 32px rgba(0,0,0,.4);
+  box-shadow:0 8px 40px rgba(0,0,0,.5);
+  gap:4px;
 }
 .bn-item {
   flex:1; display:flex; flex-direction:column;
-  align-items:center; gap:4px; cursor:pointer;
-  padding:4px 2px; position:relative; border-radius:14px;
-  transition:all .15s;
+  align-items:center; gap:5px; cursor:pointer;
+  padding:10px 4px 8px; position:relative; border-radius:14px;
+  transition:all .15s; border:1px solid transparent;
 }
-.bn-active-bg {
-  position:absolute; inset:0; border-radius:14px;
-  background:rgba(232,20,42,.1);
-  border:1px solid rgba(232,20,42,.2);
+.bn-item.active {
+  background:rgba(232,20,42,.12);
+  border-color:rgba(232,20,42,.22);
 }
 .bn-icon {
-  font-size:20px; line-height:1;
+  font-size:26px; line-height:1;
   position:relative; z-index:1; color:rgba(255,255,255,.28);
 }
 .bn-item.active .bn-icon { color:#e8142a; }
 .bn-lbl {
-  font-size:9px; font-weight:500;
+  font-size:11px; font-weight:500;
   position:relative; z-index:1; color:rgba(255,255,255,.28);
+  line-height:1;
 }
-.bn-item.active .bn-lbl { color:#e8142a; }
-.bn-pip {
-  width:4px; height:4px; border-radius:50%;
-  background:#e8142a; position:relative; z-index:1;
-}
+.bn-item.active .bn-lbl { color:#e8142a; font-weight:700; }
 /* Padding extra al fondo del contenido para que el nav no tape */
-.content { padding-bottom:90px; }
+.content { padding-bottom:100px; }
+
+/* ── PRINT / PDF ── */
+@media print {
+  body { background:#fff !important; color:#000 !important; }
+  .topbar, .bottom-nav, .rep-export-btn,
+  .rep-period-row, .coach-header,
+  #tab-coach-jugadores, #tab-coach-rpe,
+  #tab-sesion, #tab-misemana,
+  .player-modal-overlay, .video-modal-overlay { display:none !important; }
+  #tab-coach-reports { display:block !important; }
+  #report-printable {
+    background:#fff !important;
+    color:#000 !important;
+    padding:0;
+  }
+  .kpi-card { border:1px solid #ccc !important; background:#f9f9f9 !important; }
+  .kpi-num { color:#000 !important; }
+  .coach-table { width:100% !important; }
+  .coach-table th, .coach-table td { color:#000 !important; border-bottom:1px solid #eee !important; }
+  .content { padding-bottom:0 !important; }
+}
 
 /* ── REPORTS ── */
 .reports-wrap { display:flex; flex-direction:column; gap:10px; }
@@ -1200,7 +1218,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       </div>
       <div class="coach-chart-box" id="coach-rpe-chart" style="display:none">
         <div class="chart-section-title">RPE medio por sesión</div>
-        <div class="chart-section-subtitle" id="coach-rpe-semana-label"></div>
         <div class="rpe-weeks-wrap" id="coach-rpe-weeks"></div>
       </div>
       <div class="coach-chart-box" id="coach-team-load-chart" style="display:none">
@@ -1229,7 +1246,15 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
           <div class="coach-title">Reports</div>
           <div class="coach-sem-label">Exportar informe del equipo</div>
         </div>
-        <span class="coach-badge">Coach</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select id="coach-squad-filter-reports" class="semana-select" style="min-width:130px;margin-bottom:0" onchange="onCoachSquadChangeReports()">
+            <option value="">Todos los squads</option>
+            <option value="men's xv">Men's XV</option>
+            <option value="women's">Women's</option>
+            <option value="academy">Academy</option>
+          </select>
+          <span class="coach-badge">Coach</span>
+        </div>
       </div>
       <div id="reports-content"></div>
     </div>
@@ -1248,6 +1273,28 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
           <option value="1">Cargando...</option>
         </select>
       </div>
+      <div class="day-cards-row" id="day-cards-row">
+        <div class="day-card active" id="daycard-1" onclick="selectDayCard(1,this)">
+          <div class="day-card-circle">1</div>
+          <div class="day-card-lbl">Day</div>
+        </div>
+        <div class="day-card" id="daycard-2" onclick="selectDayCard(2,this)">
+          <div class="day-card-circle">2</div>
+          <div class="day-card-lbl">Day</div>
+        </div>
+        <div class="day-card" id="daycard-3" onclick="selectDayCard(3,this)">
+          <div class="day-card-circle">3</div>
+          <div class="day-card-lbl">Day</div>
+        </div>
+        <div class="day-card" id="daycard-4" onclick="selectDayCard(4,this)">
+          <div class="day-card-circle">4</div>
+          <div class="day-card-lbl">Day</div>
+        </div>
+        <div class="day-card" id="daycard-5" onclick="selectDayCard(5,this)">
+          <div class="day-card-circle" style="font-size:11px">EX</div>
+          <div class="day-card-lbl">Extra</div>
+        </div>
+      </div>
       <div id="session-container"></div>
     </div>
 
@@ -1263,16 +1310,16 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     <!-- jugador -->
     <div class="bn-item active" id="bn-sesion" onclick="switchTab('sesion')" style="display:none">
       <div class="bn-icon"><i class="ti ti-dumbbell" aria-hidden="true"></i></div>
-      <div class="bn-lbl">Sesión</div>
+      <div class="bn-lbl">Session</div>
     </div>
     <div class="bn-item" id="bn-misemana" onclick="switchTab('misemana')" style="display:none">
       <div class="bn-icon"><i class="ti ti-chart-bar" aria-hidden="true"></i></div>
-      <div class="bn-lbl">Mi semana</div>
+      <div class="bn-lbl">Stats</div>
     </div>
     <!-- coach -->
     <div class="bn-item" id="bn-jugadores" onclick="switchTab('jugadores')" style="display:none">
       <div class="bn-icon"><i class="ti ti-users" aria-hidden="true"></i></div>
-      <div class="bn-lbl">Jugadores</div>
+      <div class="bn-lbl">Squad</div>
     </div>
     <div class="bn-item" id="bn-rpe" onclick="switchTab('rpe')" style="display:none">
       <div class="bn-icon"><i class="ti ti-chart-dots" aria-hidden="true"></i></div>
@@ -1283,8 +1330,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div class="bn-lbl">Reports</div>
     </div>
     <div class="bn-item" id="bn-sesion-coach" onclick="switchTab('sesion')" style="display:none">
-      <div class="bn-icon"><i class="ti ti-dumbbell" aria-hidden="true"></i></div>
-      <div class="bn-lbl">Sesión</div>
+      <div class="bn-icon"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>
+      <div class="bn-lbl">Session</div>
     </div>
   </nav>
 
@@ -2108,7 +2155,13 @@ function switchTab(tab) {
     if (sqJ && sqR) sqR.value = sqJ.value;
     loadCoachPanel();
   }
-  if (tab === 'reports') renderReportsPanel();
+  if (tab === 'reports') {
+    // Sync squad filter
+    const sqMain = document.getElementById('coach-squad-filter');
+    const sqRep  = document.getElementById('coach-squad-filter-reports');
+    if (sqMain && sqRep) sqRep.value = sqMain.value;
+    renderReportsPanel();
+  }
 }
 
 function onCoachSquadChangeRpe() {
@@ -2126,29 +2179,30 @@ function wsummSwitch(mode) {
   renderWeekSummary();
 }
 
+function onCoachSquadChangeReports() {
+  const sel = document.getElementById('coach-squad-filter-reports');
+  // Sync to main squad filter
+  const main = document.getElementById('coach-squad-filter');
+  if (sel && main) main.value = sel.value;
+  state.coachSquadFilter = sel ? sel.value : '';
+  renderReportsPanel();
+}
+
 // ── REPORTS ──────────────────────────────────────────────────
 async function renderReportsPanel() {
   const container = document.getElementById('reports-content');
   if (!container) return;
   container.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando datos...</div>';
 
-  const sqFilter = state.coachSquadFilter || '';
+  // Sync squad dropdown
+  const sqMain = document.getElementById('coach-squad-filter');
+  const sqRep  = document.getElementById('coach-squad-filter-reports');
+  if (sqMain && sqRep && !sqRep.value && sqMain.value) sqRep.value = sqMain.value;
+
   const semanas  = state.semanas || [];
-
-  // Build month list from semana names
-  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
   const semOptions = semanas.map((s,i) => `<option value="${i+1}">${s}</option>`).join('');
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const monOptions = monthNames.map((m,i) => `<option value="${i}">${m}</option>`).join('');
-
-  // Load all registros
-  const res = await api({ action:'getEquipo', semana: state.semana });
-  if (!res.ok) { container.innerHTML = '<div class="hist-empty">Error cargando datos.</div>'; return; }
-
-  const equipo = res.equipo || [];
-  const equipoFiltrado = sqFilter
-    ? equipo.filter(j => j.squad && j.squad.toLowerCase() === sqFilter.toLowerCase())
-    : equipo;
 
   container.innerHTML = `
     <div class="reports-wrap">
@@ -2165,9 +2219,11 @@ async function renderReportsPanel() {
       <div id="rep-body"></div>
     </div>`;
 
-  // Set current semana in selector
   const semSel = document.getElementById('rep-sel-semana');
   if (semSel) semSel.value = state.semana;
+  // set current month
+  const monSel = document.getElementById('rep-sel-mes');
+  if (monSel) monSel.value = new Date().getMonth();
 
   repLoadData();
 }
@@ -2195,70 +2251,88 @@ async function repLoadData() {
   const semIdx   = semSel ? parseInt(semSel.value) : state.semana;
   const monIdx   = monSel ? parseInt(monSel.value) : new Date().getMonth();
 
-  const res = await api({ action:'getEquipo', semana: semIdx });
-  if (!res.ok) { body.innerHTML = '<div class="hist-empty">Error.</div>'; return; }
+  // Get equipo list for the squad
+  const resEq = await api({ action:'getEquipo', semana: semIdx });
+  if (!resEq.ok) { body.innerHTML = '<div class="hist-empty">Error cargando datos.</div>'; return; }
 
-  let equipo = res.equipo || [];
+  let equipo = resEq.equipo || [];
   if (sqFilter) equipo = equipo.filter(j => j.squad && j.squad.toLowerCase() === sqFilter.toLowerCase());
 
-  // Get all RPE registros for deeper analysis
-  const hoyDow    = new Date().getDay();
-  const diasTrans = hoyDow === 0 ? 7 : hoyDow;
-  const monthNames= ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const rpeCol  = v => v===null?'var(--muted)':v<=5?'#00e5a0':v<=7?'#ffc04d':'#ff7070';
+  const compCol = v => v>=80?'#00e5a0':v>=50?'#ffc04d':'#ff7070';
+  const avInit  = n => n.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
 
-  let rows, kpis, periodLabel;
+  let rows = [], kpis = {}, periodLabel = '';
 
   if (mode === 'semana') {
     periodLabel = (state.semanas && state.semanas[semIdx-1]) || `Semana ${semIdx}`;
-    rows = equipo.map(j => {
-      const sesiones7 = (j.sesiones7dias||[]);
-      const rpes = sesiones7.filter(s=>s.guardada && s.rpe).map(s=>parseFloat(s.rpe));
+    const semStr = String(semIdx);
+
+    // Load historial for ALL players in parallel
+    const histResults = await Promise.all(
+      equipo.map(j => api({ action:'getHistorial', usuario: j.usuario, ejercicio:'RPE_GLOBAL' }))
+    );
+
+    rows = equipo.map((j, idx) => {
+      const res = histResults[idx];
+      if (!res.ok || !res.historial) return { nombre:j.nombre, usuario:j.usuario, avgRpe:null, sesCount:0, comp:0, tiempo:null };
+      const sesiones = res.historial.filter(h => String(h.semana).trim() === semStr);
+      const rpes = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
       const avgRpe = rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null;
-      const sesCount = sesiones7.filter(s=>s.guardada).length;
-      const comp = diasTrans > 0 ? Math.round(sesCount/diasTrans*100) : 0;
-      const tiempo = j.tiempoUltima || null;
+      const sesCount = sesiones.length;
+      const tiempos = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
+      const tiempo = tiempos.length ? tiempos.reduce((a,b)=>a+b,0) : null;
+      // compliance = sesiones / días de entrenamiento de esa semana (max 5)
+      const comp = sesCount > 0 ? Math.min(Math.round((sesCount/5)*100), 100) : 0;
       return { nombre:j.nombre, usuario:j.usuario, avgRpe, sesCount, comp, tiempo };
     }).sort((a,b)=>b.comp-a.comp);
 
-    const allRpes = rows.filter(r=>r.avgRpe).map(r=>r.avgRpe);
-    const avgRpeTotal = allRpes.length ? Math.round((allRpes.reduce((a,b)=>a+b,0)/allRpes.length)*10)/10 : null;
-    const avgComp = rows.length ? Math.round(rows.reduce((a,b)=>a+b.comp,0)/rows.length) : 0;
-    const activos = rows.filter(r=>r.sesCount>0).length;
-    kpis = { rpe:avgRpeTotal, comp:avgComp, total:equipo.length, activos };
-
   } else {
     periodLabel = monthNames[monIdx] + ' ' + new Date().getFullYear();
-    // Simplified month view — use available weekly data
-    rows = equipo.map(j => {
-      const sesiones7 = (j.sesiones7dias||[]);
-      const rpes = sesiones7.filter(s=>s.guardada && s.rpe).map(s=>parseFloat(s.rpe));
-      const avgRpe = rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null;
-      const sesCount = sesiones7.filter(s=>s.guardada).length;
-      const comp = diasTrans > 0 ? Math.round(sesCount/diasTrans*100) : 0;
-      return { nombre:j.nombre, usuario:j.usuario, avgRpe, sesCount, comp, tiempo:j.tiempoUltima };
-    }).sort((a,b)=>b.comp-a.comp);
 
-    const allRpes = rows.filter(r=>r.avgRpe).map(r=>r.avgRpe);
-    const avgRpeTotal = allRpes.length ? Math.round((allRpes.reduce((a,b)=>a+b,0)/allRpes.length)*10)/10 : null;
-    const avgComp = rows.length ? Math.round(rows.reduce((a,b)=>a+b.comp,0)/rows.length) : 0;
-    const activos = rows.filter(r=>r.sesCount>0).length;
-    kpis = { rpe:avgRpeTotal, comp:avgComp, total:equipo.length, activos };
+    // Load full historial per player and filter by month
+    const histResults = await Promise.all(
+      equipo.map(j => api({ action:'getHistorial', usuario: j.usuario, ejercicio:'RPE_GLOBAL' }))
+    );
+
+    rows = equipo.map((j, idx) => {
+      const res = histResults[idx];
+      if (!res.ok || !res.historial) return { nombre:j.nombre, usuario:j.usuario, avgRpe:null, sesCount:0, comp:0, tiempo:null };
+      // Filter by month and year
+      const year = new Date().getFullYear();
+      const sesiones = res.historial.filter(h => {
+        const d = new Date(h.fecha);
+        return d.getMonth() === monIdx && d.getFullYear() === year;
+      });
+      const rpes = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
+      const avgRpe = rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null;
+      const sesCount = sesiones.length;
+      const tiempos = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
+      const tiempo = tiempos.length ? tiempos.reduce((a,b)=>a+b,0) : null;
+      // Estimate sessions in month (~4 weeks * 5 days = 20 max)
+      const comp = sesCount > 0 ? Math.min(Math.round((sesCount/20)*100), 100) : 0;
+      return { nombre:j.nombre, usuario:j.usuario, avgRpe, sesCount, comp, tiempo };
+    }).sort((a,b)=>b.comp-a.comp);
   }
 
-  const rpeCol  = v => v===null?'var(--muted)':v<=5?'var(--accent2)':v<=7?'#ffc04d':'#ff7070';
-  const compCol = v => v>=80?'var(--accent2)':v>=50?'#ffc04d':'#ff7070';
-  const avInit  = n => n.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+  // Filter out players with zero activity for cleaner reports
+  const activeRows = rows.filter(r => r.sesCount > 0);
+  const allRpes = activeRows.filter(r=>r.avgRpe).map(r=>r.avgRpe);
+  const avgRpeTotal = allRpes.length ? Math.round((allRpes.reduce((a,b)=>a+b,0)/allRpes.length)*10)/10 : null;
+  const avgComp = activeRows.length ? Math.round(activeRows.reduce((a,b)=>a+b.comp,0)/activeRows.length) : 0;
+  kpis = { rpe:avgRpeTotal, comp:avgComp, total:equipo.length, activos:activeRows.length };
 
   const tableRows = rows.map(r => {
     const cc = compCol(r.comp);
     const rc = rpeCol(r.avgRpe);
     return `<tr>
       <td>
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:${cc}22;color:${cc};font-size:9px;font-weight:600;margin-right:6px;flex-shrink:0">${avInit(r.nombre)}</span>
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:${cc}22;color:${cc};font-size:9px;font-weight:600;margin-right:6px;flex-shrink:0;vertical-align:middle">${avInit(r.nombre)}</span>
         ${r.nombre.split(',')[0]}
       </td>
       <td><span class="rpe7-chip rpe7-${r.avgRpe===null?'none':r.avgRpe<=5?'low':r.avgRpe<=7?'mid':'high'}">${r.avgRpe !== null ? r.avgRpe : '—'}</span></td>
-      <td style="color:var(--muted)">${r.sesCount}/${diasTrans}</td>
+      <td style="color:var(--muted);text-align:center">${r.sesCount}</td>
       <td>
         <div style="display:flex;align-items:center;gap:6px">
           <div style="flex:1;height:3px;border-radius:2px;background:var(--border);overflow:hidden">
@@ -2271,33 +2345,32 @@ async function repLoadData() {
     </tr>`;
   }).join('');
 
-  const kpiRpeCol  = rpeCol(kpis.rpe);
-  const kpiCompCol = compCol(kpis.comp);
-
   body.innerHTML = `
-    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin-bottom:10px">
-      <div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">${periodLabel} · ${sqFilter||'Todos los squads'}</div>
-      <div class="kpi-row" style="margin-bottom:0">
-        <div class="kpi-card"><div class="kpi-num" style="color:${kpiRpeCol}">${kpis.rpe||'—'}</div><div class="kpi-lbl">RPE medio</div></div>
-        <div class="kpi-card"><div class="kpi-num" style="color:${kpiCompCol}">${kpis.comp}%</div><div class="kpi-lbl">Compliance</div></div>
-        <div class="kpi-card"><div class="kpi-num">${kpis.total}</div><div class="kpi-lbl">Jugadores</div></div>
-        <div class="kpi-card"><div class="kpi-num green">${kpis.activos}</div><div class="kpi-lbl">Activos</div></div>
+    <div id="report-printable">
+      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+        <div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">${periodLabel} · ${sqFilter||'Todos los squads'}</div>
+        <div class="kpi-row" style="margin-bottom:0">
+          <div class="kpi-card"><div class="kpi-num" style="color:${rpeCol(kpis.rpe)}">${kpis.rpe||'—'}</div><div class="kpi-lbl">RPE medio</div></div>
+          <div class="kpi-card"><div class="kpi-num" style="color:${compCol(kpis.comp)}">${kpis.comp}%</div><div class="kpi-lbl">Compliance</div></div>
+          <div class="kpi-card"><div class="kpi-num">${kpis.total}</div><div class="kpi-lbl">Jugadores</div></div>
+          <div class="kpi-card"><div class="kpi-num green">${kpis.activos}</div><div class="kpi-lbl">Activos</div></div>
+        </div>
+      </div>
+      <div class="coach-table-wrap">
+        <table class="coach-table">
+          <thead><tr>
+            <th>Jugador</th><th>RPE</th><th style="text-align:center">Sesiones</th><th>Compliance</th><th>Tiempo total</th>
+          </tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
       </div>
     </div>
-    <div class="coach-table-wrap">
-      <table class="coach-table">
-        <thead><tr>
-          <th>Jugador</th><th>RPE</th><th>Sesiones</th><th>Compliance</th><th>Tiempo</th>
-        </tr></thead>
-        <tbody>${tableRows}</tbody>
-      </table>
-    </div>
-    <button class="rep-export-btn" onclick="exportReportPDF('${periodLabel}')">
-      <span style="font-size:15px">⬇</span> Exportar PDF
+    <button class="rep-export-btn" onclick="exportReportPDF()">
+      <span style="font-size:15px">⬇</span> Exportar PDF — ${periodLabel}
     </button>`;
 }
 
-function exportReportPDF(label) {
+function exportReportPDF() {
   window.print();
 }
 
@@ -2741,7 +2814,6 @@ async function loadCoachPanel() {
         <div class="rpe-sessions-bars">${sesionesHtml}</div>
       </div>`;
     }).join('');
-    document.getElementById('coach-rpe-semana-label').textContent = semanaNombre + ' · Semana activa';
     document.getElementById('coach-rpe-weeks').innerHTML = weeksHtml;
     rpeChartEl.style.display = 'block';
   } else {
