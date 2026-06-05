@@ -1544,6 +1544,43 @@ async function loadSemanas() {
   }
   state.semana = 1;
   updateWeekDropdown();
+  await renderDayCards();
+}
+
+// ── RENDER DAY CARDS dinámicos ────────────────────────────────
+// Llama al backend para saber qué días tienen contenido
+// y solo pinta esos cards
+async function renderDayCards() {
+  const squad = state.isCoach ? (state.coachSquadFilter || "men's xv") : state.squad;
+  const res   = await api({ action:'getDiasActivos', semana: state.semana, squad });
+
+  const row = document.getElementById('day-cards-row');
+  if (!row) return;
+
+  const DAY_LABELS = { 1:'Day', 2:'Day', 3:'Day', 4:'Day', 5:'Extra' };
+  const DAY_CIRCLE = { 1:'1', 2:'2', 3:'3', 4:'4', 5:'EX' };
+
+  let dias = [1,2,3,4,5]; // fallback: show all
+  if (res.ok && res.diasActivos && res.diasActivos.length) {
+    dias = res.diasActivos;
+  }
+
+  // Store for later use when changing week
+  state.diasActivos = dias;
+
+  row.innerHTML = dias.map((dia, idx) => {
+    const isFirst = idx === 0;
+    const circleStyle = dia === 5 ? ' style="font-size:11px"' : '';
+    return `<div class="day-card${isFirst?' active':''}" id="daycard-${dia}" onclick="selectDayCard(${dia},this)">
+      <div class="day-card-circle"${circleStyle}>${DAY_CIRCLE[dia]}</div>
+      <div class="day-card-lbl">${DAY_LABELS[dia]}</div>
+    </div>`;
+  }).join('');
+
+  // Set active day to first available
+  if (dias.length > 0) {
+    state.dia = dias[0];
+  }
 }
 
 function updateWeekDropdown() {
@@ -1561,32 +1598,21 @@ function onSemanaChange() {
   state.semana = parseInt(document.getElementById('sel-semana').value);
   updateWeekDropdown();
   resetSessionState();
-  // Reset todos los day cards
-  for (let i=1; i<=5; i++) {
-    const card = document.getElementById('daycard-'+i);
-    if (card) {
-      card.classList.remove('done','active');
-      const circle = card.querySelector('.day-card-circle');
-      if (circle) circle.innerHTML = i===5 ? 'EX' : String(i);
+  // Re-render day cards for the new week (async)
+  renderDayCards().then(() => {
+    loadRutina();
+    if (!state.isCoach) {
+      const wb = document.getElementById('week-summary-box');
+      if (wb) wb.innerHTML = '';
+      if (state.activeTab === 'misemana') renderWeekSummary();
+      markCompletedDaysFromHistory();
     }
-  }
-  // Reactivar el day 1
-  const d1 = document.getElementById('daycard-1');
-  if (d1) d1.classList.add('active');
-  state.dia = 1;
-  loadRutina();
-  if (!state.isCoach) {
-    // Clear and re-render week summary if on that tab
-    const wb = document.getElementById('week-summary-box');
-    if (wb) wb.innerHTML = '';
-    if (state.activeTab === 'misemana') renderWeekSummary();
-    markCompletedDaysFromHistory();
-  }
-  if (state.isCoach) {
-    const active = state.activeTab || 'jugadores';
-    if (active === 'jugadores' || active === 'rpe') loadCoachPanel();
-    if (active === 'reports') renderReportsPanel();
-  }
+    if (state.isCoach) {
+      const active = state.activeTab || 'jugadores';
+      if (active === 'jugadores' || active === 'rpe') loadCoachPanel();
+      if (active === 'reports') renderReportsPanel();
+    }
+  });
 }
 function selectDayCard(dia, el) {
   state.dia = dia;
