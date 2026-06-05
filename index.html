@@ -1552,35 +1552,97 @@ async function loadSemanas() {
 // y solo pinta esos cards
 async function renderDayCards() {
   const squad = state.isCoach ? (state.coachSquadFilter || "men's xv") : state.squad;
-  const res   = await api({ action:'getDiasActivos', semana: state.semana, squad });
-
   const row = document.getElementById('day-cards-row');
   if (!row) return;
 
-  const DAY_LABELS = { 1:'Day', 2:'Day', 3:'Day', 4:'Day', 5:'Extra' };
-  const DAY_CIRCLE = { 1:'1', 2:'2', 3:'3', 4:'4', 5:'EX' };
+  // Try new backend action first
+  let dias = [], diasTitles = {};
+  const res = await api({ action:'getDiasActivos', semana: state.semana, squad });
 
-  let dias = [1,2,3,4,5]; // fallback: show all
   if (res.ok && res.diasActivos && res.diasActivos.length) {
-    dias = res.diasActivos;
+    dias        = res.diasActivos;
+    diasTitles  = res.diasTitles || {};
+  } else {
+    // Fallback: check each day individually via getRutina
+    const checks = await Promise.all(
+      [1,2,3,4,5].map(d => api({ action:'getRutina', semana:state.semana, dia:d, squad }))
+    );
+    checks.forEach((r, idx) => {
+      const d = idx + 1;
+      if (r.ok && r.ejercicios && r.ejercicios.length) {
+        dias.push(d);
+        if (r.dayTitle) diasTitles[d] = r.dayTitle;
+      }
+    });
   }
 
-  // Store for later use when changing week
-  state.diasActivos = dias;
+  // If still empty (backend old + no exercises yet), show all as fallback
+  if (!dias.length) dias = [1,2,3,4,5];
+
+  state.diasActivos  = dias;
+  state.diasTitles   = diasTitles;
+
+  // Helper: get color for day type
+  function dayColor(title) {
+    if (!title) return null;
+    const u = title.toUpperCase();
+    if (u.includes('HIGH'))     return { c:'#ff7070', bg:'rgba(232,20,42,.06)',   border:'rgba(232,20,42,.35)',  tag:'HIGH' };
+    if (u.includes('MODERATE') || u.includes('MOD')) return { c:'#ffa040', bg:'rgba(255,140,0,.06)',  border:'rgba(255,140,0,.35)',  tag:'MOD' };
+    if (u.includes('LOW'))      return { c:'#00e5a0', bg:'rgba(0,229,160,.06)',   border:'rgba(0,229,160,.35)', tag:'LOW' };
+    return null;
+  }
+
+  const DAY_CIRCLE = { 1:'1', 2:'2', 3:'3', 4:'4', 5:'EX' };
+  const DAY_LABEL  = { 1:'Day', 2:'Day', 3:'Day', 4:'Day', 5:'Extra' };
 
   row.innerHTML = dias.map((dia, idx) => {
     const isFirst = idx === 0;
-    const circleStyle = dia === 5 ? ' style="font-size:11px"' : '';
-    return `<div class="day-card${isFirst?' active':''}" id="daycard-${dia}" onclick="selectDayCard(${dia},this)">
-      <div class="day-card-circle"${circleStyle}>${DAY_CIRCLE[dia]}</div>
-      <div class="day-card-lbl">${DAY_LABELS[dia]}</div>
-    </div>`;
+    const title   = diasTitles[dia] || '';
+    const dt      = dayColor(title);
+    const circ    = DAY_CIRCLE[dia];
+    const lbl     = DAY_LABEL[dia];
+
+    if (dt) {
+      // Colored card with type tag
+      const activeExtra = isFirst ? `outline:2px solid ${dt.c};outline-offset:1px;` : '';
+      const sizeStyle   = isFirst ? 'min-width:72px;padding:8px 10px;' : 'min-width:52px;padding:8px 4px 6px;';
+      const tagOpacity  = isFirst ? '' : 'opacity:.7;';
+      return `<div class="day-card${isFirst?' active':''}" id="daycard-${dia}"
+        onclick="selectDayCard(${dia},this)"
+        style="background:${dt.bg};border:1.5px solid ${dt.border};${sizeStyle}${activeExtra}">
+        <div class="day-card-circle" style="border-color:${dt.border};color:${dt.c};background:${dt.bg.replace('.06','.1')}">${circ}</div>
+        <div class="day-card-lbl" style="color:${dt.c}">${lbl}</div>
+        <div style="font-size:7px;font-weight:700;color:${dt.c};letter-spacing:.04em;text-transform:uppercase;${tagOpacity}background:${dt.bg.replace('.06','.15')};border-radius:3px;padding:1px 5px;margin-top:1px">${dt.tag}</div>
+      </div>`;
+    } else {
+      // No type info — neutral card
+      return `<div class="day-card${isFirst?' active':''}" id="daycard-${dia}" onclick="selectDayCard(${dia},this)">
+        <div class="day-card-circle"${dia===5?' style="font-size:11px"':''}>${circ}</div>
+        <div class="day-card-lbl">${lbl}</div>
+      </div>`;
+    }
   }).join('');
 
-  // Set active day to first available
-  if (dias.length > 0) {
-    state.dia = dias[0];
-  }
+  if (dias.length > 0) state.dia = dias[0];
+}
+
+// Update day card active state + size when switching days
+function updateDayCardActive(dia) {
+  const dias = state.diasActivos || [1,2,3,4,5];
+  dias.forEach(d => {
+    const card = document.getElementById('daycard-'+d);
+    if (!card) return;
+    const isActive = d === dia;
+    card.classList.toggle('active', isActive);
+    // Resize active card for option C
+    if (isActive) {
+      card.style.minWidth = '72px';
+      card.style.padding  = '8px 10px';
+    } else {
+      card.style.minWidth = '52px';
+      card.style.padding  = '8px 4px 6px';
+    }
+  });
 }
 
 function updateWeekDropdown() {
@@ -1617,11 +1679,9 @@ function onSemanaChange() {
 function selectDayCard(dia, el) {
   state.dia = dia;
   resetSessionState();
-  // Update card UI
-  document.querySelectorAll('.day-card').forEach(c => {
-    c.classList.remove('active');
-  });
+  document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
+  updateDayCardActive(dia);
   loadRutina();
 }
 
@@ -1819,12 +1879,15 @@ function renderSession(ejercicios, nombreSemana, sessionNotes, dayTitle) {
       </div>
     </div>`;
 
-  // ── Notas C: card con icono en la parte superior ───────────
+  // ── Notas C: card con icono — color según tipo de día ──────
+  const noteColor = dt ? dt.c : 'var(--accent)';
+  const noteBg    = dt ? dt.bg : 'rgba(232,20,42,.06)';
+  const noteBorder= dt ? dt.border : 'rgba(232,20,42,.2)';
   const notesHtml = sessionNotes ? `
-    <div style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:10px;padding:10px 12px;display:flex;align-items:flex-start;gap:10px;margin-bottom:12px">
-      <div style="width:30px;height:30px;border-radius:7px;background:rgba(232,20,42,.1);border:1px solid rgba(232,20,42,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">📝</div>
+    <div style="background:${noteBg};border:0.5px solid ${noteBorder};border-radius:10px;padding:10px 12px;display:flex;align-items:flex-start;gap:10px;margin-bottom:12px">
+      <div style="width:30px;height:30px;border-radius:7px;background:${noteBg.replace('.06','.15')};border:1px solid ${noteBorder};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">📝</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:3px">Aviso del coach</div>
+        <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${noteColor};margin-bottom:3px">Aviso del coach</div>
         <div style="font-size:11px;color:var(--muted);line-height:1.55;white-space:pre-line">${sessionNotes}</div>
       </div>
     </div>` : '';
