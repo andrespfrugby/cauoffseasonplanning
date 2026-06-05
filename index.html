@@ -2184,21 +2184,81 @@ async function renderWeekSummary() {
   const timeVal = tiempoTotal !== null ? tiempoTotal : '—';
   const kgVal   = kgTotal !== null ? kgTotal : '—';
 
-  // Days grid — show current week for semana mode, last 7 days for mes
+  // ── Days section ────────────────────────────────────────────
+  // Week mode: 7 fixed pills (L M X J V S D) — fixed 28px squares no overlap
   const hoyStr  = fmtDate(new Date());
   const lunes   = getLunesDeSemana(new Date());
   const diasSem = ['L','M','X','J','V','S','D'];
-  const daysHtml = diasSem.map((lbl, i) => {
+
+  const weekPillsHtml = diasSem.map((lbl, i) => {
     const d = new Date(lunes);
     d.setDate(d.getDate() + i);
-    const ds = fmtDate(d);
+    const ds    = fmtDate(d);
     const isHoy = ds === hoyStr;
     const done  = sesiones.some(h => fmtDate(new Date(h.fecha)) === ds);
-    let cls = 'wsumm-day empty', icon = '';
-    if (done)       { cls = 'wsumm-day done'; icon = '✓'; }
-    else if (isHoy) { cls = 'wsumm-day today'; icon = '·'; }
-    return `<div class="${cls}"><div class="wsumm-day-dot">${icon}</div><div class="wsumm-day-lbl">${lbl}</div></div>`;
+    const bg    = done  ? 'rgba(0,229,160,.18)'  : isHoy ? 'rgba(255,255,255,.06)' : 'var(--surface2)';
+    const brd   = done  ? '1px solid rgba(0,229,160,.4)' : isHoy ? '1px dashed var(--border2)' : '1px solid var(--border)';
+    const col   = done  ? '#00e5a0' : isHoy ? 'var(--muted)' : 'var(--muted)';
+    const icon  = done  ? '✓' : isHoy ? '·' : '';
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="width:28px;height:28px;border-radius:6px;background:${bg};border:${brd};display:flex;align-items:center;justify-content:center;font-size:11px;color:${col};flex-shrink:0">${icon}</div>
+      <div style="font-size:8px;color:${done?'#00e5a0':'var(--muted)'};line-height:1">${lbl}</div>
+    </div>`;
   }).join('');
+
+  // Month calendar — navigable
+  const calYear  = state._calYear  !== undefined ? state._calYear  : new Date().getFullYear();
+  const calMonth = state._calMonth !== undefined ? state._calMonth : new Date().getMonth();
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const daysInCal  = new Date(calYear, calMonth + 1, 0).getDate();
+
+  // Collect trained dates in that month
+  const trainedDays = new Set();
+  if (resRpe.ok && resRpe.historial) {
+    resRpe.historial.forEach(h => {
+      const d = new Date(h.fecha);
+      if (d.getMonth() === calMonth && d.getFullYear() === calYear) trainedDays.add(d.getDate());
+    });
+  }
+
+  const monthOptions = monthNames.map((m, i) =>
+    `<option value="${i}"${i===calMonth?' selected':''}>${m}</option>`
+  ).join('');
+  const yearOptions = [calYear-1, calYear, calYear+1].map(y =>
+    `<option value="${y}"${y===calYear?' selected':''}>${y}</option>`
+  ).join('');
+
+  const calPillsHtml = Array.from({length:daysInCal},(_,i) => {
+    const day   = i + 1;
+    const done2 = trainedDays.has(day);
+    const today = new Date();
+    const isT   = today.getDate()===day && today.getMonth()===calMonth && today.getFullYear()===calYear;
+    const bg2   = done2 ? 'rgba(0,229,160,.18)' : isT ? 'rgba(255,255,255,.06)' : 'var(--surface2)';
+    const brd2  = done2 ? '1px solid rgba(0,229,160,.4)' : isT ? '1px dashed var(--border2)' : '1px solid var(--border)';
+    const col2  = done2 ? '#00e5a0' : isT ? 'var(--muted)' : 'var(--muted)';
+    return `<div style="width:28px;height:28px;border-radius:6px;background:${bg2};border:${brd2};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:${done2?'600':'400'};color:${col2};flex-shrink:0">${day}</div>`;
+  }).join('');
+
+  const daysSection = mode === 'mes' ? `
+    <div class="wsumm-days">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+        <div class="wsumm-days-title" style="margin-bottom:0">Asistencia</div>
+        <select style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;padding:3px 7px;font-size:11px;color:var(--text);font-family:var(--font-body);outline:none;cursor:pointer"
+          onchange="state._calMonth=parseInt(this.value);renderWeekSummary()">
+          ${monthOptions}
+        </select>
+        <select style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;padding:3px 7px;font-size:11px;color:var(--text);font-family:var(--font-body);outline:none;cursor:pointer"
+          onchange="state._calYear=parseInt(this.value);renderWeekSummary()">
+          ${yearOptions}
+        </select>
+        <span style="font-size:10px;color:var(--accent2);font-weight:600">${trainedDays.size} sesiones</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${calPillsHtml}</div>
+    </div>` : `
+    <div class="wsumm-days">
+      <div class="wsumm-days-title">Sesiones esta semana</div>
+      <div style="display:grid;grid-template-columns:repeat(7,28px);gap:4px">${weekPillsHtml}</div>
+    </div>`;
 
   // Ranking — same squad filter logic
   let rankingHtml = '';
@@ -2317,10 +2377,7 @@ async function renderWeekSummary() {
         <div class="wsumm-circ">${circle(tiempoTotal!==null?Math.min(tiempoTotal/90,1):0, timeCol, timeVal!=='—'?timeVal:'—', timeVal!=='—'?'min':'')}<div class="wsumm-circ-lbl">Tiempo total</div></div>
         <div class="wsumm-circ">${circle(kgTotal!==null?Math.min(kgTotal/500,1):0, kgCol, kgVal!=='—'?kgVal:'—', kgVal!=='—'?'kg':'')}<div class="wsumm-circ-lbl">Kg semana</div></div>
       </div>
-      <div class="wsumm-days">
-        <div class="wsumm-days-title">Sesiones${mode==='mes'?' esta semana':' esta semana'}</div>
-        <div class="wsumm-days-row">${daysHtml}</div>
-      </div>
+      ${daysSection}
       ${rankingHtml}
     </div>`;
   container.style.display = 'block';
@@ -3315,7 +3372,6 @@ function toggleTimerPanel(cardId) {
 }
 
 // ── METRÓNOMO ─────────────────────────────────────────────────
-// Usa Web Audio API (osciladores) — no interrumpe Spotify/YouTube
 const metroState = {};
 
 function renderMetronomeStrip(cardId) {
@@ -3335,12 +3391,6 @@ function renderMetronomeStrip(cardId) {
   const dots = [0,1,2,3].map(i =>
     `<div class="metro-dot" id="metro-dot-${cardId}-${i}"></div>`
   ).join('');
-  // SVG metronome icon inline
-  const metroSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polygon points="12,2 19,21 5,21"/>
-    <line x1="12" y1="2" x2="18" y2="14"/>
-    <line x1="6" y1="21" x2="18" y2="21"/>
-  </svg>`;
   return `<div class="metro-wrap" id="metro-wrap-${cardId}">
     <div class="metro-bpm-row">${btns}</div>
     <div class="metro-controls">
@@ -3350,21 +3400,8 @@ function renderMetronomeStrip(cardId) {
   </div>`;
 }
 
-// Shared AudioContext — created once, reused across all metronomes
-let _sharedAudioCtx = null;
-function getAudioCtx() {
-  if (!_sharedAudioCtx) {
-    _sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint:'interactive' });
-  }
-  // iOS/Android: resume if suspended (required after user gesture)
-  if (_sharedAudioCtx.state === 'suspended') {
-    _sharedAudioCtx.resume();
-  }
-  return _sharedAudioCtx;
-}
-
 function metroGet(cardId) {
-  if (!metroState[cardId]) metroState[cardId] = { bpm:100, beat:0, iv:null, running:false };
+  if (!metroState[cardId]) metroState[cardId] = { bpm:100, beat:0, iv:null, running:false, ctx:null };
   return metroState[cardId];
 }
 
@@ -3377,48 +3414,78 @@ function metroSetBpm(cardId, bpm, el) {
   if (m.running) { metroStop(cardId); metroStart(cardId); }
 }
 
-function metroClick(cardId) {
-  const m = metroGet(cardId);
-  // Web Audio click — shared context, resumed on user gesture
+function metroPlayClick(ctx, beat) {
   try {
-    const ctx  = getAudioCtx();
+    const now  = ctx.currentTime;
     const osc  = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(ctx.destination);
-    osc.frequency.value = m.beat === 0 ? 1100 : 750;
-    gain.gain.setValueAtTime(0.4, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.06);
-  } catch(e) { console.warn('Metro audio error:', e); }
-  // Visual beat dots
+    osc.frequency.value = beat === 0 ? 1100 : 750;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.5, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  } catch(e) { console.warn('metro click err', e); }
+}
+
+function metroPulseDot(cardId, beat) {
   const nBeats = 4;
-  const beat = m.beat % nBeats;
+  const b = beat % nBeats;
   for (let i = 0; i < nBeats; i++) {
     const dot = document.getElementById(`metro-dot-${cardId}-${i}`);
-    if (dot) dot.classList.toggle('pulse', i === beat);
+    if (dot) dot.classList.toggle('pulse', i === b);
   }
-  m.beat++;
 }
 
 function metroStart(cardId) {
   const m = metroGet(cardId);
-  // Ensure AudioContext is resumed (required on iOS on first interaction)
-  try { getAudioCtx(); } catch(e) {}
-  m.beat = 0;
+
+  // Create fresh AudioContext on every start — required for iOS
+  try {
+    if (m.ctx) { try { m.ctx.close(); } catch(e){} }
+    m.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  } catch(e) {
+    alert('Tu dispositivo no soporta Web Audio. Prueba con Chrome.');
+    return;
+  }
+
+  // iOS: unlock audio with a silent buffer immediately in the gesture
+  const unlock = m.ctx.createBuffer(1, 1, 22050);
+  const src = m.ctx.createBufferSource();
+  src.buffer = unlock;
+  src.connect(m.ctx.destination);
+  src.start(0);
+
+  m.beat    = 0;
   m.running = true;
-  metroClick(cardId);
-  m.iv = setInterval(() => metroClick(cardId), Math.round(60000 / m.bpm));
+
   const btn = document.getElementById('metro-play-'+cardId);
   if (btn) { btn.textContent = '■ Parar'; btn.classList.add('playing'); }
+
+  // Play first beat immediately
+  metroPlayClick(m.ctx, 0);
+  metroPulseDot(cardId, 0);
+  m.beat = 1;
+
+  const interval = Math.round(60000 / m.bpm);
+  m.iv = setInterval(() => {
+    if (!m.running) return;
+    metroPlayClick(m.ctx, m.beat);
+    metroPulseDot(cardId, m.beat);
+    m.beat++;
+  }, interval);
 }
 
 function metroStop(cardId) {
   const m = metroGet(cardId);
   clearInterval(m.iv);
   m.running = false;
-  m.beat = 0;
+  m.beat    = 0;
+  try { if (m.ctx) m.ctx.close(); } catch(e){}
+  m.ctx = null;
   for (let i = 0; i < 4; i++) {
     const dot = document.getElementById(`metro-dot-${cardId}-${i}`);
     if (dot) dot.classList.remove('pulse');
