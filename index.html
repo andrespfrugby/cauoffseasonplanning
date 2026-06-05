@@ -1867,15 +1867,17 @@ function renderSession(ejercicios, nombreSemana, sessionNotes, dayTitle) {
     if (u.includes('LOW'))      return { color:'#00e5a0', bg:'rgba(0,229,160,.12)', border:'rgba(0,229,160,.3)', label: u.replace(/DAY\s*\d+\s*/,'').trim()||'LOW DAY' };
     return { color:'var(--muted)', bg:'var(--surface2)', border:'var(--border2)', label: title };
   }
-  const dt = getDayType(dayTitle);
+  // ── Day type color — usa dayTitle del backend o de state.diasTitles ──
+  const resolvedTitle = dayTitle || (state.diasTitles && state.diasTitles[state.dia]) || '';
+  const dt = getDayType(resolvedTitle);
 
   // ── Cabecera C: "DAY 1" grande + tipo + semana ─────────────
   const headerHtml = `
     <div style="display:flex;gap:8px;margin-bottom:10px;align-items:stretch">
-      <div style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;min-width:80px">
-        <div style="font-family:var(--font-head);font-size:28px;line-height:1;color:var(--accent);letter-spacing:.5px">${dayBase.toUpperCase()}</div>
+      <div style="background:${dt?dt.bg:'var(--surface2)'};border:1px solid ${dt?dt.border:'var(--border2)'};border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;min-width:80px">
+        <div style="font-family:var(--font-head);font-size:28px;line-height:1;color:${dt?dt.c:'var(--accent)'};letter-spacing:.5px">${dayBase.toUpperCase()}</div>
         <div style="font-size:9px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${semanaTxt}</div>
-        ${dt ? `<div style="margin-top:5px;display:inline-flex;padding:2px 8px;border-radius:5px;background:${dt.bg};border:1px solid ${dt.border}"><span style="font-size:9px;font-weight:700;color:${dt.color};letter-spacing:.05em;text-transform:uppercase">${dt.label}</span></div>` : ''}
+        ${dt ? `<div style="margin-top:5px;display:inline-flex;padding:2px 8px;border-radius:5px;background:${dt.bg.replace('.06','.18')};border:1px solid ${dt.border}"><span style="font-size:9px;font-weight:700;color:${dt.c};letter-spacing:.05em;text-transform:uppercase">${dt.label}</span></div>` : ''}
       </div>
     </div>`;
 
