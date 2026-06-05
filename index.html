@@ -65,8 +65,9 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .day-pill { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:5px 14px; font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; color:var(--muted); font-family:var(--font-body); }
 .day-pill:hover { border-color:rgba(232,20,42,.4); color:var(--text); }
 .day-pill.active { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
-.session-title { font-family:var(--font-head); font-size:30px; letter-spacing:1px; line-height:1; margin-bottom:.2rem; }
-.session-meta { color:var(--muted); font-size:13px; margin-bottom:1.25rem; }
+.session-title { font-family:var(--font-head); font-size:26px; letter-spacing:1px; line-height:1; margin-bottom:.1rem; color:var(--text); }
+.session-day-sub { font-size:14px; font-weight:600; color:var(--accent); letter-spacing:.5px; margin-bottom:.2rem; }
+.session-meta { color:var(--muted); font-size:12px; margin-bottom:1.25rem; }
 .phase-header { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:1.25rem 0 .65rem; display:flex; align-items:center; gap:8px; }
 .phase-header::after { content:''; flex:1; height:1px; background:var(--border); }
 
@@ -780,18 +781,17 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .wsumm-days-row {
   display:grid;
   grid-template-columns: repeat(7, 1fr);
-  gap:4px;
+  gap:3px;
 }
 .wsumm-day {
   display:flex; flex-direction:column;
-  align-items:center; gap:4px;
+  align-items:center; gap:3px;
 }
 .wsumm-day-dot {
-  width:100%; aspect-ratio:1;
-  max-width:32px;
-  border-radius:6px;
+  width:100%; max-width:34px; height:28px;
+  border-radius:5px;
   display:flex; align-items:center; justify-content:center;
-  font-size:11px;
+  font-size:11px; flex-shrink:0;
 }
 .wsumm-day-lbl {
   font-size:8px; color:var(--muted); line-height:1;
@@ -1081,6 +1081,39 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   box-shadow:0 1px 4px rgba(0,0,0,.12);
 }
 
+/* ── METRÓNOMO ── */
+.metro-wrap {
+  border-top:1px solid var(--border);
+  padding:10px 13px 12px;
+}
+.metro-bpm-row { display:flex; gap:4px; margin-bottom:9px; }
+.metro-bpm-btn {
+  flex:1; padding:7px 3px; border-radius:7px;
+  border:0.5px solid var(--border2); background:var(--surface2);
+  font-size:12px; font-weight:600; color:var(--muted);
+  cursor:pointer; text-align:center; font-family:var(--font-body);
+  transition:all .12s; display:flex; flex-direction:column; align-items:center; gap:1px;
+}
+.metro-bpm-btn.on {
+  background:rgba(0,229,160,.1); border-color:rgba(0,229,160,.3); color:var(--accent2);
+}
+.metro-bpm-sub { font-size:7px; color:var(--muted); font-weight:400; }
+.metro-bpm-btn.on .metro-bpm-sub { color:rgba(0,229,160,.6); }
+.metro-controls { display:flex; align-items:center; gap:8px; }
+.metro-beats { display:flex; gap:4px; flex:1; align-items:center; }
+.metro-dot {
+  width:10px; height:10px; border-radius:50%;
+  background:rgba(255,255,255,.1); transition:all .06s;
+  flex-shrink:0;
+}
+.metro-dot.pulse { background:var(--accent2); box-shadow:0 0 7px rgba(0,229,160,.6); }
+.metro-play {
+  padding:7px 14px; border-radius:7px; font-size:11px; font-weight:600;
+  border:1px solid rgba(0,229,160,.3); background:rgba(0,229,160,.1); color:var(--accent2);
+  cursor:pointer; font-family:var(--font-body); white-space:nowrap; transition:all .12s;
+}
+.metro-play.playing { background:rgba(255,77,77,.1); border-color:rgba(255,77,77,.3); color:#ff7070; }
+
 /* ── HEATMAP RPE ── */
 .hm-wrap { display:flex; flex-direction:column; gap:4px; }
 .hm-header { display:flex; align-items:center; gap:4px; margin-bottom:3px; }
@@ -1367,7 +1400,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   <nav class="bottom-nav" id="bottom-nav">
     <!-- jugador -->
     <div class="bn-item active" id="bn-sesion" onclick="switchTab('sesion')" style="display:none">
-      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v16"/><path d="M18 4v16"/><path d="M6 8h12"/><path d="M6 16h12"/><path d="M2 8h2"/><path d="M20 8h2"/><path d="M2 16h2"/><path d="M20 16h2"/></svg></div>
+      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
       <div class="bn-lbl">Session</div>
     </div>
     <div class="bn-item" id="bn-misemana" onclick="switchTab('misemana')" style="display:none">
@@ -1599,7 +1632,7 @@ async function loadRutina() {
     container.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>No hay ejercicios para este día todavía.</div>';
     return;
   }
-  renderSession(res.ejercicios, res.nombreSemana||'', res.sessionNotes||'');
+  renderSession(res.ejercicios, res.nombreSemana||'', res.sessionNotes||'', res.dayTitle||'');
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
@@ -1698,6 +1731,10 @@ function renderCard(e) {
               onclick="toggleTimerPanel('${cardId}')">
         <span class="btn-action-icon">⏱</span><span>Descanso</span>
       </button>
+      <button type="button" class="btn-action btn-action-hist" title="Metrónomo"
+              onclick="toggleMetronomePanel('${cardId}')">
+        <span class="btn-action-icon">🎵</span><span>Metrónomo</span>
+      </button>
       <button type="button" class="btn-action btn-action-video ${hasVideo?'':'no-url'}"
               onclick="openVideoModal('${nombreEsc}','${videoEsc}')"
               title="${hasVideo?'Ver vídeo':'Sin vídeo aún'}">
@@ -1721,16 +1758,48 @@ function renderCard(e) {
     <div id="panel-hist-${cardId}" class="card-panel hidden"></div>
     <div id="panel-load-${cardId}" class="card-panel hidden"></div>
     <div id="panel-timer-${cardId}" class="hidden">${renderTimerStrip(cardId)}</div>
+    <div id="panel-metro-${cardId}" class="hidden">${renderMetronomeStrip(cardId)}</div>
   </div>`;
 }
 
 // ── RENDER SESSION ────────────────────────────────────────────
-function renderSession(ejercicios, nombreSemana, sessionNotes) {
+function renderSession(ejercicios, nombreSemana, sessionNotes, dayTitle) {
   const container = document.getElementById('session-container');
   const prep = ejercicios.filter(e=>e.fase==='prep');
   const main = ejercicios.filter(e=>e.fase!=='prep');
   const semanaTxt = nombreSemana ||
     document.getElementById('sel-semana').options[document.getElementById('sel-semana').selectedIndex]?.text || '';
+
+  const dayBase = DAY_NAMES[state.dia] || 'Sesión';
+
+  // ── Colored day type badge ────────────────────────────────
+  // dayTitle comes from backend (e.g. "DAY 1 MODERATE DAY" or "DAY 1 HIGH DAY")
+  // Extract the type word and assign color
+  function getDayTypeBadge(title) {
+    if (!title) return '';
+    const upper = title.toUpperCase();
+    let color, bg, border, label;
+    if (upper.includes('HIGH')) {
+      color='#ff7070'; bg='rgba(232,20,42,.12)'; border='rgba(232,20,42,.3)';
+      label = upper.replace(/DAY\s*\d+\s*/,'').trim() || 'HIGH DAY';
+    } else if (upper.includes('MODERATE') || upper.includes('MEDIUM') || upper.includes('MOD')) {
+      color='#ffa040'; bg='rgba(255,140,0,.12)'; border='rgba(255,140,0,.3)';
+      label = upper.replace(/DAY\s*\d+\s*/,'').trim() || 'MODERATE DAY';
+    } else if (upper.includes('LOW')) {
+      color='#00e5a0'; bg='rgba(0,229,160,.12)'; border='rgba(0,229,160,.3)';
+      label = upper.replace(/DAY\s*\d+\s*/,'').trim() || 'LOW DAY';
+    } else {
+      return `<div style="font-size:11px;color:var(--muted);margin-top:2px">${title}</div>`;
+    }
+    return `<div style="display:inline-flex;align-items:center;margin-top:5px;
+      background:${bg};border:1px solid ${border};border-radius:7px;
+      padding:4px 12px;">
+      <span style="font-size:12px;font-weight:700;color:${color};letter-spacing:.06em;text-transform:uppercase">${label}</span>
+    </div>`;
+  }
+
+  const badgeHtml = getDayTypeBadge(dayTitle);
+
   const notesBanner = sessionNotes
     ? `<div class="notes-banner">
         <div class="notes-banner-head">
@@ -1740,8 +1809,13 @@ function renderSession(ejercicios, nombreSemana, sessionNotes) {
         <div class="notes-banner-body">${sessionNotes}</div>
        </div>` : '';
   container.innerHTML = `
-    <div class="session-title">${DAY_NAMES[state.dia]||'Sesión'}</div>
-    <div class="session-meta">${semanaTxt}</div>
+    <div class="coach-header" style="margin-bottom:.5rem">
+      <div>
+        <div class="coach-title">${dayBase}</div>
+        <div class="coach-sem-label">${semanaTxt}</div>
+        ${badgeHtml}
+      </div>
+    </div>
     ${prep.length ? `<div class="phase-header">Prep</div>${prep.map(renderCard).join('')}` : ''}
     <div class="phase-header">Main Block</div>
     ${main.map(renderCard).join('')}
@@ -1877,7 +1951,231 @@ async function saveSession() {
 async function renderWeekSummary() {
   const container = document.getElementById('week-summary-box');
   if (!container) return;
+  const mode = _wsummMode || 'semana';
   const semStr = String(state.semana);
+
+  const [resRpe, resCarga, resEquipo] = await Promise.all([
+    api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' }),
+    api({ action:'getHistorial', usuario:state.user.usuario }),
+    api({ action:'getEquipo', semana:state.semana })
+  ]);
+
+  if (!resRpe.ok || !resRpe.historial) return;
+
+  let sesiones, totalDias, rpeMedia, tiempoTotal, kgTotal, compliance, periodLabel;
+
+  if (mode === 'semana') {
+    sesiones    = resRpe.historial.filter(h => String(h.semana).trim() === semStr);
+    totalDias   = sesiones.length;
+    const rpes  = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
+    rpeMedia    = rpes.length ? Math.round((rpes.reduce((s,v)=>s+v,0)/rpes.length)*10)/10 : null;
+    const tiempos = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
+    tiempoTotal = tiempos.length ? tiempos.reduce((s,v)=>s+v,0) : null;
+    const hoyDow = new Date().getDay();
+    const diasTrans = hoyDow === 0 ? 7 : hoyDow;
+    compliance  = diasTrans > 0 ? Math.round((totalDias / diasTrans) * 100) : 0;
+    periodLabel = (state.semanas && state.semanas[state.semana-1]) || `Semana ${state.semana}`;
+  } else {
+    // Month mode — aggregate all sessions from current month
+    const now  = new Date();
+    const mon  = now.getMonth();
+    const year = now.getFullYear();
+    sesiones    = resRpe.historial.filter(h => {
+      const d = new Date(h.fecha);
+      return d.getMonth() === mon && d.getFullYear() === year;
+    });
+    totalDias   = sesiones.length;
+    const rpes  = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
+    rpeMedia    = rpes.length ? Math.round((rpes.reduce((s,v)=>s+v,0)/rpes.length)*10)/10 : null;
+    const tiempos = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
+    tiempoTotal = tiempos.length ? tiempos.reduce((s,v)=>s+v,0) : null;
+    // compliance for month = sessions / expected (≈20 sessions/month)
+    compliance  = Math.min(Math.round((totalDias / 20) * 100), 100);
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    periodLabel = monthNames[mon] + ' ' + year;
+  }
+
+  // kg total
+  kgTotal = null;
+  if (resCarga.ok && resCarga.historial) {
+    const fuente = mode === 'semana'
+      ? resCarga.historial.filter(h => String(h.semana).trim() === semStr && h.ejercicio !== 'RPE_GLOBAL')
+      : resCarga.historial.filter(h => {
+          const d = new Date(h.fecha);
+          return d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear() && h.ejercicio !== 'RPE_GLOBAL';
+        });
+    const cargas = fuente.flatMap(h => String(h.carga).split('/').map(parseFloat)).filter(v => !isNaN(v) && v > 10);
+    if (cargas.length) kgTotal = Math.round(cargas.reduce((s,v)=>s+v,0));
+  }
+
+  // Colores
+  const rpeCol  = rpeMedia === null ? '#5a6475' : rpeMedia<=5 ? '#00e5a0' : rpeMedia<=7 ? '#ffc04d' : '#ff7070';
+  const compCol = compliance >= 80 ? '#00e5a0' : compliance >= 50 ? '#ffc04d' : '#ff7070';
+  const timeCol = '#00e5a0';
+  const kgCol   = '#ffc04d';
+
+  function circle(pct, color, line1, line2) {
+    const r = 29, cx = 36, cy = 36;
+    const circ = 2 * Math.PI * r;
+    const offset = circ * (1 - Math.min(pct, 1));
+    const textY1 = line2 ? '33' : '39';
+    return `<svg width="72" height="72" viewBox="0 0 72 72">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="5"
+        stroke-linecap="round" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+        transform="rotate(-90 ${cx} ${cy})"/>
+      <text x="${cx}" y="${textY1}" text-anchor="middle" font-size="14" font-weight="500"
+        fill="${color}" font-family="'DM Sans',sans-serif">${line1}</text>
+      ${line2 ? `<text x="${cx}" y="46" text-anchor="middle" font-size="9" fill="rgba(120,130,148,1)" font-family="'DM Sans',sans-serif">${line2}</text>` : ''}
+    </svg>`;
+  }
+
+  const rpeVal  = rpeMedia !== null ? rpeMedia : '—';
+  const compVal = compliance + '%';
+  const timeVal = tiempoTotal !== null ? tiempoTotal : '—';
+  const kgVal   = kgTotal !== null ? kgTotal : '—';
+
+  // Days grid — show current week for semana mode, last 7 days for mes
+  const hoyStr  = fmtDate(new Date());
+  const lunes   = getLunesDeSemana(new Date());
+  const diasSem = ['L','M','X','J','V','S','D'];
+  const daysHtml = diasSem.map((lbl, i) => {
+    const d = new Date(lunes);
+    d.setDate(d.getDate() + i);
+    const ds = fmtDate(d);
+    const isHoy = ds === hoyStr;
+    const done  = sesiones.some(h => fmtDate(new Date(h.fecha)) === ds);
+    let cls = 'wsumm-day empty', icon = '';
+    if (done)       { cls = 'wsumm-day done'; icon = '✓'; }
+    else if (isHoy) { cls = 'wsumm-day today'; icon = '·'; }
+    return `<div class="${cls}"><div class="wsumm-day-dot">${icon}</div><div class="wsumm-day-lbl">${lbl}</div></div>`;
+  }).join('');
+
+  // Ranking — same squad filter logic
+  let rankingHtml = '';
+  const hoyDow2 = new Date().getDay();
+  const diasTrans2 = hoyDow2 === 0 ? 7 : hoyDow2;
+
+  if (resEquipo.ok && resEquipo.equipo) {
+    const squad  = state.squad ? state.squad.toLowerCase() : null;
+    const equipo = resEquipo.equipo.filter(j => !squad || (j.squad && j.squad.toLowerCase() === squad));
+
+    const ranked = equipo.map(j => {
+      const seg  = (j.sesiones7dias||[]).filter(s=>s.guardada).length;
+      const comp = diasTrans2 > 0 ? Math.round((seg / diasTrans2) * 100) : 0;
+      return { nombre: j.nombre, usuario: j.usuario, comp };
+    }).sort((a,b) => b.comp - a.comp);
+
+    const top3   = ranked.slice(0, 3);
+    const myRank = ranked.findIndex(j => j.usuario === state.user.usuario) + 1;
+    const myData = ranked.find(j => j.usuario === state.user.usuario);
+    const rowColor = c => c >= 80 ? '#00e5a0' : c >= 50 ? '#ffc04d' : '#ff7070';
+    const avInitials = n => n.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+
+    const topRows = top3.map((j, idx) => {
+      const isMe = j.usuario === state.user.usuario;
+      const col  = rowColor(j.comp);
+      return `<div class="wsumm-rank-row${isMe?' me':''}">
+        <div class="wsumm-rank-pos${isMe?' me-pos':''}">#${idx+1}</div>
+        <div class="wsumm-rank-av" style="background:${col}22;color:${col}">${avInitials(j.nombre)}</div>
+        <div class="wsumm-rank-name">${j.nombre.split(',')[0]}${isMe?'<span class="wsumm-you">tú</span>':''}</div>
+        <div class="wsumm-rank-bar">
+          <div class="wsumm-rank-track"><div class="wsumm-rank-fill" style="width:${j.comp}%;background:${col}"></div></div>
+          <div class="wsumm-rank-pct" style="color:${col}">${j.comp}%</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    const myRow = myRank > 3 && myData ? `
+      <div class="wsumm-rank-sep"></div>
+      <div class="wsumm-rank-row me">
+        <div class="wsumm-rank-pos me-pos">#${myRank}</div>
+        <div class="wsumm-rank-av" style="background:rgba(232,20,42,.15);color:var(--accent)">${avInitials(myData.nombre)}</div>
+        <div class="wsumm-rank-name">${myData.nombre.split(',')[0]}<span class="wsumm-you">tú</span></div>
+        <div class="wsumm-rank-bar">
+          <div class="wsumm-rank-track"><div class="wsumm-rank-fill" style="width:${myData.comp}%;background:${rowColor(myData.comp)}"></div></div>
+          <div class="wsumm-rank-pct" style="color:${rowColor(myData.comp)}">${myData.comp}%</div>
+        </div>
+      </div>` : '';
+
+    const tercero    = top3[2];
+    const terceroNom = tercero ? tercero.nombre.split(',')[0] : '';
+    const gapDays    = tercero ? Math.max(0, Math.ceil((tercero.comp * diasTrans2 / 100) - totalDias)) : 0;
+
+    let motHtml;
+    if (myRank > 0 && myRank <= 3) {
+      const above = myRank > 1 ? top3[myRank-2] : null;
+      const subTxt = above ? `Solo ${above.nombre.split(',')[0]} te supera · sigue así` : `Eres el más constante del equipo esta semana`;
+      const myComp = myData ? myData.comp : compliance;
+      motHtml = `<div style="background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.25);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-top:10px">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--surface2);border:1px solid rgba(0,229,160,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px">🏆</div>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--accent2);margin-bottom:2px">#${myRank} del equipo esta semana</div><div style="font-size:11px;color:var(--muted)">${subTxt}</div></div>
+        <div style="font-size:22px;font-weight:700;color:var(--accent2);flex-shrink:0">${myComp}%</div>
+      </div>`;
+    } else {
+      const myComp = myData ? myData.comp : compliance;
+      const terceroComp = tercero ? tercero.comp : 0;
+      motHtml = `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;overflow:hidden;margin-top:10px">
+        <div style="display:flex">
+          <div style="flex:1;padding:12px 13px;border-right:1px solid var(--border)">
+            <div style="font-size:8px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Tu posición</div>
+            <div style="font-family:var(--font-head);font-size:28px;line-height:1;color:#ffc04d">${myRank > 0 ? '#'+myRank : '—'}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">de ${ranked.length} jugadores</div>
+          </div>
+          <div style="flex:1;padding:12px 13px;background:rgba(232,20,42,.04)">
+            <div style="font-size:8px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Para el top 3</div>
+            <div style="font-family:var(--font-head);font-size:28px;line-height:1;color:var(--accent)">+${gapDays}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">sesión${gapDays!==1?'es':''} más</div>
+          </div>
+        </div>
+        <div style="padding:9px 13px;border-top:1px solid var(--border)">
+          <div style="height:4px;border-radius:2px;background:var(--border);overflow:hidden;margin-bottom:6px"><div style="height:100%;width:${myComp}%;background:${rowColor(myComp)};border-radius:2px;transition:width .5s"></div></div>
+          <div style="font-size:11px;color:var(--muted)">${myComp}% · <span style="color:var(--accent)">${terceroNom} está al ${terceroComp}%</span> — el tercero ahora mismo</div>
+        </div>
+      </div>`;
+    }
+
+    const rankTitle = mode === 'mes' ? `Ranking compliance · ${periodLabel}` : `Ranking compliance · ${squad||'equipo'}`;
+    rankingHtml = `<div class="wsumm-ranking">
+      <div class="wsumm-rank-title"><span style="font-size:12px">🏆</span>${rankTitle}</div>
+      <div class="wsumm-rank-list">${topRows}${myRow}</div>
+      ${motHtml}
+    </div>`;
+  }
+
+  const nombre   = state.user.nombre || '';
+  const initials = nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  const squadTag = state.squad ? `<span class="wsumm-squad-tag">${state.squad}</span>` : '';
+
+  container.innerHTML = `
+    <div class="week-summary">
+      <div class="week-summary-title">📊 Resumen semanal</div>
+      <div class="wsumm-toggle">
+        <button class="wsumm-toggle-btn${mode==='semana'?' active':''}" id="wsumm-btn-semana" onclick="wsummSwitch('semana')">Esta semana</button>
+        <button class="wsumm-toggle-btn${mode==='mes'?' active':''}" id="wsumm-btn-mes" onclick="wsummSwitch('mes')">Este mes</button>
+      </div>
+      <div class="wsumm-hero">
+        <div class="wsumm-avatar">${initials}</div>
+        <div>
+          <div class="wsumm-hero-name">${nombre}</div>
+          <div class="wsumm-hero-sub">${state.user.posicion?`<span>${state.user.posicion}</span>`:''}${squadTag}</div>
+        </div>
+        <div class="wsumm-week-tag">${periodLabel}</div>
+      </div>
+      <div class="wsumm-circles">
+        <div class="wsumm-circ">${circle(rpeMedia!==null?rpeMedia/10:0, rpeCol, rpeVal, '/10')}<div class="wsumm-circ-lbl">RPE medio</div></div>
+        <div class="wsumm-circ">${circle(compliance/100, compCol, compVal, '')}<div class="wsumm-circ-lbl">Compliance</div></div>
+        <div class="wsumm-circ">${circle(tiempoTotal!==null?Math.min(tiempoTotal/90,1):0, timeCol, timeVal!=='—'?timeVal:'—', timeVal!=='—'?'min':'')}<div class="wsumm-circ-lbl">Tiempo total</div></div>
+        <div class="wsumm-circ">${circle(kgTotal!==null?Math.min(kgTotal/500,1):0, kgCol, kgVal!=='—'?kgVal:'—', kgVal!=='—'?'kg':'')}<div class="wsumm-circ-lbl">Kg semana</div></div>
+      </div>
+      <div class="wsumm-days">
+        <div class="wsumm-days-title">Sesiones${mode==='mes'?' esta semana':' esta semana'}</div>
+        <div class="wsumm-days-row">${daysHtml}</div>
+      </div>
+      ${rankingHtml}
+    </div>`;
+  container.style.display = 'block';
+}
 
   const [resRpe, resCarga, resEquipo] = await Promise.all([
     api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' }),
@@ -2091,10 +2389,10 @@ async function renderWeekSummary() {
 
   container.innerHTML = `
     <div class="week-summary">
-      <div class="week-summary-title">📊 Resumen semanal</div>
+      <div class="week-summary-title">📊 Resumen ${mode==='mes'?'mensual':'semanal'}</div>
       <div class="wsumm-toggle">
-        <button class="wsumm-toggle-btn active" id="wsumm-btn-semana" onclick="wsummSwitch('semana')">Esta semana</button>
-        <button class="wsumm-toggle-btn" id="wsumm-btn-mes" onclick="wsummSwitch('mes')">Este mes</button>
+        <button class="wsumm-toggle-btn${mode==='semana'?' active':''}" id="wsumm-btn-semana" onclick="wsummSwitch('semana')">Esta semana</button>
+        <button class="wsumm-toggle-btn${mode==='mes'?' active':''}" id="wsumm-btn-mes" onclick="wsummSwitch('mes')">Este mes</button>
       </div>
 
       <div class="wsumm-hero">
@@ -2230,10 +2528,12 @@ function onCoachSquadChangeRpe() {
   onCoachSquadChange();
 }
 
+let _wsummMode = 'semana';
+
 function wsummSwitch(mode) {
+  _wsummMode = mode;
   document.getElementById('wsumm-btn-semana')?.classList.toggle('active', mode==='semana');
   document.getElementById('wsumm-btn-mes')?.classList.toggle('active', mode==='mes');
-  // Re-render with month data if needed (for now re-renders weekly, monthly calc future)
   renderWeekSummary();
 }
 
@@ -3121,6 +3421,111 @@ function toggleTimerPanel(cardId) {
   if(!panel) return;
   panel.classList.toggle('hidden');
   if(!panel.classList.contains('hidden')) timerDraw(cardId);
+}
+
+// ── METRÓNOMO ─────────────────────────────────────────────────
+// Usa Web Audio API (osciladores) — no interrumpe Spotify/YouTube
+const metroState = {};
+
+function renderMetronomeStrip(cardId) {
+  const bpms = [
+    {bpm:60, lbl:'lento'},
+    {bpm:90, lbl:'medio'},
+    {bpm:100, lbl:'activo'},
+    {bpm:110, lbl:'rápido'},
+    {bpm:120, lbl:'explosivo'},
+  ];
+  const btns = bpms.map(b =>
+    `<div class="metro-bpm-btn${b.bpm===100?' on':''}" onclick="metroSetBpm('${cardId}',${b.bpm},this)">
+      ${b.bpm}<span class="metro-bpm-sub">${b.lbl}</span>
+    </div>`
+  ).join('');
+  const dots = [0,1,2,3].map(i =>
+    `<div class="metro-dot" id="metro-dot-${cardId}-${i}"></div>`
+  ).join('');
+  return `<div class="metro-wrap" id="metro-wrap-${cardId}">
+    <div class="metro-bpm-row">${btns}</div>
+    <div class="metro-controls">
+      <div class="metro-beats">${dots}</div>
+      <div class="metro-play" id="metro-play-${cardId}" onclick="metroToggle('${cardId}')">▶ Iniciar</div>
+    </div>
+  </div>`;
+}
+
+function metroGet(cardId) {
+  if (!metroState[cardId]) metroState[cardId] = { bpm:100, beat:0, iv:null, running:false };
+  return metroState[cardId];
+}
+
+function metroSetBpm(cardId, bpm, el) {
+  const m = metroGet(cardId);
+  m.bpm = bpm;
+  // Update button styles
+  const wrap = document.getElementById('metro-wrap-'+cardId);
+  if (wrap) wrap.querySelectorAll('.metro-bpm-btn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  // Restart if running
+  if (m.running) { metroStop(cardId); metroStart(cardId); }
+}
+
+function metroClick(cardId) {
+  const m = metroGet(cardId);
+  // Light click via Web Audio — doesn't interrupt other audio
+  try {
+    if (!m.ctx) m.ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint:'interactive' });
+    const ctx = m.ctx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = m.beat === 0 ? 1200 : 800;
+    gain.gain.setValueAtTime(.35, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .05);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + .05);
+  } catch(_) {}
+  // Visual pulse
+  const nBeats = 4;
+  const beat = m.beat % nBeats;
+  for (let i=0; i<nBeats; i++) {
+    const dot = document.getElementById(`metro-dot-${cardId}-${i}`);
+    if (dot) dot.classList.toggle('pulse', i === beat);
+  }
+  m.beat++;
+}
+
+function metroStart(cardId) {
+  const m = metroGet(cardId);
+  m.beat = 0;
+  m.running = true;
+  metroClick(cardId);
+  m.iv = setInterval(() => metroClick(cardId), Math.round(60000 / m.bpm));
+  const btn = document.getElementById('metro-play-'+cardId);
+  if (btn) { btn.textContent = '■ Parar'; btn.classList.add('playing'); }
+}
+
+function metroStop(cardId) {
+  const m = metroGet(cardId);
+  clearInterval(m.iv); m.running = false; m.beat = 0;
+  const nBeats = 4;
+  for (let i=0; i<nBeats; i++) {
+    const dot = document.getElementById(`metro-dot-${cardId}-${i}`);
+    if (dot) dot.classList.remove('pulse');
+  }
+  const btn = document.getElementById('metro-play-'+cardId);
+  if (btn) { btn.textContent = '▶ Iniciar'; btn.classList.remove('playing'); }
+}
+
+function metroToggle(cardId) {
+  const m = metroGet(cardId);
+  if (m.running) metroStop(cardId);
+  else metroStart(cardId);
+}
+
+function toggleMetronomePanel(cardId) {
+  const panel = document.getElementById('panel-metro-'+cardId);
+  if (!panel) return;
+  panel.classList.toggle('hidden');
 }
 
 // ── TICK CONFIRMACIÓN ─────────────────────────────────────────
