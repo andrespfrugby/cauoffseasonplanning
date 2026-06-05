@@ -1796,56 +1796,45 @@ function renderSession(ejercicios, nombreSemana, sessionNotes, dayTitle) {
   const semanaTxt = nombreSemana ||
     document.getElementById('sel-semana').options[document.getElementById('sel-semana').selectedIndex]?.text || '';
 
-  const dayBase = DAY_NAMES[state.dia] || 'Sesión';
+  const dayBase = DAY_NAMES[state.dia] || 'Sesión'; // "Day 1", "Day 2", etc.
 
-  // ── Colored day type badge ────────────────────────────────
-  // dayTitle comes from backend (e.g. "DAY 1 MODERATE DAY" or "DAY 1 HIGH DAY")
-  // Extract the type word and assign color
-  function getDayTypeBadge(title) {
-    if (!title) return '';
-    const upper = title.toUpperCase();
-    let color, bg, border, label;
-    if (upper.includes('HIGH')) {
-      color='#ff7070'; bg='rgba(232,20,42,.12)'; border='rgba(232,20,42,.3)';
-      label = upper.replace(/DAY\s*\d+\s*/,'').trim() || 'HIGH DAY';
-    } else if (upper.includes('MODERATE') || upper.includes('MEDIUM') || upper.includes('MOD')) {
-      color='#ffa040'; bg='rgba(255,140,0,.12)'; border='rgba(255,140,0,.3)';
-      label = upper.replace(/DAY\s*\d+\s*/,'').trim() || 'MODERATE DAY';
-    } else if (upper.includes('LOW')) {
-      color='#00e5a0'; bg='rgba(0,229,160,.12)'; border='rgba(0,229,160,.3)';
-      label = upper.replace(/DAY\s*\d+\s*/,'').trim() || 'LOW DAY';
-    } else {
-      return `<div style="font-size:11px;color:var(--muted);margin-top:2px">${title}</div>`;
-    }
-    return `<div style="display:inline-flex;align-items:center;margin-top:5px;
-      background:${bg};border:1px solid ${border};border-radius:7px;
-      padding:4px 12px;">
-      <span style="font-size:12px;font-weight:700;color:${color};letter-spacing:.06em;text-transform:uppercase">${label}</span>
-    </div>`;
+  // ── Day type color ─────────────────────────────────────────
+  function getDayType(title) {
+    if (!title) return null;
+    const u = title.toUpperCase();
+    if (u.includes('HIGH'))     return { color:'#ff7070', bg:'rgba(232,20,42,.12)', border:'rgba(232,20,42,.3)',  label: u.replace(/DAY\s*\d+\s*/,'').trim()||'HIGH DAY' };
+    if (u.includes('MODERATE') || u.includes('MOD')) return { color:'#ffa040', bg:'rgba(255,140,0,.12)', border:'rgba(255,140,0,.3)',  label: u.replace(/DAY\s*\d+\s*/,'').trim()||'MODERATE DAY' };
+    if (u.includes('LOW'))      return { color:'#00e5a0', bg:'rgba(0,229,160,.12)', border:'rgba(0,229,160,.3)', label: u.replace(/DAY\s*\d+\s*/,'').trim()||'LOW DAY' };
+    return { color:'var(--muted)', bg:'var(--surface2)', border:'var(--border2)', label: title };
   }
+  const dt = getDayType(dayTitle);
 
-  const badgeHtml = getDayTypeBadge(dayTitle);
-
-  const notesBanner = sessionNotes
-    ? `<div class="notes-banner">
-        <div class="notes-banner-head">
-          <span class="notes-banner-head-icon">📝</span>
-          <span class="notes-banner-head-label">Aviso del coach</span>
-        </div>
-        <div class="notes-banner-body">${sessionNotes}</div>
-       </div>` : '';
-  container.innerHTML = `
-    <div class="coach-header" style="margin-bottom:.5rem">
-      <div>
-        <div class="coach-title">${dayBase}</div>
-        <div class="coach-sem-label">${semanaTxt}</div>
-        ${badgeHtml}
+  // ── Cabecera C: "DAY 1" grande + tipo + semana ─────────────
+  const headerHtml = `
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:stretch">
+      <div style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;min-width:80px">
+        <div style="font-family:var(--font-head);font-size:28px;line-height:1;color:var(--accent);letter-spacing:.5px">${dayBase.toUpperCase()}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${semanaTxt}</div>
+        ${dt ? `<div style="margin-top:5px;display:inline-flex;padding:2px 8px;border-radius:5px;background:${dt.bg};border:1px solid ${dt.border}"><span style="font-size:9px;font-weight:700;color:${dt.color};letter-spacing:.05em;text-transform:uppercase">${dt.label}</span></div>` : ''}
       </div>
-    </div>
+    </div>`;
+
+  // ── Notas C: card con icono en la parte superior ───────────
+  const notesHtml = sessionNotes ? `
+    <div style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:10px;padding:10px 12px;display:flex;align-items:flex-start;gap:10px;margin-bottom:12px">
+      <div style="width:30px;height:30px;border-radius:7px;background:rgba(232,20,42,.1);border:1px solid rgba(232,20,42,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">📝</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:3px">Aviso del coach</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.55;white-space:pre-line">${sessionNotes}</div>
+      </div>
+    </div>` : '';
+
+  container.innerHTML = `
+    ${headerHtml}
+    ${notesHtml}
     ${prep.length ? `<div class="phase-header">Prep</div>${prep.map(renderCard).join('')}` : ''}
     <div class="phase-header">Main Block</div>
     ${main.map(renderCard).join('')}
-    ${notesBanner}
     ${renderSessionPanel()}`;
 }
 
@@ -1855,78 +1844,93 @@ function renderSessionPanel() {
     return `<div class="session-panel"><div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion?' · '+state.tiempoSesion+' min':''}</div></div>`;
   }
 
-  // Alturas y colores de la barra RPE
-  const RPE_H    = [10,14,18,22,26,28,30,34,38,44];
-  const RPE_COL  = ['#00e5a0','#00e5a0','#00e5a0','#00e5a0',
-                    '#ffc04d','#ffc04d','#ffc04d',
-                    '#ff7070','#ff7070','#ff7070'];
-  const RPE_LBL  = ['','Reposo','Muy fácil','Ligero','Cómodo',
-                    'Moderado','Algo duro','Duro','Muy duro','Casi máx','Máximo'];
+  const RPE_H   = [10,14,18,22,26,28,30,34,38,44];
+  const RPE_COL = ['#00e5a0','#00e5a0','#00e5a0','#00e5a0','#ffc04d','#ffc04d','#ffc04d','#ff7070','#ff7070','#ff7070'];
+  const RPE_LBL = ['','Reposo','Muy fácil','Ligero','Cómodo','Moderado','Algo duro','Duro','Muy duro','Casi máx','Máximo'];
 
-  const segs = Array.from({length:10},(_,i)=>{
-    const n     = i+1;
-    const isSel = state.rpeSession === n;
-    const cls   = state.rpeSession === null ? '' : isSel ? 'active' : 'inactive';
-    return `<div class="rpe-bar-seg ${cls}"
-      style="height:${RPE_H[i]}px;background:${RPE_COL[i]}"
-      onclick="selectRpeBar(${n})"
-      title="RPE ${n} — ${RPE_LBL[n]}"></div>`;
+  const selVal   = state.rpeSession;
+  const selColor = selVal ? RPE_COL[selVal-1] : 'var(--muted)';
+  const selLbl   = selVal ? RPE_LBL[selVal] : '—';
+
+  // Small bars
+  const bars = Array.from({length:10},(_,i)=>{
+    const n = i+1, isSel = selVal===n;
+    const cls = selVal===null ? '' : isSel ? 'active' : 'inactive';
+    return `<div class="rpe-bar-seg ${cls}" style="height:${RPE_H[i]}px;background:${RPE_COL[i]};cursor:pointer"
+      onclick="selectRpeBar(${n})" title="RPE ${n}"></div>`;
   }).join('');
 
-  const selColor = state.rpeSession ? RPE_COL[state.rpeSession-1] : 'var(--muted)';
-  const selText  = state.rpeSession
-    ? `<span style="color:${selColor}">RPE ${state.rpeSession} — ${RPE_LBL[state.rpeSession]}</span>`
-    : '<span style="color:var(--muted)">Toca una barra para seleccionar</span>';
-
+  // Numpad for time — row of 11 buttons
   const tiempoTxt = state.tiempoSesion ? state.tiempoSesion+' min' : '—';
-  const numpad = ['1','2','3','4','5','6','7','8','9','⌫','0',''].map(k=>{
-    if (k==='') return '<div></div>';
-    if (k==='⌫') return `<button class="numpad-btn del" onclick="numpadInput('del')">⌫</button>`;
-    return `<button class="numpad-btn" onclick="numpadInput('${k}')">${k}</button>`;
-  }).join('');
+  const numKeys = ['1','2','3','4','5','6','7','8','9','0','⌫'];
+  const numpad = numKeys.map(k =>
+    `<button class="numpad-btn${k==='⌫'?' del':''}" onclick="numpadInput('${k==='⌫'?'del':k}')">${k}</button>`
+  ).join('');
 
   return `
   <div class="session-panel" id="session-panel">
+
     <div class="panel-section">
       <div class="panel-title">¿Cómo fue la sesión?</div>
       <div class="panel-sub">RPE global — esfuerzo percibido (1–10)</div>
-      <div class="rpe-bar-track" id="rpe-bar-track">${segs}</div>
-      <div class="rpe-bar-labels">
-        <span>1</span><span>3</span><span>5</span><span>7</span><span>9</span><span>10</span>
+
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px">
+
+        <!-- Número grande seleccionado -->
+        <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;
+          padding:10px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+          min-width:68px;flex-shrink:0;gap:2px">
+          <div id="rpe-big-num" style="font-family:var(--font-head);font-size:40px;line-height:1;color:${selColor};transition:color .15s">${selVal||'—'}</div>
+          <div id="rpe-big-lbl" style="font-size:9px;color:${selVal?selColor:'var(--muted)'};text-align:center;transition:color .15s">${selLbl}</div>
+        </div>
+
+        <!-- Barras pequeñas -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+          <div class="rpe-bar-track" id="rpe-bar-track" style="height:36px">${bars}</div>
+          <div class="rpe-bar-labels" style="margin-bottom:0">
+            <span>1</span><span>3</span><span>5</span><span>7</span><span>9</span><span>10</span>
+          </div>
+        </div>
+
       </div>
-      <div class="rpe-sel-lbl" id="rpe-sel-lbl">${selText}</div>
     </div>
+
     <div class="panel-section">
       <div class="panel-title">Tiempo de sesión</div>
-      <div class="panel-sub">Minutos totales</div>
-      <div class="time-display${state.tiempoSesion?' has-value':''}" id="time-display">${tiempoTxt}</div>
-      <div class="numpad">${numpad}</div>
-      <div class="numpad-hint">minutos totales</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+        <div class="time-display${state.tiempoSesion?' has-value':''}" id="time-display"
+          style="flex:none;min-width:80px;font-size:20px">${tiempoTxt}</div>
+        <div style="display:flex;gap:3px;flex:1;flex-wrap:wrap">
+          ${numpad}
+        </div>
+      </div>
     </div>
+
     <button class="btn-save-session" id="btn-save-session"
-            onclick="saveSession()" ${state.rpeSession!==null?'':'disabled'}>
+            onclick="saveSession()" ${selVal!==null?'':'disabled'}>
       Guardar sesión
     </button>
   </div>`;
 }
 
 function selectRpeBar(val) {
-  const RPE_H   = [10,14,18,22,26,28,30,34,38,44];
-  const RPE_COL = ['#00e5a0','#00e5a0','#00e5a0','#00e5a0',
-                   '#ffc04d','#ffc04d','#ffc04d',
-                   '#ff7070','#ff7070','#ff7070'];
-  const RPE_LBL = ['','Reposo','Muy fácil','Ligero','Cómodo',
-                   'Moderado','Algo duro','Duro','Muy duro','Casi máx','Máximo'];
+  const RPE_COL = ['#00e5a0','#00e5a0','#00e5a0','#00e5a0','#ffc04d','#ffc04d','#ffc04d','#ff7070','#ff7070','#ff7070'];
+  const RPE_LBL = ['','Reposo','Muy fácil','Ligero','Cómodo','Moderado','Algo duro','Duro','Muy duro','Casi máx','Máximo'];
   state.rpeSession = val;
   const track = document.getElementById('rpe-bar-track');
   if (track) {
     track.querySelectorAll('.rpe-bar-seg').forEach((seg,i)=>{
-      seg.classList.toggle('active', i+1 === val);
-      seg.classList.toggle('inactive', i+1 !== val);
+      seg.classList.toggle('active', i+1===val);
+      seg.classList.toggle('inactive', i+1!==val);
     });
   }
-  const lbl = document.getElementById('rpe-sel-lbl');
-  if (lbl) lbl.innerHTML = `<span style="color:${RPE_COL[val-1]}">RPE ${val} — ${RPE_LBL[val]}</span>`;
+  // Update big number
+  const bigNum = document.getElementById('rpe-big-num');
+  const bigLbl = document.getElementById('rpe-big-lbl');
+  const col = RPE_COL[val-1];
+  if (bigNum) { bigNum.textContent = val; bigNum.style.color = col; }
+  if (bigLbl) { bigLbl.textContent = RPE_LBL[val]; bigLbl.style.color = col; }
+  // Enable save button
   const s = document.getElementById('btn-save-session');
   if (s) s.disabled = false;
 }
