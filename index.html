@@ -1843,7 +1843,7 @@ function renderCard(e) {
         </button>
       </div>
       <div style="display:flex;gap:4px">
-        ${hasLoadBtn ? `<button type="button" class="btn-action btn-action-load" style="flex:1" title="Registrar carga"
+        ${hasLoadBtn ? `<button type="button" class="btn-action" style="flex:1;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.3);color:var(--accent2)" title="Registrar carga"
                 onclick="toggleCardPanel('load','${cardId}','${nombreEsc}','${loadObjEsc}','${repsEsc}')">
           <span class="btn-action-icon">＋</span><span>Carga</span>
         </button>` : ''}
@@ -1892,10 +1892,10 @@ function renderSession(ejercicios, nombreSemana, sessionNotes, dayTitle) {
   function getDayType(title) {
     if (!title) return null;
     const u = title.toUpperCase();
-    if (u.includes('HIGH'))     return { color:'#ff7070', bg:'rgba(232,20,42,.12)', border:'rgba(232,20,42,.3)',  label: u.replace(/DAY\s*\d+\s*/,'').trim()||'HIGH DAY' };
-    if (u.includes('MODERATE') || u.includes('MOD')) return { color:'#ffa040', bg:'rgba(255,140,0,.12)', border:'rgba(255,140,0,.3)',  label: u.replace(/DAY\s*\d+\s*/,'').trim()||'MODERATE DAY' };
-    if (u.includes('LOW'))      return { color:'#00e5a0', bg:'rgba(0,229,160,.12)', border:'rgba(0,229,160,.3)', label: u.replace(/DAY\s*\d+\s*/,'').trim()||'LOW DAY' };
-    return { color:'var(--muted)', bg:'var(--surface2)', border:'var(--border2)', label: title };
+    if (u.includes('HIGH'))                           return { c:'#ff7070', bg:'rgba(232,20,42,.06)',  border:'rgba(232,20,42,.3)',  label: u.replace(/DAY\s*\d+\s*/,'').trim()||'HIGH DAY',     type:'high' };
+    if (u.includes('MODERATE') || u.includes('MOD')) return { c:'#ffa040', bg:'rgba(255,140,0,.06)',  border:'rgba(255,140,0,.3)',  label: u.replace(/DAY\s*\d+\s*/,'').trim()||'MODERATE DAY', type:'mid'  };
+    if (u.includes('LOW'))                            return { c:'#00e5a0', bg:'rgba(0,229,160,.06)',  border:'rgba(0,229,160,.3)',  label: u.replace(/DAY\s*\d+\s*/,'').trim()||'LOW DAY',      type:'low'  };
+    return null;
   }
   // ── Day type color — usa dayTitle del backend o de state.diasTitles ──
   const resolvedTitle = dayTitle || (state.diasTitles && state.diasTitles[state.dia]) || '';
@@ -1922,7 +1922,7 @@ function renderSession(ejercicios, nombreSemana, sessionNotes, dayTitle) {
     </svg>`;
   }
 
-  const semType  = dt ? (dt.c==='#ff7070'?'high':dt.c==='#ffa040'?'mid':'low') : null;
+  const semType  = dt ? dt.type : null;
   const semHtml  = semType ? semaphore(semType) : '';
   const semColor = dt ? dt.c : 'var(--muted)';
 
