@@ -3373,6 +3373,26 @@ function toggleTimerPanel(cardId) {
 
 // ── METRÓNOMO ─────────────────────────────────────────────────
 const metroState = {};
+let _audioCtx = null;
+
+// iOS unlock: crear el contexto en el primer toque y mantenerlo vivo
+function _getCtx() {
+  if (!_audioCtx || _audioCtx.state === 'closed') {
+    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return _audioCtx;
+}
+
+// Desbloquear en cuanto el usuario toca cualquier cosa
+document.addEventListener('touchstart', function() {
+  const ctx = _getCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+}, { passive: true, once: false });
+
+document.addEventListener('click', function() {
+  const ctx = _getCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+}, { passive: true, once: false });
 
 function renderMetronomeStrip(cardId) {
   const bpms = [
@@ -3401,7 +3421,7 @@ function renderMetronomeStrip(cardId) {
 }
 
 function metroGet(cardId) {
-  if (!metroState[cardId]) metroState[cardId] = { bpm:100, beat:0, iv:null, running:false, ctx:null };
+  if (!metroState[cardId]) metroState[cardId] = { bpm:100, beat:0, iv:null, running:false };
   return metroState[cardId];
 }
 
@@ -3414,69 +3434,63 @@ function metroSetBpm(cardId, bpm, el) {
   if (m.running) { metroStop(cardId); metroStart(cardId); }
 }
 
-function metroPlayClick(ctx, beat) {
+function metroBeep(isAccent) {
+  const ctx = _getCtx();
+  if (!ctx) return;
+  // Si está suspendido intentar reanudar
+  if (ctx.state === 'suspended') { ctx.resume(); }
   try {
     const now  = ctx.currentTime;
+    const freq = isAccent ? 1200 : 800;
+    const dur  = 0.07;
+
     const osc  = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(ctx.destination);
-    osc.frequency.value = beat === 0 ? 1100 : 750;
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.5, now + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+    osc.type = 'square';
+    osc.frequency.value = freq;
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.4, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
     osc.start(now);
-    osc.stop(now + 0.08);
-  } catch(e) { console.warn('metro click err', e); }
+    osc.stop(now + dur + 0.01);
+  } catch(e) { console.warn('metroBeep:', e); }
 }
 
-function metroPulseDot(cardId, beat) {
-  const nBeats = 4;
-  const b = beat % nBeats;
-  for (let i = 0; i < nBeats; i++) {
-    const dot = document.getElementById(`metro-dot-${cardId}-${i}`);
-    if (dot) dot.classList.toggle('pulse', i === b);
+function metroDots(cardId, beat) {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById(`metro-dot-${cardId}-${i}`);
+    if (d) d.classList.toggle('pulse', i === (beat % 4));
   }
 }
 
 function metroStart(cardId) {
   const m = metroGet(cardId);
 
-  // Create fresh AudioContext on every start — required for iOS
-  try {
-    if (m.ctx) { try { m.ctx.close(); } catch(e){} }
-    m.ctx = new (window.AudioContext || window.webkitAudioContext)();
-  } catch(e) {
-    alert('Tu dispositivo no soporta Web Audio. Prueba con Chrome.');
-    return;
-  }
+  // Asegurar contexto activo — crítico en iOS
+  const ctx = _getCtx();
+  ctx.resume().then(() => {
+    // Reproducir primer beat inmediatamente tras resume
+    metroBeep(true);
+    metroDots(cardId, 0);
+    m.beat = 1;
+  });
 
-  // iOS: unlock audio with a silent buffer immediately in the gesture
-  const unlock = m.ctx.createBuffer(1, 1, 22050);
-  const src = m.ctx.createBufferSource();
-  src.buffer = unlock;
-  src.connect(m.ctx.destination);
-  src.start(0);
-
-  m.beat    = 0;
   m.running = true;
-
   const btn = document.getElementById('metro-play-'+cardId);
   if (btn) { btn.textContent = '■ Parar'; btn.classList.add('playing'); }
 
-  // Play first beat immediately
-  metroPlayClick(m.ctx, 0);
-  metroPulseDot(cardId, 0);
-  m.beat = 1;
-
-  const interval = Math.round(60000 / m.bpm);
+  const ms = Math.round(60000 / m.bpm);
   m.iv = setInterval(() => {
     if (!m.running) return;
-    metroPlayClick(m.ctx, m.beat);
-    metroPulseDot(cardId, m.beat);
+    metroBeep(m.beat % 4 === 0);
+    metroDots(cardId, m.beat);
     m.beat++;
-  }, interval);
+  }, ms);
 }
 
 function metroStop(cardId) {
@@ -3484,17 +3498,19 @@ function metroStop(cardId) {
   clearInterval(m.iv);
   m.running = false;
   m.beat    = 0;
-  try { if (m.ctx) m.ctx.close(); } catch(e){}
-  m.ctx = null;
   for (let i = 0; i < 4; i++) {
-    const dot = document.getElementById(`metro-dot-${cardId}-${i}`);
-    if (dot) dot.classList.remove('pulse');
+    const d = document.getElementById(`metro-dot-${cardId}-${i}`);
+    if (d) d.classList.remove('pulse');
   }
   const btn = document.getElementById('metro-play-'+cardId);
   if (btn) { btn.textContent = '▶ Iniciar'; btn.classList.remove('playing'); }
 }
 
 function metroToggle(cardId) {
+  // Este onclick ya es un gesto — desbloquear aquí también
+  const ctx = _getCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+
   const m = metroGet(cardId);
   if (m.running) metroStop(cardId);
   else metroStart(cardId);
