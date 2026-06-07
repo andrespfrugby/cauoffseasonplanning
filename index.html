@@ -1142,6 +1142,36 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .hm-cell-high { background:rgba(255,112,112,.2); border:0.5px solid rgba(255,112,112,.35); color:#ff7070; }
 .hm-avg { width:32px; flex-shrink:0; font-size:11px; font-weight:600; text-align:right; }
 
+/* ── DAILY LOAD HEATMAP ── */
+.dl-grid-header { display:flex; align-items:center; gap:3px; margin-bottom:3px; }
+.dl-name-col { min-width:80px; flex-shrink:0; font-size:8px; color:var(--muted); }
+.dl-day-col  { flex:1; text-align:center; font-size:8px; font-weight:600; color:var(--muted); letter-spacing:.04em; }
+.dl-total-col{ min-width:40px; text-align:right; font-size:8px; color:var(--muted); flex-shrink:0; }
+.dl-p-row    { display:flex; align-items:center; gap:3px; margin-bottom:3px; }
+.dl-p-name   { min-width:80px; font-size:9px; color:var(--muted); flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dl-p-name.team-avg { font-style:italic; color:var(--muted); }
+.dl-cell {
+  flex:1; height:26px; border-radius:4px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:9px; font-weight:600; transition:transform .1s;
+}
+.dl-cell:hover { transform:scale(1.08); cursor:default; }
+.dl-z0 { background:rgba(255,255,255,.04); border:0.5px solid var(--border); color:rgba(255,255,255,.15); }
+.dl-z1 { background:rgba(0,229,160,.12); border:0.5px solid rgba(0,229,160,.3);  color:#00e5a0; }  /* 1-200   ligera   */
+.dl-z2 { background:rgba(0,229,160,.25); border:0.5px solid rgba(0,229,160,.45); color:#00e5a0; }  /* 201-350 moderada */
+.dl-z3 { background:rgba(255,192,77,.2); border:0.5px solid rgba(255,192,77,.4);  color:#ffc04d; } /* 351-500 alta     */
+.dl-z4 { background:rgba(255,112,112,.2);border:0.5px solid rgba(255,112,112,.4);color:#ff7070; }  /* >500    muy alta */
+.dl-sep { height:0.5px; background:var(--border); margin:5px 0; }
+/* total semanal coloreado */
+.dl-total { min-width:40px; font-size:10px; font-weight:600; text-align:right; flex-shrink:0; }
+.dl-total.wk-low  { color:var(--muted); }   /* <1000 */
+.dl-total.wk-ok   { color:#00e5a0; }        /* 1000-2000 */
+.dl-total.wk-high { color:#ffc04d; }        /* 2000-2500 */
+.dl-total.wk-risk { color:#ff7070; }        /* >2500 */
+/* legend chips */
+.dl-legend { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px; }
+.dl-legend-chip { font-size:8px; border-radius:4px; padding:2px 7px; }
+
 /* ── ACWR ── */
 .acwr-team-kpis { display:flex; gap:8px; margin-bottom:14px; }
 .acwr-kpi { flex:1; background:var(--surface2); border:0.5px solid var(--border); border-radius:8px; padding:8px 10px; text-align:center; }
@@ -1352,6 +1382,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div class="coach-chart-box" id="coach-acwr-chart" style="display:none">
         <div class="chart-section-title">Ratio Aguda:Crónica (ACWR)</div>
         <div id="coach-acwr-content"><div class="loader"><div class="spinner"></div></div></div>
+      </div>
+
+      <!-- Daily Load Heatmap -->
+      <div class="coach-chart-box" id="coach-daily-load-chart" style="display:none">
+        <div class="chart-section-title">Carga diaria equipo — esta semana (UA)</div>
+        <div id="coach-daily-load-content"><div class="loader"><div class="spinner"></div></div></div>
       </div>
     </div>
 
@@ -3176,6 +3212,7 @@ async function loadCoachPanel() {
   renderTeamLoadChart(semanaNombre, rpeChartActivo);
   renderPlayerSelector(equipoFiltrado);
   renderAcwr(equipoFiltrado);
+  renderDailyLoad(equipoFiltrado);
 }
 
 function renderTeamLoadChart(semanaNombre, chart) {
@@ -3225,20 +3262,29 @@ async function renderAcwr(equipo) {
   function calcLoads(historial) {
     const cutoff7  = new Date(now - ms7);
     const cutoff28 = new Date(now - ms28);
-    let aguda = 0, cronica28 = 0, count28 = 0;
+    let aguda = 0, cronica28 = 0, sesiones28 = 0;
+
     for (const h of (historial || [])) {
       const d   = new Date(h.fecha);
       const rpe = parseFloat(h.rpe);
       const min = parseInt(h.tiempo_sesion);
       if (isNaN(rpe) || isNaN(min) || min <= 0) continue;
       const ua = rpe * min;
-      if (d >= cutoff7)  aguda    += ua;
-      if (d >= cutoff28) { cronica28 += ua; count28++; }
+      if (d >= cutoff7)  aguda += ua;
+      if (d >= cutoff28) { cronica28 += ua; sesiones28++; }
     }
-    // Crónica = promedio semanal de las 4 semanas = total28 / 4
-    const cronica = cronica28 > 0 ? Math.round(cronica28 / 4) : 0;
-    const acwr    = cronica > 0 ? Math.round((aguda / cronica) * 100) / 100 : null;
-    return { aguda: Math.round(aguda), cronica, acwr };
+
+    // Crónica: media semanal de las 4 semanas (dividir siempre entre 4)
+    // Mínimo 2 sesiones en los últimos 28 días para que sea representativa
+    const cronica = sesiones28 >= 2 ? Math.round(cronica28 / 4) : 0;
+
+    // ACWR solo es válido si hay carga aguda Y crónica
+    // Si aguda=0 → no entrenó esta semana → mostrar como null (no es subcarga)
+    const acwr = (aguda > 0 && cronica > 0)
+      ? Math.round((aguda / cronica) * 100) / 100
+      : null;
+
+    return { aguda: Math.round(aguda), cronica, acwr, sesiones28 };
   }
 
   const playerData = equipo.map((j, i) => {
@@ -3266,6 +3312,13 @@ async function renderAcwr(equipo) {
     if (v <= 1.3) return 'óptimo';
     if (v <= 1.5) return '⚠ precaución';
     return '🔴 riesgo';
+  }
+
+  function acwrRowStatus(p) {
+    if (p.aguda === 0 && p.cronica > 0) return { txt: 'sin entreno esta semana', col: 'var(--muted)' };
+    if (p.aguda === 0 && p.cronica === 0) return { txt: 'sin datos', col: 'var(--muted)' };
+    if (p.acwr === null) return { txt: '—', col: 'var(--muted)' };
+    return { txt: acwrLabel(p.acwr), col: acwrColor(p.acwr) };
   }
   // Pin position: 0→0%, 0.8→42%, 1.3→68%, 1.5→80%, 2→100%
   function pinPct(v) {
@@ -3311,8 +3364,10 @@ async function renderAcwr(equipo) {
     </div>`;
 
   const rows = playerData.map(p => {
-    const col = acwrColor(p.acwr);
-    const pp  = pinPct(p.acwr);
+    const col    = acwrColor(p.acwr);
+    const pp     = pinPct(p.acwr);
+    const status = acwrRowStatus(p);
+    const showPin = p.acwr !== null && p.aguda > 0;
     return `<div style="margin-bottom:9px">
       <div class="acwr-row">
         <div class="acwr-name" title="${p.nombre}">${p.nombre.split(',')[0]}</div>
@@ -3321,13 +3376,25 @@ async function renderAcwr(equipo) {
           <div style="flex:.26;background:rgba(0,229,160,.3)"></div>
           <div style="flex:.12;background:rgba(255,192,77,.3)"></div>
           <div style="flex:.2;background:rgba(255,70,70,.25)"></div>
-          ${p.acwr !== null ? `<div class="acwr-pin" style="left:${pp}%"></div>` : ''}
+          ${showPin ? `<div class="acwr-pin" style="left:${pp}%"></div>` : ''}
         </div>
-        <div class="acwr-val" style="color:${col}">${p.acwr !== null ? p.acwr : '—'} <span style="font-size:8px;font-weight:400;color:var(--muted)">${p.acwr ? acwrLabel(p.acwr) : ''}</span></div>
+        <div class="acwr-val" style="color:${status.col}">
+          ${p.acwr !== null ? p.acwr : ''}
+          <span style="font-size:8px;font-weight:400;color:${status.col};display:block">${status.txt}</span>
+        </div>
       </div>
       <div class="acwr-loads" style="padding-left:88px">
-        <div class="acwr-load-chip"><div class="acwr-load-val" style="color:var(--text)">${p.aguda}</div><div class="acwr-load-lbl">Aguda</div></div>
-        <div class="acwr-load-chip"><div class="acwr-load-val" style="color:var(--muted)">${p.cronica}</div><div class="acwr-load-lbl">Crónica</div></div>
+        <div class="acwr-load-chip">
+          <div class="acwr-load-val" style="color:${p.aguda>0?'var(--text)':'var(--muted)'}">${p.aguda||'—'}</div>
+          <div class="acwr-load-lbl">Aguda (7d)</div>
+        </div>
+        <div class="acwr-load-chip">
+          <div class="acwr-load-val" style="color:${p.cronica>0?'var(--muted)':'var(--muted)'}">
+            ${p.cronica>0?p.cronica:'—'}
+          </div>
+          <div class="acwr-load-lbl">Crónica (4sem)</div>
+        </div>
+        ${p.sesiones28 < 2 && p.sesiones28 > 0 ? `<div style="font-size:8px;color:var(--muted);align-self:center;font-style:italic">pocas sesiones (${p.sesiones28})</div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -3338,6 +3405,135 @@ async function renderAcwr(equipo) {
   }
 
   content.innerHTML = teamKpis + legend + rows;
+}
+
+async function renderDailyLoad(equipo) {
+  const el      = document.getElementById('coach-daily-load-chart');
+  const content = document.getElementById('coach-daily-load-content');
+  if (!el || !content) return;
+  el.style.display = 'block';
+  content.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  // Get current week days (Mon–Sun)
+  const now    = new Date();
+  const lunes  = getLunesDeSemana(now);
+  const hoyStr = fmtDate(now);
+
+  const diasSem   = ['L','M','X','J','V','S','D'];
+  const diasDates = diasSem.map((_,i) => {
+    const d = new Date(lunes);
+    d.setDate(d.getDate() + i);
+    return fmtDate(d);
+  });
+
+  // Load historial RPE_GLOBAL for all players in parallel
+  const results = await Promise.all(
+    equipo.map(j => api({ action:'getHistorial', usuario: j.usuario, ejercicio:'RPE_GLOBAL' }))
+  );
+
+  // UA thresholds (Foster 2001 / Gabbett 2016)
+  function loadZone(ua) {
+    if (!ua || ua === 0) return 'dl-z0';
+    if (ua <= 200)  return 'dl-z1';
+    if (ua <= 350)  return 'dl-z2';
+    if (ua <= 500)  return 'dl-z3';
+    return 'dl-z4';
+  }
+  function weekTotalClass(total) {
+    if (!total || total === 0) return 'wk-low';
+    if (total < 1000)  return 'wk-low';
+    if (total <= 2000) return 'wk-ok';
+    if (total <= 2500) return 'wk-high';
+    return 'wk-risk';
+  }
+
+  // Build per-player load matrix
+  const playerRows = equipo.map((j, idx) => {
+    const hist = results[idx].ok ? (results[idx].historial || []) : [];
+    const loads = diasDates.map(dateStr => {
+      const session = hist.find(h => fmtDate(new Date(h.fecha)) === dateStr);
+      if (!session) return null;
+      const rpe = parseFloat(session.rpe);
+      const min = parseInt(session.tiempo_sesion);
+      if (isNaN(rpe) || isNaN(min) || min <= 0) return null;
+      return Math.round(rpe * min);
+    });
+    const total = loads.reduce((s, v) => s + (v || 0), 0);
+    return { nombre: j.nombre, loads, total };
+  });
+
+  // Team average per day (only players with data that day)
+  const teamAvgByDay = diasDates.map((_, di) => {
+    const vals = playerRows.map(p => p.loads[di]).filter(v => v !== null && v > 0);
+    return vals.length ? Math.round(vals.reduce((s,v)=>s+v,0)/vals.length) : null;
+  });
+  const teamTotalAvg = playerRows.length ? Math.round(playerRows.reduce((s,p)=>s+p.total,0)/playerRows.filter(p=>p.total>0).length) : 0;
+
+  // Render
+  const headerCells = diasSem.map((d, i) => {
+    const isHoy = diasDates[i] === hoyStr;
+    return `<div class="dl-day-col" style="${isHoy?'color:var(--text);font-weight:700':''}'">${d}</div>`;
+  }).join('');
+
+  const playerRowsHtml = playerRows.map(p => {
+    const cells = p.loads.map(ua => {
+      const z = loadZone(ua);
+      return `<div class="dl-cell ${z}" title="${ua ? ua+' UA' : 'Sin datos'}">${ua || '—'}</div>`;
+    }).join('');
+    const tc = weekTotalClass(p.total);
+    return `<div class="dl-p-row">
+      <div class="dl-p-name" title="${p.nombre}">${p.nombre.split(',')[0]}</div>
+      ${cells}
+      <div class="dl-total ${tc}" title="Total semana: ${p.total} UA">${p.total || '—'}</div>
+    </div>`;
+  }).join('');
+
+  const avgCells = teamAvgByDay.map(ua => {
+    const z = loadZone(ua);
+    return `<div class="dl-cell ${z}" style="opacity:.7" title="${ua ? 'Media: '+ua+' UA' : 'Sin datos'}">${ua || '—'}</div>`;
+  }).join('');
+  const avgTc = weekTotalClass(teamTotalAvg);
+
+  const legend = `
+    <div class="dl-legend">
+      <span class="dl-legend-chip dl-z0">— sin datos</span>
+      <span class="dl-legend-chip dl-z1">≤200 ligera</span>
+      <span class="dl-legend-chip dl-z2">201–350 moderada</span>
+      <span class="dl-legend-chip dl-z3">351–500 alta</span>
+      <span class="dl-legend-chip dl-z4">&gt;500 muy alta</span>
+      <span style="font-size:7px;color:var(--muted);align-self:center;margin-left:2px">¹</span>
+    </div>
+    <div style="font-size:8px;color:var(--muted);margin-bottom:8px">
+      Total semanal óptimo: <span style="color:#00e5a0">1000–2000 UA</span>
+      <span style="font-size:7px;color:var(--muted)"> ²</span>
+    </div>`;
+
+  content.innerHTML = `
+    ${legend}
+    <div class="dl-grid-header">
+      <div class="dl-name-col"></div>
+      ${headerCells}
+      <div class="dl-total-col">TOTAL</div>
+    </div>
+    ${playerRowsHtml}
+    <div class="dl-sep"></div>
+    <div class="dl-p-row">
+      <div class="dl-p-name team-avg">Media equipo</div>
+      ${avgCells}
+      <div class="dl-total ${avgTc}">${teamTotalAvg||'—'}</div>
+    </div>
+    <div style="margin-top:12px;padding-top:8px;border-top:0.5px solid var(--border)">
+      <div style="font-size:8px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Referencias</div>
+      <div style="font-size:8px;color:var(--muted);line-height:1.7">
+        <sup>1</sup> Gabbett, T.J. (2016). The training-injury prevention paradox: should athletes be training smarter <em>and</em> harder? <em>British Journal of Sports Medicine</em>, 50(5), 273–280. — Umbrales de carga por sesión (UA = RPE × min).
+      </div>
+      <div style="font-size:8px;color:var(--muted);line-height:1.7;margin-top:3px">
+        <sup>2</sup> Hulin, B.T. et al. (2016). Spikes in acute workload are associated with increased injury risk in elite cricket fast bowlers. <em>British Journal of Sports Medicine</em>, 48(8), 708–712. — Rango óptimo de carga semanal y ratio aguda:crónica.
+      </div>
+      <div style="font-size:8px;color:var(--muted);line-height:1.7;margin-top:3px">
+        <sup>†</sup> Foster, C. et al. (2001). A new approach to monitoring exercise training. <em>Journal of Strength and Conditioning Research</em>, 15(1), 109–115. — Session RPE method: UA = RPE × duración (min).
+      </div>
+    </div>`;
 }
 
 function renderPlayerSelector(equipo) {
