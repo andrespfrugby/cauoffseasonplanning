@@ -1142,6 +1142,23 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .hm-cell-high { background:rgba(255,112,112,.2); border:0.5px solid rgba(255,112,112,.35); color:#ff7070; }
 .hm-avg { width:32px; flex-shrink:0; font-size:11px; font-weight:600; text-align:right; }
 
+/* ── ACWR ── */
+.acwr-team-kpis { display:flex; gap:8px; margin-bottom:14px; }
+.acwr-kpi { flex:1; background:var(--surface2); border:0.5px solid var(--border); border-radius:8px; padding:8px 10px; text-align:center; }
+.acwr-kpi-val { font-size:20px; font-weight:700; line-height:1; }
+.acwr-kpi-lbl { font-size:8px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:3px; }
+.acwr-legend { display:flex; height:5px; border-radius:3px; overflow:hidden; margin-bottom:2px; }
+.acwr-legend-labels { display:flex; font-size:7px; color:var(--muted); margin-bottom:10px; }
+.acwr-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+.acwr-name { min-width:80px; font-size:10px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0; }
+.acwr-gauge { flex:1; height:7px; border-radius:4px; position:relative; overflow:hidden; display:flex; }
+.acwr-pin { position:absolute; top:-2px; bottom:-2px; width:3px; border-radius:2px; background:#fff; box-shadow:0 0 4px rgba(0,0,0,.5); transform:translateX(-50%); }
+.acwr-val { min-width:64px; font-size:10px; font-weight:700; text-align:right; flex-shrink:0; }
+.acwr-loads { display:flex; gap:4px; }
+.acwr-load-chip { flex:1; background:var(--surface2); border:0.5px solid var(--border); border-radius:5px; padding:3px 6px; text-align:center; }
+.acwr-load-val { font-size:11px; font-weight:700; line-height:1; }
+.acwr-load-lbl { font-size:7px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+
 /* ── TEAM LOAD — tarjetas compactas ── */
 .tl-card-row {
   display:flex; align-items:center; gap:10px;
@@ -1329,6 +1346,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         <div id="coach-player-evo-content">
           <div class="pevo-empty">Selecciona un jugador para ver su evolución.</div>
         </div>
+      </div>
+
+      <!-- ACWR -->
+      <div class="coach-chart-box" id="coach-acwr-chart" style="display:none">
+        <div class="chart-section-title">Ratio Aguda:Crónica (ACWR)</div>
+        <div id="coach-acwr-content"><div class="loader"><div class="spinner"></div></div></div>
       </div>
     </div>
 
@@ -3152,6 +3175,7 @@ async function loadCoachPanel() {
 
   renderTeamLoadChart(semanaNombre, rpeChartActivo);
   renderPlayerSelector(equipoFiltrado);
+  renderAcwr(equipoFiltrado);
 }
 
 function renderTeamLoadChart(semanaNombre, chart) {
@@ -3179,6 +3203,141 @@ function renderTeamLoadChart(semanaNombre, chart) {
   }).join('');
   document.getElementById('coach-team-load-bars').innerHTML = cardsHtml;
   el.style.display = 'block';
+}
+
+async function renderAcwr(equipo) {
+  const el = document.getElementById('coach-acwr-chart');
+  const content = document.getElementById('coach-acwr-content');
+  if (!el || !content) return;
+  el.style.display = 'block';
+  content.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  const now   = new Date();
+  const ms7   = 7  * 24 * 3600 * 1000;
+  const ms28  = 28 * 24 * 3600 * 1000;
+
+  // Load historial for all players in parallel
+  const results = await Promise.all(
+    equipo.map(j => api({ action:'getHistorial', usuario: j.usuario, ejercicio:'RPE_GLOBAL' }))
+  );
+
+  // Calculate aguda + crónica per player using RPE × tiempo_sesion
+  function calcLoads(historial) {
+    const cutoff7  = new Date(now - ms7);
+    const cutoff28 = new Date(now - ms28);
+    let aguda = 0, cronica28 = 0, count28 = 0;
+    for (const h of (historial || [])) {
+      const d   = new Date(h.fecha);
+      const rpe = parseFloat(h.rpe);
+      const min = parseInt(h.tiempo_sesion);
+      if (isNaN(rpe) || isNaN(min) || min <= 0) continue;
+      const ua = rpe * min;
+      if (d >= cutoff7)  aguda    += ua;
+      if (d >= cutoff28) { cronica28 += ua; count28++; }
+    }
+    // Crónica = promedio semanal de las 4 semanas = total28 / 4
+    const cronica = cronica28 > 0 ? Math.round(cronica28 / 4) : 0;
+    const acwr    = cronica > 0 ? Math.round((aguda / cronica) * 100) / 100 : null;
+    return { aguda: Math.round(aguda), cronica, acwr };
+  }
+
+  const playerData = equipo.map((j, i) => {
+    const res = results[i];
+    const loads = calcLoads(res.ok ? res.historial : []);
+    return { nombre: j.nombre, ...loads };
+  }).filter(p => p.aguda > 0 || p.cronica > 0);
+
+  // Team averages
+  const withAcwr = playerData.filter(p => p.acwr !== null);
+  const teamAguda   = playerData.length ? Math.round(playerData.reduce((s,p)=>s+p.aguda,0)/playerData.length) : 0;
+  const teamCronica = playerData.length ? Math.round(playerData.reduce((s,p)=>s+p.cronica,0)/playerData.length) : 0;
+  const teamAcwr    = withAcwr.length   ? Math.round((withAcwr.reduce((s,p)=>s+p.acwr,0)/withAcwr.length)*100)/100 : null;
+
+  function acwrColor(v) {
+    if (v === null) return 'var(--muted)';
+    if (v < 0.8)  return '#7bb8ff';
+    if (v <= 1.3) return '#00e5a0';
+    if (v <= 1.5) return '#ffc04d';
+    return '#ff7070';
+  }
+  function acwrLabel(v) {
+    if (v === null) return '—';
+    if (v < 0.8)  return 'subcarga';
+    if (v <= 1.3) return 'óptimo';
+    if (v <= 1.5) return '⚠ precaución';
+    return '🔴 riesgo';
+  }
+  // Pin position: 0→0%, 0.8→42%, 1.3→68%, 1.5→80%, 2→100%
+  function pinPct(v) {
+    if (!v) return 0;
+    if (v <= 0.8)  return Math.round((v/0.8)*42);
+    if (v <= 1.3)  return Math.round(42 + ((v-0.8)/0.5)*26);
+    if (v <= 1.5)  return Math.round(68 + ((v-1.3)/0.2)*12);
+    return Math.min(Math.round(80 + ((v-1.5)/0.5)*20), 98);
+  }
+
+  const legend = `
+    <div class="acwr-legend">
+      <div style="flex:.42;background:rgba(123,184,255,.3)"></div>
+      <div style="flex:.26;background:rgba(0,229,160,.45)"></div>
+      <div style="flex:.12;background:rgba(255,192,77,.45)"></div>
+      <div style="flex:.2;background:rgba(255,70,70,.4)"></div>
+    </div>
+    <div class="acwr-legend-labels">
+      <span style="flex:.42;color:rgba(123,184,255,.7)">&lt;0.8 sub</span>
+      <span style="flex:.26;color:#00e5a0">0.8–1.3 óptimo</span>
+      <span style="flex:.12;color:#ffc04d">1.3–1.5</span>
+      <span style="flex:.2;color:#ff7070;text-align:right">&gt;1.5 riesgo</span>
+    </div>`;
+
+  const tc = acwrColor(teamAcwr);
+  const teamKpis = `
+    <div class="acwr-team-kpis">
+      <div class="acwr-kpi">
+        <div class="acwr-kpi-val" style="color:var(--text)">${teamAguda || '—'}</div>
+        <div class="acwr-kpi-lbl">Carga Aguda (7d)</div>
+        <div style="font-size:7px;color:var(--muted);margin-top:2px">UA · media equipo</div>
+      </div>
+      <div class="acwr-kpi">
+        <div class="acwr-kpi-val" style="color:var(--muted)">${teamCronica || '—'}</div>
+        <div class="acwr-kpi-lbl">Carga Crónica (4sem)</div>
+        <div style="font-size:7px;color:var(--muted);margin-top:2px">UA · media equipo</div>
+      </div>
+      <div class="acwr-kpi" style="background:${tc}18;border-color:${tc}55">
+        <div class="acwr-kpi-val" style="color:${tc}">${teamAcwr || '—'}</div>
+        <div class="acwr-kpi-lbl" style="color:${tc}">ACWR equipo</div>
+        <div style="font-size:7px;color:${tc};margin-top:2px">${teamAcwr ? acwrLabel(teamAcwr) : 'sin datos'}</div>
+      </div>
+    </div>`;
+
+  const rows = playerData.map(p => {
+    const col = acwrColor(p.acwr);
+    const pp  = pinPct(p.acwr);
+    return `<div style="margin-bottom:9px">
+      <div class="acwr-row">
+        <div class="acwr-name" title="${p.nombre}">${p.nombre.split(',')[0]}</div>
+        <div class="acwr-gauge">
+          <div style="flex:.42;background:rgba(123,184,255,.2)"></div>
+          <div style="flex:.26;background:rgba(0,229,160,.3)"></div>
+          <div style="flex:.12;background:rgba(255,192,77,.3)"></div>
+          <div style="flex:.2;background:rgba(255,70,70,.25)"></div>
+          ${p.acwr !== null ? `<div class="acwr-pin" style="left:${pp}%"></div>` : ''}
+        </div>
+        <div class="acwr-val" style="color:${col}">${p.acwr !== null ? p.acwr : '—'} <span style="font-size:8px;font-weight:400;color:var(--muted)">${p.acwr ? acwrLabel(p.acwr) : ''}</span></div>
+      </div>
+      <div class="acwr-loads" style="padding-left:88px">
+        <div class="acwr-load-chip"><div class="acwr-load-val" style="color:var(--text)">${p.aguda}</div><div class="acwr-load-lbl">Aguda</div></div>
+        <div class="acwr-load-chip"><div class="acwr-load-val" style="color:var(--muted)">${p.cronica}</div><div class="acwr-load-lbl">Crónica</div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  if (!playerData.length) {
+    content.innerHTML = '<div class="pevo-empty">Sin datos de tiempo de sesión registrados. Los jugadores deben guardar RPE + tiempo para calcular el ACWR.</div>';
+    return;
+  }
+
+  content.innerHTML = teamKpis + legend + rows;
 }
 
 function renderPlayerSelector(equipo) {
