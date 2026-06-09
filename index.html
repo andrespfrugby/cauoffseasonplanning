@@ -450,7 +450,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .coach-table th { font-size:9px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); padding:7px 10px; border-bottom:1px solid var(--border); text-align:left; }
 .coach-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
 .coach-table tr:last-child td { border-bottom:none; }
-.coach-table tr:hover td { background:rgba(255,255,255,.02); }
+.coach-table tr:hover td { background:rgba(255,255,255,.04); cursor:pointer; }
 .status-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; }
 .dot-green { background:var(--accent2); box-shadow:0 0 5px rgba(0,229,160,.5); }
 .dot-amber { background:#ffc04d; }
@@ -579,14 +579,18 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   border-color:rgba(0,229,160,.25);
   border-left:3px solid var(--accent2);
 }
+/* Done: colapsa prescripción, notas y paneles — pero MANTIENE los botones */
 .ex-card.done .ex-prescription,
-.ex-card.done .ex-card-actions,
 .ex-card.done .ex-notes-strip,
 .ex-card.done .card-panel,
-.ex-card.done .timer-compact-wrap { display:none !important; }
-.ex-card.done .ex-header { padding-bottom:10px; }
+.ex-card.done .timer-compact-wrap,
+.ex-card.done #panel-metro-card { display:none !important; }
+.ex-card.done .ex-header { padding-bottom:6px; }
 .ex-card.done .ex-tick-btn { background:var(--accent2); border-color:var(--accent2); color:#0d0f12; }
 .ex-card.done .block-id { border-color:rgba(0,229,160,.4); color:var(--accent2); }
+/* Botones de acción siempre visibles — reducidos en done */
+.ex-card.done .ex-card-actions-wrap { opacity:.7; }
+.ex-card.done .ex-card-actions-wrap:hover { opacity:1; }
 .ex-done-meta {
   font-size:10px; color:var(--accent2); padding:0 13px 10px;
   display:none;
@@ -1321,6 +1325,16 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
           <span class="coach-badge">Coach</span>
         </div>
       </div>
+      <!-- Search -->
+      <div style="position:relative;margin-bottom:10px">
+        <input type="text" id="squad-search" placeholder="🔍  Buscar jugador..."
+          oninput="filterSquadTable()"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;
+            padding:8px 12px;font-size:13px;font-family:var(--font-body);color:var(--text);outline:none;
+            transition:border-color .2s"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='var(--border2)'">
+      </div>
       <div class="kpi-row" id="coach-kpis">
         <div class="kpi-card"><div class="kpi-num" id="kpi-total">—</div><div class="kpi-lbl">Jugadores</div></div>
         <div class="kpi-card"><div class="kpi-num green" id="kpi-hoy">—</div><div class="kpi-lbl">Hoy</div></div>
@@ -1545,6 +1559,48 @@ let state = {
   squad: ''
 };
 
+const SESSION_KEY = 'cau_session';
+
+function sessionSave(userData) {
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify({ ...userData, _ts: Date.now() })); } catch(e) {}
+}
+
+function sessionLoad() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    // Expire after 30 days
+    if (Date.now() - data._ts > 30 * 24 * 3600 * 1000) { localStorage.removeItem(SESSION_KEY); return null; }
+    return data;
+  } catch(e) { return null; }
+}
+
+function sessionClear() {
+  try { localStorage.removeItem(SESSION_KEY); } catch(e) {}
+}
+
+// ── PUNTO DE ENTRADA ─────────────────────────────────────────
+(async function init() {
+  const saved = sessionLoad();
+  if (saved) {
+    // Restaurar sesión sin volver a pedir login
+    state.user       = saved;
+    state.squad      = saved.squad || '';
+    state.isCoach    = (String(saved.posicion||'').toLowerCase() === 'coach');
+    document.getElementById('player-name').textContent     = saved.nombre;
+    document.getElementById('avatar-initials').textContent =
+      saved.nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    document.getElementById('screen-login').style.display  = 'none';
+    document.getElementById('screen-app').style.display    = 'block';
+    if (state.isCoach) document.getElementById('coach-topbar-badge').classList.remove('hidden');
+    await loadSemanas();
+    loadRutina();
+    initNav();
+    if (!state.isCoach) markCompletedDaysFromHistory();
+  }
+})();
+
 // ── API ───────────────────────────────────────────────────────
 async function api(payload) {
   try {
@@ -1567,9 +1623,10 @@ async function doLogin() {
   btn.disabled=true; btn.textContent='Entrando...'; errEl.textContent='';
   const res = await api({ action:'login', usuario, password });
   if (res.ok) {
-    state.user = res;
+    state.user  = res;
     state.squad = res.squad || '';
     state.isCoach = (String(res.posicion||'').toLowerCase()==='coach');
+    sessionSave(res); // persist across reloads
     document.getElementById('player-name').textContent = res.nombre;
     document.getElementById('avatar-initials').textContent =
       res.nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -1791,17 +1848,33 @@ function resetSessionState() {
 async function loadRutina() {
   state.semana = parseInt(document.getElementById('sel-semana').value);
   const container = document.getElementById('session-container');
-  container.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando sesión...</div>';
   const squad = state.isCoach ? (state.coachSquadFilter || "men's xv") : state.squad;
+
+  // Try cache first (offline support)
+  const cached = cacheGet(state.semana, state.dia, squad);
+  if (cached) {
+    renderSession(cached.ejercicios, cached.nombreSemana, cached.sessionNotes||'', cached.dayTitle||'');
+    // Refresh in background silently
+    api({ action:'getRutina', semana:state.semana, dia:state.dia, squad }).then(res => {
+      if (res.ok && res.ejercicios && res.ejercicios.length) {
+        cacheSet(state.semana, state.dia, squad, res);
+      }
+    });
+    return;
+  }
+
+  container.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando sesión...</div>';
   const res = await api({ action:'getRutina', semana:state.semana, dia:state.dia, squad });
   if (!res.ok) {
-    container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${res.error||'Error al cargar'}</div>`;
+    container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${res.error||'Error al cargar. Comprueba tu conexión.'}</div>`;
     return;
   }
   if (!res.ejercicios||!res.ejercicios.length) {
     container.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>No hay ejercicios para este día todavía.</div>';
     return;
   }
+  // Save to cache
+  cacheSet(state.semana, state.dia, squad, res);
   renderSession(res.ejercicios, res.nombreSemana||'', res.sessionNotes||'', res.dayTitle||'');
 }
 
@@ -1889,6 +1962,7 @@ function renderCard(e) {
   const repsEsc    = (e.reps||'').replace(/'/g,"\\'");
 
   const actionsHtml = `
+    <div class="ex-card-actions-wrap">
     <div style="display:flex;flex-direction:column;gap:4px;padding:0 13px 10px">
       <div style="display:flex;gap:4px">
         <button type="button" class="btn-action btn-action-hist" style="flex:1" title="Historial de carga"
@@ -1915,6 +1989,7 @@ function renderCard(e) {
               onclick="toggleMetronomePanel('${cardId}')">
         <span class="btn-action-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L7 20h10L12 2z"/><line x1="12" y1="2" x2="17" y2="12"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span><span>Metrónomo</span>
       </button>
+    </div>
     </div>`;
   return `
   <div class="ex-card accent-${letraOk}${isPrep?' prep-card':''}" id="card-${cardId}">
@@ -2122,6 +2197,10 @@ function numpadInput(key) {
 }
 async function saveSession() {
   if (!state.rpeSession) return;
+  // Double-save guard
+  if (_savingSession) return;
+  _savingSession = true;
+
   const btn = document.getElementById('btn-save-session');
   if (btn) { btn.disabled=true; btn.textContent='Guardando...'; }
   const res = await api({
@@ -2132,6 +2211,7 @@ async function saveSession() {
     tiempo_sesion: state.tiempoSesion ? parseInt(state.tiempoSesion) : ''
   });
   if (res.ok) {
+    _savingSession = false;
     state.guardado=true;
     // 1. Tick en el selector de días
     markDayDone(state.dia);
@@ -2151,6 +2231,7 @@ async function saveSession() {
       if (active === 'jugadores' || active === 'rpe') loadCoachPanel();
     }
   } else {
+    _savingSession = false;
     if (btn) { btn.disabled=false; btn.textContent='Guardar sesión'; }
     alert('Error al guardar: '+(res.error||'inténtalo de nuevo'));
   }
@@ -3140,11 +3221,10 @@ async function loadCoachPanel() {
     const squadLabel = j.squad ? `<span style="font-size:9px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--muted);margin-left:5px">${j.squad}</span>` : '';
     const usuEsc = j.usuario.replace(/'/g,"\\'");
     const nomEsc = j.nombre.replace(/'/g,"\\'");
-    return `<tr>
+    return `<tr style="cursor:pointer" onclick="openPlayerModal('${usuEsc}','${nomEsc}')" title="Ver estadísticas de ${j.nombre}" data-nombre="${j.nombre.toLowerCase()}">
       <td>
         <span class="status-dot ${dotCls}"></span>
-        <span style="cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,255,255,.15);text-underline-offset:3px"
-              onclick="openPlayerModal('${usuEsc}','${nomEsc}')">${j.nombre}</span>
+        <span style="text-decoration:underline;text-decoration-color:rgba(255,255,255,.15);text-underline-offset:3px">${j.nombre}</span>
         ${sqFilter?'':squadLabel}
       </td>
       <td>${rpe7Html}</td>
@@ -4204,8 +4284,52 @@ async function markCompletedDaysFromHistory() {
   completedDias.forEach(dia => markDayDone(dia));
 }
 
+// ── SQUAD SEARCH FILTER ──────────────────────────────────────
+function filterSquadTable() {
+  const q = (document.getElementById('squad-search')?.value || '').toLowerCase().trim();
+  const rows = document.querySelectorAll('#coach-tbody tr');
+  let visible = 0;
+  rows.forEach(row => {
+    const nombre = (row.dataset.nombre || '').toLowerCase();
+    const show = !q || nombre.includes(q);
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  // Clear search when squad changes
+}
+
+// ── OFFLINE CACHE ─────────────────────────────────────────────
+const CACHE_KEY_PREFIX = 'cau_rutina_';
+const CACHE_TTL_MS     = 7 * 24 * 3600 * 1000; // 7 días
+
+function cacheKey(semana, dia, squad) {
+  return `${CACHE_KEY_PREFIX}${squad}_s${semana}_d${dia}`;
+}
+
+function cacheSet(semana, dia, squad, data) {
+  try {
+    localStorage.setItem(cacheKey(semana, dia, squad), JSON.stringify({
+      ts: Date.now(), data
+    }));
+  } catch(e) { /* storage full — ignore */ }
+}
+
+function cacheGet(semana, dia, squad) {
+  try {
+    const raw = localStorage.getItem(cacheKey(semana, dia, squad));
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL_MS) { localStorage.removeItem(cacheKey(semana, dia, squad)); return null; }
+    return data;
+  } catch(e) { return null; }
+}
+
+// ── DOUBLE-SAVE GUARD ─────────────────────────────────────────
+let _savingSession = false;
+
 // ── LOGOUT ────────────────────────────────────────────────────
 function logout() {
+  sessionClear();
   state = {user:null,dia:1,semana:1,semanas:[],rpeSession:null,tiempoSesion:'',guardado:false,isCoach:false,cards:{},coachEquipo:[],coachRpeChart:[],coachRpeBySquad:{},coachSquadFilter:'',squad:'',activeTab:''};
   // Hide all tabs
   ['tab-sesion','tab-misemana','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports'].forEach(id => {
