@@ -3308,7 +3308,6 @@ async function loadCoachPanel() {
     document.getElementById('coach-rpe-weeks').innerHTML = '';
   }
 
-  renderTeamLoadChart(semanaNombre, rpeChartActivo);
   renderPlayerSelector(equipoFiltrado);
   renderAcwr(equipoFiltrado);
   renderDailyLoad(equipoFiltrado);
@@ -3317,7 +3316,7 @@ async function loadCoachPanel() {
 
 function renderTeamLoadChart(semanaNombre, chart) {
   const el = document.getElementById('coach-team-load-chart');
-  if (!chart) chart = state.coachRpeChart;
+  if (!el) return; // element removed from UI
   if (!chart.length) {
     el.style.display = 'none';
     document.getElementById('coach-team-load-bars').innerHTML = '';
