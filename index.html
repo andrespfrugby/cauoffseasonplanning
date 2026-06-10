@@ -579,12 +579,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   border-color:rgba(0,229,160,.25);
   border-left:3px solid var(--accent2);
 }
-/* Done: colapsa prescripción, notas y paneles — pero MANTIENE los botones */
+/* Done: colapsa prescripción y notas — paneles y botones siguen funcionando */
 .ex-card.done .ex-prescription,
-.ex-card.done .ex-notes-strip,
-.ex-card.done .card-panel,
-.ex-card.done .timer-compact-wrap,
-.ex-card.done #panel-metro-card { display:none !important; }
+.ex-card.done .ex-notes-strip { display:none !important; }
+.ex-card.done .timer-compact-wrap { display:none !important; }
 .ex-card.done .ex-header { padding-bottom:6px; }
 .ex-card.done .ex-tick-btn { background:var(--accent2); border-color:var(--accent2); color:#0d0f12; }
 .ex-card.done .block-id { border-color:rgba(0,229,160,.4); color:var(--accent2); }
@@ -1146,6 +1144,17 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .hm-cell-high { background:rgba(255,112,112,.2); border:0.5px solid rgba(255,112,112,.35); color:#ff7070; }
 .hm-avg { width:32px; flex-shrink:0; font-size:11px; font-weight:600; text-align:right; }
 
+/* ── RPE TAB SECTION HEADERS ── */
+.rpe-section-header {
+  font-size:11px; font-weight:700; letter-spacing:.06em;
+  color:var(--text); margin:16px 0 8px;
+  display:flex; align-items:center; gap:8px;
+}
+.rpe-section-header::after {
+  content:''; flex:1; height:1px;
+  background:linear-gradient(to right, var(--border2), transparent);
+}
+
 /* ── DAILY LOAD HEATMAP ── */
 .dl-grid-header { display:flex; align-items:center; gap:3px; margin-bottom:3px; }
 .dl-name-col { min-width:80px; flex-shrink:0; font-size:8px; color:var(--muted); }
@@ -1358,10 +1367,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     <!-- ══ COACH: RPE ══ -->
     <div id="tab-coach-rpe" class="tab-section" style="display:none">
       <div class="coach-header">
-        <div>
-          <div class="coach-title">Análisis RPE</div>
-          
-        </div>
+        <div><div class="coach-title">Análisis RPE</div></div>
         <div style="display:flex;align-items:center;gap:8px">
           <select id="coach-squad-filter-rpe" class="semana-select" style="min-width:130px;margin-bottom:0" onchange="onCoachSquadChangeRpe()">
             <option value="">Todos los squads</option>
@@ -1372,13 +1378,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
           <span class="coach-badge">Coach</span>
         </div>
       </div>
+
+      <!-- ── SECCIÓN 1: RPE ── -->
+      <div class="rpe-section-header">📊 RPE</div>
       <div class="coach-chart-box" id="coach-rpe-chart" style="display:none">
         <div class="chart-section-title">RPE medio por sesión</div>
         <div class="rpe-weeks-wrap" id="coach-rpe-weeks"></div>
-      </div>
-      <div class="coach-chart-box" id="coach-team-load-chart" style="display:none">
-        <div class="chart-section-title">Carga del equipo (RPE semanal)</div>
-        <div class="team-load-bars" id="coach-team-load-bars"></div>
       </div>
       <div class="coach-chart-box" id="coach-player-evo-chart" style="display:none">
         <div class="chart-section-title">Evolución carga jugador</div>
@@ -1392,13 +1397,23 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         </div>
       </div>
 
-      <!-- ACWR -->
-      <div class="coach-chart-box" id="coach-acwr-chart" style="display:none">
-        <div class="chart-section-title">Ratio Aguda:Crónica (ACWR)</div>
-        <div id="coach-acwr-content"><div class="loader"><div class="spinner"></div></div></div>
+      <!-- ── SECCIÓN 2: CARGA DEL EQUIPO ── -->
+      <div class="rpe-section-header">⚡ Carga del Equipo</div>
+      <div class="coach-chart-box" id="coach-team-load-chart" style="display:none">
+        <div class="chart-section-title">Carga del equipo (RPE semanal)</div>
+        <div class="team-load-bars" id="coach-team-load-bars"></div>
+      </div>
+      <div class="coach-chart-box" id="coach-load-trend-chart" style="display:none">
+        <div class="chart-section-title">Tendencia carga equipo — UA/semana</div>
+        <div id="coach-load-trend-content"><div class="loader"><div class="spinner"></div></div></div>
       </div>
 
-      <!-- Daily Load Heatmap -->
+      <!-- ── SECCIÓN 3: LOAD MANAGEMENT ── -->
+      <div class="rpe-section-header">🔬 Load Management</div>
+      <div class="coach-chart-box" id="coach-acwr-chart" style="display:none">
+        <div class="chart-section-title">Ratio Aguda:Crónica — EWMA (mín. 21 días)</div>
+        <div id="coach-acwr-content"><div class="loader"><div class="spinner"></div></div></div>
+      </div>
       <div class="coach-chart-box" id="coach-daily-load-chart" style="display:none">
         <div class="chart-section-title">Carga diaria equipo — esta semana (UA)</div>
         <div id="coach-daily-load-content"><div class="loader"><div class="spinner"></div></div></div>
@@ -2729,8 +2744,10 @@ async function repLoadData() {
       const sesCount = sesiones.length;
       const tiempos = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
       const tiempo = tiempos.length ? tiempos.reduce((a,b)=>a+b,0) : null;
-      // compliance = sesiones / días de entrenamiento de esa semana (max 5)
-      const comp = sesCount > 0 ? Math.min(Math.round((sesCount/5)*100), 100) : 0;
+      // compliance = sesiones / días programados reales de esa semana
+      // diasProgramados viene del backend getDiasActivos via getEquipo
+      const diasProg = j.diasProgramados || 5;
+      const comp = sesCount > 0 ? Math.min(Math.round((sesCount/diasProg)*100), 100) : 0;
       return { nombre:j.nombre, usuario:j.usuario, avgRpe, sesCount, comp, tiempo };
     }).sort((a,b)=>b.comp-a.comp);
 
@@ -2847,8 +2864,18 @@ async function renderHistPanel(cardId, ejercicio, el) {
     el.innerHTML = '<div class="hist-empty">No se pudo cargar el historial.</div>'; return;
   }
 
+  // ── Sanitizar carga — descartar fechas auto-convertidas por Sheets ──
+  function sanitizeCarga(val) {
+    if (!val && val !== 0) return '';
+    const s = String(val).trim();
+    // Si Sheets convirtió "30/40" a Date y llegó como ISO string
+    if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return '';
+    if (s === '[object Date]') return '';
+    return s;
+  }
+
   const hist = res.historial
-    .filter(h => h.carga && String(h.carga).trim() !== '')
+    .filter(h => h.carga && sanitizeCarga(h.carga) !== '')
     .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
   if (!hist.length) {
@@ -2907,7 +2934,7 @@ async function renderHistPanel(cardId, ejercicio, el) {
   const cardsHtml = hist.map((h, i) => {
     const isLatest  = i === 0;
     const dateLabel = dd_mm(h.fecha);
-    const rawCarga  = String(h.carga).trim();
+    const rawCarga  = sanitizeCarga(h.carga);
     const setVals   = rawCarga.includes('/') ? rawCarga.split('/') : [rawCarga];
 
     let setsHtml;
@@ -3209,15 +3236,11 @@ async function loadCoachPanel() {
     }).join('');
     const tiempoTxt = j.tiempoUltima ? j.tiempoUltima+' min' : '—';
     const hoyDow = new Date().getDay();
-    const diasTranscurridos = hoyDow === 0 ? 7 : hoyDow;
     const sesGuardadas = (j.sesiones7dias||[]).filter(s=>s.guardada).length;
-    const diasEsperados = Math.min(diasTranscurridos, 7);
-    const compliance = diasEsperados > 0 ? Math.round((sesGuardadas / diasEsperados) * 100) : null;
-    let compHtml = '<span class="comp-chip comp-none">—</span>';
-    if (compliance !== null) {
-      const compCls = compliance >= 80 ? 'comp-high' : compliance >= 50 ? 'comp-mid' : 'comp-low';
-      compHtml = `<span class="comp-chip ${compCls}">${compliance}%</span>`;
-    }
+    const diasProg     = j.diasProgramados || 5;  // v10: días reales de la semana
+    const compliance   = Math.min(Math.round((sesGuardadas / diasProg) * 100), 100);
+    const compCls  = compliance >= 80 ? 'comp-high' : compliance >= 50 ? 'comp-mid' : 'comp-low';
+    const compHtml = `<span class="comp-chip ${compCls}">${compliance}%</span>`;
     const squadLabel = j.squad ? `<span style="font-size:9px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--muted);margin-left:5px">${j.squad}</span>` : '';
     const usuEsc = j.usuario.replace(/'/g,"\\'");
     const nomEsc = j.nombre.replace(/'/g,"\\'");
@@ -3293,6 +3316,7 @@ async function loadCoachPanel() {
   renderPlayerSelector(equipoFiltrado);
   renderAcwr(equipoFiltrado);
   renderDailyLoad(equipoFiltrado);
+  renderLoadTrend(equipoFiltrado);
 }
 
 function renderTeamLoadChart(semanaNombre, chart) {
@@ -3331,40 +3355,74 @@ async function renderAcwr(equipo) {
 
   const now   = new Date();
   const ms7   = 7  * 24 * 3600 * 1000;
-  const ms28  = 28 * 24 * 3600 * 1000;
+  const ms21  = 21 * 24 * 3600 * 1000;  // mínimo 21 días (Catapult standard)
 
   // Load historial for all players in parallel
   const results = await Promise.all(
     equipo.map(j => api({ action:'getHistorial', usuario: j.usuario, ejercicio:'RPE_GLOBAL' }))
   );
 
-  // Calculate aguda + crónica per player using RPE × tiempo_sesion
-  function calcLoads(historial) {
-    const cutoff7  = new Date(now - ms7);
-    const cutoff28 = new Date(now - ms28);
-    let aguda = 0, cronica28 = 0, sesiones28 = 0;
+  // ── EWMA ACWR (Bourdon et al. 2017, validated in rugby/hockey) ──────────
+  // λ_aguda   = 2/(7+1)  = 0.25  → ventana efectiva ~7 días
+  // λ_crónica = 2/(28+1) = 0.069 → ventana efectiva ~28 días
+  // EWMA_hoy  = λ × UA_hoy + (1-λ) × EWMA_ayer
+  // Arranca desde 0 el primer día de datos
+  const LAMBDA_A = 2 / (7  + 1);   // 0.25
+  const LAMBDA_C = 2 / (28 + 1);   // ~0.069
 
-    for (const h of (historial || [])) {
-      const d   = new Date(h.fecha);
-      const rpe = parseFloat(h.rpe);
-      const min = parseInt(h.tiempo_sesion);
-      if (isNaN(rpe) || isNaN(min) || min <= 0) continue;
-      const ua = rpe * min;
-      if (d >= cutoff7)  aguda += ua;
-      if (d >= cutoff28) { cronica28 += ua; sesiones28++; }
+  function calcLoads(historial) {
+    if (!historial || !historial.length) return { aguda:0, cronica:0, acwr:null, totalDias:0, insufficient:true };
+
+    // Filtrar sesiones con UA válido y ordenar por fecha
+    const sessions = historial
+      .map(h => {
+        const d   = new Date(h.fecha);
+        const rpe = parseFloat(h.rpe);
+        const min = parseInt(h.tiempo_sesion);
+        if (isNaN(rpe) || isNaN(min) || min <= 0) return null;
+        return { d, ua: rpe * min };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.d - b.d);
+
+    if (!sessions.length) return { aguda:0, cronica:0, acwr:null, totalDias:0, insufficient:true };
+
+    // Verificar mínimo 21 días entre primera sesión y hoy (Catapult standard)
+    const firstDate  = sessions[0].d;
+    const daysSince  = (now - firstDate) / (24 * 3600 * 1000);
+    const insufficient = daysSince < 21;
+
+    // Construir serie diaria desde primera sesión hasta hoy
+    const start = new Date(firstDate);
+    start.setHours(0,0,0,0);
+    const end   = new Date(now);
+    end.setHours(23,59,59,999);
+
+    // Map fecha → UA (0 si no entrenó ese día)
+    const uaByDate = {};
+    sessions.forEach(s => {
+      const key = s.d.toISOString().slice(0,10);
+      uaByDate[key] = (uaByDate[key] || 0) + s.ua;
+    });
+
+    // Iterar día a día calculando EWMA
+    let ewmaA = 0, ewmaC = 0;
+    let cursor = new Date(start);
+    while (cursor <= end) {
+      const key = cursor.toISOString().slice(0,10);
+      const ua  = uaByDate[key] || 0;
+      ewmaA = LAMBDA_A * ua + (1 - LAMBDA_A) * ewmaA;
+      ewmaC = LAMBDA_C * ua + (1 - LAMBDA_C) * ewmaC;
+      cursor.setDate(cursor.getDate() + 1);
     }
 
-    // Crónica: media semanal de las 4 semanas (dividir siempre entre 4)
-    // Mínimo 2 sesiones en los últimos 28 días para que sea representativa
-    const cronica = sesiones28 >= 2 ? Math.round(cronica28 / 4) : 0;
-
-    // ACWR solo es válido si hay carga aguda Y crónica
-    // Si aguda=0 → no entrenó esta semana → mostrar como null (no es subcarga)
-    const acwr = (aguda > 0 && cronica > 0)
-      ? Math.round((aguda / cronica) * 100) / 100
+    const aguda   = Math.round(ewmaA * 7);   // convertir a UA/semana para legibilidad
+    const cronica = Math.round(ewmaC * 7);
+    const acwr    = (aguda > 0 && cronica > 0 && !insufficient)
+      ? Math.round((ewmaA / ewmaC) * 100) / 100
       : null;
 
-    return { aguda: Math.round(aguda), cronica, acwr, sesiones28 };
+    return { aguda, cronica, acwr, totalDias: Math.round(daysSince), insufficient };
   }
 
   const playerData = equipo.map((j, i) => {
@@ -3374,7 +3432,8 @@ async function renderAcwr(equipo) {
   }).filter(p => p.aguda > 0 || p.cronica > 0);
 
   // Team averages
-  const withAcwr = playerData.filter(p => p.acwr !== null);
+  const withAcwr    = playerData.filter(p => p.acwr !== null && !p.insufficient);
+  const validPlayers = playerData.filter(p => !p.insufficient && p.totalDias >= 21);
   const teamAguda   = playerData.length ? Math.round(playerData.reduce((s,p)=>s+p.aguda,0)/playerData.length) : 0;
   const teamCronica = playerData.length ? Math.round(playerData.reduce((s,p)=>s+p.cronica,0)/playerData.length) : 0;
   const teamAcwr    = withAcwr.length   ? Math.round((withAcwr.reduce((s,p)=>s+p.acwr,0)/withAcwr.length)*100)/100 : null;
@@ -3395,9 +3454,10 @@ async function renderAcwr(equipo) {
   }
 
   function acwrRowStatus(p) {
-    if (p.aguda === 0 && p.cronica > 0) return { txt: 'sin entreno esta semana', col: 'var(--muted)' };
-    if (p.aguda === 0 && p.cronica === 0) return { txt: 'sin datos', col: 'var(--muted)' };
-    if (p.acwr === null) return { txt: '—', col: 'var(--muted)' };
+    if (p.insufficient && p.totalDias > 0) return { txt: `⏳ datos insuf. (${p.totalDias}d / 21d mín.)`, col: 'var(--muted)' };
+    if (p.aguda === 0 && p.cronica > 0)   return { txt: 'sin entreno esta semana', col: 'var(--muted)' };
+    if (p.aguda === 0 && p.cronica === 0) return { txt: 'sin datos con tiempo', col: 'var(--muted)' };
+    if (p.acwr === null)                  return { txt: '—', col: 'var(--muted)' };
     return { txt: acwrLabel(p.acwr), col: acwrColor(p.acwr) };
   }
   // Pin position: 0→0%, 0.8→42%, 1.3→68%, 1.5→80%, 2→100%
@@ -3480,9 +3540,12 @@ async function renderAcwr(equipo) {
   }).join('');
 
   if (!playerData.length) {
-    content.innerHTML = '<div class="pevo-empty">Sin datos de tiempo de sesión registrados. Los jugadores deben guardar RPE + tiempo para calcular el ACWR.</div>';
+    content.innerHTML = '<div class="pevo-empty">Sin datos de RPE + tiempo registrados. Los jugadores deben guardar ambos para calcular el ACWR.</div>';
     return;
   }
+
+  // No valid players yet
+  const noValidPlayers = withAcwr.length === 0;
 
   content.innerHTML = teamKpis + legend + rows;
 }
@@ -3614,6 +3677,141 @@ async function renderDailyLoad(equipo) {
         <sup>†</sup> Foster, C. et al. (2001). A new approach to monitoring exercise training. <em>Journal of Strength and Conditioning Research</em>, 15(1), 109–115. — Session RPE method: UA = RPE × duración (min).
       </div>
     </div>`;
+}
+
+async function renderLoadTrend(equipo) {
+  const el      = document.getElementById('coach-load-trend-chart');
+  const content = document.getElementById('coach-load-trend-content');
+  if (!el || !content) return;
+  el.style.display = 'block';
+  content.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  const now = new Date();
+
+  // Load historial RPE_GLOBAL for all players
+  const results = await Promise.all(
+    equipo.map(j => api({ action:'getHistorial', usuario: j.usuario, ejercicio:'RPE_GLOBAL' }))
+  );
+
+  // Build weekly UA per player using semana field from historial
+  // semana is the week number (1-based)
+  const weeklyUA = {}; // { semNum: { totalUA, playerCount } }
+  const weekNames = state.semanas || [];
+
+  results.forEach((res, idx) => {
+    if (!res.ok || !res.historial) return;
+    res.historial.forEach(h => {
+      const semNum = parseInt(h.semana);
+      const rpe    = parseFloat(h.rpe);
+      const min    = parseInt(h.tiempo_sesion);
+      if (isNaN(semNum) || isNaN(rpe) || isNaN(min) || min <= 0) return;
+      const ua = rpe * min;
+      if (!weeklyUA[semNum]) weeklyUA[semNum] = { totalUA: 0, playerCount: new Set(), sessions: 0 };
+      weeklyUA[semNum].totalUA    += ua;
+      weeklyUA[semNum].playerCount.add(equipo[idx].usuario);
+      weeklyUA[semNum].sessions++;
+    });
+  });
+
+  const semNums = Object.keys(weeklyUA).map(Number).sort((a,b)=>a-b);
+  if (!semNums.length) {
+    content.innerHTML = '<div class="pevo-empty">Sin datos de RPE + tiempo para calcular la tendencia.</div>';
+    return;
+  }
+
+  // Average UA per player per week
+  const weekData = semNums.map(sem => {
+    const d       = weeklyUA[sem];
+    const players = d.playerCount.size;
+    const avgUA   = players > 0 ? Math.round(d.totalUA / players) : 0;
+    const name    = weekNames[sem-1] || `Sem ${sem}`;
+    return { sem, name, avgUA, players, sessions: d.sessions };
+  });
+
+  // KPIs
+  const currentSem = weekData[weekData.length - 1];
+  const prevSem    = weekData.length > 1 ? weekData[weekData.length - 2] : null;
+  const pct        = prevSem && prevSem.avgUA > 0
+    ? Math.round(((currentSem.avgUA - prevSem.avgUA) / prevSem.avgUA) * 100)
+    : null;
+  const last4      = weekData.slice(-4);
+  const avg4       = last4.length ? Math.round(last4.reduce((s,d)=>s+d.avgUA,0)/last4.length) : 0;
+
+  function uaColor(ua) {
+    if (ua < 1000) return { bg:'rgba(123,184,255,.3)',  border:'rgba(123,184,255,.5)',  txt:'#7bb8ff' };
+    if (ua <= 2000) return { bg:'rgba(0,229,160,.3)',   border:'rgba(0,229,160,.5)',    txt:'#00e5a0' };
+    if (ua <= 2500) return { bg:'rgba(255,192,77,.25)', border:'rgba(255,192,77,.45)',  txt:'#ffc04d' };
+    return              { bg:'rgba(255,70,70,.25)',    border:'rgba(255,70,70,.5)',    txt:'#ff7070' };
+  }
+
+  const maxUA = Math.max(...weekData.map(d=>d.avgUA), 2500);
+
+  // Bars
+  const bars = weekData.map(d => {
+    const isCurrent = d.sem === currentSem.sem;
+    const c         = uaColor(d.avgUA);
+    const pctH      = Math.max(Math.round((d.avgUA / maxUA) * 100), 3);
+    const shortName = d.name.replace(/OFFSEASON_|INSEASON_/,'').slice(0,8);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="font-size:8px;font-weight:${isCurrent?700:500};color:${c.txt}">${d.avgUA}</div>
+      <div style="width:100%;height:${pctH}%;min-height:4px;border-radius:4px 4px 0 0;
+        background:${c.bg};border:${isCurrent?'1.5':'0.5'}px solid ${c.border};
+        ${isCurrent?'outline:2px solid '+c.border+';outline-offset:1px':''}">
+      </div>
+      <div style="font-size:7px;color:${isCurrent?c.txt:'var(--muted)'};font-weight:${isCurrent?700:400};
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center">
+        ${shortName}${isCurrent?' ●':''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Pct color
+  const pctCol = pct === null ? 'var(--muted)' : pct > 15 ? '#ff7070' : pct > 0 ? '#ffc04d' : '#00e5a0';
+  const pctTxt = pct === null ? '—' : (pct > 0 ? '+' : '') + pct + '%';
+
+  const currentC = uaColor(currentSem.avgUA);
+
+  content.innerHTML = `
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <div style="flex:1;background:${currentC.bg};border:0.5px solid ${currentC.border};border-radius:8px;padding:8px 10px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:${currentC.txt};line-height:1">${currentSem.avgUA}</div>
+        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px">UA esta sem</div>
+      </div>
+      <div style="flex:1;background:var(--surface2);border:0.5px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:${pctCol};line-height:1">${pctTxt}</div>
+        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px">vs sem anterior</div>
+      </div>
+      <div style="flex:1;background:var(--surface2);border:0.5px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--text);line-height:1">${avg4}</div>
+        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px">Media 4 sem</div>
+      </div>
+      <div style="flex:1;background:var(--surface2);border:0.5px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:#00e5a0;line-height:1">${currentSem.players}</div>
+        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px">activos</div>
+      </div>
+    </div>
+
+    <!-- Zona optima indicator -->
+    <div style="display:flex;align-items:center;gap:6px;font-size:8px;color:var(--muted);margin-bottom:6px">
+      <div style="width:20px;height:2px;border-top:1px dashed rgba(0,229,160,.4);border-bottom:1px dashed rgba(0,229,160,.4)"></div>
+      <span style="color:rgba(0,229,160,.5)">zona óptima 1000–2000 UA</span>
+    </div>
+
+    <!-- Barras -->
+    <div style="display:flex;gap:4px;height:90px;align-items:flex-end;position:relative;
+      background:linear-gradient(to top, transparent 0%, transparent 60%, rgba(0,229,160,.04) 60%, rgba(0,229,160,.04) 90%, transparent 90%);
+      border-bottom:0.5px solid var(--border);padding-bottom:0;margin-bottom:8px">
+      ${bars}
+    </div>
+
+    <!-- Leyenda -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span style="font-size:8px;background:rgba(123,184,255,.2);border:0.5px solid rgba(123,184,255,.4);border-radius:4px;padding:2px 7px;color:#7bb8ff">&lt;1000 subcarga</span>
+      <span style="font-size:8px;background:rgba(0,229,160,.15);border:0.5px solid rgba(0,229,160,.3);border-radius:4px;padding:2px 7px;color:#00e5a0">1000–2000 óptimo ²</span>
+      <span style="font-size:8px;background:rgba(255,192,77,.15);border:0.5px solid rgba(255,192,77,.3);border-radius:4px;padding:2px 7px;color:#ffc04d">2000–2500 elevada</span>
+      <span style="font-size:8px;background:rgba(255,70,70,.15);border:0.5px solid rgba(255,70,70,.3);border-radius:4px;padding:2px 7px;color:#ff7070">&gt;2500 riesgo</span>
+    </div>
+    <div style="font-size:8px;color:var(--muted);margin-top:5px">UA = RPE × min · media por jugador activo · solo sesiones con tiempo registrado</div>`;
 }
 
 function renderPlayerSelector(equipo) {
@@ -3961,19 +4159,9 @@ function toggleMetronomePanel(cardId) {
 function toggleTick(cardId) {
   const card = document.getElementById('card-' + cardId);
   if (!card) return;
-
   const isDone = card.classList.contains('done');
-
-  if (!isDone) {
-    // Cerrar todos los paneles abiertos antes de colapsar
-    ['hist','load','timer'].forEach(type => {
-      const p = document.getElementById(`panel-${type}-${cardId}`);
-      if (p) p.classList.add('hidden');
-    });
-    card.classList.add('done');
-  } else {
-    card.classList.remove('done');
-  }
+  if (!isDone) card.classList.add('done');
+  else card.classList.remove('done');
 }
 
 // ── PLAYER PROFILE MODAL ─────────────────────────────────────
@@ -4193,7 +4381,11 @@ async function openPlayerModalWithSemana(usuario, nombre, forceSemana) {
 
   const loadHist = hist.filter(h =>
     h.ejercicio !== 'RPE_GLOBAL' &&
-    h.carga && String(h.carga).trim() !== '' &&
+    h.carga &&
+    (() => {
+      const s = String(h.carga).trim();
+      return s !== '' && !/^\d{4}-\d{2}-\d{2}T/.test(s);
+    })() &&
     parseFloat(String(h.carga).split('/')[0]) > 10
   );
   const byEj = {};
