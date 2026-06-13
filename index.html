@@ -1480,6 +1480,18 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div id="week-summary-box"></div>
     </div>
 
+    <!-- ══ COACH: Settings ══ -->
+    <div id="tab-coach-settings" class="tab-section" style="display:none">
+      <div class="coach-header">
+        <div>
+          <div class="coach-title">Settings</div>
+          <div class="coach-sem-label">Visibilidad de semanas</div>
+        </div>
+        <span class="coach-badge">Coach</span>
+      </div>
+      <div id="settings-content"><div class="loader"><div class="spinner"></div></div></div>
+    </div>
+
   </div><!-- /content -->
 
   <!-- ══ BOTTOM NAV ══ -->
@@ -1509,6 +1521,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     <div class="bn-item" id="bn-sesion-coach" onclick="switchTab('sesion')" style="display:none">
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></div>
       <div class="bn-lbl">Session</div>
+    </div>
+    <div class="bn-item" id="bn-settings" onclick="switchTab('settings')" style="display:none">
+      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+      <div class="bn-lbl">Settings</div>
     </div>
   </nav>
 
@@ -1663,7 +1679,7 @@ document.getElementById('input-pass').addEventListener('keydown', e=>{ if(e.key=
 // ── SEMANAS ───────────────────────────────────────────────────
 async function loadSemanas() {
   const squad  = state.isCoach ? (state.coachSquadFilter || "men's xv") : state.squad;
-  const res    = await api({ action:'getSemanas', squad });
+  const res    = await api({ action:'getSemanas', squad, isCoach: state.isCoach });
   const select = document.getElementById('sel-semana');
   if (res.ok && res.semanas && res.semanas.length) {
     state.semanas = res.semanas;
@@ -2542,8 +2558,7 @@ const COACH_TABS  = ['jugadores','rpe','reports','sesion'];
 
 function initNav() {
   if (state.isCoach) {
-    // Show coach nav items
-    ['bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach'].forEach(id => {
+    ['bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-settings'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
@@ -2568,30 +2583,30 @@ function initNav() {
 
 function switchTab(tab) {
   state.activeTab = tab;
-  const allTabs = ['tab-sesion','tab-misemana','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports'];
+  const allTabs = ['tab-sesion','tab-misemana','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports','tab-coach-settings'];
   allTabs.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
 
-  // Show selected tab
   const tabMap = {
     'sesion':    'tab-sesion',
     'misemana':  'tab-misemana',
     'jugadores': 'tab-coach-jugadores',
     'rpe':       'tab-coach-rpe',
     'reports':   'tab-coach-reports',
+    'settings':  'tab-coach-settings',
   };
   const el = document.getElementById(tabMap[tab]);
   if (el) el.style.display = '';
 
-  // Update active nav item
   const navMap = {
     'sesion':    state.isCoach ? 'bn-sesion-coach' : 'bn-sesion',
     'misemana':  'bn-misemana',
     'jugadores': 'bn-jugadores',
     'rpe':       'bn-rpe',
     'reports':   'bn-reports',
+    'settings':  'bn-settings',
   };
   document.querySelectorAll('.bn-item').forEach(el => el.classList.remove('active'));
   const activeBtn = document.getElementById(navMap[tab]);
@@ -2611,11 +2626,13 @@ function switchTab(tab) {
     loadCoachPanel();
   }
   if (tab === 'reports') {
-    // Sync squad filter
     const sqMain = document.getElementById('coach-squad-filter');
     const sqRep  = document.getElementById('coach-squad-filter-reports');
     if (sqMain && sqRep) sqRep.value = sqMain.value;
     renderReportsPanel();
+  }
+  if (tab === 'settings') {
+    renderSettingsPanel();
   }
 }
 
@@ -2643,6 +2660,110 @@ function onCoachSquadChangeReports() {
   if (sel && main) main.value = sel.value;
   state.coachSquadFilter = sel ? sel.value : '';
   renderReportsPanel();
+}
+
+// ── SETTINGS PANEL ────────────────────────────────────────────
+async function renderSettingsPanel() {
+  const content = document.getElementById('settings-content');
+  if (!content) return;
+  content.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando configuración...</div>';
+
+  // Load all semanas (coach sees all) + current config
+  const squads = ["men's xv", "women's", "academy"];
+  const [mensRes, womenRes, acadRes, configRes] = await Promise.all([
+    api({ action:'getSemanas', squad:"men's xv",  isCoach: true }),
+    api({ action:'getSemanas', squad:"women's",   isCoach: true }),
+    api({ action:'getSemanas', squad:'academy',   isCoach: true }),
+    api({ action:'getWeekConfig' })
+  ]);
+
+  const config = configRes.ok ? (configRes.config || {}) : {};
+
+  // Merge all semanas grouped by squad
+  const groups = [
+    { label: "Men's XV",  semanas: mensRes.ok  ? mensRes.semanas  : [] },
+    { label: "Women's",   semanas: womenRes.ok ? womenRes.semanas : [] },
+    { label: "Academy",   semanas: acadRes.ok  ? acadRes.semanas  : [] },
+  ].filter(g => g.semanas.length > 0);
+
+  if (!groups.length) {
+    content.innerHTML = '<div class="hist-empty">No se encontraron semanas.</div>';
+    return;
+  }
+
+  const groupsHtml = groups.map(g => {
+    const rows = g.semanas.map(sem => {
+      // Si no está en Config → visible por defecto (true)
+      const visible = config[sem] !== false;
+      const semEsc  = sem.replace(/'/g, "\\'");
+      const toggleId = 'toggle-' + sem.replace(/\W/g,'_');
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sem}</div>
+          <div style="font-size:10px;color:${visible?'#00e5a0':'var(--muted)'};margin-top:2px">${visible?'✓ Visible para jugadores':'✗ Oculta'}</div>
+        </div>
+        <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;cursor:pointer">
+          <input type="checkbox" id="${toggleId}" ${visible?'checked':''} 
+            style="opacity:0;width:0;height:0;position:absolute"
+            onchange="toggleWeekVisible('${semEsc}', this.checked, '${toggleId}')">
+          <span id="slider-${toggleId}" style="
+            position:absolute;inset:0;border-radius:24px;
+            background:${visible?'#00e5a0':'rgba(255,255,255,.12)'};
+            transition:background .2s;
+          ">
+            <span style="
+              position:absolute;top:3px;left:${visible?'23px':'3px'};
+              width:18px;height:18px;border-radius:50%;background:#fff;
+              transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3);
+            " id="knob-${toggleId}"></span>
+          </span>
+        </label>
+      </div>`;
+    }).join('');
+
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">${g.label}</div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  content.innerHTML = `
+    <div style="background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.6">
+      <strong style="color:var(--accent2)">Visibilidad de semanas</strong><br>
+      Las semanas desactivadas no aparecen en la app de los jugadores. Los coaches ven siempre todas las semanas.
+    </div>
+    ${groupsHtml}`;
+}
+
+async function toggleWeekVisible(semana, visible, toggleId) {
+  // Update UI immediately (optimistic)
+  const slider = document.getElementById('slider-' + toggleId);
+  const knob   = document.getElementById('knob-'   + toggleId);
+  const label  = slider?.previousElementSibling?.previousElementSibling?.children[1];
+  if (slider) slider.style.background = visible ? '#00e5a0' : 'rgba(255,255,255,.12)';
+  if (knob)   knob.style.left         = visible ? '23px' : '3px';
+
+  // Save to backend
+  const res = await api({ action:'setWeekVisible', semana, visible });
+  if (!res.ok) {
+    // Revert on error
+    const cb = document.getElementById(toggleId);
+    if (cb) cb.checked = !visible;
+    if (slider) slider.style.background = !visible ? '#00e5a0' : 'rgba(255,255,255,.12)';
+    if (knob)   knob.style.left         = !visible ? '23px' : '3px';
+    alert('Error al guardar: ' + (res.error || 'inténtalo de nuevo'));
+    return;
+  }
+
+  // Update status label
+  const row = document.getElementById(toggleId)?.closest('div[style*="display:flex"]');
+  if (row) {
+    const statusLabel = row.querySelector('div:first-child div:last-child');
+    if (statusLabel) {
+      statusLabel.textContent = visible ? '✓ Visible para jugadores' : '✗ Oculta';
+      statusLabel.style.color = visible ? '#00e5a0' : 'var(--muted)';
+    }
+  }
 }
 
 // ── REPORTS ──────────────────────────────────────────────────
