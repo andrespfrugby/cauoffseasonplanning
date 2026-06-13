@@ -2668,8 +2668,13 @@ async function renderSettingsPanel() {
   if (!content) return;
   content.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando configuración...</div>';
 
-  // Load all semanas (coach sees all) + current config
-  const squads = ["men's xv", "women's", "academy"];
+  // Mapeo squad label → squad value para pasar al backend
+  const squadDefs = [
+    { label: "Men's XV",  squad: "men's xv",  sheetName: 'Mens_sessions'   },
+    { label: "Women's",   squad: "women's",   sheetName: 'Women_sessions'  },
+    { label: "Academy",   squad: 'academy',   sheetName: 'Academy_sessions'},
+  ];
+
   const [mensRes, womenRes, acadRes, configRes] = await Promise.all([
     api({ action:'getSemanas', squad:"men's xv",  isCoach: true }),
     api({ action:'getSemanas', squad:"women's",   isCoach: true }),
@@ -2678,13 +2683,12 @@ async function renderSettingsPanel() {
   ]);
 
   const config = configRes.ok ? (configRes.config || {}) : {};
+  const results = [mensRes, womenRes, acadRes];
 
-  // Merge all semanas grouped by squad
-  const groups = [
-    { label: "Men's XV",  semanas: mensRes.ok  ? mensRes.semanas  : [] },
-    { label: "Women's",   semanas: womenRes.ok ? womenRes.semanas : [] },
-    { label: "Academy",   semanas: acadRes.ok  ? acadRes.semanas  : [] },
-  ].filter(g => g.semanas.length > 0);
+  const groups = squadDefs.map((def, i) => ({
+    ...def,
+    semanas: results[i].ok ? results[i].semanas : []
+  })).filter(g => g.semanas.length > 0);
 
   if (!groups.length) {
     content.innerHTML = '<div class="hist-empty">No se encontraron semanas.</div>';
@@ -2693,29 +2697,31 @@ async function renderSettingsPanel() {
 
   const groupsHtml = groups.map(g => {
     const rows = g.semanas.map(sem => {
-      // Si no está en Config → visible por defecto (true)
-      const visible = config[sem] !== false;
-      const semEsc  = sem.replace(/'/g, "\\'");
-      const toggleId = 'toggle-' + sem.replace(/\W/g,'_');
+      // Clave única: sheetName:semana
+      const configKey = g.sheetName + ':' + sem;
+      const visible   = config[configKey] !== false; // default true si no existe
+      const safeId    = (g.sheetName + '_' + sem).replace(/\W/g,'_');
+      const semEsc    = sem.replace(/'/g, "\\'");
+      const squadEsc  = g.squad.replace(/'/g, "\\'");
+
       return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border)">
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sem}</div>
-          <div style="font-size:10px;color:${visible?'#00e5a0':'var(--muted)'};margin-top:2px">${visible?'✓ Visible para jugadores':'✗ Oculta'}</div>
+          <div id="status-${safeId}" style="font-size:10px;color:${visible?'#00e5a0':'var(--muted)'};margin-top:2px">${visible?'✓ Visible para jugadores':'✗ Oculta'}</div>
         </div>
         <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;cursor:pointer">
-          <input type="checkbox" id="${toggleId}" ${visible?'checked':''} 
+          <input type="checkbox" id="cb-${safeId}" ${visible?'checked':''}
             style="opacity:0;width:0;height:0;position:absolute"
-            onchange="toggleWeekVisible('${semEsc}', this.checked, '${toggleId}')">
-          <span id="slider-${toggleId}" style="
+            onchange="toggleWeekVisible('${semEsc}','${squadEsc}','${safeId}',this.checked)">
+          <span id="slider-${safeId}" style="
             position:absolute;inset:0;border-radius:24px;
             background:${visible?'#00e5a0':'rgba(255,255,255,.12)'};
-            transition:background .2s;
-          ">
-            <span style="
+            transition:background .2s;">
+            <span id="knob-${safeId}" style="
               position:absolute;top:3px;left:${visible?'23px':'3px'};
               width:18px;height:18px;border-radius:50%;background:#fff;
-              transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3);
-            " id="knob-${toggleId}"></span>
+              transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3);">
+            </span>
           </span>
         </label>
       </div>`;
@@ -2730,39 +2736,30 @@ async function renderSettingsPanel() {
   content.innerHTML = `
     <div style="background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.6">
       <strong style="color:var(--accent2)">Visibilidad de semanas</strong><br>
-      Las semanas desactivadas no aparecen en la app de los jugadores. Los coaches ven siempre todas las semanas.
+      Las semanas desactivadas no aparecen en la app de los jugadores. Los coaches ven siempre todas.
     </div>
     ${groupsHtml}`;
 }
 
-async function toggleWeekVisible(semana, visible, toggleId) {
-  // Update UI immediately (optimistic)
-  const slider = document.getElementById('slider-' + toggleId);
-  const knob   = document.getElementById('knob-'   + toggleId);
-  const label  = slider?.previousElementSibling?.previousElementSibling?.children[1];
+async function toggleWeekVisible(semana, squad, safeId, visible) {
+  // Update UI immediately
+  const slider = document.getElementById('slider-' + safeId);
+  const knob   = document.getElementById('knob-'   + safeId);
+  const status = document.getElementById('status-' + safeId);
   if (slider) slider.style.background = visible ? '#00e5a0' : 'rgba(255,255,255,.12)';
   if (knob)   knob.style.left         = visible ? '23px' : '3px';
+  if (status) { status.textContent = visible ? '✓ Visible para jugadores' : '✗ Oculta'; status.style.color = visible ? '#00e5a0' : 'var(--muted)'; }
 
-  // Save to backend
-  const res = await api({ action:'setWeekVisible', semana, visible });
+  // Save — pasa squad para que el backend use la clave correcta
+  const res = await api({ action:'setWeekVisible', semana, squad, visible });
   if (!res.ok) {
-    // Revert on error
-    const cb = document.getElementById(toggleId);
+    // Revert
+    const cb = document.getElementById('cb-' + safeId);
     if (cb) cb.checked = !visible;
     if (slider) slider.style.background = !visible ? '#00e5a0' : 'rgba(255,255,255,.12)';
     if (knob)   knob.style.left         = !visible ? '23px' : '3px';
+    if (status) { status.textContent = !visible ? '✓ Visible para jugadores' : '✗ Oculta'; status.style.color = !visible ? '#00e5a0' : 'var(--muted)'; }
     alert('Error al guardar: ' + (res.error || 'inténtalo de nuevo'));
-    return;
-  }
-
-  // Update status label
-  const row = document.getElementById(toggleId)?.closest('div[style*="display:flex"]');
-  if (row) {
-    const statusLabel = row.querySelector('div:first-child div:last-child');
-    if (statusLabel) {
-      statusLabel.textContent = visible ? '✓ Visible para jugadores' : '✗ Oculta';
-      statusLabel.style.color = visible ? '#00e5a0' : 'var(--muted)';
-    }
   }
 }
 
