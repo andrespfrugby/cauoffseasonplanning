@@ -1654,9 +1654,12 @@ async function loadSemanas() {
   const res    = await api({ action:'getSemanas', squad, isCoach: state.isCoach });
   const select = document.getElementById('sel-semana');
   if (res.ok && res.semanas && res.semanas.length) {
-    state.semanas = res.semanas;
+    state.semanas       = res.semanas;
+    state.semanaIndices = res.semanaIndices || res.semanas.map((_,i) => i+1);
     select.innerHTML = res.semanas.map((s,i)=>`<option value="${i+1}">${s}</option>`).join('');
   } else {
+    state.semanas       = [];
+    state.semanaIndices = [];
     select.innerHTML = '<option value="1">Semana 1</option>';
   }
   state.semana = 1;
@@ -1667,14 +1670,22 @@ async function loadSemanas() {
 // ── RENDER DAY CARDS dinámicos ────────────────────────────────
 // Llama al backend para saber qué días tienen contenido
 // y solo pinta esos cards
+// Devuelve el índice real en el sheet para la semana visible seleccionada
+function realSemanaIdx() {
+  const idx = state.semana - 1;
+  return (state.semanaIndices && state.semanaIndices[idx]) ? state.semanaIndices[idx] : state.semana;
+}
+
 async function renderDayCards() {
   const squad = state.isCoach ? (state.coachSquadFilter || "men's xv") : state.squad;
   const row = document.getElementById('day-cards-row');
   if (!row) return;
 
+  const semana = realSemanaIdx();  // ← índice real en el sheet
+
   // Try new backend action first
   let dias = [], diasTitles = {};
-  const res = await api({ action:'getDiasActivos', semana: state.semana, squad });
+  const res = await api({ action:'getDiasActivos', semana, squad });
 
   if (res.ok && res.diasActivos && res.diasActivos.length) {
     dias        = res.diasActivos;
@@ -1682,7 +1693,7 @@ async function renderDayCards() {
   } else {
     // Fallback: check each day individually via getRutina
     const checks = await Promise.all(
-      [1,2,3,4,5].map(d => api({ action:'getRutina', semana:state.semana, dia:d, squad }))
+      [1,2,3,4,5].map(d => api({ action:'getRutina', semana, dia:d, squad }))
     );
     checks.forEach((r, idx) => {
       const d = idx + 1;
@@ -1848,22 +1859,22 @@ async function loadRutina() {
   state.semana = parseInt(document.getElementById('sel-semana').value);
   const container = document.getElementById('session-container');
   const squad = state.isCoach ? (state.coachSquadFilter || "men's xv") : state.squad;
+  const semana = realSemanaIdx();  // ← índice real en el sheet
 
   // Try cache first (offline support)
-  const cached = cacheGet(state.semana, state.dia, squad);
+  const cached = cacheGet(semana, state.dia, squad);
   if (cached) {
     renderSession(cached.ejercicios, cached.nombreSemana, cached.sessionNotes||'', cached.dayTitle||'');
-    // Refresh in background silently
-    api({ action:'getRutina', semana:state.semana, dia:state.dia, squad }).then(res => {
+    api({ action:'getRutina', semana, dia:state.dia, squad }).then(res => {
       if (res.ok && res.ejercicios && res.ejercicios.length) {
-        cacheSet(state.semana, state.dia, squad, res);
+        cacheSet(semana, state.dia, squad, res);
       }
     });
     return;
   }
 
   container.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando sesión...</div>';
-  const res = await api({ action:'getRutina', semana:state.semana, dia:state.dia, squad });
+  const res = await api({ action:'getRutina', semana, dia:state.dia, squad });
   if (!res.ok) {
     container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${res.error||'Error al cargar. Comprueba tu conexión.'}</div>`;
     return;
@@ -1872,8 +1883,7 @@ async function loadRutina() {
     container.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>No hay ejercicios para este día todavía.</div>';
     return;
   }
-  // Save to cache
-  cacheSet(state.semana, state.dia, squad, res);
+  cacheSet(semana, state.dia, squad, res);
   renderSession(res.ejercicios, res.nombreSemana||'', res.sessionNotes||'', res.dayTitle||'');
 }
 
@@ -2204,7 +2214,7 @@ async function saveSession() {
   if (btn) { btn.disabled=true; btn.textContent='Guardando...'; }
   const res = await api({
     action:'saveRegistro', usuario:state.user.usuario,
-    semana:state.semana, dia:state.dia,
+    semana:realSemanaIdx(), dia:state.dia,
     bloque:'SESION', ejercicio:'RPE_GLOBAL',
     carga_real:'', rpe:state.rpeSession, notas_jugador:'',
     tiempo_sesion: state.tiempoSesion ? parseInt(state.tiempoSesion) : ''
@@ -3231,7 +3241,7 @@ async function saveLoad(cardId, ejercicio) {
 
   const res = await api({
     action:'saveRegistro', usuario:state.user.usuario,
-    semana:state.semana, dia:state.dia,
+    semana:realSemanaIdx(), dia:state.dia,
     bloque: cardId.split('_')[0], ejercicio: ej,
     carga_real: cargaStr, rpe:'', notas_jugador:'', tiempo_sesion:''
   });
@@ -4552,7 +4562,7 @@ async function openPlayerModalWithSemana(usuario, nombre, forceSemana) {
 async function markCompletedDaysFromHistory() {
   const res = await api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' });
   if (!res.ok || !res.historial) return;
-  const semStr = String(state.semana);
+  const semStr = String(realSemanaIdx());
   const completedDias = new Set(
     res.historial
       .filter(h => String(h.semana).trim() === semStr && h.rpe)
