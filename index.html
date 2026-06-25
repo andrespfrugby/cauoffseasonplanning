@@ -35,6 +35,99 @@ body.light-mode {
   --muted:     #5a6475;
   --danger:    #d93030;
 }
+/* Light mode: topbar */
+body.light-mode .topbar { background:rgba(242,244,248,.95); border-bottom-color:rgba(0,0,0,.08); }
+/* Light mode: exercise action buttons */
+body.light-mode .btn-action-hist,
+body.light-mode .btn-action-load {
+  background:rgba(0,0,0,.04);
+  border-color:rgba(0,0,0,.12);
+  color:#5a6475;
+}
+body.light-mode .btn-action-hist:hover,
+body.light-mode .btn-action-load:hover {
+  background:rgba(0,0,0,.07);
+  color:#111;
+}
+body.light-mode .btn-action-video {
+  background:rgba(192,16,31,.1);
+  border-color:rgba(192,16,31,.25);
+  color:#c0101f;
+}
+/* Light mode: prescription chips */
+body.light-mode .presc-A .presc-chip { background:rgba(24,95,165,.1); color:#185fa5; border-color:rgba(24,95,165,.2); }
+body.light-mode .presc-B .presc-chip { background:rgba(15,110,86,.1); color:#0f6e56; border-color:rgba(15,110,86,.2); }
+body.light-mode .presc-C .presc-chip { background:rgba(186,117,23,.12); color:#ba7517; border-color:rgba(186,117,23,.2); }
+body.light-mode .presc-D .presc-chip { background:rgba(83,74,183,.1); color:#534ab7; border-color:rgba(83,74,183,.2); }
+body.light-mode .presc-E .presc-chip { background:rgba(153,53,86,.1); color:#993556; border-color:rgba(153,53,86,.2); }
+body.light-mode .presc-X .presc-chip { background:rgba(0,0,0,.06); color:#5a6475; border-color:rgba(0,0,0,.12); }
+/* Light mode: block id badges */
+body.light-mode .block-A { color:#185fa5; border-color:rgba(24,95,165,.3); }
+body.light-mode .block-B { color:#0f6e56; border-color:rgba(15,110,86,.3); }
+body.light-mode .block-C { color:#ba7517; border-color:rgba(186,117,23,.35); }
+body.light-mode .block-D { color:#534ab7; border-color:rgba(83,74,183,.3); }
+body.light-mode .block-E { color:#993556; border-color:rgba(153,53,86,.3); }
+body.light-mode .block-id { background:rgba(0,0,0,.04); }
+/* Light mode: tags */
+body.light-mode .tag-squat { background:rgba(24,95,165,.1); color:#185fa5; }
+body.light-mode .tag-hinge { background:rgba(15,110,86,.1); color:#0f6e56; }
+body.light-mode .tag-push  { background:rgba(186,117,23,.1); color:#ba7517; }
+body.light-mode .tag-row   { background:rgba(83,74,183,.1); color:#534ab7; }
+body.light-mode .tag-pull  { background:rgba(72,112,25,.1); color:#487019; }
+body.light-mode .tag-plyo  { background:rgba(192,16,31,.1); color:#c0101f; }
+body.light-mode .tag-iso   { background:rgba(0,0,0,.06); color:#5a6475; }
+body.light-mode .tag-other { background:rgba(153,53,86,.1); color:#993556; }
+/* Light mode: phase headers */
+body.light-mode .phase-header { color:#5a6475; }
+body.light-mode .phase-header::after { background:rgba(0,0,0,.08); }
+/* Light mode: notes strip */
+body.light-mode .ex-notes-A { background:rgba(24,95,165,.05); border-top-color:rgba(24,95,165,.15); }
+body.light-mode .ex-notes-B { background:rgba(15,110,86,.05); border-top-color:rgba(15,110,86,.15); }
+body.light-mode .ex-notes-C { background:rgba(186,117,23,.05); border-top-color:rgba(186,117,23,.15); }
+body.light-mode .ex-notes-D { background:rgba(83,74,183,.05); border-top-color:rgba(83,74,183,.15); }
+body.light-mode .ex-notes-X { background:rgba(0,0,0,.03); border-top-color:rgba(0,0,0,.07); }
+/* Light mode: session panel */
+body.light-mode .session-panel { background:#f8f9fc; border-color:rgba(0,0,0,.1); }
+body.light-mode .time-display  { background:#fff; border-color:rgba(0,0,0,.12); color:#111; }
+body.light-mode .numpad-btn    { background:#fff; border-color:rgba(0,0,0,.1); color:#111; }
+body.light-mode .numpad-btn:hover { background:#f0f2f8; }
+body.light-mode .rpe-bar-seg.inactive { opacity:.18; }
+/* Light mode: day cards */
+body.light-mode .day-card { background:#fff; border-color:rgba(0,0,0,.1); }
+body.light-mode .day-card-circle { border-color:rgba(0,0,0,.15); color:#5a6475; }
+/* Light mode: week dropdown */
+body.light-mode .week-dropdown { background:#fff; border-color:rgba(0,0,0,.1); }
+body.light-mode .week-dd-badge { background:rgba(192,16,31,.08); border-color:rgba(192,16,31,.2); }
+/* Light mode: bottom nav */
+body.light-mode .bottom-nav { background:rgba(242,244,248,.97); border-color:rgba(0,0,0,.1); }
+body.light-mode .bn-icon { color:rgba(0,0,0,.3); }
+body.light-mode .bn-lbl  { color:rgba(0,0,0,.3); }
+body.light-mode .bn-item.active .bn-icon { color:var(--accent); }
+body.light-mode .bn-item.active .bn-lbl  { color:var(--accent); }
+/* Light mode: card panels (historial, load) */
+body.light-mode .card-panel { border-top-color:rgba(0,0,0,.07); }
+body.light-mode .hist-card { background:#f8f9fc; border-color:rgba(0,0,0,.1); }
+body.light-mode .load-set-box { background:#f8f9fc; border-color:rgba(0,0,0,.12); }
+/* Light mode: load numpad */
+body.light-mode .load-display { background:#fff; border-color:rgba(0,0,0,.12); }
+/* Light mode: timer */
+body.light-mode .timer-compact-wrap { border-top-color:rgba(0,0,0,.07); }
+body.light-mode .t-preset-btn { background:#f0f2f8; border-color:rgba(0,0,0,.1); color:#5a6475; }
+/* Light mode: semana select */
+body.light-mode .semana-select,
+body.light-mode .week-dd-select { background:#fff; color:#111; }
+/* Light mode: notes banner */
+body.light-mode .notes-banner { background:rgba(192,16,31,.04); border-left-color:var(--accent); color:#5a6475; }
+/* Light mode: squad table */
+body.light-mode .coach-table-wrap { background:#fff; }
+body.light-mode .coach-table td  { border-bottom-color:rgba(0,0,0,.05); }
+body.light-mode .coach-table th  { border-bottom-color:rgba(0,0,0,.08); }
+body.light-mode .wsq-empty { background:rgba(0,0,0,.04); border-color:rgba(0,0,0,.08); color:rgba(0,0,0,.25); }
+/* Light mode: week summary */
+body.light-mode .week-summary { background:#fff; border-color:rgba(0,0,0,.1); }
+body.light-mode .wsumm-rank-row { background:#f8f9fc; border-color:rgba(0,0,0,.08); }
+/* Light mode: coach chart boxes */
+body.light-mode .coach-chart-box { background:#fff; border-color:rgba(0,0,0,.1); }
 body, body * { transition: background-color .25s, border-color .25s, color .15s; }
 body { background:var(--bg); color:var(--text); font-family:var(--font-body); font-size:15px; min-height:100vh; line-height:1.5; }
 .hidden { display:none !important; }
@@ -3574,13 +3667,13 @@ async function loadCoachPanel() {
     // Avatar initials
     const initials = j.nombre.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
     const acwr = j.acwr || null;
-    const avCol = acwr===null ? 'var(--muted)' : acwr<0.8 ? '#7bb8ff' : acwr<=1.3 ? '#00e5a0' : acwr<=1.5 ? '#ffc04d' : '#ff7070';
+    const avHex = acwr===null ? '#7a8494' : acwr<0.8 ? '#7bb8ff' : acwr<=1.3 ? '#00e5a0' : acwr<=1.5 ? '#ffc04d' : '#ff7070';
     const usuEsc = j.usuario.replace(/'/g,"\\'");
     const nomEsc = j.nombre.replace(/'/g,"\\'");
     return `<tr style="cursor:pointer" onclick="openPlayerModal('${usuEsc}','${nomEsc}')" title="Ver estadísticas de ${j.nombre}" data-nombre="${j.nombre.toLowerCase()}">
       <td>
         <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:28px;height:28px;border-radius:50%;background:${avCol}20;border:1px solid ${avCol}55;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${avCol};flex-shrink:0">${initials}</div>
+          <div style="width:28px;height:28px;border-radius:50%;background:${avHex}22;border:1.5px solid ${avHex}66;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${avHex};flex-shrink:0">${initials}</div>
           <div>
             <div style="display:flex;align-items:center;gap:4px">
               <span class="status-dot ${dotCls}"></span>
