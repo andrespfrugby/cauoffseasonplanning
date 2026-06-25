@@ -23,11 +23,25 @@
   --font-body: 'DM Sans', sans-serif;
   --r:         10px;
 }
+body.light-mode {
+  --bg:        #f2f4f8;
+  --surface:   #ffffff;
+  --surface2:  #eaecf2;
+  --border:    rgba(0,0,0,0.07);
+  --border2:   rgba(0,0,0,0.13);
+  --accent:    #c0101f;
+  --accent2:   #009e70;
+  --text:      #111318;
+  --muted:     #5a6475;
+  --danger:    #d93030;
+}
+body, body * { transition: background-color .25s, border-color .25s, color .15s; }
 body { background:var(--bg); color:var(--text); font-family:var(--font-body); font-size:15px; min-height:100vh; line-height:1.5; }
 .hidden { display:none !important; }
 
 /* ── LOGIN ── */
 #screen-login { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem; position:relative; overflow:hidden; }
+
 .login-bg { position:absolute; inset:0; background: radial-gradient(ellipse 60% 50% at 80% 20%, rgba(232,20,42,0.10) 0%, transparent 60%), radial-gradient(ellipse 40% 60% at 10% 80%, rgba(232,20,42,0.05) 0%, transparent 60%); pointer-events:none; }
 .login-box { width:100%; max-width:360px; position:relative; z-index:1; }
 .login-shield { display:block; width:90px; height:90px; object-fit:contain; margin:0 auto 18px; filter:drop-shadow(0 0 18px rgba(232,20,42,0.35)); }
@@ -1226,6 +1240,75 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   display:flex; align-items:center; gap:8px;
 }
 .coach-section-divider::after { content:''; flex:1; height:1px; background:var(--border); display:inline-block; }
+
+/* ── HOY CARD ── */
+.hoy-card {
+  border-radius:var(--r); background:rgba(232,20,42,.06);
+  border:1px solid rgba(232,20,42,.22);
+  padding:12px 14px; margin-bottom:12px;
+}
+.hoy-day-strip { display:flex; gap:5px; margin-bottom:10px; }
+.hoy-dot { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+  padding:6px 3px; border-radius:8px; background:var(--surface2); border:0.5px solid var(--border2); }
+.hoy-dot.done { background:rgba(0,229,160,.08); border-color:rgba(0,229,160,.25); }
+.hoy-dot.now  { background:rgba(232,20,42,.08); border-color:rgba(232,20,42,.35); }
+.hoy-dot-c { width:24px; height:24px; border-radius:50%; border:1.5px solid var(--border2);
+  display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:var(--muted); }
+.hoy-dot.done .hoy-dot-c { border-color:rgba(0,229,160,.5); color:var(--accent2); background:rgba(0,229,160,.08); }
+.hoy-dot.now  .hoy-dot-c { border-color:var(--accent); color:var(--accent); background:rgba(232,20,42,.08); }
+.hoy-dot-lbl { font-size:7px; color:var(--muted); text-transform:uppercase; }
+.hoy-dot.done .hoy-dot-lbl { color:rgba(0,229,160,.6); }
+.hoy-dot.now  .hoy-dot-lbl { color:rgba(232,20,42,.7); font-weight:600; }
+.hoy-main { display:flex; align-items:center; gap:10px; }
+.hoy-ic { width:38px; height:38px; border-radius:9px; border:1px solid rgba(232,20,42,.3);
+  background:rgba(232,20,42,.12); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.hoy-title { font-size:15px; font-weight:700; color:var(--text); }
+.hoy-sub { font-size:10px; color:rgba(232,20,42,.75); margin-top:1px; }
+.hoy-type-badge { font-size:9px; font-weight:700; border-radius:5px; padding:2px 8px; letter-spacing:.04em; text-transform:uppercase; }
+.hoy-btn { width:100%; background:var(--accent); color:#fff; border:none; border-radius:8px;
+  padding:9px; font-size:12px; font-weight:700; cursor:pointer; margin-top:10px;
+  font-family:var(--font-body); transition:opacity .15s; }
+.hoy-btn:hover { opacity:.88; }
+.hoy-no-pending { font-size:12px; color:var(--muted); padding:4px 0; text-align:center; }
+
+/* ── SET PROGRESS BOXES ── */
+.set-prog-row { display:flex; gap:5px; margin-bottom:8px; }
+.set-prog-box {
+  flex:1; border-radius:9px; padding:8px 5px 7px; text-align:center;
+  border:1px solid var(--border2); background:var(--surface2);
+  cursor:pointer; transition:all .15s; user-select:none;
+}
+.set-prog-box:active { transform:scale(.95); }
+.set-prog-box.sp-active { border-color:var(--accent2); background:rgba(0,229,160,.07); outline:2px solid rgba(0,229,160,.2); outline-offset:1px; }
+.set-prog-box.sp-done   { border-color:rgba(0,229,160,.35); background:rgba(0,229,160,.06); }
+.sp-target { font-size:13px; font-weight:500; color:var(--muted); margin-bottom:4px; }
+.set-prog-box.sp-active .sp-target { color:var(--accent2); }
+.set-prog-box.sp-done   .sp-target { color:var(--muted); font-size:11px; }
+.sp-val { font-size:14px; font-weight:700; color:rgba(255,255,255,.18); }
+.set-prog-box.sp-done   .sp-val { color:var(--accent2); }
+.set-prog-box.sp-active .sp-val { color:var(--accent2); }
+.sp-unit { font-size:8px; color:var(--muted); margin-top:1px; text-transform:uppercase; }
+.sp-check { font-size:10px; color:var(--accent2); margin-top:3px; }
+.set-prog-box.sp-active .sp-val:not(.has-value) { animation:cursorBlink .9s step-end infinite; }
+
+/* ── EDIT LOAD BUTTON ── */
+.btn-edit-load { background:none; border:0.5px solid var(--border2); border-radius:6px;
+  color:var(--muted); font-size:11px; padding:3px 10px; cursor:pointer;
+  font-family:var(--font-body); margin-left:8px; transition:all .12s; }
+.btn-edit-load:hover { border-color:var(--accent2); color:var(--accent2); }
+
+/* ── STATUS BADGES IN SQUAD ── */
+.form-badge { display:inline-flex; align-items:center; justify-content:center;
+  height:20px; border-radius:5px; font-size:9px; font-weight:700; padding:0 7px; letter-spacing:.04em; text-transform:uppercase; }
+.fb-ok   { background:rgba(0,229,160,.12); color:#00e5a0; border:0.5px solid rgba(0,229,160,.3); }
+.fb-load { background:rgba(255,192,77,.12); color:#ffc04d; border:0.5px solid rgba(255,192,77,.3); }
+.fb-risk { background:rgba(232,20,42,.12); color:#ff7070; border:0.5px solid rgba(232,20,42,.3); }
+.fb-rest { background:rgba(123,184,255,.12); color:#7bb8ff; border:0.5px solid rgba(123,184,255,.3); }
+.fb-none { background:rgba(255,255,255,.06); color:var(--muted); border:0.5px solid var(--border2); }
+
+/* ── ACWR SPARKLINE ── */
+.acwr-spark-wrap { width:56px; flex-shrink:0; }
+.acwr-spark-canvas { display:block; width:56px; height:24px; }
 </style>
 </head>
 <body>
@@ -1288,6 +1371,9 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         <span id="player-name">Jugador</span>
       </div>
       <span id="coach-topbar-badge" class="hidden" style="background:var(--accent);color:#fff;border-radius:5px;padding:2px 9px;font-size:11px;font-weight:700;letter-spacing:.06em;">COACH</span>
+      <button class="btn-logout" id="btn-theme" onclick="toggleTheme()" title="Cambiar tema" style="display:flex;align-items:center;gap:5px;padding:5px 10px">
+        <i class="ti ti-sun" id="theme-icon" style="font-size:14px"></i>
+      </button>
       <button class="btn-logout" onclick="logout()">Salir</button>
     </div>
   </div>
@@ -1577,6 +1663,129 @@ function sessionLoad() {
 
 function sessionClear() {
   try { localStorage.removeItem(SESSION_KEY); } catch(e) {}
+}
+
+// ── THEME ─────────────────────────────────────────────────────
+function applyTheme(mode) {
+  const isLight = mode === 'light';
+  document.body.classList.toggle('light-mode', isLight);
+  const icon = document.getElementById('theme-icon');
+  if (icon) icon.className = isLight ? 'ti ti-moon' : 'ti ti-sun';
+  try { localStorage.setItem('cau_theme', mode); } catch(e){}
+}
+function toggleTheme() {
+  applyTheme(document.body.classList.contains('light-mode') ? 'dark' : 'light');
+}
+(function(){ try { applyTheme(localStorage.getItem('cau_theme')||'dark'); } catch(e){} })();
+
+// ── SESIÓN DE HOY CARD ────────────────────────────────────────
+async function renderHoyCard() {
+  const wrap = document.getElementById('hoy-card-wrap');
+  if (!wrap || state.isCoach) { if(wrap) wrap.innerHTML=''; return; }
+  const semana = realSemanaIdx();
+  const res = await api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' });
+  const semStr = String(semana);
+  const doneDias = new Set(
+    (res.ok && res.historial ? res.historial : [])
+      .filter(h => String(h.semana).trim() === semStr && h.rpe)
+      .map(h => parseInt(h.dia))
+  );
+  const diasActivos = state.diasActivos || [1,2,3,4,5];
+  const diasTitles  = state.diasTitles  || {};
+  const nextDia     = diasActivos.find(d => !doneDias.has(d));
+
+  function getDayStyle(title) {
+    if (!title) return null;
+    const u = title.toUpperCase();
+    if (u.includes('HIGH'))                           return { emoji:'🔴', color:'#ff7070', bg:'rgba(232,20,42,.07)', border:'rgba(232,20,42,.28)', tag:'HIGH DAY' };
+    if (u.includes('MODERATE') || u.includes('MOD')) return { emoji:'🟡', color:'#ffa040', bg:'rgba(255,140,0,.07)',  border:'rgba(255,140,0,.28)',  tag:'MODERATE DAY' };
+    if (u.includes('LOW'))                            return { emoji:'🟢', color:'#00e5a0', bg:'rgba(0,229,160,.07)', border:'rgba(0,229,160,.28)', tag:'LOW DAY' };
+    return { emoji:'💥', color:'var(--accent)', bg:'rgba(232,20,42,.06)', border:'rgba(232,20,42,.22)', tag:'SESIÓN' };
+  }
+
+  const dotsHtml = diasActivos.map(d => {
+    const isDone = doneDias.has(d);
+    const isNow  = d === nextDia;
+    const cls    = isDone ? 'done' : isNow ? 'now' : '';
+    return `<div class="hoy-dot ${cls}">
+      <div class="hoy-dot-c">${isDone ? '✓' : String(d)}</div>
+      <div class="hoy-dot-lbl">${isDone ? 'hecho' : isNow ? 'hoy' : `D${d}`}</div>
+    </div>`;
+  }).join('');
+
+  if (!nextDia) {
+    wrap.innerHTML = `<div class="hoy-card" style="text-align:center;padding:14px">
+      <div style="font-size:24px;margin-bottom:6px">🏆</div>
+      <div style="font-size:14px;font-weight:700;color:var(--accent2);margin-bottom:3px">¡Semana completada!</div>
+      <div style="font-size:11px;color:var(--muted)">Todas las sesiones de esta semana están registradas.</div>
+    </div>`;
+    return;
+  }
+  const ds = getDayStyle(diasTitles[nextDia]||'');
+  const semNom = (state.semanas&&state.semanas[state.semana-1])||'';
+  const typeBadgeStyle = ds ? `background:${ds.bg};border:0.5px solid ${ds.border};color:${ds.color}` : 'background:var(--surface2);color:var(--muted)';
+  wrap.innerHTML = `<div class="hoy-card">
+    <div class="hoy-day-strip">${dotsHtml}</div>
+    <div class="hoy-main">
+      <div class="hoy-ic">${ds?ds.emoji:'💥'}</div>
+      <div style="flex:1;min-width:0">
+        <div class="hoy-title">Día ${nextDia} — te toca hoy</div>
+        <div class="hoy-sub">${semNom}</div>
+      </div>
+      <div class="hoy-type-badge" style="${typeBadgeStyle}">${ds?ds.tag:`Día ${nextDia}`}</div>
+    </div>
+    <button class="hoy-btn" onclick="goToHoySession(${nextDia})">Ir a la sesión →</button>
+  </div>`;
+}
+
+function goToHoySession(dia) {
+  state.dia = dia;
+  resetSessionState();
+  document.querySelectorAll('.day-card').forEach(c=>c.classList.remove('active'));
+  const card = document.getElementById('daycard-'+dia);
+  if (card) { card.classList.add('active'); updateDayCardActive(dia); }
+  loadRutina();
+  setTimeout(()=>document.getElementById('session-container')?.scrollIntoView({behavior:'smooth',block:'start'}),200);
+}
+
+// ── PROGRESS PERSISTENCE ──────────────────────────────────────
+function progressSave() {
+  if (!state.user) return;
+  try {
+    const data = {};
+    Object.entries(state.cards).forEach(([id, cs]) => {
+      if (cs.loadVals && cs.loadVals.some(v=>v)) {
+        data[id] = { loadVals:cs.loadVals, activeIdx:cs.activeIdx, loadObj:cs.loadObj, reps:cs.reps, targets:cs.targets, ejercicio:cs.ejercicio, loadSaved:cs.loadSaved };
+      }
+    });
+    localStorage.setItem('cau_prog_'+(state.user.usuario||''), JSON.stringify({ semana:realSemanaIdx(), dia:state.dia, cards:data, ts:Date.now() }));
+  } catch(e){}
+}
+
+function progressLoad() {
+  if (!state.user) return false;
+  try {
+    const raw = localStorage.getItem('cau_prog_'+(state.user.usuario||''));
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    if (saved.semana !== realSemanaIdx() || saved.dia !== state.dia) return false;
+    if (Date.now() - saved.ts > 24*3600*1000) return false;
+    Object.entries(saved.cards||{}).forEach(([id,cs]) => { state.cards[id] = {...(state.cards[id]||{}), ...cs}; });
+    return Object.keys(saved.cards||{}).length > 0;
+  } catch(e){ return false; }
+}
+
+function progressClear() {
+  try { localStorage.removeItem('cau_prog_'+(state.user?.usuario||'')); } catch(e){}
+}
+
+// ── STATUS BADGE for ACWR ─────────────────────────────────────
+function acwrStatusBadge(acwr) {
+  if (acwr === null || acwr === undefined) return '<span class="form-badge fb-none">sin datos</span>';
+  if (acwr < 0.8)  return '<span class="form-badge fb-rest">recuperando</span>';
+  if (acwr <= 1.3) return '<span class="form-badge fb-ok">en forma</span>';
+  if (acwr <= 1.5) return '<span class="form-badge fb-load">en carga</span>';
+  return '<span class="form-badge fb-risk">⚠ riesgo</span>';
 }
 
 // ── PUNTO DE ENTRADA ─────────────────────────────────────────
@@ -1885,6 +2094,16 @@ async function loadRutina() {
   }
   cacheSet(semana, state.dia, squad, res);
   renderSession(res.ejercicios, res.nombreSemana||'', res.sessionNotes||'', res.dayTitle||'');
+  // Restore any in-progress weights from localStorage
+  if (progressLoad()) {
+    // Re-open saved panels for cards that have progress
+    Object.entries(state.cards).forEach(([cardId, cs]) => {
+      if (cs.loadVals && cs.loadVals.some(v=>v) && !cs.loadSaved) {
+        const el = document.getElementById('panel-load-'+cardId);
+        if (el) { el.classList.remove('hidden'); renderLoadPanel(cardId, el); }
+      }
+    });
+  }
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
@@ -2222,6 +2441,7 @@ async function saveSession() {
   if (res.ok) {
     _savingSession = false;
     state.guardado=true;
+    progressClear();
     // 1. Tick en el selector de días
     markDayDone(state.dia);
     // 2. Confirmación en el panel de sesión
@@ -2953,6 +3173,14 @@ function toggleCardPanel(type, cardId, ejercicio, loadObj, reps) {
 }
 
 // ── HISTORY PANEL — Opción C + estimador 1RM ─────────────────
+function editLoad(cardId) {
+  const cs = state.cards[cardId];
+  if (!cs) return;
+  cs.loadSaved = false;
+  const el = document.getElementById('panel-load-'+cardId);
+  if (el) { el.classList.remove('hidden'); renderLoadPanel(cardId, el); }
+}
+
 async function renderHistPanel(cardId, ejercicio, el) {
   el.innerHTML = '<div class="hist-empty" style="padding:6px 0">Cargando…</div>';
   const res = await api({ action:'getHistorial', usuario:state.user.usuario, ejercicio });
@@ -3116,7 +3344,10 @@ function renderLoadPanel(cardId, el) {
     const targets = cs.targets || [''];
     const vals    = cs.loadVals || [cs.loadVal || ''];
     const summary = targets.map((t,i) => vals[i] ? `${t}: ${vals[i]} kg` : '').filter(Boolean).join(' · ');
-    el.innerHTML = `<div class="load-saved-lbl">✓ Carga guardada — ${summary || '—'}</div>`;
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:6px">
+      <div class="load-saved-lbl">✓ Carga guardada — ${summary || '—'}</div>
+      <button class="btn-edit-load" onclick="editLoad('${cardId}')">Editar</button>
+    </div>`;
     return;
   }
 
@@ -3220,6 +3451,7 @@ function loadNumpad(cardId, key) {
     disp.textContent = cs.loadVals[idx] || '—';
     disp.classList.toggle('has-value', !!cs.loadVals[idx]);
   }
+  progressSave();
 }
 
 // Guardar carga (multi-serie: guarda como "val1/val2/val3" en carga_real)
@@ -3280,7 +3512,7 @@ async function onCoachSquadChange() {
 async function loadCoachPanel() {
   const semanaIdx    = state.semana - 1;
   const semanaNombre = (state.semanas && state.semanas[semanaIdx]) || ('Semana ' + state.semana);
-  document.getElementById('coach-sem-label').textContent = semanaNombre;
+  document.getElementById('coach-sem-label').textContent = `${state.semanas?.length || 0} semanas · ${state.coachSquadFilter || 'todos los squads'}`;
   const res = await api({ action:'getEquipo', semana:state.semana });
   if (!res.ok) return;
   state.coachEquipo       = res.equipo         || [];
@@ -3338,13 +3570,26 @@ async function loadCoachPanel() {
     const compCls  = compliance >= 80 ? 'comp-high' : compliance >= 50 ? 'comp-mid' : 'comp-low';
     const compHtml = `<span class="comp-chip ${compCls}">${compliance}%</span>`;
     const squadLabel = j.squad ? `<span style="font-size:9px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--muted);margin-left:5px">${j.squad}</span>` : '';
+    const posLabel = j.rugbyposition ? `<div style="font-size:9px;color:var(--muted);margin-top:1px">${j.rugbyposition}</div>` : (j.posicion ? `<div style="font-size:9px;color:var(--muted);margin-top:1px">${j.posicion}</div>` : '');
+    // Avatar initials
+    const initials = j.nombre.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+    const acwr = j.acwr || null;
+    const avCol = acwr===null ? 'var(--muted)' : acwr<0.8 ? '#7bb8ff' : acwr<=1.3 ? '#00e5a0' : acwr<=1.5 ? '#ffc04d' : '#ff7070';
     const usuEsc = j.usuario.replace(/'/g,"\\'");
     const nomEsc = j.nombre.replace(/'/g,"\\'");
     return `<tr style="cursor:pointer" onclick="openPlayerModal('${usuEsc}','${nomEsc}')" title="Ver estadísticas de ${j.nombre}" data-nombre="${j.nombre.toLowerCase()}">
       <td>
-        <span class="status-dot ${dotCls}"></span>
-        <span style="text-decoration:underline;text-decoration-color:rgba(255,255,255,.15);text-underline-offset:3px">${j.nombre}</span>
-        ${sqFilter?'':squadLabel}
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;border-radius:50%;background:${avCol}20;border:1px solid ${avCol}55;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${avCol};flex-shrink:0">${initials}</div>
+          <div>
+            <div style="display:flex;align-items:center;gap:4px">
+              <span class="status-dot ${dotCls}"></span>
+              <span style="font-weight:500">${j.nombre.split(',')[0]}</span>
+              ${sqFilter?'':squadLabel}
+            </div>
+            ${posLabel}
+          </div>
+        </div>
       </td>
       <td>${rpe7Html}</td>
       <td><div class="week-squares">${squares}</div></td>
@@ -3503,21 +3748,25 @@ async function renderAcwr(equipo) {
     // Iterar día a día calculando EWMA
     let ewmaA = 0, ewmaC = 0;
     let cursor = new Date(start);
+    const series = [];  // ACWR diario para sparkline (últimos 14 puntos con datos)
     while (cursor <= end) {
       const key = cursor.toISOString().slice(0,10);
       const ua  = uaByDate[key] || 0;
       ewmaA = LAMBDA_A * ua + (1 - LAMBDA_A) * ewmaA;
       ewmaC = LAMBDA_C * ua + (1 - LAMBDA_C) * ewmaC;
+      if (ewmaC > 0 && ewmaA > 0) series.push(Math.round((ewmaA/ewmaC)*100)/100);
       cursor.setDate(cursor.getDate() + 1);
     }
+    // Keep last 14 points for sparkline (weekly resolution)
+    const sparkSeries = series.filter((_,i,a) => i % Math.max(1,Math.floor(a.length/14)) === 0).slice(-14);
 
-    const aguda   = Math.round(ewmaA * 7);   // convertir a UA/semana para legibilidad
+    const aguda   = Math.round(ewmaA * 7);
     const cronica = Math.round(ewmaC * 7);
     const acwr    = (aguda > 0 && cronica > 0 && !insufficient)
       ? Math.round((ewmaA / ewmaC) * 100) / 100
       : null;
 
-    return { aguda, cronica, acwr, totalDias: Math.round(daysSince), insufficient };
+    return { aguda, cronica, acwr, totalDias: Math.round(daysSince), insufficient, series: sparkSeries };
   }
 
   const playerData = equipo.map((j, i) => {
@@ -3598,11 +3847,14 @@ async function renderAcwr(equipo) {
       </div>
     </div>`;
 
-  const rows = playerData.map(p => {
+  const _acwrSeries = {};
+  const rows = playerData.map((p, pi) => {
     const col    = acwrColor(p.acwr);
     const pp     = pinPct(p.acwr);
     const status = acwrRowStatus(p);
     const showPin = p.acwr !== null && p.aguda > 0;
+    const sparkId = 'acwr-sp-' + pi;
+    _acwrSeries[sparkId] = { series: p.series || [], color: col };
     return `<div style="margin-bottom:9px">
       <div class="acwr-row">
         <div class="acwr-name" title="${p.nombre}">${p.nombre.split(',')[0]}</div>
@@ -3612,6 +3864,9 @@ async function renderAcwr(equipo) {
           <div style="flex:.12;background:rgba(255,192,77,.3)"></div>
           <div style="flex:.2;background:rgba(255,70,70,.25)"></div>
           ${showPin ? `<div class="acwr-pin" style="left:${pp}%"></div>` : ''}
+        </div>
+        <div class="acwr-spark-wrap">
+          <canvas class="acwr-spark-canvas" id="${sparkId}"></canvas>
         </div>
         <div class="acwr-val" style="color:${status.col}">
           ${p.acwr !== null ? p.acwr : ''}
@@ -3629,7 +3884,6 @@ async function renderAcwr(equipo) {
           </div>
           <div class="acwr-load-lbl">Crónica (4sem)</div>
         </div>
-        ${p.sesiones28 < 2 && p.sesiones28 > 0 ? `<div style="font-size:8px;color:var(--muted);align-self:center;font-style:italic">pocas sesiones (${p.sesiones28})</div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -3643,6 +3897,27 @@ async function renderAcwr(equipo) {
   const noValidPlayers = withAcwr.length === 0;
 
   content.innerHTML = teamKpis + legend + rows;
+  // Draw sparklines
+  requestAnimationFrame(() => {
+    Object.entries(_acwrSeries).forEach(([id, {series, color}]) => {
+      const canvas = document.getElementById(id);
+      if (!canvas || !series.length) return;
+      const W=56,H=24;
+      canvas.width=W*2; canvas.height=H*2; canvas.style.width=W+'px'; canvas.style.height=H+'px';
+      const ctx=canvas.getContext('2d'); ctx.scale(2,2);
+      const n=series.length, mn=0.3, mx=2.0;
+      const tx=i=>(i/(Math.max(n-1,1)))*W, ty=v=>H-((v-mn)/(mx-mn))*(H-5)-3;
+      // optimal zone
+      ctx.fillStyle='rgba(0,229,160,.08)'; ctx.fillRect(0,ty(1.3),W,ty(0.8)-ty(1.3));
+      // line
+      ctx.beginPath();
+      series.forEach((v,i)=>{ if(i===0) ctx.moveTo(tx(i),ty(v)); else ctx.lineTo(tx(i),ty(v)); });
+      ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.lineJoin='round'; ctx.stroke();
+      // end dot
+      const last=series[n-1];
+      ctx.beginPath(); ctx.arc(tx(n-1),ty(last),2,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+    });
+  });
 }
 
 async function renderDailyLoad(equipo) {
@@ -4272,7 +4547,7 @@ async function openPlayerModal(usuario, nombre) {
   // Header
   document.getElementById('pm-avatar').textContent = nombre.split(',')[0][0] || '?';
   document.getElementById('pm-name').textContent   = nombre;
-  const subParts = [jData.posicion, jData.squad].filter(Boolean);
+  const subParts = [jData.rugbyposition || jData.posicion, jData.squad].filter(Boolean);
   document.getElementById('pm-sub').innerHTML = subParts.map(p =>
     `<span style="background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:1px 7px;font-size:10px">${p}</span>`
   ).join('');
@@ -4440,7 +4715,7 @@ async function openPlayerModalWithSemana(usuario, nombre, forceSemana) {
   const jData = state.coachEquipo.find(j => j.usuario === usuario) || {};
   document.getElementById('pm-avatar').textContent = nombre.split(',')[0][0] || '?';
   document.getElementById('pm-name').textContent   = nombre;
-  const subParts = [jData.posicion, jData.squad].filter(Boolean);
+  const subParts = [jData.rugbyposition || jData.posicion, jData.squad].filter(Boolean);
   document.getElementById('pm-sub').innerHTML = subParts.map(p =>
     `<span style="background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:1px 7px;font-size:10px">${p}</span>`
   ).join('');
