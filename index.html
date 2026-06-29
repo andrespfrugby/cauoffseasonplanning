@@ -3416,13 +3416,74 @@ async function renderHistPanel(cardId, ejercicio, el) {
 // "6-4-2"     → [6, 4, 2]
 // "6 4 2"     → [6, 4, 2]
 // "8-6-5-4"   → [8, 6, 5, 4]
+// ── DETECTAR RANGO DE REPS ─────────────────────────────────────
+// Rango: "8-10", "6-8", "4-6", "2-3" → 2 números, primero < segundo
+// Wave loading: "6-4-3", "4-4-3" → 3+ números o primero >= segundo → no es rango
+function isRepRange(repsStr) {
+  if (!repsStr) return false;
+  const s = String(repsStr).trim();
+  // Si contiene apóstrofes es tiempo, no reps
+  if (s.includes("'")) return false;
+  const parts = s.split(/[-]+/).map(p => parseInt(p)).filter(v => !isNaN(v));
+  return parts.length === 2 && parts[0] < parts[1];
+}
+function repRangeMin(repsStr) { return parseInt(String(repsStr).split('-')[0]) || 1; }
+function repRangeMax(repsStr) { const p = String(repsStr).split('-'); return parseInt(p[p.length-1]) || 1; }
+
+// ── TIEMPO: detección y parsing ───────────────────────────────
+// Formatos: 30'' · 1' · 1'30'' · 10''-15'' · 1'-2' · 1'30''-2'45''
+function isTimeStr(s) {
+  return /\d+[']+/.test(String(s||'').trim());
+}
+
+function parseTimeSecs(s) {
+  s = String(s||'').trim().replace(/\s/g,'');
+  // 1'30'' → 90s
+  const mFull = s.match(/^(\d+)'(\d+)[']+$/);
+  if (mFull) return parseInt(mFull[1])*60 + parseInt(mFull[2]);
+  // 1' → 60s
+  const mMin  = s.match(/^(\d+)'$/);
+  if (mMin)  return parseInt(mMin[1])*60;
+  // 30'' → 30s
+  const mSec  = s.match(/^(\d+)[']+$/);
+  if (mSec)  return parseInt(mSec[1]);
+  return null;
+}
+
+function formatSecs(n) {
+  if (!n && n!==0) return '—';
+  if (n < 60) return n + "''";
+  const m = Math.floor(n/60), s = n%60;
+  return s > 0 ? `${m}'${s}''` : `${m}'`;
+}
+
+function isTimeRange(repsStr) {
+  if (!repsStr) return false;
+  const s = String(repsStr).trim();
+  if (!s.includes("'")) return false;
+  // Dividir por '-' que separa dos expresiones de tiempo
+  // Ej: "10''-15''" → ["10''", "15''"]
+  // Ej: "1'30''-2'45''" → ["1'30''", "2'45''"]
+  // El separador '-' está entre dos bloques que empiezan con dígito
+  const parts = s.split(/-(?=\d)/).map(p => p.trim());
+  return parts.length === 2 && parts.every(p => isTimeStr(p) && parseTimeSecs(p) !== null);
+}
+
+function timeRangeMinMax(repsStr) {
+  const parts = String(repsStr).trim().split(/-(?=\d)/).map(p => p.trim());
+  const min   = parseTimeSecs(parts[0]) || 0;
+  const max   = parseTimeSecs(parts[1]) || min;
+  return { min, max };
+}
+
 function parseRepsPerSet(repsStr, nSets) {
   if (!repsStr) return Array(nSets).fill(null);
-  // intentar split por - o espacio (solo dígitos)
-  const parts = repsStr.split(/[-\s]+/).map(p => parseInt(p)).filter(v => !isNaN(v));
+  // Si es rango (8-10) → no expandir, devolver null (el range se muestra diferente)
+  if (isRepRange(repsStr)) return Array(nSets).fill(null);
+  // Wave / fixed: split por - o espacio
+  const parts = String(repsStr).split(/[-\s]+/).map(p => parseInt(p)).filter(v => !isNaN(v));
   if (parts.length >= nSets) return parts.slice(0, nSets);
   if (parts.length === 1)    return Array(nSets).fill(parts[0]);
-  // menos partes que series: rellenar con el último valor
   while (parts.length < nSets) parts.push(parts[parts.length-1]);
   return parts;
 }
@@ -3434,70 +3495,146 @@ function renderLoadPanel(cardId, el) {
 
   // ── Si ya está guardado ──
   if (cs.loadSaved) {
-    const targets = cs.targets || [''];
-    const vals    = cs.loadVals || [cs.loadVal || ''];
-    const summary = targets.map((t,i) => vals[i] ? `${t}: ${vals[i]} kg` : '').filter(Boolean).join(' · ');
-    el.innerHTML = `<div style="display:flex;align-items:center;gap:6px">
-      <div class="load-saved-lbl">✓ Carga guardada — ${summary || '—'}</div>
+    const targets   = cs.targets || [''];
+    const vals      = cs.loadVals || [cs.loadVal || ''];
+    const repsVals  = cs.loadRepsVals || [];
+    const timeSecs  = cs.loadTimeSecs || [];
+    const hasTimeR  = isTimeRange(cs.reps||'');
+    const hasRange  = isRepRange(cs.reps||'');
+    const summary = hasTimeR
+      ? targets.map((t,i) => timeSecs[i] > 0 ? `${t}: ${formatSecs(timeSecs[i])}` : '').filter(Boolean).join(' · ')
+      : targets.map((t,i) => {
+          const kg = vals[i]; const r = hasRange && repsVals[i] ? ` × ${repsVals[i]} reps` : '';
+          return kg ? `${t}: ${kg} kg${r}` : '';
+        }).filter(Boolean).join(' · ');
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <div class="load-saved-lbl">✓ Guardado — ${summary || '—'}</div>
       <button class="btn-edit-load" onclick="editLoad('${cardId}')">Editar</button>
     </div>`;
     return;
   }
 
   // ── Parsear targets y reps ──
-  const targets  = parseLoadTargets(cs.loadObj || '');
-  cs.targets     = targets;
-  const repsArr  = parseRepsPerSet(cs.reps || '', targets.length);
+  const targets    = parseLoadTargets(cs.loadObj || '');
+  cs.targets       = targets;
+  const repsStr    = cs.reps || '';
+  const hasRange   = isRepRange(repsStr);
+  const hasTimeR   = !hasRange && isTimeRange(repsStr);
+  const repsArr    = (hasRange || hasTimeR) ? Array(targets.length).fill(null) : parseRepsPerSet(repsStr, targets.length);
 
-  if (!cs.loadVals || cs.loadVals.length !== targets.length) {
-    cs.loadVals = targets.map(() => '');
-  }
-  if (cs.activeIdx === undefined || cs.activeIdx >= targets.length) {
-    cs.activeIdx = 0;
-  }
+  if (!cs.loadVals     || cs.loadVals.length     !== targets.length) cs.loadVals     = targets.map(() => '');
+  if (!cs.loadRepsVals || cs.loadRepsVals.length !== targets.length) cs.loadRepsVals = targets.map(() => '');
+  if (!cs.loadTimeSecs || cs.loadTimeSecs.length !== targets.length) cs.loadTimeSecs = targets.map(() => 0);
+  if (cs.activeIdx === undefined || cs.activeIdx >= targets.length)  cs.activeIdx    = 0;
+  if (cs.repInputMode === undefined) cs.repInputMode = false;
+
+  const rMin = hasRange ? repRangeMin(repsStr) : 0;
+  const rMax = hasRange ? repRangeMax(repsStr) : 0;
+  const { min: tMin, max: tMax } = hasTimeR ? timeRangeMinMax(repsStr) : { min:0, max:0 };
 
   // ── Cuadros de series ──
   const setsHtml = targets.map((target, idx) => {
     const isActive = cs.activeIdx === idx;
-    const val      = cs.loadVals[idx];
-    const isDone   = !!val;
+    const kg       = cs.loadVals[idx];
     const reps     = repsArr[idx];
-    const maxDots  = 8; // cap visual
-    const dotsN    = reps ? Math.min(reps, maxDots) : 0;
-    const dots     = dotsN > 0
-      ? Array(dotsN).fill('<div class="load-rep-dot"></div>').join('')
-      : '';
-    const repLbl   = reps ? `${reps} rep${reps>1?'s':''}` : '';
+    const actualR  = cs.loadRepsVals[idx];
+    const isDone   = !!kg;
     const cls      = `load-set-box${isActive?' active':''}${isDone&&!isActive?' done-set':''}`;
 
-    return `<div class="${cls}" onclick="selectLoadSet('${cardId}',${idx})" title="${target}${reps?' · '+reps+' reps':''}">
+    const dotsN = reps ? Math.min(reps, 8) : 0;
+    const dots  = dotsN > 0 ? Array(dotsN).fill('<div class="load-rep-dot"></div>').join('') : '';
+    const repLbl = reps ? `${reps} reps` : hasRange ? `${repsStr} reps` : '';
+
+    // Si es rango: mostrar input de reps bajo el kg
+    const repsInputHtml = hasRange ? `
+      <div style="border-top:0.5px solid rgba(255,255,255,.1);margin-top:5px;padding-top:5px">
+        <div style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">${repsStr} reps</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+          <button onclick="event.stopPropagation();adjReps('${cardId}',${idx},-1)" style="width:18px;height:18px;border-radius:4px;border:0.5px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+          <span id="reps-val-${cardId}-${idx}" style="font-size:12px;font-weight:700;min-width:20px;text-align:center;color:${actualR?'var(--accent2)':'rgba(255,255,255,.2)'}">${actualR||'—'}</span>
+          <button onclick="event.stopPropagation();adjReps('${cardId}',${idx},+1)" style="width:18px;height:18px;border-radius:4px;border:0.5px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+        </div>
+      </div>` : '';
+
+    // Si es rango de tiempo: mostrar stepper de segundos
+    const curSecs  = cs.loadTimeSecs ? (cs.loadTimeSecs[idx] || 0) : 0;
+    const timeInputHtml = hasTimeR ? `
+      <div style="border-top:0.5px solid rgba(255,255,255,.1);margin-top:5px;padding-top:5px;text-align:center">
+        <div style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">${repsStr}</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:5px">
+          <button onclick="event.stopPropagation();adjTime('${cardId}',${idx},-5)" style="width:20px;height:20px;border-radius:4px;border:0.5px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+          <span id="time-val-${cardId}-${idx}" style="font-size:13px;font-weight:700;min-width:34px;text-align:center;color:${curSecs?'var(--accent2)':'rgba(255,255,255,.2)'};font-family:var(--font-head);letter-spacing:1px">${curSecs?formatSecs(curSecs):'—'}</span>
+          <button onclick="event.stopPropagation();adjTime('${cardId}',${idx},+5)" style="width:20px;height:20px;border-radius:4px;border:0.5px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+        </div>
+        <div style="font-size:7px;color:var(--muted);margin-top:2px">−/+ 5 segundos</div>
+      </div>` : '';
+
+    return `<div class="${cls}" onclick="selectLoadSet('${cardId}',${idx})" title="${target}${repLbl?' · '+repLbl:''}">
       <div class="load-set-target">${target}</div>
       ${dots ? `<div class="load-rep-dots">${dots}</div>` : ''}
-      ${repLbl ? `<div class="load-rep-lbl">${repLbl}</div>` : ''}
-      <div class="load-set-val${val?' has-value':''}" id="ld-set-${cardId}-${idx}">${val||'—'}</div>
-      <div class="load-set-unit">kg</div>
+      ${!hasRange && !hasTimeR && repLbl ? `<div class="load-rep-lbl">${repLbl}</div>` : ''}
+      ${!hasTimeR ? `<div class="load-set-val${kg?' has-value':''}" id="ld-set-${cardId}-${idx}">${kg||'—'}</div><div class="load-set-unit">kg</div>` : ''}
+      ${repsInputHtml}
+      ${timeInputHtml}
     </div>`;
   }).join('');
 
-  // ── Numpad ──
+  // ── Numpad (oculto si solo hay rango de tiempo sin carga) ──
   const ejEsc = ej.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  const numpad = ['1','2','3','4','5','6','7','8','9','⌫','0','.'].map(k => {
+  const showNumpad = !hasTimeR; // para ejercicios de tiempo puro no hay kg
+  const numpad = showNumpad ? ['1','2','3','4','5','6','7','8','9','⌫','0','.'].map(k => {
     if (k==='⌫') return `<button class="numpad-btn del" onclick="loadNumpad('${cardId}','del')">⌫</button>`;
     if (k==='.') return `<button class="numpad-btn" onclick="loadNumpad('${cardId}','.')" style="font-size:16px;font-weight:700">·</button>`;
     return `<button class="numpad-btn" onclick="loadNumpad('${cardId}','${k}')">${k}</button>`;
-  }).join('');
+  }).join('') : '';
 
-  const activeReps = repsArr[cs.activeIdx];
-  const serieLabel = targets.length > 1
-    ? `<strong>${targets[cs.activeIdx]}</strong>${activeReps?' · '+activeReps+' reps':''} — toca otro cuadro para cambiar`
-    : 'Introduce el peso en kg';
+  const activeReps = hasRange ? repsStr : (repsArr[cs.activeIdx] ? repsArr[cs.activeIdx]+' reps' : '');
+  const serieLabel = hasTimeR
+    ? `Ajusta el tiempo con −/+ en cada cuadro · rango: <strong>${repsStr}</strong>`
+    : targets.length > 1
+      ? `<strong>${targets[cs.activeIdx]}</strong>${activeReps?' · '+activeReps:''} — toca otro cuadro para cambiar`
+      : hasRange
+        ? `Introduce el peso · ajusta las reps con +/− en cada serie`
+        : 'Introduce el peso en kg';
 
   el.innerHTML = `
-    <div class="hist-title">Registrar carga — ${ej}</div>
+    <div class="hist-title">Registrar — ${ej}</div>
     <div class="load-sets-row">${setsHtml}</div>
-    <div class="load-numpad">${numpad}</div>
+    ${showNumpad ? `<div class="load-numpad">${numpad}</div>` : ''}
     <div class="load-hint">${serieLabel}</div>
-    <button class="btn-save-load" onclick="saveLoad('${cardId}','${ejEsc}')">Guardar carga</button>`;
+    <button class="btn-save-load" onclick="saveLoad('${cardId}','${ejEsc}')">Guardar</button>`;
+}
+
+// Ajustar reps con + / −
+function adjReps(cardId, idx, delta) {
+  const cs = state.cards[cardId];
+  if (!cs) return;
+  const repsStr = cs.reps || '';
+  const rMin = repRangeMin(repsStr);
+  const rMax = repRangeMax(repsStr);
+  const current = parseInt(cs.loadRepsVals[idx]) || rMin;
+  const next = Math.min(rMax + 2, Math.max(1, current + delta));
+  cs.loadRepsVals[idx] = String(next);
+  const span = document.getElementById(`reps-val-${cardId}-${idx}`);
+  if (span) { span.textContent = next; span.style.color = 'var(--accent2)'; }
+  progressSave();
+}
+
+// Ajustar tiempo con + / − (en pasos de 5 segundos)
+function adjTime(cardId, idx, delta) {
+  const cs = state.cards[cardId];
+  if (!cs) return;
+  if (!cs.loadTimeSecs) cs.loadTimeSecs = [];
+  const { min: tMin } = isTimeRange(cs.reps||'') ? timeRangeMinMax(cs.reps||'') : { min:5, max:60 };
+  const current = cs.loadTimeSecs[idx] || tMin;
+  const next = Math.max(1, current + delta);
+  cs.loadTimeSecs[idx] = next;
+  const span = document.getElementById(`time-val-${cardId}-${idx}`);
+  if (span) { span.textContent = formatSecs(next); span.style.color = 'var(--accent2)'; }
+  // Mark set box as active/done
+  const box = document.querySelector(`#panel-load-${cardId} .load-set-box:nth-child(${idx+1})`);
+  if (box) { box.classList.add('done-set'); }
+  progressSave();
 }
 
 // Seleccionar serie activa
@@ -3509,28 +3646,29 @@ function selectLoadSet(cardId, idx) {
   if (!panel) return;
   panel.querySelectorAll('.load-set-box').forEach((box, i) => {
     const val = cs.loadVals && cs.loadVals[i];
-    box.classList.toggle('active',    i === idx);
-    box.classList.toggle('done-set',  !!val && i !== idx);
+    box.classList.toggle('active',   i === idx);
+    box.classList.toggle('done-set', !!val && i !== idx);
   });
   const hint = panel.querySelector('.load-hint');
   if (hint && cs.targets && cs.targets.length > 1) {
-    const repsArr   = parseRepsPerSet(cs.reps || '', cs.targets.length);
-    const activeReps = repsArr[idx];
-    hint.innerHTML = `<strong>${cs.targets[idx]}</strong>${activeReps?' · '+activeReps+' reps':''} — toca otro cuadro para cambiar`;
+    const hasRange = isRepRange(cs.reps||'');
+    const repsArr  = hasRange ? [] : parseRepsPerSet(cs.reps||'', cs.targets.length);
+    const activeR  = hasRange ? cs.reps : (repsArr[idx] ? repsArr[idx]+' reps' : '');
+    hint.innerHTML = `<strong>${cs.targets[idx]}</strong>${activeR?' · '+activeR:''} — toca otro cuadro para cambiar`;
   }
 }
 
-// Teclado numérico para carga — actualiza solo el display de la serie activa
+// Teclado numérico para carga — solo afecta al kg de la serie activa
 function loadNumpad(cardId, key) {
-  if (!state.cards[cardId]) state.cards[cardId] = { loadVals:[''], activeIdx:0 };
+  if (!state.cards[cardId]) state.cards[cardId] = { loadVals:[''], loadRepsVals:[''], activeIdx:0 };
   const cs  = state.cards[cardId];
   const idx = (cs.activeIdx !== undefined) ? cs.activeIdx : 0;
-  if (!cs.loadVals) cs.loadVals = [''];
+  if (!cs.loadVals)     cs.loadVals     = [''];
+  if (!cs.loadRepsVals) cs.loadRepsVals = [''];
 
   if (key === 'del') {
     cs.loadVals[idx] = cs.loadVals[idx].slice(0, -1);
   } else if (key === '.') {
-    // solo un punto decimal y máx 6 chars (p.ej. "102.5")
     if (cs.loadVals[idx].includes('.')) return;
     if (cs.loadVals[idx].length >= 6) return;
     cs.loadVals[idx] += '.';
@@ -3547,22 +3685,45 @@ function loadNumpad(cardId, key) {
   progressSave();
 }
 
-// Guardar carga (multi-serie: guarda como "val1/val2/val3" en carga_real)
+// Guardar carga — formato "90x8/92x9" si reps, "42s/45s" si tiempo, "90/92" si normal
 async function saveLoad(cardId, ejercicio) {
   const cs = state.cards[cardId];
   if (!cs) return;
-  const ej      = ejercicio || cs.ejercicio || '';
-  const targets = cs.targets || [''];
-  const vals    = cs.loadVals || [''];
+  const ej        = ejercicio || cs.ejercicio || '';
+  const targets   = cs.targets || [''];
+  const vals      = cs.loadVals || [''];
+  const repsVals  = cs.loadRepsVals || [];
+  const timeSecs  = cs.loadTimeSecs || [];
+  const hasRange  = isRepRange(cs.reps||'');
+  const hasTimeR  = !hasRange && isTimeRange(cs.reps||'');
 
-  const hasAny = vals.some(v => v && v.trim().length > 0);
-  if (!hasAny) return;
+  // Para tiempo: verificar que haya al menos un tiempo registrado
+  const hasAnyTime = hasTimeR && timeSecs.some(v => v > 0);
+  const hasAnyKg   = vals.some(v => v && v.trim().length > 0);
+  if (!hasAnyKg && !hasAnyTime) return;
 
   const btn = document.querySelector(`#panel-load-${cardId} .btn-save-load`);
   if (btn) { btn.disabled=true; btn.textContent='Guardando…'; }
 
-  // Combina los valores como "80/82.5/85" para almacenamiento
-  const cargaStr = vals.filter(v => v && v.trim()).join('/');
+  let cargaStr, summary;
+
+  if (hasTimeR) {
+    // Guardar segundos: "42s/45s/40s"
+    cargaStr = timeSecs.map(s => s > 0 ? formatSecs(s) : null).filter(Boolean).join('/');
+    summary  = targets.map((t, i) => timeSecs[i] > 0 ? `${t}: ${formatSecs(timeSecs[i])}` : '').filter(Boolean).join(' · ');
+  } else {
+    // Guardar kg (con reps si hay rango)
+    cargaStr = vals.map((v, i) => {
+      if (!v || !v.trim()) return null;
+      const r = hasRange && repsVals[i] ? `x${repsVals[i]}` : '';
+      return v + r;
+    }).filter(Boolean).join('/');
+    summary = targets.map((t, i) => {
+      const kg = vals[i];
+      const r  = hasRange && repsVals[i] ? ` × ${repsVals[i]} reps` : '';
+      return kg ? `${t} → ${kg} kg${r}` : '';
+    }).filter(Boolean).join(' · ');
+  }
 
   const res = await api({
     action:'saveRegistro', usuario:state.user.usuario,
@@ -3575,11 +3736,13 @@ async function saveLoad(cardId, ejercicio) {
     cs.loadSaved = true;
     const el = document.getElementById('panel-load-'+cardId);
     if (el) {
-      const summary = targets.map((t,i) => vals[i] ? `${t} → ${vals[i]} kg` : '').filter(Boolean).join(' · ');
-      el.innerHTML = `<div class="load-saved-lbl">✓ Guardado — ${summary}</div>`;
+      el.innerHTML = `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <div class="load-saved-lbl">✓ Guardado — ${summary}</div>
+        <button class="btn-edit-load" onclick="editLoad('${cardId}')">Editar</button>
+      </div>`;
     }
   } else {
-    if (btn) { btn.disabled=false; btn.textContent='Guardar carga'; }
+    if (btn) { btn.disabled=false; btn.textContent='Guardar'; }
     alert('Error al guardar: '+(res.error||'inténtalo de nuevo'));
   }
 }
