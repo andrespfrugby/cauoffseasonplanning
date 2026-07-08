@@ -128,7 +128,59 @@ body.light-mode .week-summary { background:#fff; border-color:rgba(0,0,0,.1); }
 body.light-mode .wsumm-rank-row { background:#f8f9fc; border-color:rgba(0,0,0,.08); }
 /* Light mode: coach chart boxes */
 body.light-mode .coach-chart-box { background:#fff; border-color:rgba(0,0,0,.1); }
-body, body * { transition: background-color .25s, border-color .25s, color .15s; }
+/* ── WELLNESS / READINESS ─────────────────────────────────── */
+.wellness-arc-val{font-size:54px;font-weight:500;line-height:1;text-align:center;transition:color .15s}
+.wellness-arc-lbl{font-size:12px;text-align:center;margin-top:5px;min-height:18px;transition:color .15s}
+.wellness-slider-wrap{width:100%;max-width:220px;margin-top:18px}
+input[type=range].w-slider{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:6px;border-radius:3px;outline:none;cursor:pointer;
+  background:linear-gradient(to right,#ff7070,#ffc04d 45%,#00e5a0);
+}
+input[type=range].w-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+  background:#fff;border:3px solid var(--bg,#0d0f12);cursor:pointer;
+}
+input[type=range].w-slider::-moz-range-thumb{
+  width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d0f12;cursor:pointer;
+}
+input[type=range].w-slider-hrs{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:6px;border-radius:3px;outline:none;cursor:pointer;
+}
+input[type=range].w-slider-hrs::-webkit-slider-thumb{
+  -webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+  background:#fff;border:3px solid var(--bg,#0d0f12);cursor:pointer;
+}
+.w-slider-ends{display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:var(--muted);padding:0 2px}
+.wellness-q-wrap{display:flex;flex-direction:column;align-items:center;padding:16px 14px 8px;flex:1}
+.wellness-q-num{font-size:9px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;align-self:flex-start}
+.wellness-q-txt{font-size:18px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:3px;align-self:flex-start}
+.wellness-q-sub{font-size:11px;color:var(--muted);margin-bottom:16px;align-self:flex-start}
+.wellness-done-ring{position:relative;margin-bottom:10px}
+.wellness-done-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.wellness-trend-box{background:var(--surface);border:0.5px solid var(--border2);border-radius:10px;padding:11px 12px;margin-bottom:10px;width:100%}
+.wellness-trend-title{font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between}
+.wellness-bars{display:flex;gap:3px;align-items:flex-end;height:36px;margin-bottom:3px}
+.wbar{flex:1;border-radius:2px 2px 0 0}
+.wbar-lbl{font-size:8px;color:var(--muted);text-align:center;flex:1}
+.wellness-chips{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:12px}
+.wchip{font-size:9px;padding:3px 9px;border-radius:20px;background:var(--surface2);color:var(--muted)}
+.wellness-nav-q{display:flex;gap:7px;padding:0 14px 14px;width:100%}
+.w-btn-back{width:42px;height:42px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s}
+.w-btn-next{flex:1;height:42px;border-radius:10px;border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s}
+.w-btn-skip{height:42px;background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer}
+/* Coach readiness dashboard */
+.readiness-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.readiness-row:last-child{border-bottom:none}
+.readiness-bar-wrap{flex:1;height:4px;border-radius:2px;background:var(--surface2);overflow:hidden;max-width:70px}
+.readiness-bar-fill{height:100%;border-radius:2px}
+.readiness-score{font-size:12px;font-weight:600;min-width:28px;text-align:right;flex-shrink:0}
+.readiness-status{font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0}
+.rs-ok{background:rgba(0,229,160,.1);color:#00e5a0}
+.rs-warn{background:rgba(255,192,77,.1);color:#ffc04d}
+.rs-bad{background:rgba(232,20,42,.1);color:#ff7070}
+.rs-na{background:var(--surface2);color:var(--muted)}
 body { background:var(--bg); color:var(--text); font-family:var(--font-body); font-size:15px; min-height:100vh; line-height:1.5; }
 .hidden { display:none !important; }
 
@@ -1630,6 +1682,31 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div id="session-container"></div>
     </div>
 
+    <!-- ══ WELLNESS / READINESS ══ -->
+    <div id="tab-wellness" class="tab-section" style="display:none">
+      <div id="wellness-content"><div class="loader"><div class="spinner"></div>Cargando...</div></div>
+    </div>
+
+    <!-- ══ COACH: Readiness ══ -->
+    <div id="tab-coach-readiness" class="tab-section" style="display:none">
+      <div class="coach-header">
+        <div>
+          <div class="coach-title">Readiness</div>
+          <div class="coach-sem-label" id="readiness-date-lbl">Hoy</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select id="coach-squad-filter-readiness" class="semana-select" style="min-width:130px;margin-bottom:0" onchange="onCoachSquadChangeReadiness()">
+            <option value="">Todos los squads</option>
+            <option value="men's xv">Men's XV</option>
+            <option value="women's">Women's</option>
+            <option value="academy">Academy</option>
+          </select>
+          <span class="coach-badge">Coach</span>
+        </div>
+      </div>
+      <div id="readiness-content"><div class="loader"><div class="spinner"></div></div></div>
+    </div>
+
     <!-- ══ JUGADOR: Mi semana ══ -->
     <div id="tab-misemana" class="tab-section" style="display:none">
       <div id="week-summary-box"></div>
@@ -1660,8 +1737,15 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="4" height="8" rx="1"/><rect x="9.5" y="7" width="4" height="13" rx="1"/><rect x="16" y="3" width="4" height="17" rx="1"/></svg></div>
       <div class="bn-lbl">Stats</div>
     </div>
+    <div class="bn-item" id="bn-wellness" onclick="switchTab('wellness')" style="display:none">
+      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+      <div class="bn-lbl">Readiness</div>
+    </div>
     <!-- coach -->
-    <div class="bn-item" id="bn-jugadores" onclick="switchTab('jugadores')" style="display:none">
+    <div class="bn-item" id="bn-readiness" onclick="switchTab('readiness')" style="display:none">
+      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+      <div class="bn-lbl">Readiness</div>
+    </div>
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3.5"/><path d="M1 21v-1.5A5.5 5.5 0 0 1 6.5 14h3A5.5 5.5 0 0 1 15 19.5V21"/><circle cx="17" cy="7" r="3"/><path d="M23 21v-1a4 4 0 0 0-3-3.87"/></svg></div>
       <div class="bn-lbl">Squad</div>
     </div>
@@ -2853,22 +2937,21 @@ const COACH_TABS  = ['jugadores','rpe','reports','sesion'];
 
 function initNav() {
   if (state.isCoach) {
-    ['bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-settings'].forEach(id => {
+    ['bn-readiness','bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-settings'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
-    ['bn-sesion','bn-misemana'].forEach(id => {
+    ['bn-sesion','bn-misemana','bn-wellness'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
-    switchTab('jugadores');
+    switchTab('readiness');
   } else {
-    // Show player nav items
-    ['bn-sesion','bn-misemana'].forEach(id => {
+    ['bn-sesion','bn-misemana','bn-wellness'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
-    ['bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach'].forEach(id => {
+    ['bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-readiness'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
@@ -2878,30 +2961,34 @@ function initNav() {
 
 function switchTab(tab) {
   state.activeTab = tab;
-  const allTabs = ['tab-sesion','tab-misemana','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports','tab-coach-settings'];
+  const allTabs = ['tab-sesion','tab-misemana','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports','tab-coach-settings','tab-wellness','tab-coach-readiness'];
   allTabs.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
 
   const tabMap = {
-    'sesion':    'tab-sesion',
-    'misemana':  'tab-misemana',
-    'jugadores': 'tab-coach-jugadores',
-    'rpe':       'tab-coach-rpe',
-    'reports':   'tab-coach-reports',
-    'settings':  'tab-coach-settings',
+    'sesion':     'tab-sesion',
+    'misemana':   'tab-misemana',
+    'jugadores':  'tab-coach-jugadores',
+    'rpe':        'tab-coach-rpe',
+    'reports':    'tab-coach-reports',
+    'settings':   'tab-coach-settings',
+    'wellness':   'tab-wellness',
+    'readiness':  'tab-coach-readiness',
   };
   const el = document.getElementById(tabMap[tab]);
   if (el) el.style.display = '';
 
   const navMap = {
-    'sesion':    state.isCoach ? 'bn-sesion-coach' : 'bn-sesion',
-    'misemana':  'bn-misemana',
-    'jugadores': 'bn-jugadores',
-    'rpe':       'bn-rpe',
-    'reports':   'bn-reports',
-    'settings':  'bn-settings',
+    'sesion':     state.isCoach ? 'bn-sesion-coach' : 'bn-sesion',
+    'misemana':   'bn-misemana',
+    'jugadores':  'bn-jugadores',
+    'rpe':        'bn-rpe',
+    'reports':    'bn-reports',
+    'settings':   'bn-settings',
+    'wellness':   'bn-wellness',
+    'readiness':  'bn-readiness',
   };
   document.querySelectorAll('.bn-item').forEach(el => el.classList.remove('active'));
   const activeBtn = document.getElementById(navMap[tab]);
@@ -2926,9 +3013,9 @@ function switchTab(tab) {
     if (sqMain && sqRep) sqRep.value = sqMain.value;
     renderReportsPanel();
   }
-  if (tab === 'settings') {
-    renderSettingsPanel();
-  }
+  if (tab === 'wellness')   renderWellnessTab();
+  if (tab === 'readiness')  renderReadinessDashboard();
+  if (tab === 'settings')   renderSettingsPanel();
 }
 
 function onCoachSquadChangeRpe() {
@@ -5151,6 +5238,375 @@ function cacheGet(semana, dia, squad) {
 
 // ── DOUBLE-SAVE GUARD ─────────────────────────────────────────
 let _savingSession = false;
+
+// ══ WELLNESS / READINESS ══════════════════════════════════════
+
+const W_COLORS = ['','#ff7070','#ff7070','#ff7070','#ffc04d','#ffc04d','#ffc04d','#00e5a0','#00e5a0','#00e5a0','#00e5a0'];
+const W_LABELS = {
+  ganas: ['','el cuerpo pide descanso','muy bajo','bajo hoy','algo bajo','nivel normal','nivel normal','con ganas — buena energía','con ganas — buena energía','casi al máximo','al máximo — listo para rendir'],
+  dolor: ['','dolor intenso','dolor fuerte','dolor notable','molestia notable','molestia moderada','algo de tensión','casi sin molestias','muy bien','excelente','sin ningún dolor'],
+  fatiga:['','muy fatigado','fatiga intensa','bastante fatigado','cargado','fatiga moderada','algo cansado','descansado','bien descansado','muy fresco','completamente fresco'],
+  sleep: ['','muy mala','mala','bastante mala','pobre','regular','aceptable','buena','muy buena','excelente','perfecta']
+};
+
+let _wellnessState = { cur:1, vals:{1:null,2:null,3:null,4:null}, hrs:null, peso:'' };
+
+function calcWellnessScore(vals) {
+  const g=parseFloat(vals[1])||0, d=parseFloat(vals[2])||0,
+        f=parseFloat(vals[3])||0, c=parseFloat(vals[4])||0;
+  return Math.round((g*0.30 + d*0.20 + f*0.25 + c*0.25)*10);
+}
+
+function wellnessArcPt(v) {
+  const a = -Math.PI + ((v-1)/9)*Math.PI;
+  return { x: 110+98*Math.cos(a), y: 112+98*Math.sin(a) };
+}
+
+function wellnessArcUpdate(q, v) {
+  _wellnessState.vals[q] = v;
+  const off = Math.round(308*(1-(v-1)/9));
+  const arc = document.getElementById('warc'+q); if(arc) arc.setAttribute('stroke-dashoffset',off);
+  const p   = wellnessArcPt(v);
+  const dot = document.getElementById('wdot'+q); if(dot){ dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('fill',W_COLORS[v]); }
+  const vEl = document.getElementById('wval'+q); if(vEl){ vEl.textContent=v; vEl.style.color=W_COLORS[v]; }
+  const lKey = {1:'ganas',2:'dolor',3:'fatiga',4:'sleep'};
+  const lEl  = document.getElementById('wlbl'+q); if(lEl){ lEl.textContent=W_LABELS[lKey[q]][v]; lEl.style.color=W_COLORS[v]; }
+  // next button color
+  const nb = document.getElementById('wbnext'); if(nb) nb.style.background = W_COLORS[v]||'#e8142a';
+}
+
+function wellnessHrsUpdate(h) {
+  _wellnessState.hrs = h;
+  const col = h<6?'#ff7070':h<=9?'#00e5a0':'#ffc04d';
+  const hEl = document.getElementById('whrsval'); if(hEl){ hEl.textContent=h%1===0?h+'h':h.toFixed(1)+'h'; hEl.style.color=col; }
+  const lEl = document.getElementById('whrslbl'); if(lEl){ lEl.textContent=h<5?'muy pocas — alerta':h<7?'por debajo de lo óptimo':h<=9?'óptimo · 7–9h recomendadas':'más de lo habitual'; lEl.style.color=col; }
+  // arc visual
+  const pct=(h-3)/(12-3);
+  const off=Math.round(308*(1-pct));
+  const arc=document.getElementById('warcH'); if(arc){ arc.setAttribute('stroke-dashoffset',off); arc.setAttribute('stroke',col); }
+  const p=wellnessArcPt(Math.round(1+(pct*9)));
+  const dot=document.getElementById('wdotH'); if(dot){ dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('fill',col); }
+  const nb = document.getElementById('wbnext'); if(nb) nb.style.background = col||'#e8142a';
+}
+
+function wellnessPesoInput(k) {
+  if(k==='del') _wellnessState.peso=_wellnessState.peso.slice(0,-1);
+  else if(k==='.'){ if(!_wellnessState.peso.includes('.')) _wellnessState.peso+=k; }
+  else{ if(_wellnessState.peso.length<5) _wellnessState.peso+=k; }
+  const el=document.getElementById('wpesoval'); if(el) el.textContent=_wellnessState.peso||'—';
+}
+
+async function renderWellnessTab() {
+  const content = document.getElementById('wellness-content');
+  if (!content) return;
+  content.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando readiness...</div>';
+  const res = await api({ action:'getWellness', usuario:state.user.usuario, dias:14 });
+  const hoyStr = new Date().toISOString().slice(0,10);
+  const todayEntry = res.ok && res.wellness ? res.wellness.find(w=>w.fecha===hoyStr) : null;
+  if (todayEntry) {
+    renderWellnessDone(content, todayEntry, res.wellness||[]);
+  } else {
+    _wellnessState = { cur:1, vals:{1:null,2:null,3:null,4:null}, hrs:null, peso:'' };
+    renderWellnessQuestion(content, 1);
+  }
+}
+
+function renderWellnessQuestion(container, q) {
+  _wellnessState.cur = q;
+  const total=6;
+  const pct  = Math.round((q/total)*100);
+  const qDefs = [
+    { n:1, txt:'Ganas de entrenar hoy',     sub:'1 = muy bajo · 10 = al máximo',     lkey:'ganas', defVal:7 },
+    { n:2, txt:'Dolor muscular / articular', sub:'1 = dolor intenso · 10 = sin dolor', lkey:'dolor', defVal:7 },
+    { n:3, txt:'Fatiga acumulada',           sub:'1 = muy fatigado · 10 = fresco',     lkey:'fatiga',defVal:6 },
+    { n:4, txt:'Calidad de sueño',           sub:'1 = muy mala · 10 = excelente',      lkey:'sleep', defVal:7 },
+    { n:5, txt:'Horas de sueño',             sub:'Desliza para ajustar',               lkey:'hrs',   defVal:null },
+    { n:6, txt:'Peso corporal',              sub:'Báscula · kg · opcional',             lkey:'peso',  defVal:null },
+  ];
+  const def = qDefs[q-1];
+  const curVal = q<=4 ? (_wellnessState.vals[q]||def.defVal) : null;
+  const isSlider = q<=4;
+  const isHrs    = q===5;
+  const isPeso   = q===6;
+  const col      = isSlider ? (W_COLORS[curVal]||'#ffc04d') : '#e8142a';
+
+  let inputHtml = '';
+  if (isSlider) {
+    const off = Math.round(308*(1-(curVal-1)/9));
+    const p   = wellnessArcPt(curVal);
+    inputHtml = `
+      <svg width="220" height="118" viewBox="0 0 220 118" style="overflow:visible" aria-hidden="true">
+        <defs><linearGradient id="wgr" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#ff7070"/><stop offset="45%" stop-color="#ffc04d"/><stop offset="100%" stop-color="#00e5a0"/>
+        </linearGradient></defs>
+        <path d="M12 112 A98 98 0 0 1 208 112" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="8" stroke-linecap="round"/>
+        <path id="warc${q}" d="M12 112 A98 98 0 0 1 208 112" fill="none" stroke="url(#wgr)" stroke-width="8" stroke-linecap="round" stroke-dasharray="308" stroke-dashoffset="${off}"/>
+        <circle id="wdot${q}" cx="${p.x}" cy="${p.y}" r="9" fill="${col}" stroke="var(--bg)" stroke-width="3"/>
+      </svg>
+      <div class="wellness-arc-val" id="wval${q}" style="color:${col}">${curVal}</div>
+      <div class="wellness-arc-lbl" id="wlbl${q}" style="color:${col}">${W_LABELS[def.lkey][curVal]}</div>
+      <div class="wellness-slider-wrap">
+        <input type="range" class="w-slider" min="1" max="10" value="${curVal}" step="1" oninput="wellnessArcUpdate(${q},+this.value)">
+        <div class="w-slider-ends"><span>1</span><span>10</span></div>
+      </div>`;
+  } else if (isHrs) {
+    const hVal = _wellnessState.hrs || 7;
+    const hCol = hVal<6?'#ff7070':hVal<=9?'#00e5a0':'#ffc04d';
+    const hPct = (hVal-3)/(12-3);
+    const hOff = Math.round(308*(1-hPct));
+    const hP   = wellnessArcPt(Math.round(1+hPct*9));
+    inputHtml = `
+      <svg width="220" height="118" viewBox="0 0 220 118" style="overflow:visible" aria-hidden="true">
+        <path d="M12 112 A98 98 0 0 1 208 112" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="8" stroke-linecap="round"/>
+        <path id="warcH" d="M12 112 A98 98 0 0 1 208 112" fill="none" stroke="${hCol}" stroke-width="8" stroke-linecap="round" stroke-dasharray="308" stroke-dashoffset="${hOff}"/>
+        <circle id="wdotH" cx="${hP.x}" cy="${hP.y}" r="9" fill="${hCol}" stroke="var(--bg)" stroke-width="3"/>
+      </svg>
+      <div class="wellness-arc-val" id="whrsval" style="color:${hCol}">${hVal}h</div>
+      <div class="wellness-arc-lbl" id="whrslbl" style="color:${hCol}">${hVal>=7&&hVal<=9?'óptimo · 7–9h recomendadas':hVal<7?'por debajo de lo óptimo':'más de lo habitual'}</div>
+      <div class="wellness-slider-wrap">
+        <input type="range" class="w-slider-hrs" min="3" max="12" value="${hVal}" step="0.5"
+          style="background:linear-gradient(to right,#ff7070 0%,#ff7070 30%,#00e5a0 50%,#00e5a0 70%,#ffc04d 100%)"
+          oninput="wellnessHrsUpdate(+this.value)">
+        <div class="w-slider-ends"><span>3h</span><span>12h</span></div>
+      </div>`;
+  } else {
+    inputHtml = `
+      <div style="font-size:46px;font-weight:500;text-align:center;color:var(--text);margin-bottom:12px;min-height:56px;letter-spacing:-1px">
+        <span id="wpesoval">${_wellnessState.peso||'—'}</span><span style="font-size:15px;color:var(--muted)"> kg</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;max-width:210px;width:100%">
+        ${['7','8','9','4','5','6','1','2','3','.','0','del'].map(k=>`<button onclick="wellnessPesoInput('${k}')" style="padding:11px;border-radius:9px;border:0.5px solid var(--border2);background:var(--surface2);font-size:16px;font-weight:500;color:var(--text);cursor:pointer">${k==='del'?'⌫':k}</button>`).join('')}
+      </div>`;
+  }
+
+  container.innerHTML = `
+    <div style="background:var(--surface2);border-radius:10px;padding:4px;display:flex;align-items:center;gap:8px;margin-bottom:16px">
+      <div style="flex:1;height:3px;background:var(--border2);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${col};border-radius:2px;transition:width .3s"></div>
+      </div>
+      <span style="font-size:10px;color:var(--muted);flex-shrink:0">${q} / ${total}</span>
+    </div>
+    <div class="wellness-q-num">Pregunta ${q} de ${total}</div>
+    <div class="wellness-q-txt">${def.txt}</div>
+    <div class="wellness-q-sub">${def.sub}</div>
+    <div style="display:flex;flex-direction:column;align-items:center;width:100%">${inputHtml}</div>
+    <div class="wellness-nav-q" style="margin-top:20px">
+      <button class="w-btn-back" onclick="wellnessPrev()" style="${q<=1?'opacity:.3':''}" ${q<=1?'disabled':''} aria-label="Anterior">‹</button>
+      <button class="w-btn-next" id="wbnext" onclick="wellnessNext()" style="background:${col}">${q===total?'Enviar ✓':'Siguiente ›'}</button>
+      ${q>=5?`<button class="w-btn-skip" onclick="wellnessNext()">Saltar</button>`:''}
+    </div>`;
+}
+
+function wellnessNext() {
+  const q = _wellnessState.cur;
+  if (q < 6) { renderWellnessQuestion(document.getElementById('wellness-content'), q+1); }
+  else { wellnessSave(); }
+}
+function wellnessPrev() {
+  const q = _wellnessState.cur;
+  if (q > 1) renderWellnessQuestion(document.getElementById('wellness-content'), q-1);
+}
+
+async function wellnessSave() {
+  const content = document.getElementById('wellness-content');
+  if (content) content.innerHTML = '<div class="loader"><div class="spinner"></div>Guardando...</div>';
+  const res = await api({
+    action:          'saveWellness',
+    usuario:         state.user.usuario,
+    ganas_entrenar:  _wellnessState.vals[1],
+    dolor:           _wellnessState.vals[2],
+    fatiga:          _wellnessState.vals[3],
+    calidad_sueno:   _wellnessState.vals[4],
+    horas_sueno:     _wellnessState.hrs,
+    peso_corporal:   _wellnessState.peso || ''
+  });
+  if (res.ok) {
+    const hist = await api({ action:'getWellness', usuario:state.user.usuario, dias:14 });
+    const hoyStr = new Date().toISOString().slice(0,10);
+    const todayEntry = hist.ok && hist.wellness ? hist.wellness.find(w=>w.fecha===hoyStr) : null;
+    renderWellnessDone(content, todayEntry||{readiness_score:res.score}, hist.wellness||[]);
+  } else {
+    if (content) content.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${res.error||'Error al guardar'}</div>`;
+  }
+}
+
+function renderWellnessDone(container, entry, history) {
+  const score  = parseFloat(entry?.readiness_score||0);
+  const col    = score>=70?'#00e5a0':score>=50?'#ffc04d':'#ff7070';
+  const title  = score>=80?'Excelente estado de readiness':score>=65?'Buen estado de forma':score>=50?'Estado moderado':'Necesitas recuperación';
+  const circ   = 2*Math.PI*46;
+  const off    = Math.round(circ*(1-score/100));
+
+  // Trend bars from history (last 7 entries)
+  const hist7 = (history||[]).slice(-7);
+  const maxS   = Math.max(...hist7.map(h=>parseFloat(h.readiness_score||0)), score, 1);
+  const days   = ['L','M','X','J','V','S','D'];
+  const barsHtml = hist7.map((h,i)=>{
+    const s=parseFloat(h.readiness_score||0);
+    const c=s>=70?'#00e5a0':s>=50?'#ffc04d':'#ff7070';
+    const isLast=i===hist7.length-1;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px">
+      <span style="font-size:8px;color:${isLast?c:'var(--muted)'};font-weight:${isLast?600:400}">${Math.round(s)}</span>
+      <div style="width:100%;height:${Math.round(s/maxS*30)}px;background:${isLast?c:'rgba(255,255,255,.12)'};border-radius:2px 2px 0 0;${isLast?'outline:2px solid '+c+';outline-offset:1px':''}"></div>
+    </div>`;
+  }).join('');
+  const prevScore = hist7.length>=2 ? parseFloat(hist7[hist7.length-2]?.readiness_score||0) : null;
+  const delta = prevScore!==null ? Math.round(score-prevScore) : null;
+  const deltaStr = delta!==null ? (delta>=0?'+':'')+delta : '—';
+  const deltaCol = delta===null?'var(--muted)':delta>=0?'#00e5a0':'#ff7070';
+
+  const chips = [
+    entry.ganas_entrenar ? `Ganas ${entry.ganas_entrenar}/10`:'',
+    entry.dolor          ? `Dolor ${entry.dolor}/10`:'',
+    entry.fatiga         ? `Fatiga ${entry.fatiga}/10`:'',
+    entry.calidad_sueno  ? `Sueño ${entry.calidad_sueno}/10`:'',
+    entry.horas_sueno    ? `${entry.horas_sueno}h de sueño`:'',
+    entry.peso_corporal  ? `${entry.peso_corporal} kg`:'',
+  ].filter(Boolean).map(c=>`<div class="wchip">${c}</div>`).join('');
+
+  container.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0 8px">
+      <div class="wellness-done-ring" style="margin-bottom:10px">
+        <svg width="110" height="110" viewBox="0 0 110 110" aria-hidden="true">
+          <circle cx="55" cy="55" r="46" fill="none" stroke="var(--border2)" stroke-width="7"/>
+          <circle cx="55" cy="55" r="46" fill="none" stroke="${col}" stroke-width="7"
+            stroke-linecap="round" stroke-dasharray="${Math.round(circ)}" stroke-dashoffset="${off}"
+            transform="rotate(-90 55 55)"/>
+        </svg>
+        <div class="wellness-done-center">
+          <div style="font-size:38px;font-weight:500;color:${col};line-height:1">${Math.round(score)}</div>
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">readiness</div>
+        </div>
+      </div>
+      <div style="font-size:14px;font-weight:600;color:var(--text);text-align:center;margin-bottom:4px">${title}</div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:14px">Enviado al cuerpo técnico</div>
+    </div>
+    <div class="wellness-trend-box">
+      <div class="wellness-trend-title">
+        <span>Últimos días</span>
+        <span style="color:${deltaCol}">${deltaStr} vs ayer</span>
+      </div>
+      <div class="wellness-bars">${barsHtml}</div>
+    </div>
+    <div class="wellness-chips">${chips}</div>
+    <button onclick="switchTab('sesion')" style="width:100%;background:#e8142a;color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body)">Ver sesión de hoy</button>`;
+}
+
+// ── COACH READINESS DASHBOARD ─────────────────────────────────
+async function renderReadinessDashboard() {
+  const content = document.getElementById('readiness-content');
+  if (!content) return;
+  content.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const sqFilter = state.coachSquadFilter || '';
+  const res = await api({ action:'getWellnessEquipo' });
+  if (!res.ok) { content.innerHTML = '<div class="hist-empty">Error cargando datos de readiness.</div>'; return; }
+
+  const hoyStr = new Date().toISOString().slice(0,10);
+  document.getElementById('readiness-date-lbl').textContent = 'Hoy · ' + hoyStr.split('-').reverse().slice(0,2).join('/');
+
+  let equipo = res.equipo || [];
+  if (sqFilter) equipo = equipo.filter(j => j.squad && j.squad.toLowerCase() === sqFilter.toLowerCase());
+
+  const media      = res.mediaScore;
+  const alertas    = equipo.filter(j=>j.score!==null&&j.score<50).length;
+  const sinResp    = equipo.filter(j=>j.score===null).length;
+  const respondidos= equipo.filter(j=>j.score!==null).length;
+  const mediaCol   = media===null?'var(--muted)':media>=70?'var(--accent2)':media>=50?'#ffc04d':'var(--danger)';
+
+  // KPI row
+  const kpis = `<div class="kpi-row" style="margin-bottom:12px">
+    <div class="kpi-card"><div class="kpi-num" style="color:${mediaCol}">${media||'—'}</div><div class="kpi-lbl">FER medio</div></div>
+    <div class="kpi-card"><div class="kpi-num red">${alertas}</div><div class="kpi-lbl">Alertas</div></div>
+    <div class="kpi-card"><div class="kpi-num green">${respondidos}</div><div class="kpi-lbl">Respondido</div></div>
+    <div class="kpi-card"><div class="kpi-num amber">${sinResp}</div><div class="kpi-lbl">Sin resp.</div></div>
+  </div>`;
+
+  // Metric cell: colored background if bad/amber/good
+  function metricCell(val) {
+    if (val === null || val === undefined || val === '') return `<td style="text-align:center;color:var(--muted);font-size:12px">—</td>`;
+    const v   = parseFloat(val);
+    const col = v>=7 ? 'rgba(0,229,160,.12)'   : v>=5 ? 'rgba(255,192,77,.12)'   : 'rgba(232,20,42,.15)';
+    const tcl = v>=7 ? '#00e5a0'                : v>=5 ? '#ffc04d'                : '#ff7070';
+    const bold= v<5;
+    return `<td style="text-align:center;padding:6px 4px">
+      <div style="background:${col};border-radius:5px;padding:4px 6px;font-size:13px;font-weight:${bold?700:500};color:${tcl};min-width:28px;text-align:center">${v%1===0?v:v.toFixed(1)}</div>
+    </td>`;
+  }
+  function hoursCell(val) {
+    if (!val) return `<td style="text-align:center;color:var(--muted);font-size:12px">—</td>`;
+    const h   = parseFloat(val);
+    const col = h>=7&&h<=9?'rgba(0,229,160,.12)':h<6?'rgba(232,20,42,.15)':'rgba(255,192,77,.12)';
+    const tcl = h>=7&&h<=9?'#00e5a0':h<6?'#ff7070':'#ffc04d';
+    return `<td style="text-align:center;padding:6px 4px">
+      <div style="background:${col};border-radius:5px;padding:4px 6px;font-size:12px;font-weight:500;color:${tcl};text-align:center">${h%1===0?h:h.toFixed(1)}h</div>
+    </td>`;
+  }
+  function scoreCell(score, delta) {
+    if (score===null) return `<td style="text-align:center;color:var(--muted);font-size:12px">—</td>`;
+    const col = score>=70?'#00e5a0':score>=50?'#ffc04d':'#ff7070';
+    const deltaStr = delta!==null ? `<div style="font-size:9px;color:${delta>=0?'#00e5a0':'#ff7070'}">${delta>=0?'↑':'↓'}${Math.abs(delta)}</div>` : '';
+    return `<td style="text-align:center;padding:6px 4px">
+      <div style="font-size:16px;font-weight:700;color:${col}">${Math.round(score)}</div>${deltaStr}
+    </td>`;
+  }
+  function pesoCell(val) {
+    if (!val) return `<td style="text-align:center;color:var(--muted);font-size:12px">—</td>`;
+    return `<td style="text-align:center;font-size:12px;color:var(--text)">${val} kg</td>`;
+  }
+
+  const tableRows = equipo.map(j => {
+    const sc  = j.score;
+    const scCol = sc===null?'#7a8494':sc>=70?'#00e5a0':sc>=50?'#ffc04d':'#ff7070';
+    const today = j.today || {};
+    const initials = j.nombre.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+    return `<tr>
+      <td style="padding:6px 8px;white-space:nowrap;border-right:0.5px solid var(--border);position:sticky;left:0;background:var(--surface)">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="width:26px;height:26px;border-radius:50%;background:${scCol}22;border:1.5px solid ${scCol}66;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${scCol};flex-shrink:0">${initials}</div>
+          <div>
+            <div style="font-size:12px;font-weight:500;color:var(--text)">${j.nombre.split(',')[0]}</div>
+            ${j.rugbyposition?`<div style="font-size:9px;color:var(--muted)">${j.rugbyposition}</div>`:''}
+          </div>
+        </div>
+      </td>
+      ${scoreCell(sc, j.delta)}
+      ${metricCell(today.ganas_entrenar)}
+      ${metricCell(today.dolor)}
+      ${metricCell(today.fatiga)}
+      ${metricCell(today.calidad_sueno)}
+      ${hoursCell(today.horas_sueno)}
+      ${pesoCell(today.peso_corporal)}
+    </tr>`;
+  }).join('');
+
+  content.innerHTML = `
+    ${kpis}
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:0.5px solid var(--border)">
+      <table style="width:100%;border-collapse:collapse;min-width:520px;background:var(--surface)">
+        <thead>
+          <tr style="border-bottom:0.5px solid var(--border2)">
+            <th style="padding:8px 10px;text-align:left;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap;position:sticky;left:0;background:var(--surface2)">Jugador</th>
+            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">FER</th>
+            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Ganas</th>
+            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Dolor</th>
+            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Fatiga</th>
+            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Sueño</th>
+            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Horas</th>
+            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Peso</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows||`<tr><td colspan="8" style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Nadie ha respondido el cuestionario hoy todavía.</td></tr>`}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function onCoachSquadChangeReadiness() {
+  const sel = document.getElementById('coach-squad-filter-readiness');
+  state.coachSquadFilter = sel ? sel.value : '';
+  renderReadinessDashboard();
+}
 
 // ── LOGOUT ────────────────────────────────────────────────────
 function logout() {
