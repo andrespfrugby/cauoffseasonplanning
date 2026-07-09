@@ -1968,49 +1968,63 @@ function acwrStatusBadge(acwr) {
 
 // ── WELLNESS CALENDAR helper ──────────────────────────────────
 function buildWellnessCalendar(history, interactive) {
-  const now     = new Date();
-  const year    = now.getFullYear(), month = now.getMonth();
-  const hoyStr  = now.toISOString().slice(0,10);
+  const now      = new Date();
+  const year     = now.getFullYear(), month = now.getMonth();
+  const hoyStr   = now.toISOString().slice(0,10);
   const datesSet = new Set((history||[]).map(h=>h.fecha));
   const firstDay = new Date(year, month, 1);
   const startDow = (firstDay.getDay()+6)%7;
   const daysInMonth = new Date(year, month+1, 0).getDate();
   const monthName = firstDay.toLocaleDateString('es-ES',{month:'long'});
-  let cells = '';
+  // ONE unified grid: headers + padding + cells
+  const headers = ['L','M','X','J','V','S','D'].map(d=>
+    `<div style="font-size:8px;font-weight:600;color:var(--muted);text-align:center;padding:2px 0">${d}</div>`
+  ).join('');
+  let cells = headers;
   for(let i=0;i<startDow;i++) cells += `<div></div>`;
   for(let d=1;d<=daysInMonth;d++){
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const done    = datesSet.has(dateStr);
-    const isToday = dateStr===hoyStr;
-    const isFuture = dateStr > hoyStr;
-    const bg   = done?'rgba(0,229,160,.15)':isToday?'rgba(232,20,42,.1)':'var(--surface2)';
-    const col  = done?'#00e5a0':isToday?'var(--accent)':'var(--muted)';
-    const bord = done?'rgba(0,229,160,.4)':isToday?'rgba(232,20,42,.35)':'var(--border)';
-    const fw   = (done||isToday)?600:400;
-    const cnt  = done?'✓':String(d);
-    // Interactive: past days without wellness can be clicked to fill
+    const dateStr  = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const done     = datesSet.has(dateStr);
+    const isToday  = dateStr===hoyStr;
+    const isFuture = dateStr>hoyStr;
+    const bg  = done?'rgba(0,229,160,.15)':isToday?'rgba(232,20,42,.1)':'var(--surface2)';
+    const col = done?'#00e5a0':isToday?'var(--accent)':'var(--muted)';
+    const brd = done?'1.5px solid rgba(0,229,160,.5)':isToday?'1.5px solid rgba(232,20,42,.4)':'1px solid var(--border)';
+    const fw  = (done||isToday)?700:400;
+    const cnt = done?'&#10003;':String(d);
     const clickable = interactive && !done && !isFuture;
-    const style = `aspect-ratio:1;border-radius:50%;background:${bg};border:1.5px solid ${bord};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:${fw};color:${col};transition:all .15s${clickable?';cursor:pointer':''}`;
-    const onclick = clickable ? `onclick="wellnessSelectDate('${dateStr}')" title="Registrar readiness del ${d}"` : '';
-    cells += `<div style="${style}" ${onclick}>${cnt}</div>`;
+    const extras = clickable ? `onclick="wellnessSelectDate('${dateStr}')" title="Registrar readiness del ${d}" style="aspect-ratio:1;border-radius:50%;background:${bg};border:${brd};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:${fw};color:${col};cursor:pointer;transition:all .15s"` : `style="aspect-ratio:1;border-radius:50%;background:${bg};border:${brd};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:${fw};color:${col};transition:all .15s"`;
+    cells += `<div ${extras}>${cnt}</div>`;
   }
-  const dayHds = ['L','M','X','J','V','S','D'].map(d=>`<div style="font-size:8px;font-weight:600;color:var(--muted);text-align:center">${d}</div>`).join('');
-  const hint = interactive ? `<div style="font-size:9px;color:var(--muted);margin-top:6px;text-align:center">Toca un día pasado para registrar el readiness de ese día</div>` : '';
+  const hint = interactive ? `<div style="font-size:9px;color:var(--muted);margin-top:8px;text-align:center">Toca un día pasado para registrar ese día</div>` : '';
   return `<div class="wellness-trend-box" style="margin-bottom:10px">
     <div class="wellness-trend-title">
-      <span style="text-transform:capitalize">${monthName} ${year}</span>
+      <span style="text-transform:capitalize;font-weight:500">${monthName} ${year}</span>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:50%;background:rgba(0,229,160,.6)"></div>enviado</div>
         <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:50%;background:rgba(232,20,42,.5)"></div>hoy</div>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px">${dayHds}</div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">${cells}</div>
     ${hint}
   </div>`;
 }
 
-// Fill wellness for a past date
+// ── WELLNESS SELECT DATE (fill past day) ────────────────────
+function wellnessSelectDate(dateStr) {
+  _wellnessState = { cur:1, vals:{1:null,2:null,3:null,4:null}, hrs:null, peso:'', _targetDate: dateStr };
+  const content = document.getElementById('wellness-content');
+  if (!content) return;
+  const d = dateStr.split('-');
+  content.innerHTML = `<div style="background:rgba(232,20,42,.08);border:0.5px solid rgba(232,20,42,.25);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--accent);display:flex;align-items:center;gap:8px">
+    <span>&#128197;</span><span>Registrando readiness del <strong>${d[2]}/${d[1]}/${d[0]}</strong></span>
+  </div>`;
+  const formWrap = document.createElement('div');
+  content.appendChild(formWrap);
+  renderWellnessQuestion(formWrap, 1);
+}
+
+
 function wellnessSelectDate(dateStr) {
   _wellnessState = { cur:1, vals:{1:null,2:null,3:null,4:null}, hrs:null, peso:'', targetDate: dateStr };
   const content = document.getElementById('wellness-content');
@@ -5610,24 +5624,6 @@ function renderWellnessDone(container, entry, history) {
   const circ   = 2*Math.PI*46;
   const off    = Math.round(circ*(1-score/100));
 
-  // Trend bars from history (last 7 entries)
-  const hist7 = (history||[]).slice(-7);
-  const maxS   = Math.max(...hist7.map(h=>parseFloat(h.readiness_score||0)), score, 1);
-  const days   = ['L','M','X','J','V','S','D'];
-  const barsHtml = hist7.map((h,i)=>{
-    const s=parseFloat(h.readiness_score||0);
-    const c=s>=70?'#00e5a0':s>=50?'#ffc04d':'#ff7070';
-    const isLast=i===hist7.length-1;
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px">
-      <span style="font-size:8px;color:${isLast?c:'var(--muted)'};font-weight:${isLast?600:400}">${Math.round(s)}</span>
-      <div style="width:100%;height:${Math.round(s/maxS*30)}px;background:${isLast?c:'rgba(255,255,255,.12)'};border-radius:2px 2px 0 0;${isLast?'outline:2px solid '+c+';outline-offset:1px':''}"></div>
-    </div>`;
-  }).join('');
-  const prevScore = hist7.length>=2 ? parseFloat(hist7[hist7.length-2]?.readiness_score||0) : null;
-  const delta = prevScore!==null ? Math.round(score-prevScore) : null;
-  const deltaStr = delta!==null ? (delta>=0?'+':'')+delta : '—';
-  const deltaCol = delta===null?'var(--muted)':delta>=0?'#00e5a0':'#ff7070';
-
   const chips = [
     entry.ganas_entrenar ? `Ganas ${entry.ganas_entrenar}/10`:'',
     entry.dolor          ? `Dolor ${entry.dolor}/10`:'',
@@ -5638,7 +5634,7 @@ function renderWellnessDone(container, entry, history) {
   ].filter(Boolean).map(c=>`<div class="wchip">${c}</div>`).join('');
 
   container.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0 8px">
+    <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0 12px">
       <div class="wellness-done-ring" style="margin-bottom:10px">
         <svg width="110" height="110" viewBox="0 0 110 110" aria-hidden="true">
           <circle cx="55" cy="55" r="46" fill="none" stroke="var(--border2)" stroke-width="7"/>
@@ -5652,18 +5648,11 @@ function renderWellnessDone(container, entry, history) {
         </div>
       </div>
       <div style="font-size:14px;font-weight:600;color:var(--text);text-align:center;margin-bottom:4px">${title}</div>
-      <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:14px">Enviado al cuerpo técnico</div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px">Enviado al cuerpo técnico</div>
     </div>
-    <div class="wellness-trend-box">
-      <div class="wellness-trend-title">
-        <span>Últimos días</span>
-        <span style="color:${deltaCol}">${deltaStr} vs ayer</span>
-      </div>
-      <div class="wellness-bars">${barsHtml}</div>
-    </div>
+    ${chips ? `<div class="wellness-chips" style="margin-bottom:14px">${chips}</div>` : ''}
     ${buildWellnessCalendar(history, true)}
-    <div class="wellness-chips">${chips}</div>
-    <button onclick="switchTab('sesion')" style="width:100%;background:#e8142a;color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);margin-top:8px">Ver sesión de hoy</button>`;
+    <button onclick="switchTab('sesion')" style="width:100%;background:#e8142a;color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);margin-top:10px">Ver sesión de hoy</button>`;
 }
 
 // ── COACH READINESS DASHBOARD ─────────────────────────────────
@@ -5786,74 +5775,103 @@ async function renderReadinessDashboard() {
 }
 
 // ── WELLNESS PLAYER MODAL (coach) ────────────────────────────
-// Abre el modal original del jugador (RPE + cargas) y añade sección wellness arriba
 async function openWellnessPlayerModal(usuario, nombre) {
-  // 1. Open original modal (RPE + loads history) — this is the existing system
-  await openPlayerModal(usuario, nombre);
-
-  // 2. Fetch wellness history and prepend to modal body
+  // Open the modal overlay and set header
+  if (!state.coachEquipo || !state.coachEquipo.length) {
+    const eq = await api({ action:'getEquipo', semana: realSemanaIdx() });
+    if (eq.ok) state.coachEquipo = eq.equipo || [];
+  }
+  const jData = state.coachEquipo.find(j => j.usuario === usuario) || {};
+  const avLetter = nombre.split(',')[0][0] || '?';
+  document.getElementById('pm-avatar').textContent = avLetter;
+  document.getElementById('pm-name').textContent   = nombre;
+  const subParts = [jData.rugbyposition || jData.posicion, jData.squad].filter(Boolean);
+  document.getElementById('pm-sub').innerHTML = subParts.map(p =>
+    `<span style="background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:1px 7px;font-size:10px">${p}</span>`
+  ).join('');
   const pmBody = document.getElementById('pm-body');
-  if (!pmBody) return;
-  const wellRes = await api({ action:'getWellness', usuario, dias:14 });
-  if (!wellRes.ok || !wellRes.wellness || !wellRes.wellness.length) return;
+  pmBody.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando...</div>';
+  document.getElementById('player-modal-overlay').classList.add('open');
 
-  const hist = wellRes.wellness.slice(-14);
-  const W_COLS = ['','#ff7070','#ff7070','#ff7070','#ffc04d','#ffc04d','#ffc04d','#00e5a0','#00e5a0','#00e5a0','#00e5a0'];
+  // Fetch both in parallel
+  const [wellRes, histRes] = await Promise.all([
+    api({ action:'getWellness', usuario, dias:30 }),
+    api({ action:'getHistorial', usuario })
+  ]);
 
-  // Score sparkline
-  const maxSc = Math.max(...hist.map(h=>parseFloat(h.readiness_score||0)), 1);
-  const sparkBars = hist.map((h,i) => {
-    const s = parseFloat(h.readiness_score||0);
-    const col = s>=70?'#00e5a0':s>=50?'#ffc04d':'#ff7070';
-    const hh = Math.max(4, Math.round((s/maxSc)*44));
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
-      <span style="font-size:7px;color:${col}">${Math.round(s)}</span>
-      <div style="width:100%;height:${hh}px;background:${col};border-radius:2px 2px 0 0;opacity:${i===hist.length-1?1:0.65}"></div>
+  const hist7    = (wellRes.ok && wellRes.wellness) ? wellRes.wellness.slice(-14) : [];
+  const lastW    = hist7[hist7.length-1];
+  const scoreHoy = lastW ? parseFloat(lastW.readiness_score||0) : null;
+  const scoreCol = scoreHoy===null?'var(--muted)':scoreHoy>=70?'#00e5a0':scoreHoy>=50?'#ffc04d':'#ff7070';
+  const W_COLS   = ['','#ff7070','#ff7070','#ff7070','#ffc04d','#ffc04d','#ffc04d','#00e5a0','#00e5a0','#00e5a0','#00e5a0'];
+
+  // ── Readiness tab content ──
+  const chips7 = lastW ? ['ganas_entrenar','dolor','fatiga','calidad_sueno','horas_sueno'].map(k=>{
+    const v=parseFloat(lastW[k]); if(isNaN(v)) return '';
+    const isH=k==='horas_sueno';
+    const c=isH?(v>=7&&v<=9?'#00e5a0':v<6?'#ff7070':'#ffc04d'):(W_COLS[Math.round(v)]||'#ffc04d');
+    const lbl={'ganas_entrenar':'Ganas','dolor':'Dolor','fatiga':'Fatiga','calidad_sueno':'Sueño','horas_sueno':'Horas'}[k];
+    return `<div style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:7px;padding:5px 8px;text-align:center">
+      <div style="font-size:13px;font-weight:600;color:${c}">${v%1===0?v:v.toFixed(1)}${isH?'h':''}</div>
+      <div style="font-size:8px;color:var(--muted)">${lbl}</div>
     </div>`;
-  }).join('');
-  const dateLbls = hist.map(h=>`<div style="flex:1;font-size:7px;color:var(--muted);text-align:center">${h.fecha.slice(5)}</div>`).join('');
+  }).filter(Boolean).join('') : '';
 
-  // Last entry summary chips
-  const last = hist[hist.length-1];
-  const chipDefs = [
-    { k:'ganas_entrenar', l:'Ganas' },
-    { k:'dolor',          l:'Dolor' },
-    { k:'fatiga',         l:'Fatiga' },
-    { k:'calidad_sueno',  l:'Sueño' },
-    { k:'horas_sueno',    l:'Horas' },
-  ];
-  const chips = chipDefs.map(d => {
-    const v = parseFloat(last[d.k]);
-    if (isNaN(v)) return '';
-    const isHrs = d.k==='horas_sueno';
-    const col = isHrs?(v>=7&&v<=9?'#00e5a0':v<6?'#ff7070':'#ffc04d'):(W_COLS[Math.round(v)]||'#ffc04d');
-    return `<div style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;padding:4px 8px;text-align:center">
-      <div style="font-size:12px;font-weight:600;color:${col}">${v%1===0?v:v.toFixed(1)}${isHrs?'h':''}</div>
-      <div style="font-size:8px;color:var(--muted)">${d.l}</div>
-    </div>`;
-  }).filter(Boolean).join('');
+  const weightChart = buildWeightChart((wellRes.ok&&wellRes.wellness ? wellRes.wellness.filter(h=>h.peso_corporal&&parseFloat(h.peso_corporal)>0) : []), 240, 52);
 
-  // Weight chart (shared builder — works with 1+ entries)
-  const weightChart = buildWeightChart(
-    hist.filter(h=>h.peso_corporal&&parseFloat(h.peso_corporal)>0), 240, 52
-  );
-
-  const scoreHoy = parseFloat(last.readiness_score||0);
-  const scoreCol = scoreHoy>=70?'#00e5a0':scoreHoy>=50?'#ffc04d':'#ff7070';
-  const wellnessSection = `<div style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:10px;padding:12px;margin-bottom:14px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">Readiness · últimos ${hist.length} días</div>
-      <div style="font-size:18px;font-weight:700;color:${scoreCol}">${Math.round(scoreHoy)} <span style="font-size:10px;font-weight:400;color:var(--muted)">hoy</span></div>
+  const readinessTab = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="width:54px;height:54px;flex-shrink:0">
+        <svg width="54" height="54" viewBox="0 0 54 54">
+          <circle cx="27" cy="27" r="22" fill="none" stroke="var(--border2)" stroke-width="5"/>
+          <circle cx="27" cy="27" r="22" fill="none" stroke="${scoreCol}" stroke-width="5"
+            stroke-linecap="round" stroke-dasharray="${Math.round(2*Math.PI*22)}"
+            stroke-dashoffset="${scoreHoy!==null?Math.round(2*Math.PI*22*(1-scoreHoy/100)):Math.round(2*Math.PI*22)}"
+            transform="rotate(-90 27 27)"/>
+        </svg>
+        <div style="position:relative;top:-38px;text-align:center;font-size:15px;font-weight:700;color:${scoreCol}">${scoreHoy!==null?Math.round(scoreHoy):'—'}</div>
+      </div>
+      <div style="flex:1;display:flex;gap:5px;flex-wrap:wrap">${chips7||'<span style="font-size:12px;color:var(--muted)">Sin datos hoy</span>'}</div>
     </div>
-    <div style="display:flex;align-items:flex-end;gap:2px;height:56px;margin-bottom:3px">${sparkBars}</div>
-    <div style="display:flex;gap:2px;margin-bottom:10px">${dateLbls}</div>
-    <div style="display:flex;gap:5px;flex-wrap:wrap">${chips}</div>
-    ${weightChart}
-  </div>`;
+    ${weightChart}`;
 
-  // Guard: prevent double-prepend if called twice
-  if (pmBody.innerHTML.includes('Readiness ·')) return;
-  pmBody.innerHTML = wellnessSection + pmBody.innerHTML;
+  // ── Entrenamientos tab content ──
+  const rpeHist = histRes.ok && histRes.historial ? histRes.historial.filter(h=>h.ejercicio==='RPE_GLOBAL'&&h.rpe).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha)) : [];
+  const sparkBars = rpeHist.slice(-12).map(h=>{
+    const col = parseFloat(h.rpe)<=5?'#00e5a0':parseFloat(h.rpe)<=7?'#ffc04d':'#ff7070';
+    const hh = Math.max(4,Math.round((h.rpe/10)*36));
+    return `<div style="flex:1;height:${hh}px;background:${col};border-radius:2px 2px 0 0;align-self:flex-end;opacity:.8" title="RPE ${h.rpe}"></div>`;
+  }).join('');
+  const avgRpe = rpeHist.length ? Math.round((rpeHist.slice(-7).reduce((s,h)=>s+parseFloat(h.rpe),0)/Math.min(rpeHist.length,7))*10)/10 : null;
+
+  const entrTab = `
+    <div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">RPE evolución</div>
+        ${avgRpe!==null?`<div style="font-size:13px;font-weight:600;color:#ffc04d">Media 7d: ${avgRpe}</div>`:''}
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:2px;height:40px;background:var(--surface2);border-radius:6px;padding:4px 6px">${sparkBars||'<span style="font-size:11px;color:var(--muted);margin:auto">Sin sesiones registradas</span>'}</div>
+    </div>
+    <button onclick="openPlayerModalWithSemana('${usuario.replace(/'/g,"\\'")}','${nombre.replace(/'/g,"\\'")}',null)" style="width:100%;background:var(--surface2);border:0.5px solid var(--border2);border-radius:8px;padding:9px;font-size:12px;font-weight:500;color:var(--text);cursor:pointer;font-family:var(--font-body)">Ver cargas y sesiones completas →</button>`;
+
+  pmBody.innerHTML = `
+    <div style="display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:14px">
+      <button id="pm-tab-r" onclick="pmSwitchTab('r')" style="flex:1;padding:9px;border:none;border-bottom:2px solid var(--accent);background:none;font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;font-family:var(--font-body)">Readiness</button>
+      <button id="pm-tab-e" onclick="pmSwitchTab('e')" style="flex:1;padding:9px;border:none;border-bottom:2px solid transparent;background:none;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;font-family:var(--font-body)">Entrenamientos</button>
+    </div>
+    <div id="pm-content-r">${readinessTab}</div>
+    <div id="pm-content-e" style="display:none">${entrTab}</div>`;
+}
+
+function pmSwitchTab(t) {
+  document.getElementById('pm-content-r').style.display = t==='r'?'':'none';
+  document.getElementById('pm-content-e').style.display = t==='e'?'':'none';
+  document.getElementById('pm-tab-r').style.borderBottomColor = t==='r'?'var(--accent)':'transparent';
+  document.getElementById('pm-tab-e').style.borderBottomColor = t==='e'?'var(--accent)':'transparent';
+  document.getElementById('pm-tab-r').style.color = t==='r'?'var(--accent)':'var(--muted)';
+  document.getElementById('pm-tab-r').style.fontWeight = t==='r'?'600':'500';
+  document.getElementById('pm-tab-e').style.color = t==='e'?'var(--accent)':'var(--muted)';
+  document.getElementById('pm-tab-e').style.fontWeight = t==='e'?'600':'500';
 }
 
 function onCoachSquadChangeReadiness() {
