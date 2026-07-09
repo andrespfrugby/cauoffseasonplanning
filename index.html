@@ -1023,7 +1023,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   align-items:flex-start; justify-content:center;
   padding:1.5rem 1rem; overflow-y:auto;
 }
-.player-modal-overlay.open { display:flex; }
+.player-modal-overlay.open { display:flex; pointer-events:all; }
+.player-modal-overlay.open ~ * { pointer-events:none; }
 .player-modal {
   width:100%; max-width:680px;
   background:var(--surface); border:1px solid var(--border2);
@@ -5036,6 +5037,7 @@ function toggleTick(cardId) {
 function closePlayerModal(e) {
   if (e && e.target !== document.getElementById('player-modal-overlay')) return;
   document.getElementById('player-modal-overlay').classList.remove('open');
+  state._wellnessModalLoading = false;
 }
 document.addEventListener('keydown', e => { if(e.key==='Escape') { closeVideoModal(); closePlayerModal(); } });
 
@@ -5776,6 +5778,9 @@ async function renderReadinessDashboard() {
 
 // ── WELLNESS PLAYER MODAL (coach) ────────────────────────────
 async function openWellnessPlayerModal(usuario, nombre) {
+  // Guard: prevent double-open race condition
+  if (state._wellnessModalLoading) return;
+  state._wellnessModalLoading = true;
   // Open the modal overlay and set header
   if (!state.coachEquipo || !state.coachEquipo.length) {
     const eq = await api({ action:'getEquipo', semana: realSemanaIdx() });
@@ -5861,6 +5866,8 @@ async function openWellnessPlayerModal(usuario, nombre) {
     </div>
     <div id="pm-content-r">${readinessTab}</div>
     <div id="pm-content-e" style="display:none">${entrTab}</div>`;
+
+  state._wellnessModalLoading = false;
 }
 
 function pmSwitchTab(t) {
