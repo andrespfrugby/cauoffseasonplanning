@@ -1729,7 +1729,11 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   <!-- ══ BOTTOM NAV ══ -->
   <nav class="bottom-nav" id="bottom-nav">
     <!-- jugador -->
-    <div class="bn-item active" id="bn-sesion" onclick="switchTab('sesion')" style="display:none">
+    <div class="bn-item active" id="bn-wellness" onclick="switchTab('wellness')" style="display:none">
+      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+      <div class="bn-lbl">Readiness</div>
+    </div>
+    <div class="bn-item" id="bn-sesion" onclick="switchTab('sesion')" style="display:none">
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
       <div class="bn-lbl">Session</div>
     </div>
@@ -1737,15 +1741,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="4" height="8" rx="1"/><rect x="9.5" y="7" width="4" height="13" rx="1"/><rect x="16" y="3" width="4" height="17" rx="1"/></svg></div>
       <div class="bn-lbl">Stats</div>
     </div>
-    <div class="bn-item" id="bn-wellness" onclick="switchTab('wellness')" style="display:none">
-      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-      <div class="bn-lbl">Readiness</div>
-    </div>
     <!-- coach -->
     <div class="bn-item" id="bn-readiness" onclick="switchTab('readiness')" style="display:none">
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
       <div class="bn-lbl">Readiness</div>
     </div>
+    <div class="bn-item" id="bn-jugadores" onclick="switchTab('jugadores')" style="display:none">
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3.5"/><path d="M1 21v-1.5A5.5 5.5 0 0 1 6.5 14h3A5.5 5.5 0 0 1 15 19.5V21"/><circle cx="17" cy="7" r="3"/><path d="M23 21v-1a4 4 0 0 0-3-3.87"/></svg></div>
       <div class="bn-lbl">Squad</div>
     </div>
@@ -2936,26 +2937,24 @@ const PLAYER_TABS = ['sesion','misemana'];
 const COACH_TABS  = ['jugadores','rpe','reports','sesion'];
 
 function initNav() {
+  // All nav items — hide all first
+  const allNavIds = ['bn-sesion','bn-misemana','bn-wellness','bn-readiness','bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-settings'];
+  allNavIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+
   if (state.isCoach) {
-    ['bn-readiness','bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-settings'].forEach(id => {
+    // Coach: Readiness · Load · Reports · Session · Settings (NO Squad)
+    ['bn-readiness','bn-rpe','bn-reports','bn-sesion-coach','bn-settings'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
-    });
-    ['bn-sesion','bn-misemana','bn-wellness'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
     });
     switchTab('readiness');
   } else {
-    ['bn-sesion','bn-misemana','bn-wellness'].forEach(id => {
+    // Player: Readiness · Session · Stats
+    ['bn-wellness','bn-sesion','bn-misemana'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
-    ['bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-readiness'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
-    });
-    switchTab('sesion');
+    switchTab('wellness');
   }
 }
 
@@ -5538,7 +5537,7 @@ async function renderReadinessDashboard() {
     const col = h>=7&&h<=9?'rgba(0,229,160,.12)':h<6?'rgba(232,20,42,.15)':'rgba(255,192,77,.12)';
     const tcl = h>=7&&h<=9?'#00e5a0':h<6?'#ff7070':'#ffc04d';
     return `<td style="text-align:center;padding:6px 4px">
-      <div style="background:${col};border-radius:5px;padding:4px 6px;font-size:12px;font-weight:500;color:${tcl};text-align:center">${h%1===0?h:h.toFixed(1)}h</div>
+      <div style="background:${col};border-radius:5px;padding:4px 6px;font-size:12px;font-weight:500;color:${tcl};text-align:center">${h%1===0?h:h.toFixed(1)}</div>
     </td>`;
   }
   function scoreCell(score, delta) {
@@ -5559,13 +5558,22 @@ async function renderReadinessDashboard() {
     const scCol = sc===null?'#7a8494':sc>=70?'#00e5a0':sc>=50?'#ffc04d':'#ff7070';
     const today = j.today || {};
     const initials = j.nombre.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+    // Mini trend bars from 7-day history
+    const trendBarsHtml = (j.trend||[]).map(v => {
+      if (v===null) return `<div style="width:3px;height:4px;border-radius:1px;background:rgba(255,255,255,.1);align-self:flex-end"></div>`;
+      const bc = v>=70?'#00e5a0':v>=50?'#ffc04d':'#ff7070';
+      const bh = Math.max(3,Math.round((v/100)*14));
+      return `<div style="width:3px;height:${bh}px;border-radius:1px;background:${bc};align-self:flex-end"></div>`;
+    }).join('');
     return `<tr>
       <td style="padding:6px 8px;white-space:nowrap;border-right:0.5px solid var(--border);position:sticky;left:0;background:var(--surface)">
         <div style="display:flex;align-items:center;gap:7px">
           <div style="width:26px;height:26px;border-radius:50%;background:${scCol}22;border:1.5px solid ${scCol}66;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${scCol};flex-shrink:0">${initials}</div>
           <div>
             <div style="font-size:12px;font-weight:500;color:var(--text)">${j.nombre.split(',')[0]}</div>
-            ${j.rugbyposition?`<div style="font-size:9px;color:var(--muted)">${j.rugbyposition}</div>`:''}
+            <div style="display:flex;align-items:flex-end;gap:2px;height:16px;margin-top:2px">
+              ${trendBarsHtml||`<span style="font-size:9px;color:var(--muted)">${j.rugbyposition||''}</span>`}
+            </div>
           </div>
         </div>
       </td>
@@ -5586,7 +5594,7 @@ async function renderReadinessDashboard() {
         <thead>
           <tr style="border-bottom:0.5px solid var(--border2)">
             <th style="padding:8px 10px;text-align:left;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap;position:sticky;left:0;background:var(--surface2)">Jugador</th>
-            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">FER</th>
+            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Score</th>
             <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Ganas</th>
             <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Dolor</th>
             <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Fatiga</th>
