@@ -1966,6 +1966,46 @@ function acwrStatusBadge(acwr) {
   return '<span class="form-badge fb-risk">⚠ riesgo</span>';
 }
 
+// ── WELLNESS CALENDAR helper ──────────────────────────────────
+function buildWellnessCalendar(history) {
+  const now     = new Date();
+  const year    = now.getFullYear(), month = now.getMonth();
+  const hoyStr  = now.toISOString().slice(0,10);
+  // Set of dates with wellness submitted
+  const datesSet = new Set((history||[]).map(h=>h.fecha));
+  // First day of month
+  const firstDay = new Date(year, month, 1);
+  const startDow = (firstDay.getDay()+6)%7; // 0=Mon
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const monthName = firstDay.toLocaleDateString('es-ES',{month:'long'});
+  // Build cells
+  let cells = '';
+  // Empty cells before start
+  for(let i=0;i<startDow;i++) cells += `<div></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const done    = datesSet.has(dateStr);
+    const isToday = dateStr===hoyStr;
+    const bg   = done?'rgba(0,229,160,.15)':isToday?'rgba(232,20,42,.1)':'var(--surface2)';
+    const col  = done?'#00e5a0':isToday?'var(--accent)':'var(--muted)';
+    const bord = done?'rgba(0,229,160,.4)':isToday?'rgba(232,20,42,.35)':'var(--border)';
+    const fw   = (done||isToday)?600:400;
+    cells += `<div style="aspect-ratio:1;border-radius:5px;background:${bg};border:0.5px solid ${bord};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:${fw};color:${col}">${d}</div>`;
+  }
+  const dayHds = ['L','M','X','J','V','S','D'].map(d=>`<div style="font-size:8px;font-weight:600;color:var(--muted);text-align:center">${d}</div>`).join('');
+  return `<div class="wellness-trend-box" style="margin-bottom:10px">
+    <div class="wellness-trend-title">
+      <span style="text-transform:capitalize">${monthName} ${year}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:rgba(0,229,160,.4)"></div>enviado</div>
+        <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:rgba(232,20,42,.3)"></div>hoy</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px">${dayHds}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${cells}</div>
+  </div>`;
+}
+
 // ── PUNTO DE ENTRADA ─────────────────────────────────────────
 (async function init() {
   const saved = sessionLoad();
@@ -2647,13 +2687,14 @@ async function saveSession() {
 async function renderWeekSummary() {
   const container = document.getElementById('week-summary-box');
   if (!container) return;
-  const mode = _wsummMode || 'semana';
-  const semStr = String(state.semana);
+  const mode   = _wsummMode || 'semana';
+  const semStr = String(realSemanaIdx()); // ← real sheet index, matches what saveRegistro stores
 
-  const [resRpe, resCarga, resEquipo] = await Promise.all([
+  const [resRpe, resCarga, resEquipo, resWellness] = await Promise.all([
     api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' }),
     api({ action:'getHistorial', usuario:state.user.usuario }),
-    api({ action:'getEquipo', semana:state.semana })
+    api({ action:'getEquipo', semana:realSemanaIdx() }),
+    api({ action:'getWellness', usuario:state.user.usuario, dias:60 })
   ]);
 
   if (!resRpe.ok || !resRpe.historial) return;
@@ -2822,13 +2863,13 @@ async function renderWeekSummary() {
       return { nombre: j.nombre, usuario: j.usuario, comp };
     }).sort((a,b) => b.comp - a.comp);
 
-    const top3   = ranked.slice(0, 3);
+    const top5   = ranked.slice(0, 5);
     const myRank = ranked.findIndex(j => j.usuario === state.user.usuario) + 1;
     const myData = ranked.find(j => j.usuario === state.user.usuario);
     const rowColor = c => c >= 80 ? '#00e5a0' : c >= 50 ? '#ffc04d' : '#ff7070';
     const avInitials = n => n.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
 
-    const topRows = top3.map((j, idx) => {
+    const topRows = top5.map((j, idx) => {
       const isMe = j.usuario === state.user.usuario;
       const col  = rowColor(j.comp);
       return `<div class="wsumm-rank-row${isMe?' me':''}">
@@ -2842,7 +2883,7 @@ async function renderWeekSummary() {
       </div>`;
     }).join('');
 
-    const myRow = myRank > 3 && myData ? `
+    const myRow = myRank > 5 && myData ? `
       <div class="wsumm-rank-sep"></div>
       <div class="wsumm-rank-row me">
         <div class="wsumm-rank-pos me-pos">#${myRank}</div>
@@ -2854,7 +2895,7 @@ async function renderWeekSummary() {
         </div>
       </div>` : '';
 
-    const tercero    = top3[2];
+    const tercero    = top5[2];
     const terceroNom = tercero ? tercero.nombre.split(',')[0] : '';
     const gapDays    = tercero ? Math.max(0, Math.ceil((tercero.comp * diasTrans2 / 100) - totalDias)) : 0;
 
@@ -2899,6 +2940,49 @@ async function renderWeekSummary() {
     </div>`;
   }
 
+  // ── Evolución peso corporal ─────────────────────────────────
+  let weightChartHtml = '';
+  if (resWellness.ok && resWellness.wellness) {
+    const pesoData = resWellness.wellness.filter(h=>h.peso_corporal&&parseFloat(h.peso_corporal)>0);
+    if (pesoData.length >= 2) {
+      const pesos = pesoData.map(h=>parseFloat(h.peso_corporal));
+      const minP=Math.min(...pesos)-0.5, maxP=Math.max(...pesos)+0.5;
+      const W=260, H=48;
+      const tx=i=>Math.round((i/(pesoData.length-1))*W);
+      const ty=v=>Math.round(H-((v-minP)/(maxP-minP))*(H-8)-4);
+      const pts=pesoData.map((h,i)=>`${tx(i)},${ty(parseFloat(h.peso_corporal))}`).join(' ');
+      const dots=pesoData.map((h,i)=>{
+        const x=tx(i), y=ty(parseFloat(h.peso_corporal));
+        return `<circle cx="${x}" cy="${y}" r="3.5" fill="#7bb8ff"/>`;
+      }).join('');
+      const lastPeso = pesos[pesos.length-1];
+      const firstPeso = pesos[0];
+      const diff = Math.round((lastPeso-firstPeso)*10)/10;
+      const diffStr = diff>0?'+'+diff:String(diff);
+      const diffCol = Math.abs(diff)<1?'var(--muted)':diff>0?'#ff7070':'#00e5a0';
+      weightChartHtml = `
+        <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-top:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Evolución peso</div>
+            <div style="font-size:13px;font-weight:700;color:#7bb8ff">${lastPeso} kg <span style="font-size:11px;color:${diffCol}">(${diffStr} kg)</span></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-bottom:3px">
+            <span>${pesoData[0].fecha.slice(5)}</span><span>${pesoData[pesoData.length-1].fecha.slice(5)}</span>
+          </div>
+          <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;display:block">
+            <polyline points="${pts}" fill="none" stroke="#7bb8ff" stroke-width="1.5" stroke-linejoin="round" opacity=".6"/>
+            ${dots}
+          </svg>
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:2px">
+            <span>${Math.min(...pesos).toFixed(1)} kg</span><span>${Math.max(...pesos).toFixed(1)} kg</span>
+          </div>
+        </div>`;
+    }
+  }
+
+  // ── Calendario wellness ─────────────────────────────────────
+  const wellnessCal = resWellness.ok ? buildWellnessCalendar(resWellness.wellness||[]) : '';
+
   const nombre   = state.user.nombre || '';
   const initials = nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
   const squadTag = state.squad ? `<span class="wsumm-squad-tag">${state.squad}</span>` : '';
@@ -2926,6 +3010,8 @@ async function renderWeekSummary() {
       </div>
       ${daysSection}
       ${rankingHtml}
+      ${weightChartHtml}
+      ${wellnessCal}
     </div>`;
   container.style.display = 'block';
 }
@@ -4891,7 +4977,11 @@ function closePlayerModal(e) {
 document.addEventListener('keydown', e => { if(e.key==='Escape') { closeVideoModal(); closePlayerModal(); } });
 
 async function openPlayerModal(usuario, nombre) {
-  // Buscar datos del jugador en state
+  // Ensure coachEquipo is loaded (may be empty if coming from Readiness without visiting Squad)
+  if (!state.coachEquipo || !state.coachEquipo.length) {
+    const eq = await api({ action:'getEquipo', semana: realSemanaIdx() });
+    if (eq.ok) state.coachEquipo = eq.equipo || [];
+  }
   const jData = state.coachEquipo.find(j => j.usuario === usuario) || {};
   // Header
   document.getElementById('pm-avatar').textContent = nombre.split(',')[0][0] || '?';
@@ -4918,9 +5008,9 @@ async function openPlayerModal(usuario, nombre) {
     .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
 
   // ── Semanas disponibles (para el selector) ─────────────────
+  // Semanas con cualquier registro (RPE_GLOBAL incluido)
   const semanasDisp = [...new Set(
-    hist.filter(h => h.ejercicio !== 'RPE_GLOBAL' && h.carga)
-        .map(h => String(h.semana).trim())
+    hist.filter(h => h.semana).map(h => String(h.semana).trim())
   )].sort((a,b) => parseInt(a)-parseInt(b));
 
   // ── Estado del modal en closure ─────────────────────────────
@@ -5077,9 +5167,9 @@ async function openPlayerModalWithSemana(usuario, nombre, forceSemana) {
     .filter(h => h.ejercicio === 'RPE_GLOBAL' && h.rpe)
     .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
 
+  // Semanas con cualquier registro (RPE_GLOBAL incluido)
   const semanasDisp = [...new Set(
-    hist.filter(h => h.ejercicio !== 'RPE_GLOBAL' && h.carga)
-        .map(h => String(h.semana).trim())
+    hist.filter(h => h.semana).map(h => String(h.semana).trim())
   )].sort((a,b) => parseInt(a)-parseInt(b));
 
   const selSemana = forceSemana || semanasDisp[semanasDisp.length-1] || '';
@@ -5134,6 +5224,30 @@ async function openPlayerModalWithSemana(usuario, nombre, forceSemana) {
     ? hist.find(h => String(h.semana).trim() === selSemana && h.ejercicio === 'RPE_GLOBAL')
     : null;
 
+  // ── Asistencia esta semana (por fechas de calendario) ──────
+  const hoy = new Date();
+  const dow  = hoy.getDay(); // 0=sun
+  const lun  = new Date(hoy); lun.setDate(hoy.getDate() - (dow===0?6:dow-1)); lun.setHours(0,0,0,0);
+  const dayLabels = ['L','M','X','J','V','S','D'];
+  const weekDays = dayLabels.map((lbl,i) => {
+    const d = new Date(lun); d.setDate(lun.getDate()+i);
+    const dStr = d.toISOString().slice(0,10);
+    const reg = rpeGlobal.find(h => String(h.fecha).slice(0,10) === dStr);
+    const isFuture = d > hoy;
+    return { lbl, dStr, reg, isFuture };
+  });
+  const weekSquares = weekDays.map(({lbl, reg, isFuture}) => {
+    const cls = reg ? 'done' : isFuture ? 'future' : 'empty';
+    const col  = reg ? '#00e5a0' : 'var(--muted)';
+    const bg   = reg ? 'rgba(0,229,160,.12)' : 'var(--surface2)';
+    const border = reg ? 'rgba(0,229,160,.35)' : isFuture ? 'var(--border)' : 'var(--border2)';
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div style="width:28px;height:28px;border-radius:50%;background:${bg};border:1px solid ${border};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:${col}">${reg?'✓':lbl}</div>
+      <div style="font-size:8px;color:var(--muted)">${lbl}</div>
+    </div>`;
+  }).join('');
+  const sesEsSem = weekDays.filter(d=>d.reg).length;
+
   const usuEsc = usuario.replace(/'/g,"\\'");
   const nomEsc = nombre.replace(/'/g,"\\'");
   const semPills = semanasDisp.map(s => {
@@ -5162,6 +5276,10 @@ async function openPlayerModalWithSemana(usuario, nombre, forceSemana) {
         </table>
       </div>
     </div>`:''}
+    <div>
+      <div class="pm-section-lbl">Asistencia esta semana (${sesEsSem}/7)</div>
+      <div style="display:flex;gap:4px;padding:4px 0">${weekSquares}</div>
+    </div>
     ${semanasDisp.length?`<div>
       <div class="pm-section-lbl">Detalle por semana</div>
       <div class="pm-sess-pills">${semPills}</div>
@@ -5320,10 +5438,14 @@ function renderWellnessQuestion(container, q) {
     { n:3, txt:'Fatiga acumulada',           sub:'1 = muy fatigado · 10 = fresco',     lkey:'fatiga',defVal:6 },
     { n:4, txt:'Calidad de sueño',           sub:'1 = muy mala · 10 = excelente',      lkey:'sleep', defVal:7 },
     { n:5, txt:'Horas de sueño',             sub:'Desliza para ajustar',               lkey:'hrs',   defVal:null },
-    { n:6, txt:'Peso corporal',              sub:'Báscula · kg · opcional',             lkey:'peso',  defVal:null },
+    { n:6, txt:'Peso corporal',              sub:'Báscula · kg · opcional — puedes saltar',lkey:'peso',  defVal:null },
   ];
   const def = qDefs[q-1];
-  const curVal = q<=4 ? (_wellnessState.vals[q]||def.defVal) : null;
+  // Pre-set default if not yet touched — prevents null → 0 in score calculation
+  if (q<=4 && (_wellnessState.vals[q]===null || _wellnessState.vals[q]===undefined)) {
+    _wellnessState.vals[q] = def.defVal;
+  }
+  const curVal = q<=4 ? _wellnessState.vals[q] : null;
   const isSlider = q<=4;
   const isHrs    = q===5;
   const isPeso   = q===6;
@@ -5370,8 +5492,9 @@ function renderWellnessQuestion(container, q) {
       </div>`;
   } else {
     inputHtml = `
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center">Introduce tu peso — <em>opcional</em></div>
       <div style="font-size:46px;font-weight:500;text-align:center;color:var(--text);margin-bottom:12px;min-height:56px;letter-spacing:-1px">
-        <span id="wpesoval">${_wellnessState.peso||'—'}</span><span style="font-size:15px;color:var(--muted)"> kg</span>
+        <span id="wpesoval" style="color:${_wellnessState.peso?'var(--text)':'var(--muted)'}">${_wellnessState.peso||'—'}</span><span style="font-size:15px;color:var(--muted)"> kg</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;max-width:210px;width:100%">
         ${['7','8','9','4','5','6','1','2','3','.','0','del'].map(k=>`<button onclick="wellnessPesoInput('${k}')" style="padding:11px;border-radius:9px;border:0.5px solid var(--border2);background:var(--surface2);font-size:16px;font-weight:500;color:var(--text);cursor:pointer">${k==='del'?'⌫':k}</button>`).join('')}
@@ -5392,7 +5515,7 @@ function renderWellnessQuestion(container, q) {
     <div class="wellness-nav-q" style="margin-top:20px">
       <button class="w-btn-back" onclick="wellnessPrev()" style="${q<=1?'opacity:.3':''}" ${q<=1?'disabled':''} aria-label="Anterior">‹</button>
       <button class="w-btn-next" id="wbnext" onclick="wellnessNext()" style="background:${col}">${q===total?'Enviar ✓':'Siguiente ›'}</button>
-      ${q>=5?`<button class="w-btn-skip" onclick="wellnessNext()">Saltar</button>`:''}
+      ${q===6?`<button class="w-btn-skip" onclick="wellnessNext()">Saltar</button>`:''}
     </div>`;
 }
 
@@ -5427,6 +5550,36 @@ async function wellnessSave() {
   } else {
     if (content) content.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${res.error||'Error al guardar'}</div>`;
   }
+}
+
+function buildWellnessCalendar(history) {
+  const now2 = new Date();
+  const year = now2.getFullYear(), month = now2.getMonth();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const firstDow    = new Date(year, month, 1).getDay();
+  const monthNames  = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const wellnessDates = new Set((history||[]).filter(h => {
+    const d = new Date((h.fecha||'')+'T00:00:00');
+    return d.getFullYear()===year && d.getMonth()===month;
+  }).map(h => new Date((h.fecha||'')+'T00:00:00').getDate()));
+  const calOffset = firstDow===0?6:firstDow-1;
+  let cells = Array(calOffset).fill('<div></div>');
+  for (let d=1; d<=daysInMonth; d++) {
+    const isToday = d===now2.getDate();
+    const filled  = wellnessDates.has(d);
+    const bg = filled?'rgba(0,229,160,.15)':'var(--surface2)';
+    const border = filled?'rgba(0,229,160,.4)':isToday?'var(--border2)':'var(--border)';
+    const col = filled?'#00e5a0':isToday?'var(--text)':'var(--muted)';
+    const fw  = isToday||filled?700:400;
+    cells.push(`<div style="aspect-ratio:1;border-radius:50%;background:${bg};border:1px solid ${border};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:${fw};color:${col}">${filled?'✓':d}</div>`);
+  }
+  return `<div class="wellness-trend-box" style="margin-top:10px">
+    <div class="wellness-trend-title"><span>${monthNames[month]}</span><span style="color:var(--accent2)">${wellnessDates.size} días registrados</span></div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px">
+      ${['L','M','X','J','V','S','D'].map(d=>`<div style="font-size:8px;font-weight:600;color:var(--muted);text-align:center">${d}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">${cells.join('')}</div>
+  </div>`;
 }
 
 function renderWellnessDone(container, entry, history) {
@@ -5487,8 +5640,10 @@ function renderWellnessDone(container, entry, history) {
       </div>
       <div class="wellness-bars">${barsHtml}</div>
     </div>
+    ${buildWellnessCalendar(history)}
     <div class="wellness-chips">${chips}</div>
-    <button onclick="switchTab('sesion')" style="width:100%;background:#e8142a;color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body)">Ver sesión de hoy</button>`;
+    ${buildWellnessCalendar(history||[])}
+    <button onclick="switchTab('sesion')" style="width:100%;background:#e8142a;color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);margin-top:8px">Ver sesión de hoy</button>`;
 }
 
 // ── COACH READINESS DASHBOARD ─────────────────────────────────
@@ -5560,7 +5715,7 @@ async function renderReadinessDashboard() {
     const initials = j.nombre.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
     // Mini trend bars from 7-day history
     const trendBarsHtml = (j.trend||[]).map(v => {
-      if (v===null) return `<div style="width:3px;height:4px;border-radius:1px;background:rgba(255,255,255,.1);align-self:flex-end"></div>`;
+      if (v===null) return `<div style="width:3px;height:4px;border-radius:1px;background:var(--border2);align-self:flex-end"></div>`;
       const bc = v>=70?'#00e5a0':v>=50?'#ffc04d':'#ff7070';
       const bh = Math.max(3,Math.round((v/100)*14));
       return `<div style="width:3px;height:${bh}px;border-radius:1px;background:${bc};align-self:flex-end"></div>`;
@@ -5611,113 +5766,97 @@ async function renderReadinessDashboard() {
 }
 
 // ── WELLNESS PLAYER MODAL (coach) ────────────────────────────
+// Abre el modal original del jugador (RPE + cargas) y añade sección wellness arriba
 async function openWellnessPlayerModal(usuario, nombre) {
-  // Reuse existing modal infrastructure or create overlay
-  let overlay = document.getElementById('wellness-modal-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'wellness-modal-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)';
-    overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
-    document.body.appendChild(overlay);
-  }
-  overlay.innerHTML = `<div style="background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;padding:16px 16px 32px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div>
-        <div style="font-size:16px;font-weight:600;color:var(--text)">${nombre.split(',')[0]}</div>
-        <div style="font-size:11px;color:var(--muted)">Evolución wellness</div>
-      </div>
-      <button onclick="document.getElementById('wellness-modal-overlay').remove()" style="background:var(--surface2);border:none;width:30px;height:30px;border-radius:50%;color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
-    </div>
-    <div id="wellness-modal-body"><div class="loader"><div class="spinner"></div></div></div>
-  </div>`;
+  // 1. Open original modal (RPE + loads history) — this is the existing system
+  await openPlayerModal(usuario, nombre);
 
-  const res = await api({ action:'getWellness', usuario, dias:14 });
-  const body = document.getElementById('wellness-modal-body');
-  if (!res.ok || !res.wellness || !res.wellness.length) {
-    body.innerHTML = '<div class="hist-empty">Sin datos de wellness en los últimos 14 días.</div>';
-    return;
-  }
+  // 2. Fetch wellness history and prepend to modal body
+  const pmBody = document.getElementById('pm-body');
+  if (!pmBody) return;
+  const wellRes = await api({ action:'getWellness', usuario, dias:14 });
+  if (!wellRes.ok || !wellRes.wellness || !wellRes.wellness.length) return;
 
-  const hist = res.wellness.slice(-14);
+  const hist = wellRes.wellness.slice(-14);
   const W_COLS = ['','#ff7070','#ff7070','#ff7070','#ffc04d','#ffc04d','#ffc04d','#00e5a0','#00e5a0','#00e5a0','#00e5a0'];
 
   // Score sparkline
   const maxSc = Math.max(...hist.map(h=>parseFloat(h.readiness_score||0)), 1);
   const sparkBars = hist.map((h,i) => {
     const s = parseFloat(h.readiness_score||0);
-    const c = s>=70?'#00e5a0':s>=50?'#ffc04d':'#ff7070';
-    const hh = Math.max(4, Math.round((s/maxSc)*48));
-    const isLast = i===hist.length-1;
+    const col = s>=70?'#00e5a0':s>=50?'#ffc04d':'#ff7070';
+    const hh = Math.max(4, Math.round((s/maxSc)*44));
     return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
-      <span style="font-size:8px;color:${c};font-weight:${isLast?600:400}">${Math.round(s)}</span>
-      <div style="width:100%;height:${hh}px;background:${c};border-radius:2px 2px 0 0;opacity:${isLast?1:0.6}"></div>
+      <span style="font-size:7px;color:${col}">${Math.round(s)}</span>
+      <div style="width:100%;height:${hh}px;background:${col};border-radius:2px 2px 0 0;opacity:${i===hist.length-1?1:0.65}"></div>
     </div>`;
   }).join('');
   const dateLbls = hist.map(h=>`<div style="flex:1;font-size:7px;color:var(--muted);text-align:center">${h.fecha.slice(5)}</div>`).join('');
 
-  // Metric rows
-  const metrics = [
-    { k:'ganas_entrenar', lbl:'Ganas entrenar' },
-    { k:'dolor',          lbl:'Dolor' },
-    { k:'fatiga',         lbl:'Fatiga' },
-    { k:'calidad_sueno',  lbl:'Calidad sueño' },
-    { k:'horas_sueno',    lbl:'Horas sueño' },
+  // Last entry summary chips
+  const last = hist[hist.length-1];
+  const chipDefs = [
+    { k:'ganas_entrenar', l:'Ganas' },
+    { k:'dolor',          l:'Dolor' },
+    { k:'fatiga',         l:'Fatiga' },
+    { k:'calidad_sueno',  l:'Sueño' },
+    { k:'horas_sueno',    l:'Horas' },
   ];
-  const metricRows = metrics.map(m => {
-    const cells = hist.map(h => {
-      const v = parseFloat(h[m.k]);
-      if (isNaN(v)) return `<div style="flex:1;text-align:center;font-size:10px;color:var(--muted)">—</div>`;
-      const isHrs = m.k==='horas_sueno';
-      const c = isHrs ? (v>=7&&v<=9?'#00e5a0':v<6?'#ff7070':'#ffc04d') : W_COLS[Math.round(v)]||'#ffc04d';
-      return `<div style="flex:1;text-align:center;font-size:10px;font-weight:500;color:${c}">${v%1===0?v:v.toFixed(1)}</div>`;
-    }).join('');
-    return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:0.5px solid var(--border)">
-      <div style="font-size:10px;color:var(--muted);width:80px;flex-shrink:0">${m.lbl}</div>
-      <div style="flex:1;display:flex;gap:2px">${cells}</div>
+  const chips = chipDefs.map(d => {
+    const v = parseFloat(last[d.k]);
+    if (isNaN(v)) return '';
+    const isHrs = d.k==='horas_sueno';
+    const col = isHrs?(v>=7&&v<=9?'#00e5a0':v<6?'#ff7070':'#ffc04d'):(W_COLS[Math.round(v)]||'#ffc04d');
+    return `<div style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;padding:4px 8px;text-align:center">
+      <div style="font-size:12px;font-weight:600;color:${col}">${v%1===0?v:v.toFixed(1)}${isHrs?'h':''}</div>
+      <div style="font-size:8px;color:var(--muted)">${d.l}</div>
     </div>`;
-  }).join('');
+  }).filter(Boolean).join('');
 
   // Weight chart
-  const pesoData = hist.filter(h=>h.peso_corporal && parseFloat(h.peso_corporal)>0);
+  const pesoData = hist.filter(h=>h.peso_corporal&&parseFloat(h.peso_corporal)>0);
   let weightChart = '';
   if (pesoData.length >= 2) {
     const pesos = pesoData.map(h=>parseFloat(h.peso_corporal));
-    const minP = Math.min(...pesos)-0.5, maxP = Math.max(...pesos)+0.5;
-    const W=260, H=50;
-    const tx = i => Math.round((i/(pesoData.length-1))*W);
-    const ty = v => Math.round(H - ((v-minP)/(maxP-minP))*(H-6) - 3);
-    const pts = pesoData.map((h,i)=>`${tx(i)},${ty(parseFloat(h.peso_corporal))}`).join(' ');
-    const dots = pesoData.map((h,i)=>{
-      const x=tx(i), y=ty(parseFloat(h.peso_corporal));
-      return `<circle cx="${x}" cy="${y}" r="3" fill="#7bb8ff"/>
-        <title>${h.fecha.slice(5)}: ${h.peso_corporal} kg</title>`;
+    const minP=Math.min(...pesos)-0.5, maxP=Math.max(...pesos)+0.5;
+    const W=240,H=44;
+    const tx=i=>Math.round((i/(pesoData.length-1))*W);
+    const ty=v=>Math.round(H-((v-minP)/(maxP-minP))*(H-6)-3);
+    const pts=pesoData.map((h,i)=>`${tx(i)},${ty(parseFloat(h.peso_corporal))}`).join(' ');
+    const dots=pesoData.map((h,i)=>{
+      const x=tx(i),y=ty(parseFloat(h.peso_corporal));
+      return `<circle cx="${x}" cy="${y}" r="3" fill="#7bb8ff"><title>${h.fecha.slice(5)}: ${h.peso_corporal}kg</title></circle>`;
     }).join('');
-    weightChart = `
-      <div style="margin-top:14px">
-        <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Peso corporal</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-          <span style="font-size:9px;color:var(--muted)">${minP.toFixed(1)} kg</span>
-          <span style="font-size:9px;color:var(--muted)">${maxP.toFixed(1)} kg</span>
-        </div>
-        <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible">
-          <polyline points="${pts}" fill="none" stroke="#7bb8ff" stroke-width="1.5" stroke-linejoin="round"/>
-          ${dots}
-        </svg>
-        <div style="display:flex;justify-content:space-between;margin-top:3px">
-          <span style="font-size:8px;color:var(--muted)">${pesoData[0].fecha.slice(5)}</span>
-          <span style="font-size:8px;color:var(--muted)">${pesoData[pesoData.length-1].fecha.slice(5)}</span>
-        </div>
-      </div>`;
+    weightChart = `<div style="margin-top:10px">
+      <div style="font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Peso corporal</div>
+      <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-bottom:3px">
+        <span>${pesoData[0].fecha.slice(5)}</span><span>${pesoData[pesoData.length-1].fecha.slice(5)}</span>
+      </div>
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;display:block">
+        <polyline points="${pts}" fill="none" stroke="#7bb8ff" stroke-width="1.5" stroke-linejoin="round"/>
+        ${dots}
+      </svg>
+      <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:2px">
+        <span>${Math.min(...pesos).toFixed(1)}kg</span><span>${Math.max(...pesos).toFixed(1)}kg</span>
+      </div>
+    </div>`;
   }
 
-  body.innerHTML = `
-    <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Score readiness · últimos ${hist.length} días</div>
-    <div style="display:flex;align-items:flex-end;gap:2px;height:60px;margin-bottom:3px">${sparkBars}</div>
-    <div style="display:flex;gap:2px;margin-bottom:16px">${dateLbls}</div>
-    <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Métricas diarias</div>
-    ${metricRows}
-    ${weightChart}`;
+  const scoreHoy = parseFloat(last.readiness_score||0);
+  const scoreCol = scoreHoy>=70?'#00e5a0':scoreHoy>=50?'#ffc04d':'#ff7070';
+  const wellnessSection = `<div style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:10px;padding:12px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">Readiness · últimos ${hist.length} días</div>
+      <div style="font-size:18px;font-weight:700;color:${scoreCol}">${Math.round(scoreHoy)} <span style="font-size:10px;font-weight:400;color:var(--muted)">hoy</span></div>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:2px;height:56px;margin-bottom:3px">${sparkBars}</div>
+    <div style="display:flex;gap:2px;margin-bottom:10px">${dateLbls}</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap">${chips}</div>
+    ${weightChart}
+  </div>`;
+
+  // Prepend wellness section to existing modal body
+  pmBody.innerHTML = wellnessSection + pmBody.innerHTML;
 }
 
 function onCoachSquadChangeReadiness() {
