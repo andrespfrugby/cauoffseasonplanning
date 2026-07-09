@@ -2006,6 +2006,72 @@ function buildWellnessCalendar(history) {
   </div>`;
 }
 
+
+// ── SHARED WEIGHT CHART BUILDER ───────────────────────────────
+function buildWeightChart(pesoData, W=260, H=52) {
+  if (!pesoData || !pesoData.length) return '';
+  const pesos = pesoData.map(h=>parseFloat(h.peso_corporal));
+  const lastP = pesos[pesos.length-1];
+  const firstP = pesos[0];
+  const diff = Math.round((lastP-firstP)*10)/10;
+  const diffStr = diff>0?'+'+diff:String(diff);
+  const diffCol = Math.abs(diff)<0.5?'var(--muted)':diff>0?'#ff7070':'#00e5a0';
+
+  // For single entry: draw horizontal dashed line + center dot
+  let svgContent = '';
+  if (pesoData.length === 1) {
+    const cy = Math.round(H/2);
+    svgContent = `
+      <line x1="0" y1="${cy}" x2="${W}" y2="${cy}" stroke="#7bb8ff" stroke-width="1.5" stroke-dasharray="5,4" opacity=".4"/>
+      <circle cx="${W/2}" cy="${cy}" r="5" fill="#7bb8ff"/>
+      <text x="${W/2+10}" y="${cy+4}" font-size="11" fill="#7bb8ff" font-family="DM Sans,sans-serif" font-weight="600">${lastP} kg</text>`;
+  } else {
+    const minP = Math.min(...pesos)-0.3, maxP = Math.max(...pesos)+0.3;
+    const tx = i => Math.round((i/(pesoData.length-1))*W);
+    const ty = v => Math.round(H-((v-minP)/(maxP-minP))*(H-12)-6);
+    const pts = pesoData.map((h,i)=>`${tx(i)},${ty(parseFloat(h.peso_corporal))}`).join(' ');
+    // Area fill
+    const areaPoints = `${tx(0)},${H} ` + pts + ` ${tx(pesoData.length-1)},${H}`;
+    // Value labels at first & last
+    const x0=tx(0), y0=ty(firstP), xL=tx(pesoData.length-1), yL=ty(lastP);
+    svgContent = `
+      <defs>
+        <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#7bb8ff" stop-opacity=".25"/>
+          <stop offset="100%" stop-color="#7bb8ff" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <polygon points="${areaPoints}" fill="url(#wg)"/>
+      <polyline points="${pts}" fill="none" stroke="#7bb8ff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${pesoData.map((h,i)=>{
+        const x=tx(i), y=ty(parseFloat(h.peso_corporal));
+        const isEnd = i===0||i===pesoData.length-1;
+        return isEnd ? `<circle cx="${x}" cy="${y}" r="4" fill="#7bb8ff" stroke="var(--surface)" stroke-width="2"/>` 
+                     : `<circle cx="${x}" cy="${y}" r="2.5" fill="#7bb8ff" opacity=".6"/>`;
+      }).join('')}
+      <text x="${x0+2}" y="${y0-8}" font-size="9" fill="#7bb8ff" font-family="DM Sans,sans-serif">${firstP}</text>
+      <text x="${xL-2}" y="${yL-8}" font-size="9" fill="#7bb8ff" font-family="DM Sans,sans-serif" text-anchor="end">${lastP}</text>`;
+  }
+
+  const dateRow = pesoData.length >= 2
+    ? `<div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:2px">
+        <span>${pesoData[0].fecha.slice(5)}</span><span>${pesoData[pesoData.length-1].fecha.slice(5)}</span>
+       </div>` : `<div style="font-size:8px;color:var(--muted);text-align:center;margin-top:2px">${pesoData[0].fecha.slice(5)}</div>`;
+
+  const header = pesoData.length >= 2
+    ? `<div style="font-size:13px;font-weight:700;color:#7bb8ff">${lastP} kg <span style="font-size:11px;color:${diffCol}">(${diffStr})</span></div>`
+    : `<div style="font-size:13px;font-weight:700;color:#7bb8ff">${lastP} kg</div>`;
+
+  return `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-top:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Evolución peso</div>
+      ${header}
+    </div>
+    <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;display:block">${svgContent}</svg>
+    ${dateRow}
+  </div>`;
+}
+
 // ── PUNTO DE ENTRADA ─────────────────────────────────────────
 (async function init() {
   const saved = sessionLoad();
@@ -2941,44 +3007,9 @@ async function renderWeekSummary() {
   }
 
   // ── Evolución peso corporal ─────────────────────────────────
-  let weightChartHtml = '';
-  if (resWellness.ok && resWellness.wellness) {
-    const pesoData = resWellness.wellness.filter(h=>h.peso_corporal&&parseFloat(h.peso_corporal)>0);
-    if (pesoData.length >= 2) {
-      const pesos = pesoData.map(h=>parseFloat(h.peso_corporal));
-      const minP=Math.min(...pesos)-0.5, maxP=Math.max(...pesos)+0.5;
-      const W=260, H=48;
-      const tx=i=>Math.round((i/(pesoData.length-1))*W);
-      const ty=v=>Math.round(H-((v-minP)/(maxP-minP))*(H-8)-4);
-      const pts=pesoData.map((h,i)=>`${tx(i)},${ty(parseFloat(h.peso_corporal))}`).join(' ');
-      const dots=pesoData.map((h,i)=>{
-        const x=tx(i), y=ty(parseFloat(h.peso_corporal));
-        return `<circle cx="${x}" cy="${y}" r="3.5" fill="#7bb8ff"/>`;
-      }).join('');
-      const lastPeso = pesos[pesos.length-1];
-      const firstPeso = pesos[0];
-      const diff = Math.round((lastPeso-firstPeso)*10)/10;
-      const diffStr = diff>0?'+'+diff:String(diff);
-      const diffCol = Math.abs(diff)<1?'var(--muted)':diff>0?'#ff7070':'#00e5a0';
-      weightChartHtml = `
-        <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-top:10px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Evolución peso</div>
-            <div style="font-size:13px;font-weight:700;color:#7bb8ff">${lastPeso} kg <span style="font-size:11px;color:${diffCol}">(${diffStr} kg)</span></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-bottom:3px">
-            <span>${pesoData[0].fecha.slice(5)}</span><span>${pesoData[pesoData.length-1].fecha.slice(5)}</span>
-          </div>
-          <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;display:block">
-            <polyline points="${pts}" fill="none" stroke="#7bb8ff" stroke-width="1.5" stroke-linejoin="round" opacity=".6"/>
-            ${dots}
-          </svg>
-          <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:2px">
-            <span>${Math.min(...pesos).toFixed(1)} kg</span><span>${Math.max(...pesos).toFixed(1)} kg</span>
-          </div>
-        </div>`;
-    }
-  }
+  const weightChartHtml = resWellness.ok && resWellness.wellness
+    ? buildWeightChart(resWellness.wellness.filter(h=>h.peso_corporal&&parseFloat(h.peso_corporal)>0))
+    : '';
 
   // ── Calendario wellness ─────────────────────────────────────
   const wellnessCal = resWellness.ok ? buildWellnessCalendar(resWellness.wellness||[]) : '';
@@ -5813,34 +5844,10 @@ async function openWellnessPlayerModal(usuario, nombre) {
     </div>`;
   }).filter(Boolean).join('');
 
-  // Weight chart
-  const pesoData = hist.filter(h=>h.peso_corporal&&parseFloat(h.peso_corporal)>0);
-  let weightChart = '';
-  if (pesoData.length >= 2) {
-    const pesos = pesoData.map(h=>parseFloat(h.peso_corporal));
-    const minP=Math.min(...pesos)-0.5, maxP=Math.max(...pesos)+0.5;
-    const W=240,H=44;
-    const tx=i=>Math.round((i/(pesoData.length-1))*W);
-    const ty=v=>Math.round(H-((v-minP)/(maxP-minP))*(H-6)-3);
-    const pts=pesoData.map((h,i)=>`${tx(i)},${ty(parseFloat(h.peso_corporal))}`).join(' ');
-    const dots=pesoData.map((h,i)=>{
-      const x=tx(i),y=ty(parseFloat(h.peso_corporal));
-      return `<circle cx="${x}" cy="${y}" r="3" fill="#7bb8ff"><title>${h.fecha.slice(5)}: ${h.peso_corporal}kg</title></circle>`;
-    }).join('');
-    weightChart = `<div style="margin-top:10px">
-      <div style="font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Peso corporal</div>
-      <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-bottom:3px">
-        <span>${pesoData[0].fecha.slice(5)}</span><span>${pesoData[pesoData.length-1].fecha.slice(5)}</span>
-      </div>
-      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;display:block">
-        <polyline points="${pts}" fill="none" stroke="#7bb8ff" stroke-width="1.5" stroke-linejoin="round"/>
-        ${dots}
-      </svg>
-      <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:2px">
-        <span>${Math.min(...pesos).toFixed(1)}kg</span><span>${Math.max(...pesos).toFixed(1)}kg</span>
-      </div>
-    </div>`;
-  }
+  // Weight chart (shared builder — works with 1+ entries)
+  const weightChart = buildWeightChart(
+    hist.filter(h=>h.peso_corporal&&parseFloat(h.peso_corporal)>0), 240, 52
+  );
 
   const scoreHoy = parseFloat(last.readiness_score||0);
   const scoreCol = scoreHoy>=70?'#00e5a0':scoreHoy>=50?'#ffc04d':'#ff7070';
