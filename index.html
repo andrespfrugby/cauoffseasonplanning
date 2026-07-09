@@ -2849,7 +2849,8 @@ async function renderWeekSummary() {
     d.setDate(d.getDate() + i);
     const ds    = fmtDate(d);
     const isHoy = ds === hoyStr;
-    const done  = sesiones.some(h => fmtDate(new Date(h.fecha)) === ds);
+    // Use ALL sessions filtered by calendar date (not by semana number)
+    const done  = resRpe.historial.some(h => fmtDate(new Date(h.fecha)) === ds && h.rpe);
     const bg    = done  ? 'rgba(0,229,160,.18)'  : isHoy ? 'rgba(255,255,255,.06)' : 'var(--surface2)';
     const brd   = done  ? '1px solid rgba(0,229,160,.4)' : isHoy ? '1px dashed var(--border2)' : '1px solid var(--border)';
     const col   = done  ? '#00e5a0' : isHoy ? 'var(--muted)' : 'var(--muted)';
@@ -3040,9 +3041,8 @@ async function renderWeekSummary() {
         <div class="wsumm-circ">${circle(kgTotal!==null?Math.min(kgTotal/500,1):0, kgCol, kgVal!=='—'?kgVal:'—', kgVal!=='—'?'kg':'')}<div class="wsumm-circ-lbl">Kg semana</div></div>
       </div>
       ${daysSection}
-      ${rankingHtml}
       ${weightChartHtml}
-      ${wellnessCal}
+      ${rankingHtml}
     </div>`;
   container.style.display = 'block';
 }
