@@ -5514,7 +5514,7 @@ async function renderReadinessDashboard() {
 
   // KPI row
   const kpis = `<div class="kpi-row" style="margin-bottom:12px">
-    <div class="kpi-card"><div class="kpi-num" style="color:${mediaCol}">${media||'—'}</div><div class="kpi-lbl">FER medio</div></div>
+    <div class="kpi-card"><div class="kpi-num" style="color:${mediaCol}">${media||'—'}</div><div class="kpi-lbl">Score Avg</div></div>
     <div class="kpi-card"><div class="kpi-num red">${alertas}</div><div class="kpi-lbl">Alertas</div></div>
     <div class="kpi-card"><div class="kpi-num green">${respondidos}</div><div class="kpi-lbl">Respondido</div></div>
     <div class="kpi-card"><div class="kpi-num amber">${sinResp}</div><div class="kpi-lbl">Sin resp.</div></div>
@@ -5565,7 +5565,7 @@ async function renderReadinessDashboard() {
       const bh = Math.max(3,Math.round((v/100)*14));
       return `<div style="width:3px;height:${bh}px;border-radius:1px;background:${bc};align-self:flex-end"></div>`;
     }).join('');
-    return `<tr>
+    return `<tr style="cursor:pointer" onclick="openWellnessPlayerModal('${j.usuario}','${j.nombre.replace(/'/g,"\\'")}')">
       <td style="padding:6px 8px;white-space:nowrap;border-right:0.5px solid var(--border);position:sticky;left:0;background:var(--surface)">
         <div style="display:flex;align-items:center;gap:7px">
           <div style="width:26px;height:26px;border-radius:50%;background:${scCol}22;border:1.5px solid ${scCol}66;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${scCol};flex-shrink:0">${initials}</div>
@@ -5608,6 +5608,116 @@ async function renderReadinessDashboard() {
         </tbody>
       </table>
     </div>`;
+}
+
+// ── WELLNESS PLAYER MODAL (coach) ────────────────────────────
+async function openWellnessPlayerModal(usuario, nombre) {
+  // Reuse existing modal infrastructure or create overlay
+  let overlay = document.getElementById('wellness-modal-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'wellness-modal-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)';
+    overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `<div style="background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;padding:16px 16px 32px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div style="font-size:16px;font-weight:600;color:var(--text)">${nombre.split(',')[0]}</div>
+        <div style="font-size:11px;color:var(--muted)">Evolución wellness</div>
+      </div>
+      <button onclick="document.getElementById('wellness-modal-overlay').remove()" style="background:var(--surface2);border:none;width:30px;height:30px;border-radius:50%;color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div id="wellness-modal-body"><div class="loader"><div class="spinner"></div></div></div>
+  </div>`;
+
+  const res = await api({ action:'getWellness', usuario, dias:14 });
+  const body = document.getElementById('wellness-modal-body');
+  if (!res.ok || !res.wellness || !res.wellness.length) {
+    body.innerHTML = '<div class="hist-empty">Sin datos de wellness en los últimos 14 días.</div>';
+    return;
+  }
+
+  const hist = res.wellness.slice(-14);
+  const W_COLS = ['','#ff7070','#ff7070','#ff7070','#ffc04d','#ffc04d','#ffc04d','#00e5a0','#00e5a0','#00e5a0','#00e5a0'];
+
+  // Score sparkline
+  const maxSc = Math.max(...hist.map(h=>parseFloat(h.readiness_score||0)), 1);
+  const sparkBars = hist.map((h,i) => {
+    const s = parseFloat(h.readiness_score||0);
+    const c = s>=70?'#00e5a0':s>=50?'#ffc04d':'#ff7070';
+    const hh = Math.max(4, Math.round((s/maxSc)*48));
+    const isLast = i===hist.length-1;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+      <span style="font-size:8px;color:${c};font-weight:${isLast?600:400}">${Math.round(s)}</span>
+      <div style="width:100%;height:${hh}px;background:${c};border-radius:2px 2px 0 0;opacity:${isLast?1:0.6}"></div>
+    </div>`;
+  }).join('');
+  const dateLbls = hist.map(h=>`<div style="flex:1;font-size:7px;color:var(--muted);text-align:center">${h.fecha.slice(5)}</div>`).join('');
+
+  // Metric rows
+  const metrics = [
+    { k:'ganas_entrenar', lbl:'Ganas entrenar' },
+    { k:'dolor',          lbl:'Dolor' },
+    { k:'fatiga',         lbl:'Fatiga' },
+    { k:'calidad_sueno',  lbl:'Calidad sueño' },
+    { k:'horas_sueno',    lbl:'Horas sueño' },
+  ];
+  const metricRows = metrics.map(m => {
+    const cells = hist.map(h => {
+      const v = parseFloat(h[m.k]);
+      if (isNaN(v)) return `<div style="flex:1;text-align:center;font-size:10px;color:var(--muted)">—</div>`;
+      const isHrs = m.k==='horas_sueno';
+      const c = isHrs ? (v>=7&&v<=9?'#00e5a0':v<6?'#ff7070':'#ffc04d') : W_COLS[Math.round(v)]||'#ffc04d';
+      return `<div style="flex:1;text-align:center;font-size:10px;font-weight:500;color:${c}">${v%1===0?v:v.toFixed(1)}</div>`;
+    }).join('');
+    return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:0.5px solid var(--border)">
+      <div style="font-size:10px;color:var(--muted);width:80px;flex-shrink:0">${m.lbl}</div>
+      <div style="flex:1;display:flex;gap:2px">${cells}</div>
+    </div>`;
+  }).join('');
+
+  // Weight chart
+  const pesoData = hist.filter(h=>h.peso_corporal && parseFloat(h.peso_corporal)>0);
+  let weightChart = '';
+  if (pesoData.length >= 2) {
+    const pesos = pesoData.map(h=>parseFloat(h.peso_corporal));
+    const minP = Math.min(...pesos)-0.5, maxP = Math.max(...pesos)+0.5;
+    const W=260, H=50;
+    const tx = i => Math.round((i/(pesoData.length-1))*W);
+    const ty = v => Math.round(H - ((v-minP)/(maxP-minP))*(H-6) - 3);
+    const pts = pesoData.map((h,i)=>`${tx(i)},${ty(parseFloat(h.peso_corporal))}`).join(' ');
+    const dots = pesoData.map((h,i)=>{
+      const x=tx(i), y=ty(parseFloat(h.peso_corporal));
+      return `<circle cx="${x}" cy="${y}" r="3" fill="#7bb8ff"/>
+        <title>${h.fecha.slice(5)}: ${h.peso_corporal} kg</title>`;
+    }).join('');
+    weightChart = `
+      <div style="margin-top:14px">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Peso corporal</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:9px;color:var(--muted)">${minP.toFixed(1)} kg</span>
+          <span style="font-size:9px;color:var(--muted)">${maxP.toFixed(1)} kg</span>
+        </div>
+        <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible">
+          <polyline points="${pts}" fill="none" stroke="#7bb8ff" stroke-width="1.5" stroke-linejoin="round"/>
+          ${dots}
+        </svg>
+        <div style="display:flex;justify-content:space-between;margin-top:3px">
+          <span style="font-size:8px;color:var(--muted)">${pesoData[0].fecha.slice(5)}</span>
+          <span style="font-size:8px;color:var(--muted)">${pesoData[pesoData.length-1].fecha.slice(5)}</span>
+        </div>
+      </div>`;
+  }
+
+  body.innerHTML = `
+    <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Score readiness · últimos ${hist.length} días</div>
+    <div style="display:flex;align-items:flex-end;gap:2px;height:60px;margin-bottom:3px">${sparkBars}</div>
+    <div style="display:flex;gap:2px;margin-bottom:16px">${dateLbls}</div>
+    <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Métricas diarias</div>
+    ${metricRows}
+    ${weightChart}`;
 }
 
 function onCoachSquadChangeReadiness() {
