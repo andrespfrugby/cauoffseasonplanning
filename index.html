@@ -1967,43 +1967,62 @@ function acwrStatusBadge(acwr) {
 }
 
 // ── WELLNESS CALENDAR helper ──────────────────────────────────
-function buildWellnessCalendar(history) {
+function buildWellnessCalendar(history, interactive) {
   const now     = new Date();
   const year    = now.getFullYear(), month = now.getMonth();
   const hoyStr  = now.toISOString().slice(0,10);
-  // Set of dates with wellness submitted
   const datesSet = new Set((history||[]).map(h=>h.fecha));
-  // First day of month
   const firstDay = new Date(year, month, 1);
-  const startDow = (firstDay.getDay()+6)%7; // 0=Mon
+  const startDow = (firstDay.getDay()+6)%7;
   const daysInMonth = new Date(year, month+1, 0).getDate();
   const monthName = firstDay.toLocaleDateString('es-ES',{month:'long'});
-  // Build cells
   let cells = '';
-  // Empty cells before start
   for(let i=0;i<startDow;i++) cells += `<div></div>`;
   for(let d=1;d<=daysInMonth;d++){
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const done    = datesSet.has(dateStr);
     const isToday = dateStr===hoyStr;
+    const isFuture = dateStr > hoyStr;
     const bg   = done?'rgba(0,229,160,.15)':isToday?'rgba(232,20,42,.1)':'var(--surface2)';
     const col  = done?'#00e5a0':isToday?'var(--accent)':'var(--muted)';
     const bord = done?'rgba(0,229,160,.4)':isToday?'rgba(232,20,42,.35)':'var(--border)';
     const fw   = (done||isToday)?600:400;
-    cells += `<div style="aspect-ratio:1;border-radius:5px;background:${bg};border:0.5px solid ${bord};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:${fw};color:${col}">${d}</div>`;
+    const cnt  = done?'✓':String(d);
+    // Interactive: past days without wellness can be clicked to fill
+    const clickable = interactive && !done && !isFuture;
+    const style = `aspect-ratio:1;border-radius:50%;background:${bg};border:1.5px solid ${bord};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:${fw};color:${col};transition:all .15s${clickable?';cursor:pointer':''}`;
+    const onclick = clickable ? `onclick="wellnessSelectDate('${dateStr}')" title="Registrar readiness del ${d}"` : '';
+    cells += `<div style="${style}" ${onclick}>${cnt}</div>`;
   }
   const dayHds = ['L','M','X','J','V','S','D'].map(d=>`<div style="font-size:8px;font-weight:600;color:var(--muted);text-align:center">${d}</div>`).join('');
+  const hint = interactive ? `<div style="font-size:9px;color:var(--muted);margin-top:6px;text-align:center">Toca un día pasado para registrar el readiness de ese día</div>` : '';
   return `<div class="wellness-trend-box" style="margin-bottom:10px">
     <div class="wellness-trend-title">
       <span style="text-transform:capitalize">${monthName} ${year}</span>
       <div style="display:flex;align-items:center;gap:8px">
-        <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:rgba(0,229,160,.4)"></div>enviado</div>
-        <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:rgba(232,20,42,.3)"></div>hoy</div>
+        <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:50%;background:rgba(0,229,160,.6)"></div>enviado</div>
+        <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:50%;background:rgba(232,20,42,.5)"></div>hoy</div>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px">${dayHds}</div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${cells}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px">${dayHds}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">${cells}</div>
+    ${hint}
   </div>`;
+}
+
+// Fill wellness for a past date
+function wellnessSelectDate(dateStr) {
+  _wellnessState = { cur:1, vals:{1:null,2:null,3:null,4:null}, hrs:null, peso:'', targetDate: dateStr };
+  const content = document.getElementById('wellness-content');
+  if (content) {
+    // Show a notice about which date they're filling
+    const d = new Date(dateStr+'T12:00:00');
+    const lbl = d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+    content.innerHTML = `<div style="background:rgba(232,20,42,.08);border:0.5px solid rgba(232,20,42,.2);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--accent);text-align:center">📅 Registrando readiness del ${lbl}</div>`;
+    const q1wrap = document.createElement('div');
+    content.appendChild(q1wrap);
+    renderWellnessQuestion(content, 1);
+  }
 }
 
 
@@ -3013,7 +3032,6 @@ async function renderWeekSummary() {
     : '';
 
   // ── Calendario wellness ─────────────────────────────────────
-  const wellnessCal = resWellness.ok ? buildWellnessCalendar(resWellness.wellness||[]) : '';
 
   const nombre   = state.user.nombre || '';
   const initials = nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -5571,7 +5589,8 @@ async function wellnessSave() {
     fatiga:          _wellnessState.vals[3],
     calidad_sueno:   _wellnessState.vals[4],
     horas_sueno:     _wellnessState.hrs,
-    peso_corporal:   _wellnessState.peso || ''
+    peso_corporal:   _wellnessState.peso || '',
+    fecha_override:  _wellnessState.targetDate || null
   });
   if (res.ok) {
     const hist = await api({ action:'getWellness', usuario:state.user.usuario, dias:14 });
@@ -5583,35 +5602,6 @@ async function wellnessSave() {
   }
 }
 
-function buildWellnessCalendar(history) {
-  const now2 = new Date();
-  const year = now2.getFullYear(), month = now2.getMonth();
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-  const firstDow    = new Date(year, month, 1).getDay();
-  const monthNames  = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const wellnessDates = new Set((history||[]).filter(h => {
-    const d = new Date((h.fecha||'')+'T00:00:00');
-    return d.getFullYear()===year && d.getMonth()===month;
-  }).map(h => new Date((h.fecha||'')+'T00:00:00').getDate()));
-  const calOffset = firstDow===0?6:firstDow-1;
-  let cells = Array(calOffset).fill('<div></div>');
-  for (let d=1; d<=daysInMonth; d++) {
-    const isToday = d===now2.getDate();
-    const filled  = wellnessDates.has(d);
-    const bg = filled?'rgba(0,229,160,.15)':'var(--surface2)';
-    const border = filled?'rgba(0,229,160,.4)':isToday?'var(--border2)':'var(--border)';
-    const col = filled?'#00e5a0':isToday?'var(--text)':'var(--muted)';
-    const fw  = isToday||filled?700:400;
-    cells.push(`<div style="aspect-ratio:1;border-radius:50%;background:${bg};border:1px solid ${border};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:${fw};color:${col}">${filled?'✓':d}</div>`);
-  }
-  return `<div class="wellness-trend-box" style="margin-top:10px">
-    <div class="wellness-trend-title"><span>${monthNames[month]}</span><span style="color:var(--accent2)">${wellnessDates.size} días registrados</span></div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px">
-      ${['L','M','X','J','V','S','D'].map(d=>`<div style="font-size:8px;font-weight:600;color:var(--muted);text-align:center">${d}</div>`).join('')}
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">${cells.join('')}</div>
-  </div>`;
-}
 
 function renderWellnessDone(container, entry, history) {
   const score  = parseFloat(entry?.readiness_score||0);
@@ -5671,9 +5661,8 @@ function renderWellnessDone(container, entry, history) {
       </div>
       <div class="wellness-bars">${barsHtml}</div>
     </div>
-    ${buildWellnessCalendar(history)}
+    ${buildWellnessCalendar(history, true)}
     <div class="wellness-chips">${chips}</div>
-    ${buildWellnessCalendar(history||[])}
     <button onclick="switchTab('sesion')" style="width:100%;background:#e8142a;color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);margin-top:8px">Ver sesión de hoy</button>`;
 }
 
@@ -5862,7 +5851,8 @@ async function openWellnessPlayerModal(usuario, nombre) {
     ${weightChart}
   </div>`;
 
-  // Prepend wellness section to existing modal body
+  // Guard: prevent double-prepend if called twice
+  if (pmBody.innerHTML.includes('Readiness ·')) return;
   pmBody.innerHTML = wellnessSection + pmBody.innerHTML;
 }
 
