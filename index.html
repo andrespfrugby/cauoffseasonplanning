@@ -3356,20 +3356,24 @@ async function renderSettingsPanel() {
     { label: "Academy",   squad: 'academy',   sheetName: 'Academy_sessions'},
   ];
 
-  const [mensRes, womenRes, acadRes, configRes] = await Promise.all([
+  const [mensRes, womenRes, acadRes, configRes, weeksRes] = await Promise.all([
     api({ action:'getSemanas', squad:"men's xv",  isCoach: true }),
     api({ action:'getSemanas', squad:"women's",   isCoach: true }),
     api({ action:'getSemanas', squad:'academy',   isCoach: true }),
-    api({ action:'getWeekConfig' })
+    api({ action:'getWeekConfig' }),
+    api({ action:'getWeeks' })
   ]);
 
   const config = configRes.ok ? (configRes.config || {}) : {};
   const results = [mensRes, womenRes, acadRes];
+  // Semanas creadas desde el Planner (viven en Plantillas)
+  const plannerWeeks = (weeksRes && weeksRes.ok) ? (weeksRes.weeks || []) : [];
 
   const groups = squadDefs.map((def, i) => ({
     ...def,
-    semanas: results[i].ok ? results[i].semanas : []
-  })).filter(g => g.semanas.length > 0);
+    semanas: results[i].ok ? results[i].semanas : [],
+    planner: plannerWeeks.filter(w => String(w.squad||'').toLowerCase() === def.squad.toLowerCase())
+  })).filter(g => g.semanas.length > 0 || g.planner.length > 0);
 
   if (!groups.length) {
     content.innerHTML = '<div class="hist-empty">No se encontraron semanas.</div>';
@@ -3408,18 +3412,69 @@ async function renderSettingsPanel() {
       </div>`;
     }).join('');
 
+    // ── Semanas creadas desde el Planner ────────────────────
+    const plannerRows = (g.planner||[]).map(w => {
+      const visible = w.visible === true;
+      const safeId  = ('PL_' + w.id).replace(/\W/g,'_');
+      const idEsc   = String(w.id).replace(/'/g, "\\'");
+      const rango   = (w.fecha_inicio||w.fecha_fin) ? (fmtDateShort(w.fecha_inicio)+' - '+fmtDateShort(w.fecha_fin)) : '';
+      const ndias   = ((w.data&&w.data.dias)||[]).length;
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border)">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:8px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:rgba(0,229,160,.12);border:0.5px solid rgba(0,229,160,.3);border-radius:4px;padding:1px 5px;color:var(--accent2);flex-shrink:0">Planner</span>
+            <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.nombre}</div>
+          </div>
+          <div id="status-${safeId}" style="font-size:10px;color:${visible?'#00e5a0':'var(--muted)'};margin-top:2px">${visible?'✓ Visible para jugadores':'✗ Oculta'}${rango?' · '+rango:''}${ndias?' · '+ndias+' días':''}</div>
+        </div>
+        <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;cursor:pointer">
+          <input type="checkbox" id="cb-${safeId}" ${visible?'checked':''}
+            style="opacity:0;width:0;height:0;position:absolute"
+            onchange="togglePlannerWeekVisible('${idEsc}','${safeId}',this.checked)">
+          <span id="slider-${safeId}" style="position:absolute;inset:0;border-radius:24px;background:${visible?'#00e5a0':'rgba(255,255,255,.12)'};transition:background .2s;">
+            <span id="knob-${safeId}" style="position:absolute;top:3px;left:${visible?'23px':'3px'};width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3);"></span>
+          </span>
+        </label>
+      </div>`;
+    }).join('');
+
     return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px">
       <div style="font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">${g.label}</div>
-      ${rows}
+      ${rows}${plannerRows}
     </div>`;
   }).join('');
 
   content.innerHTML = `
     <div style="background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.6">
       <strong style="color:var(--accent2)">Visibilidad de semanas</strong><br>
-      Las semanas desactivadas no aparecen en la app de los jugadores. Los coaches ven siempre todas.
+      Las semanas desactivadas no aparecen en la app de los jugadores. Los coaches ven siempre todas.<br>
+      Las marcadas como <span style="color:var(--accent2);font-weight:600">Planner</span> son las que has creado desde la pesta&ntilde;a Planner.
     </div>
     ${groupsHtml}`;
+}
+
+// Toggle de visibilidad para semanas creadas en el Planner (viven en Plantillas)
+async function togglePlannerWeekVisible(id, safeId, visible) {
+  const slider = document.getElementById('slider-' + safeId);
+  const knob   = document.getElementById('knob-'   + safeId);
+  const status = document.getElementById('status-' + safeId);
+  const paint = (v) => {
+    if (slider) slider.style.background = v ? '#00e5a0' : 'rgba(255,255,255,.12)';
+    if (knob)   knob.style.left         = v ? '23px' : '3px';
+    if (status) {
+      const extra = status.textContent.indexOf('·') !== -1 ? status.textContent.slice(status.textContent.indexOf('·')-1) : '';
+      status.textContent = (v ? '✓ Visible para jugadores' : '✗ Oculta') + extra;
+      status.style.color = v ? '#00e5a0' : 'var(--muted)';
+    }
+  };
+  paint(visible);
+  const res = await api({ action:'publishWeek', id, visible });
+  if (!res.ok) {
+    const cb = document.getElementById('cb-' + safeId);
+    if (cb) cb.checked = !visible;
+    paint(!visible);
+    alert('Error al guardar: ' + (res.error || 'inténtalo de nuevo'));
+  }
 }
 
 async function toggleWeekVisible(semana, squad, safeId, visible) {
@@ -6278,16 +6333,17 @@ async function renderWeeksList(){
       const totalEj=dias.reduce((s,d)=>s+(d.bloques||[]).reduce((ss,b)=>ss+(b.ejercicios||[]).length,0),0);
       const daysHtml=dias.map((d,di)=>{
         const nej=(d.bloques||[]).reduce((s,b)=>s+(b.ejercicios||[]).length,0);
-        return `<div class="day" onclick="editWeek('${w.id}')"><span class="dnum">D${di+1}</span>${d.titulo||'Dia'}<span class="dblk">${fmtDateShort(d.fecha)} · ${nej} ej.</span></div>`;
+        const sem=daySemaforoMini(d.titulo||'');
+        return `<div class="day" onclick="editWeek('${w.id}')">${sem}<span style="flex:1">${d.titulo||'Dia '+(di+1)}</span><span class="dblk">${fmtDateShort(d.fecha)} · ${nej} ej.</span></div>`;
       }).join('');
       return `<div class="wk">
-        <div class="wk-head">
-          <div style="flex:1" onclick="editWeek('${w.id}')">
+        <div class="wk-head" onclick="editWeek('${w.id}')" style="cursor:pointer">
+          <div style="flex:1;min-width:0">
             <div class="wk-name">${w.nombre}</div>
             <div class="wk-meta">${w.squad} · ${fmtRange(w.fecha_inicio,w.fecha_fin)} · ${dias.length} dias · ${totalEj} ej.</div>
           </div>
-          <span class="pub ${w.visible?'on':''}" onclick="togglePublish('${w.id}',${!w.visible})">${w.visible?'&#128065; Publicada':'&#128064; Borrador'}</span>
-          <span class="wk-del" onclick="delWeek('${w.id}')">&#128465;</span>
+          <span class="pub ${w.visible?'on':''}" title="Se gestiona en Settings">${w.visible?'&#128065; Visible':'&#128064; Oculta'}</span>
+          <span class="wk-del" onclick="event.stopPropagation();delWeek('${w.id}')">&#128465;</span>
         </div>
         <div class="wk-days">${daysHtml||'<div style="font-size:11px;color:var(--muted);padding:6px">Sin dias aun</div>'}</div>
       </div>`;
@@ -6348,9 +6404,9 @@ function renderWeekEditor(){
     <div id="pw-days">${daysHtml||'<div class="hist-empty" style="text-align:center;padding:14px">Anade el primer dia</div>'}</div>
     <button class="pw-addday" onclick="addDay()">&#43; anadir dia</button>
     <div style="display:flex;gap:8px;margin-top:12px">
-      <button class="pw-draft" onclick="saveWeekNow(false)">Guardar borrador</button>
-      <button class="pw-publish" onclick="saveWeekNow(true)">&#10148; Publicar</button>
-    </div>`;
+      <button class="pw-publish" style="flex:1" onclick="saveWeekNow()">Guardar semana</button>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.5">La visibilidad para jugadores se gestiona en <b>Settings</b></div>`;
 }
 function renderDayCard(d,i){
   const open=d._open!==false;
@@ -6358,8 +6414,8 @@ function renderDayCard(d,i){
   return `<div class="day-card">
     <div class="day-hd" onclick="toggleDay(${i})">
       <span class="chev">${open?'&#9660;':'&#9654;'}</span>
-      <span class="dnum">D${i+1}</span>
-      <input class="dinp" placeholder="Titulo del dia (ej. High Day)" value="${d.titulo||''}" oninput="event.stopPropagation();setDayField(${i},'titulo',this.value)" onclick="event.stopPropagation()">
+      <span id="daysem-${i}" style="display:flex;align-items:center">${daySemaforo(d.titulo||'')}</span>
+      <input class="dinp" placeholder="Titulo del dia (ej. High Day)" value="${d.titulo||''}" oninput="event.stopPropagation();refreshDaySemaforo(${i},this.value)" onclick="event.stopPropagation()">
       <input type="date" class="dchip-date" value="${d.fecha||''}" onchange="setDayField(${i},'fecha',this.value)" onclick="event.stopPropagation()">
       <span class="day-del" onclick="event.stopPropagation();removeDay(${i})">&#10005;</span>
     </div>
@@ -6395,6 +6451,40 @@ function renderBlockRow(b,dayIdx,blockIdx){
   }
   return `<div class="single-wrap">${rows}</div>`;
 }
+// ── SEMAFORO por tipo de dia (autodeteccion del titulo) ──
+function dayType(title){
+  const u=String(title||'').toUpperCase();
+  if(u.indexOf('HIGH')!==-1) return 'high';
+  if(u.indexOf('MODERATE')!==-1||u.indexOf('MOD')!==-1) return 'mid';
+  if(u.indexOf('LOW')!==-1) return 'low';
+  return null;
+}
+// Semaforo grande (cabecera del dia en el editor)
+function daySemaforo(title){
+  const t=dayType(title);
+  const red = t==='high' ? '#ff7070' : 'rgba(255,112,112,.18)';
+  const amb = t==='mid'  ? '#ffa040' : 'rgba(255,160,64,.18)';
+  const grn = t==='low'  ? '#00e5a0' : 'rgba(0,229,160,.18)';
+  const glow = t==='high'?'drop-shadow(0 0 3px #ff7070)':t==='mid'?'drop-shadow(0 0 3px #ffa040)':t==='low'?'drop-shadow(0 0 3px #00e5a0)':'none';
+  return `<svg width="13" height="30" viewBox="0 0 18 42" style="filter:${glow};flex-shrink:0">
+    <rect x="1" y="1" width="16" height="40" rx="8" fill="rgba(0,0,0,.35)" stroke="rgba(255,255,255,.1)" stroke-width=".5"/>
+    <circle cx="9" cy="9" r="5" fill="${red}"/><circle cx="9" cy="21" r="5" fill="${amb}"/><circle cx="9" cy="33" r="5" fill="${grn}"/>
+  </svg>`;
+}
+// Semaforo mini (lista de semanas) — puntito de color
+function daySemaforoMini(title){
+  const t=dayType(title);
+  const c = t==='high'?'#ff7070':t==='mid'?'#ffa040':t==='low'?'#00e5a0':'var(--muted)';
+  const op = t?1:.3;
+  return `<span style="width:8px;height:8px;border-radius:50%;background:${c};opacity:${op};flex-shrink:0"></span>`;
+}
+// Refresca el semaforo al escribir el titulo (sin re-render completo)
+function refreshDaySemaforo(i, val){
+  setDayField(i,'titulo',val);
+  const el=document.getElementById('daysem-'+i);
+  if(el) el.innerHTML=daySemaforo(val);
+}
+
 function toggleDay(i){ const d=_plan.week.data.dias[i]; d._open=(d._open===false); renderWeekEditor(); }
 function setDayField(i,f,v){ _plan.week.data.dias[i][f]=v; }
 function addDay(){
@@ -6625,22 +6715,23 @@ function cmpRow(label,unit,prevTxt,nowTxt,now,prev){
 }
 
 // ---- Guardar semana ----
-async function saveWeekNow(publish){
+async function saveWeekNow(){
   const w=_plan.week;
   if(!w.nombre.trim()){ alert('Ponle titulo a la semana'); return; }
-  // limpiar flags internos
   const clean=JSON.parse(JSON.stringify(w.data));
   (clean.dias||[]).forEach(d=>{ delete d._open; });
   const btns=document.querySelectorAll('.pw-draft,.pw-publish');
-  btns.forEach(b=>{ b.disabled=true; });
+  btns.forEach(b=>{ b.disabled=true; b.textContent='Guardando...'; });
+  // Preserva la visibilidad actual (nueva = oculta por defecto; se activa en Settings)
+  const vis = (w.id && w.visible === true) ? true : false;
   const res=await api({ action:'saveWeek', id:w.id||'', nombre:w.nombre, squad:w.squad,
     fecha_inicio:w.fecha_inicio, fecha_fin:w.fecha_fin, data:clean,
-    visible:publish, creado_por:(state.user&&state.user.usuario)||'' });
+    visible:vis, creado_por:(state.user&&state.user.usuario)||'' });
   if(res.ok){
-    alert(publish?'Semana publicada ✓':'Borrador guardado ✓');
+    alert('Semana guardada ✓\n\nPara que los jugadores la vean, actívala en Settings.');
     _plan.week=null;
     renderWeeksList();
-  } else { btns.forEach(b=>{ b.disabled=false; }); alert('Error: '+(res.error||'')); }
+  } else { btns.forEach(b=>{ b.disabled=false; b.textContent='Guardar semana'; }); alert('Error: '+(res.error||'')); }
 }
 
 </script>
