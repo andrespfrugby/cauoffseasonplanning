@@ -1455,6 +1455,132 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 /* ── ACWR SPARKLINE ── */
 .acwr-spark-wrap { width:56px; flex-shrink:0; }
 .acwr-spark-canvas { display:block; width:56px; height:24px; }
+
+/* ===== PLANNER STYLES ===== */
+/* ══ PLANNER (integrado) ══ */
+.plan-tabs{display:flex;gap:6px;background:var(--surface2);padding:4px;border-radius:var(--r);margin-bottom:14px}
+.plan-tab{flex:1;padding:8px;border-radius:calc(var(--r) - 4px);border:none;background:transparent;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font-body)}
+.plan-tab.active{background:var(--surface);color:var(--text)}
+.pbar{display:flex;gap:6px;margin-bottom:12px}
+.psearch{flex:1;display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);padding:0 10px;height:36px}
+.psearch input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:13px;font-family:var(--font-body)}
+.pfilters{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.pfcat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.pfcat-chips{display:flex;gap:5px;flex-wrap:wrap}
+.pchip{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer}
+.pchip.on{background:rgba(232,20,42,.12);color:var(--accent);border-color:rgba(232,20,42,.35)}
+.pcount{font-size:10px;color:var(--muted);margin-bottom:8px}
+.pex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.pex-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px}
+.pex-thumb{width:100%;height:80px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:20px;cursor:pointer;overflow:hidden}
+.pex-name{font-size:12px;font-weight:600;line-height:1.3;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pex-tags{font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pex-edit{margin-top:7px;width:100%;padding:5px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font-body)}
+.pback{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;margin-bottom:10px;font-family:var(--font-body)}
+.pe-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.pe-head{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.pe-thumb{width:64px;height:44px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--muted);overflow:hidden;flex-shrink:0}
+.pe-name{font-size:14px;font-weight:600}
+.pe-vid{font-size:11px;color:var(--accent);cursor:pointer}
+.pe-secttl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.pe-catrow{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px}
+.pe-catlbl{font-size:10px;color:var(--muted);width:100px;flex-shrink:0;padding-top:5px}
+.pe-tags{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.petag{font-size:11px;padding:4px 8px;border-radius:6px;background:rgba(232,20,42,.1);color:var(--accent);display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.petag .x{font-size:9px;opacity:.6}
+.pe-addbtn{width:100%;margin-top:6px;padding:9px;border-radius:8px;border:1px dashed var(--border2);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font-body)}
+.pe-addlbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 6px}
+.pe-catpicks{display:flex;gap:5px;flex-wrap:wrap}
+.pcatpick{font-size:11px;padding:4px 9px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer}
+.pcatpick.on{background:rgba(232,20,42,.12);color:var(--accent);border-color:rgba(232,20,42,.35)}
+#pe-addpanel{background:var(--surface2);border-radius:8px;padding:10px 12px;margin-top:10px}
+#pe-addpanel.hidden{display:none}
+.pe-addinput{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:9px 11px;color:var(--text);font-size:13px;outline:none;font-family:var(--font-body)}
+.pe-opts{margin-top:6px;border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:200px;overflow-y:auto}
+.pe-opt{padding:8px 10px;font-size:12px;background:var(--surface);border-bottom:1px solid var(--border);cursor:pointer}
+.pe-opt.create{color:var(--accent);font-weight:600}
+.pe-save{width:100%;margin-top:12px;padding:11px;border-radius:8px;border:none;background:var(--accent2);color:#0d0f12;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-body)}
+.pw-new,.pw-addday{width:100%;padding:11px;border-radius:8px;border:1px dashed var(--border2);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;margin-bottom:12px;font-family:var(--font-body)}
+.wk{border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
+.wk-head{display:flex;align-items:center;gap:8px;padding:11px 13px;background:var(--surface2)}
+.wk-name{font-size:13px;font-weight:600}
+.wk-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.pub{font-size:10px;padding:3px 9px;border-radius:12px;background:var(--surface);color:var(--muted);cursor:pointer;flex-shrink:0}
+.pub.on{background:rgba(0,229,160,.15);color:var(--accent2)}
+.wk-del{font-size:14px;cursor:pointer;opacity:.6;flex-shrink:0}
+.wk-days{padding:6px 13px 10px}
+.day{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);font-size:12px;font-weight:500;cursor:pointer}
+.day:last-child{border-bottom:none}
+.dnum{font-size:9px;font-weight:700;color:var(--accent);background:rgba(232,20,42,.1);border-radius:4px;padding:2px 6px}
+.dblk{margin-left:auto;font-size:10px;color:var(--muted);font-weight:400}
+.pw-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;margin-bottom:10px}
+.pw-box .inp{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 11px;color:var(--text);font-size:13px;width:100%;font-family:var(--font-body)}
+.day-card{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:8px}
+.day-hd{display:flex;align-items:center;gap:9px;padding:11px 13px;background:var(--surface2);cursor:pointer}
+.chev{font-size:12px;color:var(--muted)}
+.dinp{background:none;border:none;color:var(--text);font-size:13px;font-weight:600;font-family:var(--font-body);outline:none;flex:1;min-width:0}
+.dchip-date{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:4px 8px;color:var(--text);font-size:11px;font-family:var(--font-body);flex-shrink:0}
+.day-del{font-size:12px;color:var(--muted);cursor:pointer;flex-shrink:0}
+.day-body{padding:10px 13px 12px}
+.superblk{border:1px solid rgba(0,229,160,.3);border-radius:9px;padding:8px;margin-bottom:6px;background:rgba(0,229,160,.05)}
+.sslabel{font-size:8px;color:var(--accent2);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px}
+.ss-inner{display:flex;flex-direction:column;gap:5px;border-left:2px solid var(--accent2);padding-left:8px}
+.ss-add{margin-top:6px;width:100%;padding:6px;border-radius:6px;border:1px dashed rgba(0,229,160,.3);background:transparent;color:var(--accent2);font-size:10px;cursor:pointer;font-family:var(--font-body)}
+.single-wrap{margin-bottom:6px}
+.brow{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;cursor:pointer}
+.bl{width:24px;height:22px;border-radius:5px;background:rgba(232,20,42,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+.bth{width:28px;height:20px;border-radius:4px;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;flex-shrink:0;overflow:hidden}
+.bnm{font-size:12px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bmini{font-size:10px;color:var(--muted);flex-shrink:0}
+.brow-del{font-size:11px;color:var(--muted);flex-shrink:0}
+.addb{flex:1;padding:8px;border-radius:7px;border:1px dashed var(--border2);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font-body)}
+.pw-draft{flex:1;padding:11px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body)}
+.pw-publish{flex:1;padding:11px;border-radius:8px;border:none;background:var(--accent2);color:#0d0f12;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-body)}
+.picker-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:12px}
+.picker-box{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:440px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+.picker-top{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.picker-top input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:14px;font-family:var(--font-body)}
+.picker-count{font-size:9px;color:var(--muted);white-space:nowrap}
+.picker-x{font-size:15px;color:var(--muted);cursor:pointer}
+.picker-body{display:flex;flex:1;overflow:hidden;min-height:200px}
+.picker-list{flex:1;overflow-y:auto;border-right:1px solid var(--border)}
+.picker-filters{width:150px;overflow-y:auto;background:var(--surface2)}
+.ex{display:flex;align-items:center;gap:9px;padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer}
+.eth{width:30px;height:22px;border-radius:4px;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;flex-shrink:0;overflow:hidden}
+.enm{font-size:13px;font-weight:500}
+.ety{font-size:10px;color:var(--muted)}
+.fh{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 10px 4px;font-weight:700}
+.fo{display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:11px;cursor:pointer;color:var(--muted)}
+.fo.on{color:var(--accent);font-weight:600}
+.fc{margin-left:auto;font-size:9px;color:var(--muted)}
+.picker-foot{border-top:1px solid var(--border)}
+.ft{width:100%;padding:10px;border:none;background:var(--surface2);font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font-body)}
+.fields-box{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:400px;padding:16px}
+.fields-hd{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.pb-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pb-fields label{display:flex;flex-direction:column;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;gap:3px}
+.pb-fields input{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;font-weight:600;outline:none;font-family:var(--font-body)}
+.pb-loadrow{display:flex;gap:5px;margin-top:8px}
+.lc{font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);color:var(--muted);cursor:pointer}
+.lc.on{background:rgba(0,229,160,.12);color:var(--accent2);border-color:rgba(0,229,160,.35)}
+.pb-cmp{margin-top:12px}
+.pb-cmp-ttl{font-size:10px;color:var(--muted);font-style:italic;margin-bottom:6px}
+.pb-cmp-load,.pb-cmp-empty{font-size:11px;color:var(--muted);font-style:italic}
+.pb-cmprow{display:flex;align-items:center;gap:9px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:5px}
+.pb-cmpic{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.pb-cmprow.up .pb-cmpic{background:rgba(0,229,160,.15);color:var(--accent2)}
+.pb-cmprow.down .pb-cmpic{background:rgba(123,184,255,.15);color:#7bb8ff}
+.pb-cmprow.flat .pb-cmpic{background:var(--surface);color:var(--muted)}
+.pb-cmptop{display:flex;justify-content:space-between;font-size:12px;font-weight:500}
+.pb-cmpsub{font-size:10px;color:var(--muted);margin-top:2px}
+.pb-cmpsub b{color:var(--text)}
+.pb-delta{font-size:11px;font-weight:700;padding:1px 7px;border-radius:12px}
+.pb-delta.up{background:rgba(0,229,160,.15);color:var(--accent2)}
+.pb-delta.down{background:rgba(123,184,255,.15);color:#7bb8ff}
+.pb-delta.flat{background:var(--surface);color:var(--muted)}
+.pb-warn{display:flex;gap:7px;background:rgba(255,192,77,.08);border:1px solid rgba(255,192,77,.2);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:11px;color:#e0a830;line-height:1.5}
+#tab-coach-planner mark{background:rgba(255,192,77,.3);color:#e0a830;border-radius:2px;padding:0 1px}
+
 </style>
 </head>
 <body>
@@ -1725,6 +1851,23 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div id="settings-content"><div class="loader"><div class="spinner"></div></div></div>
     </div>
 
+    <!-- ══ COACH: Planner (galería + creador de semanas) ══ -->
+    <div id="tab-coach-planner" class="tab-section" style="display:none">
+      <div class="coach-header">
+        <div>
+          <div class="coach-title">Planner</div>
+          <div class="coach-sem-label">Galería y creador de sesiones</div>
+        </div>
+        <span class="coach-badge">Coach</span>
+      </div>
+      <div class="plan-tabs">
+        <button class="plan-tab active" id="plt-weeks" onclick="plannerSub('weeks')">Semanas</button>
+        <button class="plan-tab" id="plt-gal" onclick="plannerSub('gal')">Galería</button>
+      </div>
+      <div id="planner-content"><div class="loader"><div class="spinner"></div></div></div>
+    </div>
+    <div id="picker-modal"></div>
+
   </div><!-- /content -->
 
   <!-- ══ BOTTOM NAV ══ -->
@@ -1762,6 +1905,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     <div class="bn-item" id="bn-sesion-coach" onclick="switchTab('sesion')" style="display:none">
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></div>
       <div class="bn-lbl">Session</div>
+    </div>
+    <div class="bn-item" id="bn-planner" onclick="switchTab('planner')" style="display:none">
+      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></svg></div>
+      <div class="bn-lbl">Planner</div>
     </div>
     <div class="bn-item" id="bn-settings" onclick="switchTab('settings')" style="display:none">
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
@@ -3088,12 +3235,12 @@ const COACH_TABS  = ['jugadores','rpe','reports','sesion'];
 
 function initNav() {
   // All nav items — hide all first
-  const allNavIds = ['bn-sesion','bn-misemana','bn-wellness','bn-readiness','bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-settings'];
+  const allNavIds = ['bn-sesion','bn-misemana','bn-wellness','bn-readiness','bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-planner','bn-settings'];
   allNavIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
 
   if (state.isCoach) {
-    // Coach: Readiness · Load · Reports · Session · Settings (NO Squad)
-    ['bn-readiness','bn-rpe','bn-reports','bn-sesion-coach','bn-settings'].forEach(id => {
+    // Coach: Readiness · Load · Reports · Session · Planner · Settings (NO Squad)
+    ['bn-readiness','bn-rpe','bn-reports','bn-sesion-coach','bn-planner','bn-settings'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
@@ -3110,7 +3257,7 @@ function initNav() {
 
 function switchTab(tab) {
   state.activeTab = tab;
-  const allTabs = ['tab-sesion','tab-misemana','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports','tab-coach-settings','tab-wellness','tab-coach-readiness'];
+  const allTabs = ['tab-sesion','tab-misemana','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports','tab-coach-settings','tab-wellness','tab-coach-readiness','tab-coach-planner'];
   allTabs.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
@@ -3125,6 +3272,7 @@ function switchTab(tab) {
     'settings':   'tab-coach-settings',
     'wellness':   'tab-wellness',
     'readiness':  'tab-coach-readiness',
+    'planner':    'tab-coach-planner',
   };
   const el = document.getElementById(tabMap[tab]);
   if (el) el.style.display = '';
@@ -3138,6 +3286,7 @@ function switchTab(tab) {
     'settings':   'bn-settings',
     'wellness':   'bn-wellness',
     'readiness':  'bn-readiness',
+    'planner':    'bn-planner',
   };
   document.querySelectorAll('.bn-item').forEach(el => el.classList.remove('active'));
   const activeBtn = document.getElementById(navMap[tab]);
@@ -3165,6 +3314,7 @@ function switchTab(tab) {
   if (tab === 'wellness')   renderWellnessTab();
   if (tab === 'readiness')  renderReadinessDashboard();
   if (tab === 'settings')   renderSettingsPanel();
+  if (tab === 'planner')    renderPlanner();
 }
 
 function onCoachSquadChangeRpe() {
@@ -5907,6 +6057,592 @@ function logout() {
   btn.disabled=false; btn.textContent='Entrar';
   document.getElementById('login-error').textContent='';
 }
+
+/* ===== PLANNER MODULE ===== */
+// ===================================================================
+//  PLANNER - Modulo completo (galeria + creador jerarquico + semanas)
+//  Aditivo. Reutiliza api(), openVideoModal(), state.
+// ===================================================================
+var _plan = {
+  sub:'weeks', exercises:[], lists:{}, loaded:false,
+  filters:{}, search:'',
+  editing:null,
+  week:null,          // semana en edicion
+  weeks:[],
+  picker:null         // {dayIdx, blockIdx} destino del selector
+};
+
+var PLAN_CATS = [
+  { key:'pattern',     list:'Movement Pattern', lbl:'Movement Pattern' },
+  { key:'laterality',  list:'Laterality',       lbl:'Laterality' },
+  { key:'category',    list:'Category',         lbl:'Category' },
+  { key:'goal',        list:'Goal',             lbl:'Goal' },
+  { key:'contraction', list:'Contraction Type', lbl:'Contraction' }
+];
+
+var SQUADS = ["men's xv","women's","academy"];
+
+function ytThumb(url){
+  if(!url) return '';
+  var id='';
+  try{
+    var u=new URL(url);
+    if(u.hostname.indexOf('youtu.be')!==-1) id=u.pathname.slice(1).split('?')[0];
+    else if(u.hostname.indexOf('youtube.com')!==-1){
+      id=u.searchParams.get('v')||'';
+      if(!id && u.pathname.indexOf('/shorts/')!==-1) id=u.pathname.split('/shorts/')[1].split('/')[0];
+    }
+  }catch(e){}
+  return id?'https://img.youtube.com/vi/'+id+'/mqdefault.jpg':'';
+}
+
+async function ensurePlannerData(){
+  if(_plan.loaded) return;
+  const res = await api({ action:'getExerciseLibrary' });
+  if(res && res.ok){ _plan.exercises=res.exercises||[]; _plan.lists=res.lists||{}; _plan.loaded=true; _plan.backendReady=true; }
+  else { _plan.backendReady=false; }
+}
+
+async function renderPlanner(){
+  await ensurePlannerData();
+  if(_plan.backendReady===false){
+    const c=document.getElementById('planner-content');
+    if(c) c.innerHTML='<div class="pe-box" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">&#128295;</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">Backend pendiente de desplegar</div><div style="font-size:12px;color:var(--muted);line-height:1.6">El Planner ya está integrado en la app, pero necesita las acciones nuevas en tu Apps Script para leer los ejercicios y guardar semanas.<br><br>Sigue el archivo <b>1_BACKEND_appscript.md</b> (añadir columnas al Sheet + pegar las funciones + desplegar nueva versión). El resto de la app funciona con normalidad mientras tanto.</div></div>';
+    return;
+  }
+  plannerSub(_plan.sub);
+}
+
+function plannerSub(sub){
+  _plan.sub=sub;
+  ['weeks','gal'].forEach(s=>{
+    const b=document.getElementById('plt-'+s);
+    if(b) b.classList.toggle('active', s===sub);
+  });
+  if(sub==='gal') renderGallery();
+  else renderWeeksList();
+}
+
+// ============ GALERIA ============
+function exTagsArr(ex){
+  var out=[];
+  PLAN_CATS.forEach(c=>{ var v=ex[c.key]; if(v) String(v).split(',').forEach(x=>{if(x.trim())out.push(x.trim());}); });
+  return out;
+}
+function matchesFilters(ex){
+  for(var cat in _plan.filters){
+    var set=_plan.filters[cat]; if(!set||!set.size) continue;
+    var cc=PLAN_CATS.find(c=>c.list===cat); if(!cc) continue;
+    var val=String(ex[cc.key]||'').toLowerCase(), any=false;
+    set.forEach(f=>{ if(val.split(',').map(s=>s.trim()).indexOf(f.toLowerCase())!==-1) any=true; });
+    if(!any) return false;
+  }
+  if(_plan.search && String(ex.name).toLowerCase().indexOf(_plan.search.toLowerCase())===-1) return false;
+  return true;
+}
+function toggleGalFilter(cat,val){
+  if(!_plan.filters[cat]) _plan.filters[cat]=new Set();
+  const s=_plan.filters[cat];
+  if(s.has(val)) s.delete(val); else s.add(val);
+  renderGallery();
+}
+function renderGallery(){
+  const c=document.getElementById('planner-content');
+  const lists=_plan.lists;
+  let filtersHtml='';
+  PLAN_CATS.forEach(cc=>{
+    const vals=lists[cc.list]||[]; if(!vals.length) return;
+    const chips=vals.map(v=>{
+      const on=_plan.filters[cc.list]&&_plan.filters[cc.list].has(v);
+      return `<span class="pchip${on?' on':''}" onclick="toggleGalFilter('${cc.list.replace(/'/g,"\\'")}','${v.replace(/'/g,"\\'")}')">${v.replace(/_/g,' ')}</span>`;
+    }).join('');
+    filtersHtml+=`<div class="pfcat"><div class="pfcat-lbl">${cc.lbl}</div><div class="pfcat-chips">${chips}</div></div>`;
+  });
+  const filtered=_plan.exercises.filter(matchesFilters);
+  const cards=filtered.map(ex=>{
+    const th=ytThumb(ex.video), tags=exTagsArr(ex);
+    const tagStr=tags.length?tags.slice(0,3).map(t=>t.replace(/_/g,' ')).join(' · '):'<span style="font-style:italic;color:var(--muted)">Sin clasificar</span>';
+    const inner=th?`<img src="${th}" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.parentNode.innerHTML='&#9654;'">`:'&#9654;';
+    return `<div class="pex-card">
+      <div class="pex-thumb" onclick="openVideoModal('${ex.name.replace(/'/g,"\\'")}','${(ex.video||'').replace(/'/g,"\\'")}')">${inner}</div>
+      <div class="pex-name" title="${ex.name}">${ex.name}</div>
+      <div class="pex-tags">${tagStr}</div>
+      <button class="pex-edit" onclick="openFilterEditor('${ex.id}')">&#9998; filtros</button>
+    </div>`;
+  }).join('');
+  c.innerHTML=`
+    <div class="pbar">
+      <div class="psearch"><span>&#128269;</span><input type="text" placeholder="Buscar ejercicio..." value="${_plan.search}" oninput="_plan.search=this.value;renderGalleryDebounced()"></div>
+    </div>
+    <div class="pfilters">${filtersHtml}</div>
+    <div class="pcount">${filtered.length} ejercicio${filtered.length!==1?'s':''}</div>
+    <div class="pex-grid">${cards||'<div class="hist-empty" style="grid-column:1/-1">Ningun ejercicio con esos filtros.</div>'}</div>`;
+}
+let _galTO;
+function renderGalleryDebounced(){ clearTimeout(_galTO); _galTO=setTimeout(renderGallery,180); }
+
+// ============ EDITOR DE FILTROS ============
+function openFilterEditor(id){
+  const ex=_plan.exercises.find(e=>String(e.id)===String(id)); if(!ex) return;
+  _plan.editing=JSON.parse(JSON.stringify(ex));
+  renderFilterEditor();
+}
+function exValsForCat(ex,key){ return String(ex[key]||'').split(',').map(s=>s.trim()).filter(Boolean); }
+function renderFilterEditor(){
+  const ex=_plan.editing, th=ytThumb(ex.video);
+  const rows=PLAN_CATS.map(cc=>{
+    const vals=exValsForCat(ex,cc.key);
+    const tags=vals.map(v=>`<span class="petag" onclick="removeExTag('${cc.key}','${v.replace(/'/g,"\\'")}')">${v.replace(/_/g,' ')}<span class="x">&#10005;</span></span>`).join('');
+    return `<div class="pe-catrow"><div class="pe-catlbl">${cc.lbl}</div><div class="pe-tags">${tags||'<span style="font-size:11px;color:var(--muted)">-</span>'}</div></div>`;
+  }).join('');
+  document.getElementById('planner-content').innerHTML=`
+    <button class="pback" onclick="renderGallery()">&#8249; volver a galeria</button>
+    <div class="pe-box">
+      <div class="pe-head">
+        <div class="pe-thumb">${th?`<img src="${th}" style="width:100%;height:100%;object-fit:cover">`:'&#9654;'}</div>
+        <div><div class="pe-name">${ex.name}</div>
+        ${ex.video?`<a class="pe-vid" onclick="openVideoModal('${ex.name.replace(/'/g,"\\'")}','${(ex.video||'').replace(/'/g,"\\'")}')">&#9654; ver video</a>`:''}</div>
+      </div>
+      <div class="pe-secttl">Clasificacion - toca un tag para quitarlo</div>
+      ${rows}
+      <button class="pe-addbtn" onclick="toggleAddFilter()">&#43; anadir filtro</button>
+      <div id="pe-addpanel" class="hidden"></div>
+      <button class="pe-save" onclick="saveExerciseEdits()">Guardar en Database</button>
+    </div>`;
+}
+function removeExTag(key,val){
+  const ex=_plan.editing;
+  ex[key]=exValsForCat(ex,key).filter(v=>v!==val).join(',');
+  renderFilterEditor();
+}
+let _addCat=null,_addSearch='';
+function toggleAddFilter(){
+  const p=document.getElementById('pe-addpanel'); if(!p) return;
+  if(!p.classList.contains('hidden')){ p.classList.add('hidden'); return; }
+  p.classList.remove('hidden'); _addCat=PLAN_CATS[0].list; _addSearch='';
+  renderAddPanel();
+}
+function renderAddPanel(){
+  const p=document.getElementById('pe-addpanel'); if(!p) return;
+  const catChips=PLAN_CATS.map(cc=>`<span class="pcatpick${cc.list===_addCat?' on':''}" onclick="_addCat='${cc.list.replace(/'/g,"\\'")}';_addSearch='';renderAddPanel()">${cc.lbl}</span>`).join('');
+  const catObj=PLAN_CATS.find(c=>c.list===_addCat);
+  const listVals=_plan.lists[_addCat]||[];
+  const q=_addSearch.trim().toLowerCase();
+  const matches=q?listVals.filter(v=>v.toLowerCase().indexOf(q)!==-1):listVals;
+  const exact=listVals.some(v=>v.toLowerCase()===q);
+  let opts=matches.map(v=>`<div class="pe-opt" onclick="applyAddFilter('${catObj.key}','${v.replace(/'/g,"\\'")}',false)">${v.replace(/_/g,' ')}</div>`).join('');
+  if(q&&!exact) opts+=`<div class="pe-opt create" onclick="applyAddFilter('${catObj.key}','${_addSearch.replace(/'/g,"\\'")}',true)">&#43; Crear "${_addSearch}" como filtro nuevo</div>`;
+  p.innerHTML=`
+    <div class="pe-addlbl">1 - categoria</div>
+    <div class="pe-catpicks">${catChips}</div>
+    <div class="pe-addlbl">2 - escribe o elige</div>
+    <input type="text" class="pe-addinput" placeholder="Escribe para buscar o crear..." value="${_addSearch}" oninput="_addSearch=this.value;renderAddPanel()">
+    <div class="pe-opts">${opts||'<div class="pe-opt" style="color:var(--muted)">Escribe para crear un valor nuevo...</div>'}</div>`;
+}
+async function applyAddFilter(key,val,isNew){
+  const ex=_plan.editing, vals=exValsForCat(ex,key);
+  if(vals.map(v=>v.toLowerCase()).indexOf(val.toLowerCase())===-1) vals.push(val);
+  ex[key]=vals.join(',');
+  if(isNew){
+    const catObj=PLAN_CATS.find(c=>c.key===key);
+    await api({ action:'addListValue', categoria:catObj.list, valor:val });
+    if(!_plan.lists[catObj.list]) _plan.lists[catObj.list]=[];
+    _plan.lists[catObj.list].push(val);
+  }
+  renderFilterEditor();
+}
+async function saveExerciseEdits(){
+  const ex=_plan.editing, btn=document.querySelector('.pe-save');
+  if(btn){ btn.disabled=true; btn.textContent='Guardando...'; }
+  const res=await api({ action:'saveExerciseTags', id:ex.id, name:ex.name,
+    pattern:ex.pattern, laterality:ex.laterality, category:ex.category, goal:ex.goal, contraction:ex.contraction });
+  if(res.ok){
+    const idx=_plan.exercises.findIndex(e=>String(e.id)===String(ex.id));
+    if(idx!==-1) _plan.exercises[idx]=JSON.parse(JSON.stringify(ex));
+    renderGallery();
+  } else { if(btn){ btn.disabled=false; btn.textContent='Guardar en Database'; } alert('Error: '+(res.error||'')); }
+}
+
+// ============ SEMANAS: LISTA ============
+async function renderWeeksList(){
+  const c=document.getElementById('planner-content');
+  c.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  const res=await api({ action:'getWeeks' });
+  _plan.weeks=res.ok?(res.weeks||[]):[];
+  let html=`<button class="pw-new" onclick="newWeek()">&#43; crear semana nueva</button>`;
+  if(!_plan.weeks.length){
+    html+='<div class="hist-empty" style="text-align:center;padding:20px">Aun no hay semanas. Crea la primera.</div>';
+  } else {
+    html+=_plan.weeks.map(w=>{
+      const dias=(w.data&&w.data.dias)||[];
+      const totalEj=dias.reduce((s,d)=>s+(d.bloques||[]).reduce((ss,b)=>ss+(b.ejercicios||[]).length,0),0);
+      const daysHtml=dias.map((d,di)=>{
+        const nej=(d.bloques||[]).reduce((s,b)=>s+(b.ejercicios||[]).length,0);
+        return `<div class="day" onclick="editWeek('${w.id}')"><span class="dnum">D${di+1}</span>${d.titulo||'Dia'}<span class="dblk">${fmtDateShort(d.fecha)} · ${nej} ej.</span></div>`;
+      }).join('');
+      return `<div class="wk">
+        <div class="wk-head">
+          <div style="flex:1" onclick="editWeek('${w.id}')">
+            <div class="wk-name">${w.nombre}</div>
+            <div class="wk-meta">${w.squad} · ${fmtRange(w.fecha_inicio,w.fecha_fin)} · ${dias.length} dias · ${totalEj} ej.</div>
+          </div>
+          <span class="pub ${w.visible?'on':''}" onclick="togglePublish('${w.id}',${!w.visible})">${w.visible?'&#128065; Publicada':'&#128064; Borrador'}</span>
+          <span class="wk-del" onclick="delWeek('${w.id}')">&#128465;</span>
+        </div>
+        <div class="wk-days">${daysHtml||'<div style="font-size:11px;color:var(--muted);padding:6px">Sin dias aun</div>'}</div>
+      </div>`;
+    }).join('');
+  }
+  c.innerHTML=html;
+}
+function fmtDateShort(d){
+  if(!d) return 's/f';
+  try{ const dt=new Date(d+'T00:00'); return dt.toLocaleDateString('es-ES',{weekday:'short',day:'2-digit',month:'2-digit'}); }catch(e){ return d; }
+}
+function fmtRange(a,b){
+  if(!a&&!b) return 'sin fechas';
+  return fmtDateShort(a)+' - '+fmtDateShort(b);
+}
+async function togglePublish(id,vis){
+  await api({ action:'publishWeek', id, visible:vis });
+  renderWeeksList();
+}
+async function delWeek(id){
+  if(!confirm('Borrar esta semana?')) return;
+  await api({ action:'deleteWeek', id });
+  renderWeeksList();
+}
+
+// ============ SEMANAS: EDITOR JERARQUICO ============
+function newWeek(){
+  const today=new Date();
+  const end=new Date(today.getTime()+6*86400000);
+  _plan.week={ id:'', nombre:'', squad:SQUADS[0], visible:false,
+    fecha_inicio:today.toISOString().slice(0,10), fecha_fin:end.toISOString().slice(0,10),
+    data:{ dias:[] } };
+  renderWeekEditor();
+}
+function editWeek(id){
+  const w=_plan.weeks.find(x=>String(x.id)===String(id)); if(!w) return;
+  _plan.week=JSON.parse(JSON.stringify(w));
+  if(!_plan.week.data) _plan.week.data={dias:[]};
+  if(!_plan.week.data.dias) _plan.week.data.dias=[];
+  renderWeekEditor();
+}
+function renderWeekEditor(){
+  const w=_plan.week;
+  const squadOpts=SQUADS.map(sq=>`<option value="${sq}"${w.squad===sq?' selected':''}>${sq}</option>`).join('');
+  const daysHtml=(w.data.dias||[]).map((d,i)=>renderDayCard(d,i)).join('');
+  document.getElementById('planner-content').innerHTML=`
+    <button class="pback" onclick="renderWeeksList()">&#8249; volver a semanas</button>
+    <div class="pw-box">
+      <input class="inp" style="font-size:15px;font-weight:600;margin-bottom:10px" placeholder="Titulo de la semana (ej. OFFSEASON WEEK 1)" value="${w.nombre}" oninput="_plan.week.nombre=this.value">
+      <div class="pe-addlbl">Rango de fechas</div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px">
+        <input type="date" class="inp" value="${w.fecha_inicio}" onchange="_plan.week.fecha_inicio=this.value">
+        <span style="color:var(--muted);font-size:12px">a</span>
+        <input type="date" class="inp" value="${w.fecha_fin}" onchange="_plan.week.fecha_fin=this.value">
+      </div>
+      <select class="semana-select" style="margin:0" onchange="_plan.week.squad=this.value">${squadOpts}</select>
+    </div>
+    <div id="pw-days">${daysHtml||'<div class="hist-empty" style="text-align:center;padding:14px">Anade el primer dia</div>'}</div>
+    <button class="pw-addday" onclick="addDay()">&#43; anadir dia</button>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="pw-draft" onclick="saveWeekNow(false)">Guardar borrador</button>
+      <button class="pw-publish" onclick="saveWeekNow(true)">&#10148; Publicar</button>
+    </div>`;
+}
+function renderDayCard(d,i){
+  const open=d._open!==false;
+  const blocks=(d.bloques||[]).map((b,bi)=>renderBlockRow(b,i,bi)).join('');
+  return `<div class="day-card">
+    <div class="day-hd" onclick="toggleDay(${i})">
+      <span class="chev">${open?'&#9660;':'&#9654;'}</span>
+      <span class="dnum">D${i+1}</span>
+      <input class="dinp" placeholder="Titulo del dia (ej. High Day)" value="${d.titulo||''}" oninput="event.stopPropagation();setDayField(${i},'titulo',this.value)" onclick="event.stopPropagation()">
+      <input type="date" class="dchip-date" value="${d.fecha||''}" onchange="setDayField(${i},'fecha',this.value)" onclick="event.stopPropagation()">
+      <span class="day-del" onclick="event.stopPropagation();removeDay(${i})">&#10005;</span>
+    </div>
+    ${open?`<div class="day-body">
+      ${blocks||'<div style="font-size:11px;color:var(--muted);padding:4px 0 8px">Sin bloques</div>'}
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button class="addb" onclick="addBlock(${i},'unico')">&#9723; bloque unico</button>
+        <button class="addb" onclick="addBlock(${i},'superserie')">&#9707; superserie</button>
+      </div>
+    </div>`:''}
+  </div>`;
+}
+function renderBlockRow(b,dayIdx,blockIdx){
+  const isSuper=b.tipo==='superserie';
+  const rows=(b.ejercicios||[]).map((it,ei)=>{
+    const th=ytThumb(it.video);
+    const presc=[it.sets?it.sets+'x':'',it.reps||'',it.carga||''].filter(Boolean).join(' ');
+    return `<div class="brow" onclick="openExerciseFields(${dayIdx},${blockIdx},${ei})">
+      <span class="bl">${it.orden||''}</span>
+      <div class="bth">${th?`<img src="${th}" style="width:100%;height:100%;object-fit:cover">`:'&#9654;'}</div>
+      <span class="bnm">${it.ejercicio||'<i style=color:var(--muted)>elegir ejercicio</i>'}</span>
+      <span class="bmini">${presc}</span>
+      <span class="brow-del" onclick="event.stopPropagation();removeExerciseFromBlock(${dayIdx},${blockIdx},${ei})">&#10005;</span>
+    </div>`;
+  }).join('');
+  const addMore=isSuper?`<button class="ss-add" onclick="addExerciseToBlock(${dayIdx},${blockIdx})">&#43; anadir a superserie</button>`:'';
+  if(isSuper){
+    return `<div class="superblk">
+      <div class="sslabel">Superserie ${b.letra||''}</div>
+      <div class="ss-inner">${rows}</div>
+      ${addMore}
+    </div>`;
+  }
+  return `<div class="single-wrap">${rows}</div>`;
+}
+function toggleDay(i){ const d=_plan.week.data.dias[i]; d._open=(d._open===false); renderWeekEditor(); }
+function setDayField(i,f,v){ _plan.week.data.dias[i][f]=v; }
+function addDay(){
+  const dias=_plan.week.data.dias;
+  dias.push({ titulo:'', fecha:_plan.week.fecha_inicio||'', bloques:[], _open:true });
+  renderWeekEditor();
+}
+function removeDay(i){ _plan.week.data.dias.splice(i,1); renderWeekEditor(); }
+
+function nextBlockLetter(day){
+  const used=(day.bloques||[]).map(b=>b.letra).filter(Boolean);
+  let code=65;
+  while(used.indexOf(String.fromCharCode(code))!==-1) code++;
+  return String.fromCharCode(code);
+}
+function addBlock(dayIdx,tipo){
+  const day=_plan.week.data.dias[dayIdx];
+  const letra=nextBlockLetter(day);
+  const block={ tipo, letra, ejercicios:[] };
+  day.bloques.push(block);
+  const blockIdx=day.bloques.length-1;
+  // abrir selector para el primer ejercicio
+  addExerciseToBlock(dayIdx,blockIdx);
+}
+function removeBlock(dayIdx,blockIdx){ _plan.week.data.dias[dayIdx].bloques.splice(blockIdx,1); renderWeekEditor(); }
+function removeExerciseFromBlock(dayIdx,blockIdx,ei){
+  const b=_plan.week.data.dias[dayIdx].bloques[blockIdx];
+  b.ejercicios.splice(ei,1);
+  if(!b.ejercicios.length) _plan.week.data.dias[dayIdx].bloques.splice(blockIdx,1);
+  reorderBlock(dayIdx);
+  renderWeekEditor();
+}
+function reorderBlock(dayIdx){
+  // recalcula orden A1,A2 / B1... segun letra + posicion
+  const day=_plan.week.data.dias[dayIdx];
+  (day.bloques||[]).forEach(b=>{
+    (b.ejercicios||[]).forEach((it,idx)=>{ it.orden=(b.letra||'?')+(idx+1); });
+  });
+}
+
+// abrir selector doble panel
+function addExerciseToBlock(dayIdx,blockIdx){
+  _plan.picker={ dayIdx, blockIdx, q:'', filters:{} };
+  renderExercisePicker();
+}
+function openExerciseFields(dayIdx,blockIdx,ei){
+  // toca un ejercicio ya puesto -> abrir campos de prescripcion (modal inline)
+  _plan.fieldEdit={ dayIdx, blockIdx, ei };
+  renderFieldsModal();
+}
+
+// ---- Selector de doble panel ----
+function pickerCounts(cat,val){
+  // cuenta ejercicios que tienen ese valor (respetando otros filtros activos)
+  const base=_plan.exercises.filter(e=>pickerPasses(e,cat));
+  const cc=PLAN_CATS.find(c=>c.list===cat);
+  return base.filter(e=>String(e[cc.key]||'').split(',').map(s=>s.trim().toLowerCase()).indexOf(val.toLowerCase())!==-1).length;
+}
+function pickerPasses(ex,skipCat){
+  const f=_plan.picker.filters;
+  for(const cat in f){
+    if(cat===skipCat) continue;
+    const set=f[cat]; if(!set||!set.length) continue;
+    const cc=PLAN_CATS.find(c=>c.list===cat);
+    const vals=String(ex[cc.key]||'').split(',').map(s=>s.trim().toLowerCase());
+    if(!set.some(v=>vals.indexOf(v.toLowerCase())!==-1)) return false;
+  }
+  return true;
+}
+function togglePickerFilter(cat,val){
+  const f=_plan.picker.filters;
+  if(!f[cat]) f[cat]=[];
+  const idx=f[cat].map(x=>x.toLowerCase()).indexOf(val.toLowerCase());
+  if(idx!==-1) f[cat].splice(idx,1); else f[cat].push(val);
+  if(!f[cat].length) delete f[cat];
+  renderExercisePicker();
+}
+function clearPickerFilters(){ _plan.picker.filters={}; _plan.picker.q=''; renderExercisePicker(); }
+function pickerSearchInput(v){
+  _plan.picker.q=v;
+  const list=document.getElementById('picker-list');
+  if(list) list.innerHTML=pickerListHtml();
+  const cnt=document.getElementById('picker-count');
+  if(cnt) cnt.textContent=pickerFiltered().length+' DE '+_plan.exercises.length;
+}
+function pickerFiltered(){
+  const q=(_plan.picker.q||'').trim().toLowerCase();
+  return _plan.exercises.filter(e=>pickerPasses(e,null)&&(!q||e.name.toLowerCase().indexOf(q)!==-1));
+}
+function pickerListHtml(){
+  const q=(_plan.picker.q||'').trim().toLowerCase();
+  const hits=pickerFiltered();
+  if(!hits.length) return '<div style="padding:14px;font-size:12px;color:var(--muted);text-align:center">Sin coincidencias</div>';
+  return hits.slice(0,120).map(e=>{
+    const th=ytThumb(e.video);
+    const tags=exTagsArr(e).slice(0,3).map(t=>t.replace(/_/g,' ')).join(' · ');
+    const nm=q?e.name.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<mark>$1</mark>'):e.name;
+    return `<div class="ex" onclick="pickExercise('${String(e.id)}')">
+      <span class="eth">${th?`<img src="${th}" style="width:100%;height:100%;object-fit:cover">`:'&#9654;'}</span>
+      <div><div class="enm">${nm}</div><div class="ety">${tags||'sin clasificar'}</div></div>
+    </div>`;
+  }).join('');
+}
+function renderExercisePicker(){
+  const filtersHtml=PLAN_CATS.map(cc=>{
+    const vals=_plan.lists[cc.list]||[]; if(!vals.length) return '';
+    const opts=vals.map(v=>{
+      const on=_plan.picker.filters[cc.list]&&_plan.picker.filters[cc.list].map(x=>x.toLowerCase()).indexOf(v.toLowerCase())!==-1;
+      const n=pickerCounts(cc.list,v);
+      return `<div class="fo${on?' on':''}" onclick="togglePickerFilter('${cc.list.replace(/'/g,"\\'")}','${v.replace(/'/g,"\\'")}')"><span>${on?'&#9745;':'&#9744;'}</span>${v.replace(/_/g,' ')}<span class="fc">${n}</span></div>`;
+    }).join('');
+    return `<div class="fh">${cc.lbl}</div>${opts}`;
+  }).join('');
+  const modal=document.getElementById('picker-modal');
+  const html=`
+    <div class="picker-backdrop" onclick="closePicker(event)">
+      <div class="picker-box" onclick="event.stopPropagation()">
+        <div class="picker-top">
+          <span>&#128269;</span>
+          <input type="text" placeholder="Buscar ejercicio..." value="${_plan.picker.q}" oninput="pickerSearchInput(this.value)" autofocus>
+          <span id="picker-count" class="picker-count">${pickerFiltered().length} DE ${_plan.exercises.length}</span>
+          <span class="picker-x" onclick="closePicker()">&#10005;</span>
+        </div>
+        <div class="picker-body">
+          <div id="picker-list" class="picker-list">${pickerListHtml()}</div>
+          <div class="picker-filters">${filtersHtml}</div>
+        </div>
+        <div class="picker-foot"><button class="ft" onclick="clearPickerFilters()">&#8709; Limpiar filtros</button></div>
+      </div>
+    </div>`;
+  modal.innerHTML=html;
+  modal.style.display='block';
+}
+function closePicker(e){
+  const modal=document.getElementById('picker-modal');
+  modal.style.display='none'; modal.innerHTML='';
+  // si el bloque quedo vacio (cancelaron sin elegir), limpiarlo
+  if(_plan.picker){
+    const {dayIdx,blockIdx}=_plan.picker;
+    const b=_plan.week.data.dias[dayIdx] && _plan.week.data.dias[dayIdx].bloques[blockIdx];
+    if(b && (!b.ejercicios||!b.ejercicios.length)) _plan.week.data.dias[dayIdx].bloques.splice(blockIdx,1);
+  }
+  _plan.picker=null;
+  renderWeekEditor();
+}
+function pickExercise(id){
+  const ex=_plan.exercises.find(e=>String(e.id)===String(id)); if(!ex) return;
+  const {dayIdx,blockIdx}=_plan.picker;
+  const b=_plan.week.data.dias[dayIdx].bloques[blockIdx];
+  b.ejercicios.push({ ejercicio:ex.name, video:ex.video, sets:'', reps:'', tempo:'', carga:'', tipo_carga:'%', orden:'' });
+  reorderBlock(dayIdx);
+  const modal=document.getElementById('picker-modal');
+  modal.style.display='none'; modal.innerHTML='';
+  _plan.picker=null;
+  renderWeekEditor();
+}
+
+// ---- Modal de campos de prescripcion + control de carga ----
+function renderFieldsModal(){
+  const {dayIdx,blockIdx,ei}=_plan.fieldEdit;
+  const it=_plan.week.data.dias[dayIdx].bloques[blockIdx].ejercicios[ei];
+  const lt=it.tipo_carga||'%';
+  const modal=document.getElementById('picker-modal');
+  modal.innerHTML=`
+    <div class="picker-backdrop" onclick="closeFields(event)">
+      <div class="fields-box" onclick="event.stopPropagation()">
+        <div class="fields-hd"><span class="bl">${it.orden||''}</span><span style="font-size:14px;font-weight:600;flex:1">${it.ejercicio}</span><span class="picker-x" onclick="closeFields()">&#10005;</span></div>
+        <div class="pb-fields">
+          <label>Sets<input value="${it.sets||''}" oninput="setField('sets',this.value)"></label>
+          <label>Reps<input value="${it.reps||''}" oninput="setField('reps',this.value)"></label>
+          <label>Tempo<input value="${it.tempo||''}" oninput="setField('tempo',this.value)"></label>
+          <label>Carga<input value="${it.carga||''}" oninput="setField('carga',this.value)"></label>
+        </div>
+        <div class="pb-loadrow">
+          ${['%','RIR','RPE'].map(t=>`<span class="lc${lt===t?' on':''}" onclick="setField('tipo_carga','${t}')">${t}</span>`).join('')}
+        </div>
+        <div id="cmp-box" class="pb-cmp"></div>
+        <button class="pe-save" onclick="closeFields()" style="margin-top:12px">Hecho</button>
+      </div>
+    </div>`;
+  modal.style.display='block';
+  updateLoadCompare();
+}
+function setField(f,v){
+  const {dayIdx,blockIdx,ei}=_plan.fieldEdit;
+  _plan.week.data.dias[dayIdx].bloques[blockIdx].ejercicios[ei][f]=v;
+  if(f==='tipo_carga'){ renderFieldsModal(); return; }
+  clearTimeout(_cmpTO); _cmpTO=setTimeout(updateLoadCompare,350);
+}
+let _cmpTO;
+function closeFields(e){
+  const modal=document.getElementById('picker-modal');
+  modal.style.display='none'; modal.innerHTML='';
+  _plan.fieldEdit=null;
+  renderWeekEditor();
+}
+function tempoTUT(t){ if(!t) return null; const d=String(t).replace(/[^0-9]/g,'').split('').map(Number); return d.length?d.reduce((s,v)=>s+v,0):null; }
+function repsTotal(r){ const n=String(r||'').match(/\d+/g); return n?n.map(Number).reduce((s,v)=>s+v,0):null; }
+function loadNum(c){ const m=String(c||'').match(/\d+\.?\d*/); return m?parseFloat(m[0]):null; }
+async function updateLoadCompare(){
+  if(!_plan.fieldEdit) return;
+  const {dayIdx,blockIdx,ei}=_plan.fieldEdit;
+  const it=_plan.week.data.dias[dayIdx].bloques[blockIdx].ejercicios[ei];
+  const box=document.getElementById('cmp-box'); if(!box) return;
+  box.innerHTML='<div class="pb-cmp-load">comparando...</div>';
+  const res=await api({ action:'getPrevPrescription', squad:_plan.week.squad, fecha_inicio_actual:_plan.week.fecha_inicio, ejercicio:it.ejercicio, exclude_id:_plan.week.id||'' });
+  const prev=res.ok?res.prev:null;
+  if(!prev){ box.innerHTML='<div class="pb-cmp-empty">Sin datos de la semana anterior para este ejercicio</div>'; return; }
+  const rows=[];
+  const vN=(parseInt(it.sets)||0)*(repsTotal(it.reps)||0), vP=(parseInt(prev.sets)||0)*(repsTotal(prev.reps)||0);
+  if(vN&&vP) rows.push(cmpRow('Volumen','sets x reps',vP+' reps',vN+' reps',vN,vP));
+  const iN=loadNum(it.carga), iP=loadNum(prev.carga);
+  if(iN!=null&&iP!=null) rows.push(cmpRow('Intensidad','carga',prev.carga,it.carga,iN,iP));
+  const tN=tempoTUT(it.tempo), tP=tempoTUT(prev.tempo);
+  if(tN!=null&&tP!=null) rows.push(cmpRow('Tiempo bajo tension','s/rep',tP+'s',tN+'s',tN,tP));
+  const sN=parseInt(it.sets)||0, sP=parseInt(prev.sets)||0;
+  if(sN&&sP) rows.push(cmpRow('Sets','',sP,sN,sN,sP));
+  let warn='';
+  if(vN>vP&&iN>iP) warn='<div class="pb-warn">&#9889; Subes volumen e intensidad a la vez. Semana de choque - vigila el ACWR.</div>';
+  box.innerHTML='<div class="pb-cmp-ttl">Progresion respecto a la semana anterior</div>'+rows.join('')+warn;
+}
+function cmpRow(label,unit,prevTxt,nowTxt,now,prev){
+  let dir='flat',dt='=';
+  if(now>prev) dir='up'; else if(now<prev) dir='down';
+  if(prev!==0&&now!==prev){ const pct=Math.round(((now-prev)/prev)*100); dt=(pct>0?'+':'')+pct+'%'; }
+  const icon=dir==='up'?'&#8593;':dir==='down'?'&#8595;':'=';
+  return `<div class="pb-cmprow ${dir}"><span class="pb-cmpic">${icon}</span><div style="flex:1"><div class="pb-cmptop"><span>${label}</span><span class="pb-delta ${dir}">${dt}</span></div><div class="pb-cmpsub">${prevTxt} &#8594; <b>${nowTxt}</b>${unit?' · '+unit:''}</div></div></div>`;
+}
+
+// ---- Guardar semana ----
+async function saveWeekNow(publish){
+  const w=_plan.week;
+  if(!w.nombre.trim()){ alert('Ponle titulo a la semana'); return; }
+  // limpiar flags internos
+  const clean=JSON.parse(JSON.stringify(w.data));
+  (clean.dias||[]).forEach(d=>{ delete d._open; });
+  const btns=document.querySelectorAll('.pw-draft,.pw-publish');
+  btns.forEach(b=>{ b.disabled=true; });
+  const res=await api({ action:'saveWeek', id:w.id||'', nombre:w.nombre, squad:w.squad,
+    fecha_inicio:w.fecha_inicio, fecha_fin:w.fecha_fin, data:clean,
+    visible:publish, creado_por:(state.user&&state.user.usuario)||'' });
+  if(res.ok){
+    alert(publish?'Semana publicada ✓':'Borrador guardado ✓');
+    _plan.week=null;
+    renderWeeksList();
+  } else { btns.forEach(b=>{ b.disabled=false; }); alert('Error: '+(res.error||'')); }
+}
+
 </script>
 </body>
 </html>
