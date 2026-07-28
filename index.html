@@ -1456,6 +1456,22 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .acwr-spark-wrap { width:56px; flex-shrink:0; }
 .acwr-spark-canvas { display:block; width:56px; height:24px; }
 
+/* ===== CARGA DIARIA STYLES ===== */
+.load-subnav{display:flex;gap:6px;background:var(--surface2);padding:4px;border-radius:var(--r);margin-bottom:14px}
+.load-subtab{flex:1;padding:8px;border-radius:calc(var(--r) - 4px);border:none;background:transparent;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font-body)}
+.load-subtab.active{background:var(--surface);color:var(--text)}
+.cd-datebar{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.cd-kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+.cd-kpi{background:var(--surface1);border-radius:10px;padding:11px 10px;text-align:center}
+.cd-kpi-num{font-size:24px;font-weight:600;line-height:1}
+.cd-kpi-lbl{font-size:10px;color:var(--text-secondary);margin-top:3px;line-height:1.2}
+.cd-chart-title{font-size:12px;font-weight:600;color:var(--text);margin:0 0 8px}
+.cd-bars{display:flex;align-items:flex-end;gap:5px;height:120px;padding:16px 4px 22px;background:var(--surface1);border-radius:10px;margin-bottom:16px;overflow-x:auto}
+.cd-bar{flex:1;min-width:26px;border-radius:4px 4px 0 0;position:relative;display:flex;align-items:flex-start;justify-content:center;transition:height .2s}
+.cd-bar-val{position:absolute;top:-15px;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap}
+.cd-bar-lbl{position:absolute;bottom:-18px;font-size:8px;color:var(--muted);white-space:nowrap;max-width:34px;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.cd-empty{font-size:12px;color:var(--muted);text-align:center;padding:20px}
+
 /* ===== PLANNER STYLES ===== */
 /* ══ PLANNER (integrado) ══ */
 .plan-tabs{display:flex;gap:6px;background:var(--surface2);padding:4px;border-radius:var(--r);margin-bottom:14px}
@@ -1701,7 +1717,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     <!-- ══ COACH: RPE ══ -->
     <div id="tab-coach-rpe" class="tab-section" style="display:none">
       <div class="coach-header">
-        <div><div class="coach-title">Análisis RPE</div></div>
+        <div><div class="coach-title">Load</div></div>
         <div style="display:flex;align-items:center;gap:8px">
           <select id="coach-squad-filter-rpe" class="semana-select" style="min-width:130px;margin-bottom:0" onchange="onCoachSquadChangeRpe()">
             <option value="">Todos los squads</option>
@@ -1713,6 +1729,18 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         </div>
       </div>
 
+      <div class="load-subnav">
+        <button class="load-subtab active" id="lst-diaria" onclick="loadSub('diaria')">Carga diaria</button>
+        <button class="load-subtab" id="lst-analisis" onclick="loadSub('analisis')">Análisis RPE</button>
+      </div>
+
+      <!-- ── SUB-VISTA: Carga diaria ── -->
+      <div id="load-view-diaria">
+        <div id="carga-diaria-content"><div class="loader"><div class="spinner"></div></div></div>
+      </div>
+
+      <!-- ── SUB-VISTA: Análisis RPE (contenido original) ── -->
+      <div id="load-view-analisis" style="display:none">
       <!-- ── SECCIÓN 1: RPE ── -->
       <div class="rpe-section-header">🍬 RPE</div>
       <div class="coach-chart-box" id="coach-rpe-chart" style="display:none">
@@ -1748,6 +1776,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         <div class="chart-section-title">Carga diaria equipo — esta semana (UA)</div>
         <div id="coach-daily-load-content"><div class="loader"><div class="spinner"></div></div></div>
       </div>
+      </div><!-- /load-view-analisis -->
     </div>
 
     <!-- ══ COACH: Reports ══ -->
@@ -1822,6 +1851,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
           <div class="coach-sem-label" id="readiness-date-lbl">Hoy</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
+          <input type="date" id="readiness-date-picker" class="semana-select" style="min-width:120px;margin-bottom:0;padding:7px 9px" onchange="onReadinessDateChange()">
           <select id="coach-squad-filter-readiness" class="semana-select" style="min-width:130px;margin-bottom:0" onchange="onCoachSquadChangeReadiness()">
             <option value="">Todos los squads</option>
             <option value="men's xv">Men's XV</option>
@@ -1837,6 +1867,11 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     <!-- ══ JUGADOR: Mi semana ══ -->
     <div id="tab-misemana" class="tab-section" style="display:none">
       <div id="week-summary-box"></div>
+    </div>
+
+    <!-- ══ JUGADOR: Field Load ══ -->
+    <div id="tab-fieldload" class="tab-section" style="display:none">
+      <div id="fieldload-content"></div>
     </div>
 
     <!-- ══ COACH: Settings ══ -->
@@ -1884,6 +1919,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     <div class="bn-item" id="bn-misemana" onclick="switchTab('misemana')" style="display:none">
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="4" height="8" rx="1"/><rect x="9.5" y="7" width="4" height="13" rx="1"/><rect x="16" y="3" width="4" height="17" rx="1"/></svg></div>
       <div class="bn-lbl">Stats</div>
+    </div>
+    <div class="bn-item" id="bn-fieldload" onclick="switchTab('fieldload')" style="display:none">
+      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/><circle cx="12" cy="12" r="10"/></svg></div>
+      <div class="bn-lbl">Field</div>
     </div>
     <!-- coach -->
     <div class="bn-item" id="bn-readiness" onclick="switchTab('readiness')" style="display:none">
@@ -3235,7 +3274,7 @@ const COACH_TABS  = ['jugadores','rpe','reports','sesion'];
 
 function initNav() {
   // All nav items — hide all first
-  const allNavIds = ['bn-sesion','bn-misemana','bn-wellness','bn-readiness','bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-planner','bn-settings'];
+  const allNavIds = ['bn-sesion','bn-misemana','bn-fieldload','bn-wellness','bn-readiness','bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-planner','bn-settings'];
   allNavIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
 
   if (state.isCoach) {
@@ -3247,7 +3286,7 @@ function initNav() {
     switchTab('readiness');
   } else {
     // Player: Readiness · Session · Stats
-    ['bn-wellness','bn-sesion','bn-misemana'].forEach(id => {
+    ['bn-wellness','bn-sesion','bn-misemana','bn-fieldload'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
@@ -3257,7 +3296,7 @@ function initNav() {
 
 function switchTab(tab) {
   state.activeTab = tab;
-  const allTabs = ['tab-sesion','tab-misemana','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports','tab-coach-settings','tab-wellness','tab-coach-readiness','tab-coach-planner'];
+  const allTabs = ['tab-sesion','tab-misemana','tab-fieldload','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports','tab-coach-settings','tab-wellness','tab-coach-readiness','tab-coach-planner'];
   allTabs.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
@@ -3266,6 +3305,7 @@ function switchTab(tab) {
   const tabMap = {
     'sesion':     'tab-sesion',
     'misemana':   'tab-misemana',
+    'fieldload':  'tab-fieldload',
     'jugadores':  'tab-coach-jugadores',
     'rpe':        'tab-coach-rpe',
     'reports':    'tab-coach-reports',
@@ -3280,6 +3320,7 @@ function switchTab(tab) {
   const navMap = {
     'sesion':     state.isCoach ? 'bn-sesion-coach' : 'bn-sesion',
     'misemana':   'bn-misemana',
+    'fieldload':  'bn-fieldload',
     'jugadores':  'bn-jugadores',
     'rpe':        'bn-rpe',
     'reports':    'bn-reports',
@@ -3304,6 +3345,7 @@ function switchTab(tab) {
     const sqR = document.getElementById('coach-squad-filter-rpe');
     if (sqJ && sqR) sqR.value = sqJ.value;
     loadCoachPanel();
+    if (tab === 'rpe') loadSub(_loadSub || 'diaria');
   }
   if (tab === 'reports') {
     const sqMain = document.getElementById('coach-squad-filter');
@@ -3315,6 +3357,7 @@ function switchTab(tab) {
   if (tab === 'readiness')  renderReadinessDashboard();
   if (tab === 'settings')   renderSettingsPanel();
   if (tab === 'planner')    renderPlanner();
+  if (tab === 'fieldload')  renderFieldLoad();
 }
 
 function onCoachSquadChangeRpe() {
@@ -3323,7 +3366,80 @@ function onCoachSquadChangeRpe() {
   const sqJ = document.getElementById('coach-squad-filter');
   if (sqR && sqJ) sqJ.value = sqR.value;
   onCoachSquadChange();
+  if (_loadSub === 'diaria') renderCargaDiaria();
 }
+
+// ── SUB-NAV de Load: Carga diaria / Análisis RPE ──
+var _loadSub = 'diaria';
+function loadSub(sub) {
+  _loadSub = sub;
+  ['diaria','analisis'].forEach(s => {
+    const btn = document.getElementById('lst-'+s);
+    if (btn) btn.classList.toggle('active', s===sub);
+    const view = document.getElementById('load-view-'+s);
+    if (view) view.style.display = (s===sub) ? '' : 'none';
+  });
+  if (sub === 'diaria') renderCargaDiaria();
+}
+
+async function renderCargaDiaria() {
+  const c = document.getElementById('carga-diaria-content');
+  if (!c) return;
+  c.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  const hoyStr = new Date().toISOString().slice(0,10);
+  let picker = document.getElementById('cd-date');
+  const fecha = (picker && picker.value) ? picker.value : hoyStr;
+  const squad = state.coachSquadFilter || '';
+
+  const res = await api({ action:'getCargaDiaria', fecha, squad });
+  if (!res.ok) { c.innerHTML = '<div class="cd-empty">Error cargando la carga diaria.</div>'; return; }
+
+  const eq = res.equipo || [];
+  const pr = res.promedios || {};
+  const esHoy = (fecha === hoyStr);
+
+  // Barras: color por RPE
+  function rpeCol(v){ return v==null?'var(--border-strong)':v>=8?'#ff7070':v>=5?'#ffc04d':'#00e5a0'; }
+  function barSet(getter) {
+    const withData = eq.filter(j => getter(j) != null);
+    if (!withData.length) return '<div class="cd-empty">Sin registros este día.</div>';
+    const ordered = withData.slice().sort((a,b)=>getter(b)-getter(a));
+    return `<div class="cd-bars">${ordered.map(j=>{
+      const v = getter(j);
+      const h = Math.max(6, Math.round((v/10)*100));
+      const ini = j.nombre.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+      return `<div class="cd-bar" style="height:${h}%;background:${rpeCol(v)}">
+        <span class="cd-bar-val">${v%1===0?v:v.toFixed(1)}</span>
+        <span class="cd-bar-lbl" title="${j.nombre}">${ini}</span>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  const fmtN = (v)=> v==null?'—':(v%1===0?v:v.toFixed(1));
+
+  c.innerHTML = `
+    <div class="cd-datebar">
+      <input type="date" id="cd-date" class="semana-select" style="margin-bottom:0;min-width:150px" max="${hoyStr}" value="${fecha}" onchange="renderCargaDiaria()">
+      <span style="font-size:11px;color:var(--muted)">${esHoy?'Hoy':''}</span>
+    </div>
+
+    <div class="cd-kpis">
+      <div class="cd-kpi"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_gym)}">${fmtN(pr.rpe_gym)}</div><div class="cd-kpi-lbl">RPE Gym<br>media</div></div>
+      <div class="cd-kpi"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_partido)}">${fmtN(pr.rpe_partido)}</div><div class="cd-kpi-lbl">RPE Partido<br>media</div></div>
+      <div class="cd-kpi"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_campo)}">${fmtN(pr.rpe_campo)}</div><div class="cd-kpi-lbl">RPE Campo<br>media</div></div>
+    </div>
+
+    <div class="cd-chart-title">RPE Gym por jugador</div>
+    ${barSet(j => j.rpe_gym)}
+
+    <div class="cd-chart-title">RPE Partido por jugador</div>
+    ${barSet(j => j.rpe_partido)}
+
+    <div class="cd-chart-title">RPE Campo/Entreno por jugador</div>
+    ${barSet(j => j.rpe_campo)}`;
+}
+
 
 let _wsummMode = 'semana';
 
@@ -5868,11 +5984,20 @@ async function renderReadinessDashboard() {
   if (!content) return;
   content.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
   const sqFilter = state.coachSquadFilter || '';
-  const res = await api({ action:'getWellnessEquipo' });
+
+  // Fecha seleccionada (por defecto hoy). El selector permite ver días pasados.
+  const hoyStr = new Date().toISOString().slice(0,10);
+  const picker = document.getElementById('readiness-date-picker');
+  if (picker && !picker.value) picker.value = hoyStr;
+  if (picker) picker.max = hoyStr; // no permitir futuro
+  const fechaSel = (picker && picker.value) ? picker.value : hoyStr;
+
+  const res = await api({ action:'getWellnessEquipo', fecha: fechaSel });
   if (!res.ok) { content.innerHTML = '<div class="hist-empty">Error cargando datos de readiness.</div>'; return; }
 
-  const hoyStr = new Date().toISOString().slice(0,10);
-  document.getElementById('readiness-date-lbl').textContent = 'Hoy · ' + hoyStr.split('-').reverse().slice(0,2).join('/');
+  const esHoy = (fechaSel === hoyStr);
+  const fechaLbl = fechaSel.split('-').reverse().slice(0,2).join('/');
+  document.getElementById('readiness-date-lbl').textContent = (esHoy ? 'Hoy · ' : '') + fechaLbl;
 
   let equipo = res.equipo || [];
   if (sqFilter) equipo = equipo.filter(j => j.squad && j.squad.toLowerCase() === sqFilter.toLowerCase());
@@ -5958,6 +6083,37 @@ async function renderReadinessDashboard() {
     </tr>`;
   }).join('');
 
+  // ── Fila PROMEDIO del equipo ────────────────────────────────
+  function avgOf(getter) {
+    const vals = equipo.map(getter).filter(v => v !== null && v !== undefined && v !== '' && !isNaN(parseFloat(v))).map(parseFloat);
+    if (!vals.length) return null;
+    return vals.reduce((s,v)=>s+v,0) / vals.length;
+  }
+  function promCell(val, isHours) {
+    if (val === null) return `<td style="text-align:center;color:var(--muted);font-size:12px;padding:8px 4px">—</td>`;
+    const v = Math.round(val*10)/10;
+    return `<td style="text-align:center;padding:8px 4px;font-size:13px;font-weight:700;color:var(--text)">${v%1===0?v:v.toFixed(1)}</td>`;
+  }
+  const avgScore = avgOf(j => j.score);
+  const avgScoreCol = avgScore===null?'var(--muted)':avgScore>=70?'#00e5a0':avgScore>=50?'#ffc04d':'#ff7070';
+  const promedioRow = `<tr style="border-top:2px solid var(--accent);background:rgba(232,20,42,.06)">
+    <td style="padding:8px 10px;white-space:nowrap;border-right:0.5px solid var(--border);position:sticky;left:0;background:rgba(40,20,22,.6)">
+      <div style="display:flex;align-items:center;gap:7px">
+        <div style="width:26px;height:26px;border-radius:50%;background:${avgScoreCol}22;border:1.5px solid ${avgScoreCol}66;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="width:8px;height:8px;border-radius:50%;background:${avgScoreCol}"></span>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.03em">PROMEDIO</div>
+      </div>
+    </td>
+    <td style="text-align:center;padding:8px 4px"><div style="font-size:16px;font-weight:700;color:${avgScoreCol}">${avgScore!==null?Math.round(avgScore):'—'}</div></td>
+    ${promCell(avgOf(j=>j.today&&j.today.ganas_entrenar))}
+    ${promCell(avgOf(j=>j.today&&j.today.dolor))}
+    ${promCell(avgOf(j=>j.today&&j.today.fatiga))}
+    ${promCell(avgOf(j=>j.today&&j.today.calidad_sueno))}
+    ${promCell(avgOf(j=>j.today&&j.today.horas_sueno), true)}
+    ${promCell(avgOf(j=>j.today&&j.today.peso_corporal))}
+  </tr>`;
+
   content.innerHTML = `
     ${kpis}
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:0.5px solid var(--border)">
@@ -5975,7 +6131,8 @@ async function renderReadinessDashboard() {
           </tr>
         </thead>
         <tbody>
-          ${tableRows||`<tr><td colspan="8" style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Nadie ha respondido el cuestionario hoy todavía.</td></tr>`}
+          ${tableRows||`<tr><td colspan="8" style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Nadie ha respondido el cuestionario ${esHoy?'hoy':'ese día'} todavía.</td></tr>`}
+          ${tableRows ? promedioRow : ''}
         </tbody>
       </table>
     </div>`;
@@ -6092,12 +6249,143 @@ function onCoachSquadChangeReadiness() {
   renderReadinessDashboard();
 }
 
+function onReadinessDateChange() {
+  renderReadinessDashboard();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FIELD LOAD — registro de carga de campo/partido (jugador)
+// ═══════════════════════════════════════════════════════════════
+var _fl = { tipo:'partido', rpe:null, minutos:'', fecha:null, saved:false };
+
+function renderFieldLoad() {
+  _fl = { tipo:'partido', rpe:null, minutos:'', fecha:new Date().toISOString().slice(0,10), saved:false };
+  drawFieldLoad();
+}
+
+function drawFieldLoad() {
+  const c = document.getElementById('fieldload-content');
+  if (!c) return;
+
+  if (_fl.saved) {
+    c.innerHTML = `<div class="coach-header"><div><div class="coach-title">Field Load</div></div></div>
+      <div class="saved-msg" style="margin-top:12px">✓ Carga registrada — ${_fl.tipo==='partido'?'Partido':'Entrenamiento'} · RPE ${_fl.rpe}${_fl.minutos?' · '+_fl.minutos+' min':''}</div>
+      <button class="btn-save-session" style="margin-top:12px" onclick="renderFieldLoad()">Registrar otra</button>`;
+    return;
+  }
+
+  const RPE_H   = [10,14,18,22,26,28,30,34,38,44];
+  const RPE_COL = ['#00e5a0','#00e5a0','#00e5a0','#00e5a0','#ffc04d','#ffc04d','#ffc04d','#ff7070','#ff7070','#ff7070'];
+  const RPE_LBL = ['','Reposo','Muy fácil','Ligero','Cómodo','Moderado','Algo duro','Duro','Muy duro','Casi máx','Máximo'];
+  const selVal   = _fl.rpe;
+  const selColor = selVal ? RPE_COL[selVal-1] : 'var(--muted)';
+  const selLbl   = selVal ? RPE_LBL[selVal] : '—';
+  const esPartido = _fl.tipo === 'partido';
+
+  const bars = Array.from({length:10},(_,i)=>{
+    const n=i+1, isSel=selVal===n;
+    const cls = selVal===null ? '' : isSel ? 'active' : 'inactive';
+    return `<div class="rpe-bar-seg ${cls}" style="height:${RPE_H[i]}px;background:${RPE_COL[i]};cursor:pointer" onclick="flSelectRpe(${n})" title="RPE ${n}"></div>`;
+  }).join('');
+
+  const rpeTitle = esPartido ? 'RPE Partido' : 'RPE Entrenamiento';
+  const minTitle = esPartido ? 'Minutos de juego' : 'Duración de la sesión';
+  const minSub   = esPartido ? 'Minutos disputados en el partido' : 'Minutos de entrenamiento de campo';
+
+  c.innerHTML = `
+    <div class="coach-header"><div><div class="coach-title">Field Load</div><div class="coach-sem-label">Carga de campo o partido</div></div></div>
+
+    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px">Fecha</div>
+    <input type="date" id="fl-date" class="semana-select" style="margin-bottom:14px" max="${new Date().toISOString().slice(0,10)}" value="${_fl.fecha}" onchange="_fl.fecha=this.value">
+
+    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Tipo de sesión</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <div onclick="flSetTipo('partido')" style="background:${esPartido?'rgba(232,20,42,.1)':'var(--surface2)'};border:1.5px solid ${esPartido?'rgba(232,20,42,.35)':'var(--border)'};border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer">
+        <div style="font-size:22px">🏉</div>
+        <div style="font-size:12px;font-weight:600;color:${esPartido?'var(--accent)':'var(--text-secondary)'};margin-top:4px">Partido</div>
+      </div>
+      <div onclick="flSetTipo('entreno')" style="background:${!esPartido?'rgba(232,20,42,.1)':'var(--surface2)'};border:1.5px solid ${!esPartido?'rgba(232,20,42,.35)':'var(--border)'};border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer">
+        <div style="font-size:22px">🏃</div>
+        <div style="font-size:12px;font-weight:600;color:${!esPartido?'var(--accent)':'var(--text-secondary)'};margin-top:4px">Entrenamiento</div>
+      </div>
+    </div>
+
+    <div class="panel-section" style="background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:12px 14px;margin-bottom:10px">
+      <div class="panel-title">${rpeTitle}</div>
+      <div class="panel-sub">Esfuerzo percibido (1–10)</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px">
+        <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:68px;flex-shrink:0;gap:2px">
+          <div id="fl-big-num" style="font-family:var(--font-head);font-size:40px;line-height:1;color:${selColor}">${selVal||'—'}</div>
+          <div id="fl-big-lbl" style="font-size:9px;color:${selVal?selColor:'var(--muted)'};text-align:center">${selLbl}</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+          <div class="rpe-bar-track" id="fl-bar-track" style="height:36px">${bars}</div>
+          <div class="rpe-bar-labels" style="margin-bottom:0"><span>1</span><span>3</span><span>5</span><span>7</span><span>9</span><span>10</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section" style="background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:12px 14px;margin-bottom:10px">
+      <div class="panel-title">${minTitle}</div>
+      <div class="panel-sub">${minSub}</div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
+        <div class="time-display${_fl.minutos?' has-value':''}" id="fl-min-display" style="flex:none;min-width:80px;font-size:20px">${_fl.minutos?_fl.minutos+' min':'—'}</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;flex:1">
+          ${['1','2','3','4','5','6','7','8','9','⌫','0',''].map(k=>{
+            if(k==='') return '<div></div>';
+            if(k==='⌫') return `<button class="numpad-btn del" style="padding:5px 2px;font-size:13px" onclick="flMinInput('del')">⌫</button>`;
+            return `<button class="numpad-btn" style="padding:5px 2px;font-size:13px" onclick="flMinInput('${k}')">${k}</button>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-save-session" id="fl-save" onclick="saveFieldLoad()" ${selVal!==null?'':'disabled'}>Guardar carga de campo</button>`;
+}
+
+function flSetTipo(t){ _fl.tipo=t; drawFieldLoad(); }
+function flSelectRpe(val){
+  const RPE_COL=['#00e5a0','#00e5a0','#00e5a0','#00e5a0','#ffc04d','#ffc04d','#ffc04d','#ff7070','#ff7070','#ff7070'];
+  const RPE_LBL=['','Reposo','Muy fácil','Ligero','Cómodo','Moderado','Algo duro','Duro','Muy duro','Casi máx','Máximo'];
+  _fl.rpe=val;
+  const track=document.getElementById('fl-bar-track');
+  if(track) track.querySelectorAll('.rpe-bar-seg').forEach((seg,i)=>{ seg.classList.toggle('active',i+1===val); seg.classList.toggle('inactive',i+1!==val); });
+  const bigNum=document.getElementById('fl-big-num'), bigLbl=document.getElementById('fl-big-lbl');
+  const col=RPE_COL[val-1];
+  if(bigNum){ bigNum.textContent=val; bigNum.style.color=col; }
+  if(bigLbl){ bigLbl.textContent=RPE_LBL[val]; bigLbl.style.color=col; }
+  const s=document.getElementById('fl-save'); if(s) s.disabled=false;
+}
+function flMinInput(key){
+  if(key==='del') _fl.minutos=_fl.minutos.slice(0,-1);
+  else { if(_fl.minutos.length>=3) return; _fl.minutos+=key; }
+  const el=document.getElementById('fl-min-display');
+  if(!el) return;
+  if(_fl.minutos){ el.textContent=_fl.minutos+' min'; el.classList.add('has-value'); }
+  else { el.textContent='—'; el.classList.remove('has-value'); }
+}
+let _flSaving=false;
+async function saveFieldLoad(){
+  if(_fl.rpe===null || _flSaving) return;
+  _flSaving=true;
+  const btn=document.getElementById('fl-save');
+  if(btn){ btn.disabled=true; btn.textContent='Guardando...'; }
+  const res=await api({
+    action:'saveFieldLoad', usuario:state.user.usuario,
+    fecha:_fl.fecha, tipo:_fl.tipo, rpe:_fl.rpe, minutos:_fl.minutos?parseInt(_fl.minutos):'',
+    semana:realSemanaIdx(), dia:state.dia||''
+  });
+  _flSaving=false;
+  if(res.ok){ _fl.saved=true; drawFieldLoad(); }
+  else { if(btn){ btn.disabled=false; btn.textContent='Guardar carga de campo'; } alert('Error: '+(res.error||'')); }
+}
+
 // ── LOGOUT ────────────────────────────────────────────────────
 function logout() {
   sessionClear();
   state = {user:null,dia:1,semana:1,semanas:[],rpeSession:null,tiempoSesion:'',guardado:false,isCoach:false,cards:{},coachEquipo:[],coachRpeChart:[],coachRpeBySquad:{},coachSquadFilter:'',squad:'',activeTab:''};
   // Hide all tabs
-  ['tab-sesion','tab-misemana','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports'].forEach(id => {
+  ['tab-sesion','tab-misemana','tab-fieldload','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
