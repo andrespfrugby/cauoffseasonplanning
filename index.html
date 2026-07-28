@@ -1466,10 +1466,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .cd-kpi-num{font-size:24px;font-weight:600;line-height:1}
 .cd-kpi-lbl{font-size:10px;color:var(--text-secondary);margin-top:3px;line-height:1.2}
 .cd-chart-title{font-size:12px;font-weight:600;color:var(--text);margin:0 0 8px}
-.cd-bars{display:flex;align-items:flex-end;gap:5px;height:120px;padding:16px 4px 22px;background:var(--surface1);border-radius:10px;margin-bottom:16px;overflow-x:auto}
-.cd-bar{flex:1;min-width:26px;border-radius:4px 4px 0 0;position:relative;display:flex;align-items:flex-start;justify-content:center;transition:height .2s}
-.cd-bar-val{position:absolute;top:-15px;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap}
-.cd-bar-lbl{position:absolute;bottom:-18px;font-size:8px;color:var(--muted);white-space:nowrap;max-width:34px;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.cd-bars{display:flex;align-items:flex-end;gap:8px;padding:14px 12px 8px;background:var(--surface1);border-radius:10px;margin-bottom:16px;overflow-x:auto;min-height:180px}
+.cd-bcol{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;min-width:34px;height:100%}
+.cd-bval{font-size:12px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
+.cd-btrack{width:24px;height:100px;display:flex;align-items:flex-end;background:var(--surface2);border-radius:5px;overflow:hidden}
+.cd-bfill{width:100%;border-radius:5px 5px 0 0;transition:height .25s}
+.cd-bname{font-size:10px;color:var(--text-secondary);writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;max-height:70px;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .cd-empty{font-size:12px;color:var(--muted);text-align:center;padding:20px}
 
 /* ===== PLANNER STYLES ===== */
@@ -1912,6 +1914,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
       <div class="bn-lbl">Readiness</div>
     </div>
+    <div class="bn-item" id="bn-fieldload" onclick="switchTab('fieldload')" style="display:none">
+      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="1"/><line x1="12" y1="5" x2="12" y2="19"/><circle cx="12" cy="12" r="2.5"/><path d="M2 9h3v6H2"/><path d="M22 9h-3v6h3"/></svg></div>
+      <div class="bn-lbl">Field</div>
+    </div>
     <div class="bn-item" id="bn-sesion" onclick="switchTab('sesion')" style="display:none">
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
       <div class="bn-lbl">Session</div>
@@ -1919,10 +1925,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     <div class="bn-item" id="bn-misemana" onclick="switchTab('misemana')" style="display:none">
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="4" height="8" rx="1"/><rect x="9.5" y="7" width="4" height="13" rx="1"/><rect x="16" y="3" width="4" height="17" rx="1"/></svg></div>
       <div class="bn-lbl">Stats</div>
-    </div>
-    <div class="bn-item" id="bn-fieldload" onclick="switchTab('fieldload')" style="display:none">
-      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/><circle cx="12" cy="12" r="10"/></svg></div>
-      <div class="bn-lbl">Field</div>
     </div>
     <!-- coach -->
     <div class="bn-item" id="bn-readiness" onclick="switchTab('readiness')" style="display:none">
@@ -3286,7 +3288,7 @@ function initNav() {
     switchTab('readiness');
   } else {
     // Player: Readiness · Session · Stats
-    ['bn-wellness','bn-sesion','bn-misemana','bn-fieldload'].forEach(id => {
+    ['bn-wellness','bn-fieldload','bn-sesion','bn-misemana'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
@@ -3371,6 +3373,7 @@ function onCoachSquadChangeRpe() {
 
 // ── SUB-NAV de Load: Carga diaria / Análisis RPE ──
 var _loadSub = 'diaria';
+var _cdFecha = null;
 function loadSub(sub) {
   _loadSub = sub;
   ['diaria','analisis'].forEach(s => {
@@ -3385,12 +3388,15 @@ function loadSub(sub) {
 async function renderCargaDiaria() {
   const c = document.getElementById('carga-diaria-content');
   if (!c) return;
-  c.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
 
   const hoyStr = new Date().toISOString().slice(0,10);
-  let picker = document.getElementById('cd-date');
-  const fecha = (picker && picker.value) ? picker.value : hoyStr;
+  // Leer la fecha del picker ANTES de destruir el DOM; si no hay, usar la guardada o hoy
+  const picker = document.getElementById('cd-date');
+  if (picker && picker.value) _cdFecha = picker.value;
+  const fecha = _cdFecha || hoyStr;
   const squad = state.coachSquadFilter || '';
+
+  c.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
 
   const res = await api({ action:'getCargaDiaria', fecha, squad });
   if (!res.ok) { c.innerHTML = '<div class="cd-empty">Error cargando la carga diaria.</div>'; return; }
@@ -3399,7 +3405,7 @@ async function renderCargaDiaria() {
   const pr = res.promedios || {};
   const esHoy = (fecha === hoyStr);
 
-  // Barras: color por RPE
+  // Barras verticales: color por RPE
   function rpeCol(v){ return v==null?'var(--border-strong)':v>=8?'#ff7070':v>=5?'#ffc04d':'#00e5a0'; }
   function barSet(getter) {
     const withData = eq.filter(j => getter(j) != null);
@@ -3407,11 +3413,12 @@ async function renderCargaDiaria() {
     const ordered = withData.slice().sort((a,b)=>getter(b)-getter(a));
     return `<div class="cd-bars">${ordered.map(j=>{
       const v = getter(j);
-      const h = Math.max(6, Math.round((v/10)*100));
-      const ini = j.nombre.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
-      return `<div class="cd-bar" style="height:${h}%;background:${rpeCol(v)}">
-        <span class="cd-bar-val">${v%1===0?v:v.toFixed(1)}</span>
-        <span class="cd-bar-lbl" title="${j.nombre}">${ini}</span>
+      const h = Math.max(8, Math.round((v/10)*100));
+      const nombre = j.nombre.split(',')[0];
+      return `<div class="cd-bcol">
+        <span class="cd-bval">${v%1===0?v:v.toFixed(1)}</span>
+        <div class="cd-btrack"><div class="cd-bfill" style="height:${h}%;background:${rpeCol(v)}"></div></div>
+        <span class="cd-bname" title="${j.nombre}">${nombre}</span>
       </div>`;
     }).join('')}</div>`;
   }
@@ -3420,24 +3427,24 @@ async function renderCargaDiaria() {
 
   c.innerHTML = `
     <div class="cd-datebar">
-      <input type="date" id="cd-date" class="semana-select" style="margin-bottom:0;min-width:150px" max="${hoyStr}" value="${fecha}" onchange="renderCargaDiaria()">
+      <input type="date" id="cd-date" class="semana-select" style="margin-bottom:0;min-width:150px" max="${hoyStr}" value="${fecha}" onchange="_cdFecha=this.value;renderCargaDiaria()">
       <span style="font-size:11px;color:var(--muted)">${esHoy?'Hoy':''}</span>
     </div>
 
     <div class="cd-kpis">
       <div class="cd-kpi"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_gym)}">${fmtN(pr.rpe_gym)}</div><div class="cd-kpi-lbl">RPE Gym<br>media</div></div>
+      <div class="cd-kpi"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_campo)}">${fmtN(pr.rpe_campo)}</div><div class="cd-kpi-lbl">RPE Entren.<br>campo</div></div>
       <div class="cd-kpi"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_partido)}">${fmtN(pr.rpe_partido)}</div><div class="cd-kpi-lbl">RPE Partido<br>media</div></div>
-      <div class="cd-kpi"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_campo)}">${fmtN(pr.rpe_campo)}</div><div class="cd-kpi-lbl">RPE Campo<br>media</div></div>
     </div>
 
-    <div class="cd-chart-title">RPE Gym por jugador</div>
+    <div class="cd-chart-title">RPE Gym</div>
     ${barSet(j => j.rpe_gym)}
 
-    <div class="cd-chart-title">RPE Partido por jugador</div>
-    ${barSet(j => j.rpe_partido)}
+    <div class="cd-chart-title">RPE Entrenamiento de campo</div>
+    ${barSet(j => j.rpe_campo)}
 
-    <div class="cd-chart-title">RPE Campo/Entreno por jugador</div>
-    ${barSet(j => j.rpe_campo)}`;
+    <div class="cd-chart-title">RPE Partido</div>
+    ${barSet(j => j.rpe_partido)}`;
 }
 
 
