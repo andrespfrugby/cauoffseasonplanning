@@ -1461,10 +1461,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .load-subtab{flex:1;padding:8px;border-radius:calc(var(--r) - 4px);border:none;background:transparent;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font-body)}
 .load-subtab.active{background:var(--surface);color:var(--text)}
 .cd-datebar{display:flex;align-items:center;gap:8px;margin-bottom:14px}
-.cd-kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
-.cd-kpi{background:var(--surface1);border-radius:10px;padding:11px 10px;text-align:center}
-.cd-kpi-num{font-size:24px;font-weight:600;line-height:1}
-.cd-kpi-lbl{font-size:10px;color:var(--text-secondary);margin-top:3px;line-height:1.2}
+.cd-kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px}
+.cd-kpi{background:var(--surface1);border-radius:9px;padding:9px 6px;text-align:center;border-top:2px solid var(--border-strong)}
+.cd-kpi-num{font-size:19px;font-weight:600;line-height:1}
+.cd-kpi-lbl{font-size:9px;color:var(--text-muted);margin-top:3px;line-height:1.2;text-transform:uppercase;letter-spacing:.03em}
 .cd-svg-wrap{background:var(--surface1);border-radius:10px;padding:8px 8px 4px;margin-bottom:12px}
 .cd-chart-title{font-size:11px;font-weight:600;color:var(--text);margin:0 0 5px}
 .cd-empty{font-size:12px;color:var(--muted);text-align:center;padding:20px}
@@ -3434,16 +3434,16 @@ async function renderCargaDiaria() {
       const y = yFor(v);
       let nm = String(j.nombre||'').split(',')[0].trim().split(/\s+/)[0];
       if (nm.length > nameChars) nm = nm.slice(0, nameChars);
-      const valTxt = showVal ? `<text x="${cx}" y="${y-3}" text-anchor="middle" font-size="8" font-weight="700" fill="var(--text)">${v%1===0?v:v.toFixed(1)}</text>` : '';
+      const valTxt = showVal ? `<text x="${cx}" y="${y-3}" text-anchor="middle" font-size="8" font-weight="700" fill="#e8e8ea">${v%1===0?v:v.toFixed(1)}</text>` : '';
       return `<rect x="${x}" y="${y}" width="${bw}" height="${padT+plotH-y}" rx="2" fill="#4a90c2"/>${valTxt}
-        <text x="${cx}" y="${H-padB+11}" text-anchor="middle" font-size="7" fill="var(--text-secondary)" transform="rotate(-45 ${cx} ${H-padB+11})">${nm}</text>`;
+        <text x="${cx}" y="${H-padB+11}" text-anchor="middle" font-size="7.5" fill="#a8a8ac" transform="rotate(-45 ${cx} ${H-padB+11})">${nm}</text>`;
     }).join('');
 
-    // Media: línea discontinua horizontal + etiqueta a la izquierda
+    // Media: línea discontinua fina + etiqueta a la izquierda
     const mediaY = yFor(media);
-    const mediaLine = `<line x1="${padL}" y1="${mediaY}" x2="${padL+plotW}" y2="${mediaY}" stroke="#7ac142" stroke-width="1.5" stroke-dasharray="5 3"/>
-      <rect x="${padL+2}" y="${mediaY-11}" width="52" height="11" rx="2" fill="#7ac142"/>
-      <text x="${padL+28}" y="${mediaY-3}" text-anchor="middle" font-size="7.5" font-weight="700" fill="#0d0f12">Media ${media.toFixed(1)}</text>`;
+    const mediaLine = `<line x1="${padL}" y1="${mediaY}" x2="${padL+plotW}" y2="${mediaY}" stroke="#7ac142" stroke-width="1" stroke-dasharray="4 3"/>
+      <rect x="${padL+2}" y="${mediaY-10}" width="46" height="10" rx="2" fill="#7ac142"/>
+      <text x="${padL+25}" y="${mediaY-2.5}" text-anchor="middle" font-size="7" font-weight="700" fill="#0d0f12">Media ${media.toFixed(1)}</text>`;
 
     return `<div class="cd-svg-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block">
       ${bandRects}${gridY}${bars}${mediaLine}
@@ -3459,9 +3459,9 @@ async function renderCargaDiaria() {
     </div>
 
     <div class="cd-kpis">
-      <div class="cd-kpi"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_gym)}">${fmtN(pr.rpe_gym)}</div><div class="cd-kpi-lbl">RPE Gym<br>media</div></div>
-      <div class="cd-kpi"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_campo)}">${fmtN(pr.rpe_campo)}</div><div class="cd-kpi-lbl">RPE Entren.<br>campo</div></div>
-      <div class="cd-kpi"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_partido)}">${fmtN(pr.rpe_partido)}</div><div class="cd-kpi-lbl">RPE Partido<br>media</div></div>
+      <div class="cd-kpi" style="border-top-color:#4a90c2"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_gym)}">${fmtN(pr.rpe_gym)}</div><div class="cd-kpi-lbl">Gym</div></div>
+      <div class="cd-kpi" style="border-top-color:#ffc04d"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_campo)}">${fmtN(pr.rpe_campo)}</div><div class="cd-kpi-lbl">Entren.</div></div>
+      <div class="cd-kpi" style="border-top-color:#ff7a70"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_partido)}">${fmtN(pr.rpe_partido)}</div><div class="cd-kpi-lbl">Partido</div></div>
     </div>
 
     <div class="cd-chart-title">RPE Gym</div>
