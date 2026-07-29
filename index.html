@@ -1466,12 +1466,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .cd-kpi-num{font-size:24px;font-weight:600;line-height:1}
 .cd-kpi-lbl{font-size:10px;color:var(--text-secondary);margin-top:3px;line-height:1.2}
 .cd-chart-title{font-size:12px;font-weight:600;color:var(--text);margin:0 0 8px}
-.cd-bars{display:flex;align-items:flex-end;gap:8px;padding:14px 12px 8px;background:var(--surface1);border-radius:10px;margin-bottom:16px;overflow-x:auto;min-height:180px}
-.cd-bcol{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;min-width:34px;height:100%}
-.cd-bval{font-size:12px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
-.cd-btrack{width:24px;height:100px;display:flex;align-items:flex-end;background:var(--surface2);border-radius:5px;overflow:hidden}
-.cd-bfill{width:100%;border-radius:5px 5px 0 0;transition:height .25s}
-.cd-bname{font-size:10px;color:var(--text-secondary);writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;max-height:70px;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.cd-svg-wrap{background:var(--surface1);border-radius:10px;padding:10px 6px;margin-bottom:16px;overflow-x:auto}
 .cd-empty{font-size:12px;color:var(--muted);text-align:center;padding:20px}
 
 /* ===== PLANNER STYLES ===== */
@@ -3407,20 +3402,48 @@ async function renderCargaDiaria() {
 
   // Barras verticales: color por RPE
   function rpeCol(v){ return v==null?'var(--border-strong)':v>=8?'#ff7070':v>=5?'#ffc04d':'#00e5a0'; }
+  // Gráfica estilo XPS: barras azules, bandas de fondo por zona, media del equipo
   function barSet(getter) {
     const withData = eq.filter(j => getter(j) != null);
     if (!withData.length) return '<div class="cd-empty">Sin registros este día.</div>';
     const ordered = withData.slice().sort((a,b)=>getter(b)-getter(a));
-    return `<div class="cd-bars">${ordered.map(j=>{
+    const media = ordered.reduce((s,j)=>s+getter(j),0)/ordered.length;
+
+    const W = Math.max(320, ordered.length*54 + 90);
+    const H = 220, padT = 18, padB = 34, padL = 26, padR = 60;
+    const plotH = H - padT - padB, plotW = W - padL - padR;
+    const yFor = v => padT + plotH - (v/10)*plotH;
+    const bandRects = [
+      { from:0, to:5, col:'rgba(0,229,160,.10)' },
+      { from:5, to:7, col:'rgba(255,192,77,.13)' },
+      { from:7, to:10, col:'rgba(255,112,112,.13)' }
+    ].map(b=>`<rect x="${padL}" y="${yFor(b.to)}" width="${plotW}" height="${yFor(b.from)-yFor(b.to)}" fill="${b.col}"/>`).join('');
+    const gridY = [0,2,4,6,8,10].map(v=>`<line x1="${padL}" y1="${yFor(v)}" x2="${padL+plotW}" y2="${yFor(v)}" stroke="var(--border)" stroke-width=".5"/><text x="${padL-6}" y="${yFor(v)+3}" text-anchor="end" font-size="9" fill="var(--muted)">${v}</text>`).join('');
+
+    const n = ordered.length;
+    const slot = plotW / n;
+    const bw = Math.min(30, slot*0.6);
+    const bars = ordered.map((j,i)=>{
       const v = getter(j);
-      const h = Math.max(8, Math.round((v/10)*100));
-      const nombre = j.nombre.split(',')[0];
-      return `<div class="cd-bcol">
-        <span class="cd-bval">${v%1===0?v:v.toFixed(1)}</span>
-        <div class="cd-btrack"><div class="cd-bfill" style="height:${h}%;background:${rpeCol(v)}"></div></div>
-        <span class="cd-bname" title="${j.nombre}">${nombre}</span>
-      </div>`;
-    }).join('')}</div>`;
+      const cx = padL + slot*i + slot/2;
+      const x = cx - bw/2;
+      const y = yFor(v);
+      const nm = j.nombre.split(',')[0];
+      const short = nm.length>9 ? nm.slice(0,8)+'…' : nm;
+      return `<rect x="${x}" y="${y}" width="${bw}" height="${padT+plotH-y}" rx="3" fill="#4a90c2"/>
+        <text x="${cx}" y="${y-4}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--text)">${v%1===0?v:v.toFixed(1)}</text>
+        <text x="${cx}" y="${H-padB+13}" text-anchor="middle" font-size="9" fill="var(--text-secondary)">${short}</text>`;
+    }).join('');
+
+    // Media del equipo (punto a la derecha)
+    const mediaX = padL + plotW + 26;
+    const mediaY = yFor(media);
+    const mediaDot = `<circle cx="${mediaX}" cy="${mediaY}" r="5" fill="#7ac142"/>
+      <text x="${mediaX}" y="${H-padB+13}" text-anchor="middle" font-size="8" fill="var(--muted)">Media</text>`;
+
+    return `<div class="cd-svg-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMinYMid meet" style="min-width:${W}px">
+      ${bandRects}${gridY}${bars}${mediaDot}
+    </svg></div>`;
   }
 
   const fmtN = (v)=> v==null?'—':(v%1===0?v:v.toFixed(1));
@@ -6307,13 +6330,11 @@ function drawFieldLoad() {
 
     <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Tipo de sesión</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-      <div onclick="flSetTipo('partido')" style="background:${esPartido?'rgba(232,20,42,.1)':'var(--surface2)'};border:1.5px solid ${esPartido?'rgba(232,20,42,.35)':'var(--border)'};border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer">
-        <div style="font-size:22px">🏉</div>
-        <div style="font-size:12px;font-weight:600;color:${esPartido?'var(--accent)':'var(--text-secondary)'};margin-top:4px">Partido</div>
+      <div onclick="flSetTipo('partido')" style="background:${esPartido?'rgba(232,20,42,.1)':'var(--surface2)'};border:1.5px solid ${esPartido?'rgba(232,20,42,.35)':'var(--border)'};border-radius:10px;padding:16px 8px;text-align:center;cursor:pointer">
+        <div style="font-size:14px;font-weight:600;color:${esPartido?'var(--accent)':'var(--text-secondary)'}">Partido</div>
       </div>
-      <div onclick="flSetTipo('entreno')" style="background:${!esPartido?'rgba(232,20,42,.1)':'var(--surface2)'};border:1.5px solid ${!esPartido?'rgba(232,20,42,.35)':'var(--border)'};border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer">
-        <div style="font-size:22px">🏃</div>
-        <div style="font-size:12px;font-weight:600;color:${!esPartido?'var(--accent)':'var(--text-secondary)'};margin-top:4px">Entrenamiento</div>
+      <div onclick="flSetTipo('entreno')" style="background:${!esPartido?'rgba(232,20,42,.1)':'var(--surface2)'};border:1.5px solid ${!esPartido?'rgba(232,20,42,.35)':'var(--border)'};border-radius:10px;padding:16px 8px;text-align:center;cursor:pointer">
+        <div style="font-size:14px;font-weight:600;color:${!esPartido?'var(--accent)':'var(--text-secondary)'}">Entrenamiento</div>
       </div>
     </div>
 
