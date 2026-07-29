@@ -3435,11 +3435,10 @@ async function renderCargaDiaria() {
       return `<rect x="${x}" y="${y}" width="${bw}" height="${padT+plotH-y}" rx="2" fill="#4a90c2"/>${valTxt}`;
     }).join('');
 
-    // Media: línea discontinua fina + etiqueta a la izquierda
+    // Media: solo línea discontinua, color según zona (tonos oscuros para contraste)
     const mediaY = yFor(media);
-    const mediaLine = `<line x1="${padL}" y1="${mediaY}" x2="${padL+plotW}" y2="${mediaY}" stroke="#7ac142" stroke-width="1" stroke-dasharray="4 3"/>
-      <rect x="${padL+2}" y="${mediaY-10}" width="46" height="10" rx="2" fill="#7ac142"/>
-      <text x="${padL+25}" y="${mediaY-2.5}" text-anchor="middle" font-size="7" font-weight="700" fill="#0d0f12">Media ${media.toFixed(1)}</text>`;
+    const mediaCol = media >= 8 ? '#c43b3b' : media >= 5 ? '#c78a20' : '#3a9c6e';
+    const mediaLine = `<line x1="${padL}" y1="${mediaY}" x2="${padL+plotW}" y2="${mediaY}" stroke="${mediaCol}" stroke-width="1.5" stroke-dasharray="4 3"/>`;
 
     // Nombres como HTML debajo (rectos, legibles), alineados con las barras
     const nameChars = n > 12 ? 4 : n > 8 ? 6 : 9;
