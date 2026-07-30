@@ -1860,7 +1860,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
           <span class="coach-badge">Coach</span>
         </div>
       </div>
+      <div class="load-subnav">
+        <button class="load-subtab active" id="rst-wellness" onclick="readinessSub('wellness')">Wellness</button>
+        <button class="load-subtab" id="rst-dolor" onclick="readinessSub('dolor')">Dolor muscular</button>
+      </div>
       <div id="readiness-content"><div class="loader"><div class="spinner"></div></div></div>
+      <div id="molestias-content" style="display:none"></div>
     </div>
 
     <!-- ══ JUGADOR: Mi semana ══ -->
@@ -5948,16 +5953,164 @@ function renderWellnessQuestion(container, q) {
 function wellnessNext() {
   const q = _wellnessState.cur;
   if (q < 6) { renderWellnessQuestion(document.getElementById('wellness-content'), q+1); }
-  else { wellnessSave(); }
+  else { renderMolestiasStep(); }
 }
 function wellnessPrev() {
   const q = _wellnessState.cur;
   if (q > 1) renderWellnessQuestion(document.getElementById('wellness-content'), q-1);
 }
 
+// ── PASO MOLESTIAS (opcional, tras la pregunta 6) ──────────────
+var _molestias = [];   // [{zona, label, cara, intensidad}]
+var _molSel = null;    // zona pendiente de asignar intensidad
+
+// Definición de zonas: id, label, cara (frente/espalda), y path SVG
+function _bodyZones(cara) {
+  if (cara === 'frente') return [
+    { id:'pecho_izq', label:'Pecho izq', d:'M74 74 C71 84 71 96 74 108 L89 106 L89 70 C84 70 78 71 74 74Z' },
+    { id:'pecho_der', label:'Pecho der', d:'M106 74 C109 84 109 96 106 108 L91 106 L91 70 C96 70 102 71 106 74Z' },
+    { id:'abdomen', label:'Abdomen', d:'M78 112 L102 112 L100 150 L80 150Z' },
+    { id:'hombro_izq', label:'Hombro izq', d:'M64 72 C58 75 53 80 51 90 L66 88 C67 82 70 76 72 72Z' },
+    { id:'hombro_der', label:'Hombro der', d:'M116 72 C122 75 127 80 129 90 L114 88 C113 82 110 76 108 72Z' },
+    { id:'biceps_izq', label:'Bíceps izq', d:'M51 90 C49 100 48 112 50 124 L60 122 C60 110 62 98 64 90Z' },
+    { id:'biceps_der', label:'Bíceps der', d:'M129 90 C131 100 132 112 130 124 L120 122 C120 110 118 98 116 90Z' },
+    { id:'cuadriceps_izq', label:'Cuádriceps izq', d:'M72 180 C72 200 74 220 76 238 L88 236 L89 182Z' },
+    { id:'cuadriceps_der', label:'Cuádriceps der', d:'M108 180 C108 200 106 220 104 238 L92 236 L91 182Z' },
+    { id:'rodilla_izq', label:'Rodilla izq', d:'M76 240 L88 240 L88 252 L77 252Z' },
+    { id:'rodilla_der', label:'Rodilla der', d:'M104 240 L92 240 L92 252 L103 252Z' },
+    { id:'mano_izq', label:'Mano izq', d:'M47 143 a7 10 0 1 0 14 0 a7 10 0 1 0 -14 0Z' },
+    { id:'mano_der', label:'Mano der', d:'M119 143 a7 10 0 1 0 14 0 a7 10 0 1 0 -14 0Z' }
+  ];
+  return [
+    { id:'trapecio', label:'Trapecio', d:'M256 66 C252 74 253 84 257 92 L283 92 C287 84 288 74 284 66 C276 70 264 70 256 66Z' },
+    { id:'dorsal_izq', label:'Dorsal izq', d:'M256 94 C252 106 253 124 257 138 L269 136 L269 94Z' },
+    { id:'dorsal_der', label:'Dorsal der', d:'M284 94 C288 106 287 124 283 138 L271 136 L271 94Z' },
+    { id:'lumbar', label:'Lumbar', d:'M260 140 L280 140 L278 165 L262 165Z' },
+    { id:'gluteo_izq', label:'Glúteo izq', d:'M258 168 C256 178 257 188 260 196 L269 194 L269 168Z' },
+    { id:'gluteo_der', label:'Glúteo der', d:'M282 168 C284 178 283 188 280 196 L271 194 L271 168Z' },
+    { id:'isquio_izq', label:'Isquio izq', d:'M258 198 C257 212 259 226 262 238 L269 236 L269 198Z' },
+    { id:'isquio_der', label:'Isquio der', d:'M282 198 C283 212 281 226 278 238 L271 236 L271 198Z' },
+    { id:'gemelo_izq', label:'Gemelo izq', d:'M259 250 C258 260 260 270 262 278 L268 277 L268 250Z' },
+    { id:'gemelo_der', label:'Gemelo der', d:'M281 250 C282 260 280 270 278 278 L272 277 L272 250Z' },
+    { id:'hombro_izq_e', label:'Hombro izq', d:'M244 72 C238 75 233 80 231 90 L246 88 C247 82 250 76 252 72Z' },
+    { id:'hombro_der_e', label:'Hombro der', d:'M296 72 C302 75 307 80 309 90 L294 88 C293 82 290 76 288 72Z' }
+  ];
+}
+
+function _intColor(i){ return i==='alta'?'#ff5050':i==='media'?'#ff7a1a':'#ffd23f'; }
+
+function _bodyBaseSVG() {
+  return `
+  <text x="90" y="14" text-anchor="middle" font-size="10" fill="var(--muted)" font-weight="600">FRENTE</text>
+  <text x="270" y="14" text-anchor="middle" font-size="10" fill="var(--muted)" font-weight="600">ESPALDA</text>
+  <g fill="#4a4a54" stroke="#71717c" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M90 30 C83 30 79 35 79 43 C79 49 82 54 87 56 C85 58 84 60 84 62 L96 62 C96 60 95 58 93 56 C98 54 101 49 101 43 C101 35 97 30 90 30Z"/>
+    <path d="M84 62 C76 64 68 66 64 72 C60 79 61 92 63 104 C64 112 67 122 68 132 L70 150 C71 158 72 168 72 178 L108 178 C108 168 109 158 110 150 L112 132 C113 122 116 112 117 104 C119 92 120 79 116 72 C112 66 104 64 96 62Z"/>
+    <path d="M64 72 C58 75 53 80 51 90 C49 100 48 112 48 124 C48 132 50 140 52 146 L60 144 C60 136 60 126 61 116 C62 104 64 90 66 80Z"/>
+    <path d="M116 72 C122 75 127 80 129 90 C131 100 132 112 132 124 C132 132 130 140 128 146 L120 144 C120 136 120 126 119 116 C118 104 116 90 114 80Z"/>
+    <ellipse cx="54" cy="153" rx="7" ry="10"/><ellipse cx="126" cy="153" rx="7" ry="10"/>
+    <path d="M72 178 C72 190 73 204 75 218 C76 232 78 248 79 262 C79 268 78 274 79 278 L88 278 C88 272 88 264 89 256 C90 242 91 226 91 210 L90 178Z"/>
+    <path d="M108 178 C108 190 107 204 105 218 C104 232 102 248 101 262 C101 268 102 274 101 278 L92 278 C92 272 92 264 91 256 C90 242 89 226 89 210 L90 178Z"/>
+    <ellipse cx="82" cy="284" rx="8" ry="6"/><ellipse cx="98" cy="284" rx="8" ry="6"/>
+  </g>
+  <g fill="none" stroke="#83838f" stroke-width="1" opacity="0.85">
+    <path d="M90 64 L90 132"/><path d="M76 118 L104 118 M77 128 L103 128 M78 138 L102 138"/>
+  </g>
+  <g fill="#4a4a54" stroke="#71717c" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M270 30 C263 30 259 35 259 43 C259 49 262 54 267 56 C265 58 264 60 264 62 L276 62 C276 60 275 58 273 56 C278 54 281 49 281 43 C281 35 277 30 270 30Z"/>
+    <path d="M264 62 C256 64 248 66 244 72 C240 79 241 92 243 104 C244 112 247 122 248 132 L250 150 C251 158 252 168 252 178 L288 178 C288 168 289 158 290 150 L292 132 C293 122 296 112 297 104 C299 92 300 79 296 72 C292 66 284 64 276 62Z"/>
+    <path d="M244 72 C238 75 233 80 231 90 C229 100 228 112 228 124 C228 132 230 140 232 146 L240 144 C240 136 240 126 241 116 C242 104 244 90 246 80Z"/>
+    <path d="M296 72 C302 75 307 80 309 90 C311 100 312 112 312 124 C312 132 310 140 308 146 L300 144 C300 136 300 126 299 116 C298 104 296 90 294 80Z"/>
+    <ellipse cx="234" cy="153" rx="7" ry="10"/><ellipse cx="306" cy="153" rx="7" ry="10"/>
+    <path d="M252 178 C252 190 253 204 255 218 C256 232 258 248 259 262 C259 268 258 274 259 278 L268 278 C268 272 268 264 269 256 C270 242 271 226 271 210 L270 178Z"/>
+    <path d="M288 178 C288 190 287 204 285 218 C284 232 282 248 281 262 C281 268 282 274 281 278 L272 278 C272 272 272 264 271 256 C270 242 269 226 269 210 L270 178Z"/>
+    <ellipse cx="262" cy="284" rx="8" ry="6"/><ellipse cx="278" cy="284" rx="8" ry="6"/>
+  </g>
+  <g fill="none" stroke="#83838f" stroke-width="1" opacity="0.85"><path d="M270 64 L270 178"/></g>`;
+}
+
+function renderMolestiasStep() {
+  const c = document.getElementById('wellness-content');
+  if (!c) return;
+  const zonasF = _bodyZones('frente'), zonasE = _bodyZones('espalda');
+  const paint = (z) => {
+    const m = _molestias.find(x=>x.id===z.id);
+    const fill = m ? _intColor(m.intensidad) : 'transparent';
+    const op = m ? '0.82' : '0';
+    return `<path d="${z.d}" fill="${fill}" opacity="${op}" stroke="${m?_intColor(m.intensidad):'#ffffff'}" stroke-opacity="${m?'0.9':'0.12'}" stroke-width="1" stroke-dasharray="${m?'0':'2 2'}" style="cursor:pointer" onclick="molPickZone('${z.id}','${z.label}')"/>`;
+  };
+  c.innerHTML = `
+    <div style="text-align:center;margin-bottom:4px;font-size:17px;font-weight:600">¿Alguna molestia hoy?</div>
+    <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:14px">Opcional · toca la zona donde te duele</div>
+    <svg viewBox="0 0 360 300" width="100%" style="display:block;max-width:360px;margin:0 auto">
+      ${_bodyBaseSVG()}
+      ${zonasF.map(paint).join('')}
+      ${zonasE.map(paint).join('')}
+    </svg>
+    <div id="mol-picker"></div>
+    <div id="mol-list" style="margin-top:8px"></div>
+    <div style="margin-top:10px">
+      <textarea id="mol-nota" placeholder="Añade una nota (opcional)..." style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--text);min-height:40px;resize:none;font-family:inherit">${_molNota||''}</textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="w-btn-back" onclick="renderWellnessQuestion(document.getElementById('wellness-content'),6)" style="flex:0 0 auto">‹</button>
+      <button class="w-btn-next" onclick="wellnessSave()" style="flex:1;background:var(--accent2)">${_molestias.length?'Guardar con molestias ✓':'Guardar sin molestias ✓'}</button>
+    </div>
+    <div style="display:flex;justify-content:center;gap:14px;margin-top:10px;font-size:10px;color:var(--muted)">
+      <span>🟡 Leve</span><span>🟠 Media</span><span>🔴 Alta</span>
+    </div>`;
+  molRenderList();
+}
+
+function molPickZone(id, label) {
+  _molSel = { id, label };
+  const p = document.getElementById('mol-picker');
+  if (!p) return;
+  p.innerHTML = `
+    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin-top:10px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:8px">${label} — ¿qué intensidad?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+        <button onclick="molSetInt('leve')" style="padding:9px;border-radius:8px;border:1px solid rgba(255,210,63,.4);background:rgba(255,210,63,.12);color:#ffd23f;font-size:12px;font-weight:600;cursor:pointer">🟡 Leve</button>
+        <button onclick="molSetInt('media')" style="padding:9px;border-radius:8px;border:1px solid rgba(255,122,26,.4);background:rgba(255,122,26,.12);color:#ff7a1a;font-size:12px;font-weight:600;cursor:pointer">🟠 Media</button>
+        <button onclick="molSetInt('alta')" style="padding:9px;border-radius:8px;border:1px solid rgba(255,80,80,.4);background:rgba(255,80,80,.12);color:#ff5050;font-size:12px;font-weight:600;cursor:pointer">🔴 Alta</button>
+      </div>
+      ${_molestias.find(x=>x.id===_molSel.id)?`<button onclick="molRemove('${id}')" style="width:100%;margin-top:6px;padding:7px;border-radius:8px;border:none;background:var(--surface);color:var(--muted);font-size:11px;cursor:pointer">Quitar esta zona</button>`:''}
+    </div>`;
+}
+
+function molSetInt(intensidad) {
+  if (!_molSel) return;
+  const existing = _molestias.find(x=>x.id===_molSel.id);
+  if (existing) existing.intensidad = intensidad;
+  else _molestias.push({ id:_molSel.id, label:_molSel.label, intensidad });
+  _molSel = null;
+  renderMolestiasStep();
+}
+function molRemove(id) {
+  _molestias = _molestias.filter(x=>x.id!==id);
+  _molSel = null;
+  renderMolestiasStep();
+}
+function molRenderList() {
+  const l = document.getElementById('mol-list');
+  if (!l) return;
+  if (!_molestias.length) { l.innerHTML=''; return; }
+  l.innerHTML = _molestias.map(m=>`
+    <div style="display:inline-flex;align-items:center;gap:6px;background:${_intColor(m.intensidad)}22;border:1px solid ${_intColor(m.intensidad)}66;border-radius:14px;padding:3px 10px;margin:3px 3px 0 0">
+      <span style="width:8px;height:8px;border-radius:50%;background:${_intColor(m.intensidad)}"></span>
+      <span style="font-size:11px;color:var(--text)">${m.label}</span>
+      <span style="font-size:11px;cursor:pointer;color:var(--muted)" onclick="molRemove('${m.id}')">✕</span>
+    </div>`).join('');
+}
+var _molNota = '';
+
 async function wellnessSave() {
+  const notaEl = document.getElementById('mol-nota');
+  if (notaEl) _molNota = notaEl.value;
   const content = document.getElementById('wellness-content');
   if (content) content.innerHTML = '<div class="loader"><div class="spinner"></div>Guardando...</div>';
+  // empaquetar molestias con la nota
+  const molPayload = _molestias.length ? { zonas:_molestias, nota:_molNota||'' } : (_molNota ? { zonas:[], nota:_molNota } : null);
   const res = await api({
     action:          'saveWellness',
     usuario:         state.user.usuario,
@@ -5967,8 +6120,11 @@ async function wellnessSave() {
     calidad_sueno:   _wellnessState.vals[4],
     horas_sueno:     _wellnessState.hrs,
     peso_corporal:   _wellnessState.peso || '',
-    fecha_override:  _wellnessState.targetDate || null
+    fecha_override:  _wellnessState.targetDate || null,
+    molestias:       molPayload ? JSON.stringify(molPayload) : ''
   });
+  // reset molestias para la próxima vez
+  _molestias = []; _molSel = null; _molNota = '';
   if (res.ok) {
     const hist = await api({ action:'getWellness', usuario:state.user.usuario, dias:14 });
     const hoyStr = new Date().toISOString().slice(0,10);
@@ -6286,11 +6442,82 @@ function pmSwitchTab(t) {
 function onCoachSquadChangeReadiness() {
   const sel = document.getElementById('coach-squad-filter-readiness');
   state.coachSquadFilter = sel ? sel.value : '';
-  renderReadinessDashboard();
+  if (_readinessSub === 'dolor') renderMolestias(); else renderReadinessDashboard();
 }
 
 function onReadinessDateChange() {
-  renderReadinessDashboard();
+  if (_readinessSub === 'dolor') renderMolestias(); else renderReadinessDashboard();
+}
+
+// ── SUB-NAV Readiness: Wellness / Dolor muscular ──
+var _readinessSub = 'wellness';
+function readinessSub(sub) {
+  _readinessSub = sub;
+  ['wellness','dolor'].forEach(s=>{
+    const btn=document.getElementById('rst-'+s);
+    if(btn) btn.classList.toggle('active', s===sub);
+  });
+  document.getElementById('readiness-content').style.display  = sub==='wellness'?'':'none';
+  document.getElementById('molestias-content').style.display = sub==='dolor'?'':'none';
+  if (sub==='dolor') renderMolestias();
+}
+
+// Silueta en pequeño coloreada (coach) — recibe lista de zonas marcadas
+function _bodyMiniSVG(zonas) {
+  const zf = _bodyZones('frente'), ze = _bodyZones('espalda');
+  const marks = {};
+  (zonas||[]).forEach(z=>{ marks[z.id]=z.intensidad; });
+  const paint = z => {
+    const int = marks[z.id];
+    if (!int) return '';
+    return `<path d="${z.d}" fill="${_intColor(int)}" opacity="0.85"/>`;
+  };
+  return `<svg viewBox="0 0 360 300" style="width:100%;height:auto">
+    ${_bodyBaseSVG()}
+    ${zf.map(paint).join('')}${ze.map(paint).join('')}
+  </svg>`;
+}
+
+async function renderMolestias() {
+  const c = document.getElementById('molestias-content');
+  if (!c) return;
+  const hoyStr = new Date().toISOString().slice(0,10);
+  const picker = document.getElementById('readiness-date-picker');
+  const fecha = (picker && picker.value) ? picker.value : hoyStr;
+  const squad = state.coachSquadFilter || '';
+  c.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  const res = await api({ action:'getMolestiasEquipo', fecha, squad });
+  if (!res.ok) { c.innerHTML = '<div class="hist-empty">Error cargando molestias.</div>'; return; }
+
+  const js = res.jugadores || [];
+  if (!js.length) {
+    c.innerHTML = `<div class="hist-empty" style="text-align:center;padding:30px 16px">
+      <div style="font-size:32px;margin-bottom:8px">✅</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px">Sin molestias reportadas</div>
+      <div style="font-size:12px;color:var(--muted)">Ningún jugador ha reportado dolor ${fecha===hoyStr?'hoy':'ese día'}.</div>
+    </div>`;
+    return;
+  }
+
+  c.innerHTML = `<div style="font-size:11px;color:var(--muted);margin-bottom:10px">${js.length} jugador${js.length>1?'es':''} con molestias</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${js.map(j=>{
+        const zonas = (j.zonas&&j.zonas.zonas) ? j.zonas.zonas : (Array.isArray(j.zonas)?j.zonas:[]);
+        const nota = (j.zonas&&j.zonas.nota) ? j.zonas.nota : '';
+        const chips = zonas.map(z=>`<span style="display:inline-flex;align-items:center;gap:5px;background:${_intColor(z.intensidad)}22;border-radius:12px;padding:2px 9px;margin:2px 3px 0 0">
+          <span style="width:8px;height:8px;border-radius:50%;background:${_intColor(z.intensidad)}"></span>
+          <span style="font-size:11px;color:${_intColor(z.intensidad)};font-weight:500">${z.label} · ${z.intensidad}</span></span>`).join('');
+        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start">
+          <div style="width:90px;flex-shrink:0">${_bodyMiniSVG(zonas)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">${j.nombre}</div>
+            <div style="margin-bottom:${nota?'6px':'0'}">${chips}</div>
+            ${nota?`<div style="font-size:11px;color:var(--text-secondary);line-height:1.4;font-style:italic">"${nota}"</div>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════
