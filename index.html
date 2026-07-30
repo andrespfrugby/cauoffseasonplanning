@@ -6035,60 +6035,50 @@ function renderMolestiasStep() {
   const zonasF = _bodyZones('frente'), zonasE = _bodyZones('espalda');
   const paint = (z) => {
     const m = _molestias.find(x=>x.id===z.id);
-    const fill = m ? _intColor(m.intensidad) : 'transparent';
-    const op = m ? '0.82' : '0';
-    return `<path d="${z.d}" fill="${fill}" opacity="${op}" stroke="${m?_intColor(m.intensidad):'#ffffff'}" stroke-opacity="${m?'0.9':'0.12'}" stroke-width="1" stroke-dasharray="${m?'0':'2 2'}" style="cursor:pointer" onclick="molPickZone('${z.id}','${z.label}')"/>`;
+    const fill = m ? _intColor(m.intensidad) : '#6b6b76';
+    const op = m ? '0.85' : '0.28';
+    const stroke = m ? _intColor(m.intensidad) : '#9a9aa4';
+    return `<path d="${z.d}" fill="${fill}" opacity="${op}" stroke="${stroke}" stroke-opacity="0.85" stroke-width="1" style="cursor:pointer" onclick="molCycle('${z.id}','${z.label}')"><title>${z.label}</title></path>`;
   };
   c.innerHTML = `
     <div style="text-align:center;margin-bottom:4px;font-size:17px;font-weight:600">¿Alguna molestia hoy?</div>
-    <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:14px">Opcional · toca la zona donde te duele</div>
-    <svg viewBox="0 0 360 300" width="100%" style="display:block;max-width:360px;margin:0 auto">
+    <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:4px">Opcional · toca la zona donde te duele</div>
+    <div style="text-align:center;font-size:10px;color:var(--muted);margin-bottom:12px">Cada toque sube la intensidad: 🟡 → 🟠 → 🔴 → quitar</div>
+    <svg viewBox="0 0 360 300" width="100%" style="display:block;max-width:380px;margin:0 auto">
       ${_bodyBaseSVG()}
       ${zonasF.map(paint).join('')}
       ${zonasE.map(paint).join('')}
     </svg>
-    <div id="mol-picker"></div>
     <div id="mol-list" style="margin-top:8px"></div>
     <div style="margin-top:10px">
       <textarea id="mol-nota" placeholder="Añade una nota (opcional)..." style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--text);min-height:40px;resize:none;font-family:inherit">${_molNota||''}</textarea>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px">
-      <button class="w-btn-back" onclick="renderWellnessQuestion(document.getElementById('wellness-content'),6)" style="flex:0 0 auto">‹</button>
+      <button class="w-btn-back" onclick="molSaveNota();renderWellnessQuestion(document.getElementById('wellness-content'),6)" style="flex:0 0 auto">‹</button>
       <button class="w-btn-next" onclick="wellnessSave()" style="flex:1;background:var(--accent2)">${_molestias.length?'Guardar con molestias ✓':'Guardar sin molestias ✓'}</button>
-    </div>
-    <div style="display:flex;justify-content:center;gap:14px;margin-top:10px;font-size:10px;color:var(--muted)">
-      <span>🟡 Leve</span><span>🟠 Media</span><span>🔴 Alta</span>
     </div>`;
   molRenderList();
 }
 
-function molPickZone(id, label) {
-  _molSel = { id, label };
-  const p = document.getElementById('mol-picker');
-  if (!p) return;
-  p.innerHTML = `
-    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin-top:10px">
-      <div style="font-size:12px;font-weight:600;margin-bottom:8px">${label} — ¿qué intensidad?</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
-        <button onclick="molSetInt('leve')" style="padding:9px;border-radius:8px;border:1px solid rgba(255,210,63,.4);background:rgba(255,210,63,.12);color:#ffd23f;font-size:12px;font-weight:600;cursor:pointer">🟡 Leve</button>
-        <button onclick="molSetInt('media')" style="padding:9px;border-radius:8px;border:1px solid rgba(255,122,26,.4);background:rgba(255,122,26,.12);color:#ff7a1a;font-size:12px;font-weight:600;cursor:pointer">🟠 Media</button>
-        <button onclick="molSetInt('alta')" style="padding:9px;border-radius:8px;border:1px solid rgba(255,80,80,.4);background:rgba(255,80,80,.12);color:#ff5050;font-size:12px;font-weight:600;cursor:pointer">🔴 Alta</button>
-      </div>
-      ${_molestias.find(x=>x.id===_molSel.id)?`<button onclick="molRemove('${id}')" style="width:100%;margin-top:6px;padding:7px;border-radius:8px;border:none;background:var(--surface);color:var(--muted);font-size:11px;cursor:pointer">Quitar esta zona</button>`:''}
-    </div>`;
-}
+function molSaveNota(){ const n=document.getElementById('mol-nota'); if(n) _molNota=n.value; }
 
-function molSetInt(intensidad) {
-  if (!_molSel) return;
-  const existing = _molestias.find(x=>x.id===_molSel.id);
-  if (existing) existing.intensidad = intensidad;
-  else _molestias.push({ id:_molSel.id, label:_molSel.label, intensidad });
-  _molSel = null;
+// Toque cíclico: leve → media → alta → quitar → leve...
+function molCycle(id, label) {
+  molSaveNota();
+  const seq = ['leve','media','alta'];
+  const existing = _molestias.find(x=>x.id===id);
+  if (!existing) {
+    _molestias.push({ id, label, intensidad:'leve' });
+  } else {
+    const idx = seq.indexOf(existing.intensidad);
+    if (idx < seq.length-1) existing.intensidad = seq[idx+1];
+    else _molestias = _molestias.filter(x=>x.id!==id); // tras 'alta' → quitar
+  }
   renderMolestiasStep();
 }
 function molRemove(id) {
+  molSaveNota();
   _molestias = _molestias.filter(x=>x.id!==id);
-  _molSel = null;
   renderMolestiasStep();
 }
 function molRenderList() {
@@ -6470,9 +6460,9 @@ function _bodyMiniSVG(zonas) {
   const paint = z => {
     const int = marks[z.id];
     if (!int) return '';
-    return `<path d="${z.d}" fill="${_intColor(int)}" opacity="0.85"/>`;
+    return `<path d="${z.d}" fill="${_intColor(int)}" opacity="0.9"/>`;
   };
-  return `<svg viewBox="0 0 360 300" style="width:100%;height:auto">
+  return `<svg viewBox="0 0 360 300" style="width:100%;height:auto;display:block">
     ${_bodyBaseSVG()}
     ${zf.map(paint).join('')}${ze.map(paint).join('')}
   </svg>`;
@@ -6501,20 +6491,18 @@ async function renderMolestias() {
   }
 
   c.innerHTML = `<div style="font-size:11px;color:var(--muted);margin-bottom:10px">${js.length} jugador${js.length>1?'es':''} con molestias</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
       ${js.map(j=>{
         const zonas = (j.zonas&&j.zonas.zonas) ? j.zonas.zonas : (Array.isArray(j.zonas)?j.zonas:[]);
         const nota = (j.zonas&&j.zonas.nota) ? j.zonas.nota : '';
-        const chips = zonas.map(z=>`<span style="display:inline-flex;align-items:center;gap:5px;background:${_intColor(z.intensidad)}22;border-radius:12px;padding:2px 9px;margin:2px 3px 0 0">
+        const chips = zonas.map(z=>`<span style="display:inline-flex;align-items:center;gap:5px;background:${_intColor(z.intensidad)}1e;border-radius:12px;padding:3px 10px;margin:3px 3px 0 0">
           <span style="width:8px;height:8px;border-radius:50%;background:${_intColor(z.intensidad)}"></span>
           <span style="font-size:11px;color:${_intColor(z.intensidad)};font-weight:500">${z.label} · ${z.intensidad}</span></span>`).join('');
-        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start">
-          <div style="width:90px;flex-shrink:0">${_bodyMiniSVG(zonas)}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:600;margin-bottom:4px">${j.nombre}</div>
-            <div style="margin-bottom:${nota?'6px':'0'}">${chips}</div>
-            ${nota?`<div style="font-size:11px;color:var(--text-secondary);line-height:1.4;font-style:italic">"${nota}"</div>`:''}
-          </div>
+        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px">
+          <div style="font-size:15px;font-weight:600;margin-bottom:10px">${j.nombre}</div>
+          <div style="max-width:300px;margin:0 auto 10px">${_bodyMiniSVG(zonas)}</div>
+          <div style="text-align:center">${chips}</div>
+          ${nota?`<div style="font-size:11px;color:var(--text-secondary);line-height:1.4;font-style:italic;text-align:center;margin-top:8px">"${nota}"</div>`:''}
         </div>`;
       }).join('')}
     </div>`;
