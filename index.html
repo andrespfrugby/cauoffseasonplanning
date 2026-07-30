@@ -5967,6 +5967,7 @@ var _molSel = null;    // zona pendiente de asignar intensidad
 // Definición de zonas: id, label, cara (frente/espalda), y path SVG
 function _bodyZones(cara) {
   if (cara === 'frente') return [
+    { id:'cabeza', label:'Cabeza', d:'M79 33 C79 27 83 24 90 24 C97 24 101 27 101 33 C101 40 97 45 90 45 C83 45 79 40 79 33Z' },
     { id:'pecho_izq', label:'Pecho izq', d:'M74 74 C71 84 71 96 74 108 L89 106 L89 70 C84 70 78 71 74 74Z' },
     { id:'pecho_der', label:'Pecho der', d:'M106 74 C109 84 109 96 106 108 L91 106 L91 70 C96 70 102 71 106 74Z' },
     { id:'abdomen', label:'Abdomen', d:'M78 112 L102 112 L100 150 L80 150Z' },
@@ -5974,18 +5975,27 @@ function _bodyZones(cara) {
     { id:'hombro_der', label:'Hombro der', d:'M116 72 C122 75 127 80 129 90 L114 88 C113 82 110 76 108 72Z' },
     { id:'biceps_izq', label:'Bíceps izq', d:'M51 90 C49 100 48 112 50 124 L60 122 C60 110 62 98 64 90Z' },
     { id:'biceps_der', label:'Bíceps der', d:'M129 90 C131 100 132 112 130 124 L120 122 C120 110 118 98 116 90Z' },
+    { id:'antebrazo_izq', label:'Antebrazo izq', d:'M50 124 C48 132 49 140 52 146 L61 143 C61 136 61 130 60 124Z' },
+    { id:'antebrazo_der', label:'Antebrazo der', d:'M130 124 C132 132 131 140 128 146 L119 143 C119 136 119 130 120 124Z' },
     { id:'cuadriceps_izq', label:'Cuádriceps izq', d:'M72 180 C72 200 74 220 76 238 L88 236 L89 182Z' },
     { id:'cuadriceps_der', label:'Cuádriceps der', d:'M108 180 C108 200 106 220 104 238 L92 236 L91 182Z' },
     { id:'rodilla_izq', label:'Rodilla izq', d:'M76 240 L88 240 L88 252 L77 252Z' },
     { id:'rodilla_der', label:'Rodilla der', d:'M104 240 L92 240 L92 252 L103 252Z' },
+    { id:'tibial_izq', label:'Tibial izq', d:'M77 254 C78 262 79 270 80 276 L88 276 L88 254Z' },
+    { id:'tibial_der', label:'Tibial der', d:'M103 254 C102 262 101 270 100 276 L92 276 L92 254Z' },
     { id:'mano_izq', label:'Mano izq', d:'M47 143 a7 10 0 1 0 14 0 a7 10 0 1 0 -14 0Z' },
     { id:'mano_der', label:'Mano der', d:'M119 143 a7 10 0 1 0 14 0 a7 10 0 1 0 -14 0Z' }
   ];
   return [
+    { id:'cuello', label:'Cuello', d:'M264 56 L276 56 L276 64 C273 66 267 66 264 64Z' },
     { id:'trapecio', label:'Trapecio', d:'M256 66 C252 74 253 84 257 92 L283 92 C287 84 288 74 284 66 C276 70 264 70 256 66Z' },
     { id:'dorsal_izq', label:'Dorsal izq', d:'M256 94 C252 106 253 124 257 138 L269 136 L269 94Z' },
     { id:'dorsal_der', label:'Dorsal der', d:'M284 94 C288 106 287 124 283 138 L271 136 L271 94Z' },
     { id:'lumbar', label:'Lumbar', d:'M260 140 L280 140 L278 165 L262 165Z' },
+    { id:'triceps_izq', label:'Tríceps izq', d:'M231 90 C229 100 228 112 230 124 L240 122 C240 110 242 98 244 90Z' },
+    { id:'triceps_der', label:'Tríceps der', d:'M309 90 C311 100 312 112 310 124 L300 122 C300 110 298 98 296 90Z' },
+    { id:'antebrazo_izq_e', label:'Antebrazo izq', d:'M230 124 C228 132 229 140 232 146 L241 143 C241 136 241 130 240 124Z' },
+    { id:'antebrazo_der_e', label:'Antebrazo der', d:'M310 124 C312 132 311 140 308 146 L299 143 C299 136 299 130 300 124Z' },
     { id:'gluteo_izq', label:'Glúteo izq', d:'M258 168 C256 178 257 188 260 196 L269 194 L269 168Z' },
     { id:'gluteo_der', label:'Glúteo der', d:'M282 168 C284 178 283 188 280 196 L271 194 L271 168Z' },
     { id:'isquio_izq', label:'Isquio izq', d:'M258 198 C257 212 259 226 262 238 L269 236 L269 198Z' },
@@ -6491,18 +6501,28 @@ async function renderMolestias() {
   }
 
   c.innerHTML = `<div style="font-size:11px;color:var(--muted);margin-bottom:10px">${js.length} jugador${js.length>1?'es':''} con molestias</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">
       ${js.map(j=>{
         const zonas = (j.zonas&&j.zonas.zonas) ? j.zonas.zonas : (Array.isArray(j.zonas)?j.zonas:[]);
         const nota = (j.zonas&&j.zonas.nota) ? j.zonas.nota : '';
-        const chips = zonas.map(z=>`<span style="display:inline-flex;align-items:center;gap:5px;background:${_intColor(z.intensidad)}1e;border-radius:12px;padding:3px 10px;margin:3px 3px 0 0">
+        const sev = { alta:3, media:2, leve:1 };
+        const maxInt = zonas.reduce((m,z)=> (sev[z.intensidad]||0)>sev[m]?z.intensidad:m, 'leve');
+        const inicial = (j.nombre||'?').split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+        const chips = zonas.map(z=>`<span style="display:inline-flex;align-items:center;gap:5px;background:${_intColor(z.intensidad)}1e;border-radius:12px;padding:4px 11px;margin:3px 3px 0 0">
           <span style="width:8px;height:8px;border-radius:50%;background:${_intColor(z.intensidad)}"></span>
-          <span style="font-size:11px;color:${_intColor(z.intensidad)};font-weight:500">${z.label} · ${z.intensidad}</span></span>`).join('');
-        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px">
-          <div style="font-size:15px;font-weight:600;margin-bottom:10px">${j.nombre}</div>
-          <div style="max-width:300px;margin:0 auto 10px">${_bodyMiniSVG(zonas)}</div>
+          <span style="font-size:12px;color:${_intColor(z.intensidad)};font-weight:500">${z.label} · ${z.intensidad}</span></span>`).join('');
+        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="width:38px;height:38px;border-radius:50%;background:${_intColor(maxInt)}22;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:${_intColor(maxInt)};flex-shrink:0">${inicial}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:var(--text)">${j.nombre}</div>
+              ${j.squad?`<div style="font-size:12px;color:var(--muted)">${j.squad}</div>`:''}
+            </div>
+            <div style="background:${_intColor(maxInt)}22;color:${_intColor(maxInt)};font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;flex-shrink:0">${zonas.length} zona${zonas.length>1?'s':''}</div>
+          </div>
+          <div style="max-width:320px;margin:0 auto 10px">${_bodyMiniSVG(zonas)}</div>
           <div style="text-align:center">${chips}</div>
-          ${nota?`<div style="font-size:11px;color:var(--text-secondary);line-height:1.4;font-style:italic;text-align:center;margin-top:8px">"${nota}"</div>`:''}
+          ${nota?`<div style="font-size:12px;color:var(--text-secondary);line-height:1.4;font-style:italic;text-align:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">"${nota}"</div>`:''}
         </div>`;
       }).join('')}
     </div>`;
