@@ -497,6 +497,17 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .btn-save-load { background:var(--accent2); color:#0d0f12; border:none; border-radius:8px; padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer; font-family:var(--font-body); margin-top:8px; transition:opacity .15s; width:100%; }
 .btn-save-load:hover { opacity:.85; }
 .btn-save-load:disabled { opacity:.4; cursor:not-allowed; }
+.btn-load-nota { background:rgba(0,229,160,.1); color:var(--accent2); border:1px solid rgba(0,229,160,.35); border-radius:8px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font-body); margin-top:8px; width:100%; transition:opacity .15s; }
+.btn-load-nota:hover { opacity:.8; }
+.hist-info-btn { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:#4a90c2; color:#fff; font-size:9px; font-weight:700; font-style:italic; cursor:pointer; margin-left:6px; vertical-align:middle; flex-shrink:0; }
+.hist-info-btn:hover { background:#5aa0d2; }
+.hist-pop { display:none; position:absolute; top:100%; left:0; margin-top:6px; z-index:20; background:#1e1e24; border:1px solid rgba(74,144,194,.5); border-radius:10px; padding:9px 11px; min-width:150px; max-width:230px; box-shadow:0 8px 24px rgba(0,0,0,.45); text-align:left; }
+.hist-pop.open { display:block; }
+.hist-pop-date { font-size:8px; color:#4a90c2; text-transform:uppercase; letter-spacing:.05em; font-weight:600; margin-bottom:5px; }
+.hist-pop-series { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:7px; }
+.hist-pop-serie { font-size:10px; background:var(--surface2); border-radius:4px; padding:3px 7px; color:var(--text); white-space:nowrap; }
+.hist-pop-serie b { color:var(--muted); font-weight:600; margin-right:2px; }
+.hist-pop-nota { font-size:11px; color:var(--text); line-height:1.4; font-style:italic; border-top:1px solid var(--border2); padding-top:6px; }
 .load-saved-lbl { font-size:12px; color:var(--accent2); font-weight:600; padding:4px 0; }
 
 /* ── HISTORIAL — OPCIÓN C (tarjetas scroll horizontal) ── */
@@ -1322,6 +1333,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   content:''; flex:1; height:1px;
   background:linear-gradient(to right, var(--border2), transparent);
 }
+.rpe-rango-btn { flex:1; font-size:11px; padding:7px; border-radius:7px; border:none; background:transparent; color:var(--muted); cursor:pointer; font-family:var(--font-body); transition:all .15s; }
+.rpe-rango-btn.active { background:var(--surface1); color:var(--text); font-weight:600; }
+.rpe-bloque-opt { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:6px; cursor:pointer; }
+.rpe-bloque-opt:hover { background:var(--surface2); }
+.rpe-bloque-chk { width:15px; height:15px; border-radius:4px; border:1.5px solid var(--border2); display:flex; align-items:center; justify-content:center; font-size:9px; color:#fff; flex-shrink:0; }
+.rpe-bloque-opt.sel .rpe-bloque-chk { background:var(--accent); border-color:var(--accent); }
 
 /* ── DAILY LOAD HEATMAP ── */
 .dl-grid-header { display:flex; align-items:center; gap:3px; margin-bottom:3px; }
@@ -1784,6 +1801,20 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div id="load-view-analisis" style="display:none">
       <!-- ── SECCIÓN 1: RPE ── -->
       <div class="rpe-section-header">🍬 RPE</div>
+      <div id="rpe-rango-filtro" style="display:none;margin-bottom:14px">
+        <div style="display:flex;gap:5px;background:var(--surface2);padding:4px;border-radius:10px;max-width:360px">
+          <button class="rpe-rango-btn active" id="rpe-rango-7d" onclick="rpeSetRango('7d')">7 días</button>
+          <button class="rpe-rango-btn" id="rpe-rango-mes" onclick="rpeSetRango('mes')">Último mes</button>
+          <button class="rpe-rango-btn" id="rpe-rango-bloques" onclick="rpeSetRango('bloques')">Por bloques</button>
+        </div>
+        <div id="rpe-bloques-picker" style="display:none;margin-top:8px;position:relative;max-width:360px">
+          <div id="rpe-bloques-toggle" onclick="rpeToggleBloquesDropdown()" style="background:var(--surface1);border:1px solid var(--border2);border-radius:9px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+            <span id="rpe-bloques-label" style="font-size:12px;color:var(--text)">Todos los bloques</span>
+            <span style="font-size:10px;color:var(--muted)">▾</span>
+          </div>
+          <div id="rpe-bloques-list" style="display:none;background:var(--surface1);border:1px solid var(--border2);border-radius:9px;margin-top:4px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.3);max-height:240px;overflow-y:auto;position:absolute;left:0;right:0;z-index:30"></div>
+        </div>
+      </div>
       <div class="coach-chart-box" id="coach-rpe-chart" style="display:none">
         <div class="chart-section-title">RPE medio por sesión</div>
         <div class="rpe-weeks-wrap" id="coach-rpe-weeks"></div>
@@ -4284,6 +4315,19 @@ function editLoad(cardId) {
   if (el) { el.classList.remove('hidden'); renderLoadPanel(cardId, el); }
 }
 
+function histTogglePop(popId){
+  const p = document.getElementById(popId);
+  if (!p) return;
+  const wasOpen = p.classList.contains('open');
+  document.querySelectorAll('.hist-pop.open').forEach(x=>x.classList.remove('open'));
+  if (!wasOpen) p.classList.add('open');
+}
+document.addEventListener('click', function(e){
+  if (!e.target.classList || (!e.target.classList.contains('hist-info-btn') && !e.target.closest('.hist-pop'))){
+    document.querySelectorAll('.hist-pop.open').forEach(x=>x.classList.remove('open'));
+  }
+}, true);
+
 async function renderHistPanel(cardId, ejercicio, el) {
   el.innerHTML = '<div class="hist-empty" style="padding:6px 0">Cargando…</div>';
   const res = await api({ action:'getHistorial', usuario:state.user.usuario, ejercicio });
@@ -4407,10 +4451,26 @@ async function renderHistPanel(cardId, ejercicio, el) {
     const latestClass = isLatest ? ` latest-${letraOk}` : '';
     const dotHtml     = isLatest ? `<div class="hist-card-dot"></div>` : '';
 
-    return `<div class="hist-card${latestClass}" style="${cardOpacity(i)}">
-      <div class="hist-card-date">${dotHtml}${dateLabel}</div>
+    // Nota del ejercicio (si hay) + popover con series desglosadas
+    const notaTxt = (h.notas!=null ? String(h.notas) : '').trim();
+    const tieneNota = notaTxt.length > 0;
+    const tieneSeries = setVals.length > 1;
+    const popId = `histpop-${cardId}-${i}`;
+    let infoBtn = '', popover = '';
+    if (tieneNota || tieneSeries) {
+      infoBtn = `<span class="hist-info-btn" onclick="event.stopPropagation();histTogglePop('${popId}')">i</span>`;
+      const seriesPop = tieneSeries ? `<div class="hist-pop-series">${
+        setVals.map((v,si)=>{ const label = targets[si]?targets[si]:`S${si+1}`; return `<span class="hist-pop-serie"><b>${label}</b> ${v}</span>`; }).join('')
+      }</div>` : '';
+      const notaPop = tieneNota ? `<div class="hist-pop-nota">${notaTxt}</div>` : '';
+      popover = `<div class="hist-pop" id="${popId}"><div class="hist-pop-date">${dateLabel}</div>${seriesPop}${notaPop}</div>`;
+    }
+
+    return `<div class="hist-card${latestClass}" style="${cardOpacity(i)};position:relative">
+      <div class="hist-card-date">${dotHtml}${dateLabel}${infoBtn}</div>
       <div class="hist-card-sets">${setsHtml}</div>
       ${rmHtml}
+      ${popover}
     </div>`;
   }).join('');
 
@@ -4612,7 +4672,19 @@ function renderLoadPanel(cardId, el) {
     <div class="load-sets-row">${setsHtml}</div>
     ${showNumpad ? `<div class="load-numpad">${numpad}</div>` : ''}
     <div class="load-hint">${serieLabel}</div>
+    <button class="btn-load-nota" onclick="toggleLoadNota('${cardId}')" id="load-nota-btn-${cardId}">✏️ ${cs.loadNota ? 'Editar nota' : 'Añadir nota'}</button>
+    <div id="load-nota-box-${cardId}" style="display:${cs.loadNotaOpen?'block':'none'};margin-top:6px">
+      <textarea id="load-nota-txt-${cardId}" placeholder="Ej: la última serie la subí, me encontré fuerte..." oninput="state.cards['${cardId}'].loadNota=this.value" style="width:100%;background:var(--surface2);border:1px solid rgba(0,229,160,.3);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--text);resize:none;font-family:inherit;outline:none" rows="2">${cs.loadNota||''}</textarea>
+    </div>
     <button class="btn-save-load" onclick="saveLoad('${cardId}','${ejEsc}')">Guardar</button>`;
+}
+
+function toggleLoadNota(cardId){
+  const cs = state.cards[cardId]; if(!cs) return;
+  cs.loadNotaOpen = !cs.loadNotaOpen;
+  const box = document.getElementById('load-nota-box-'+cardId);
+  if (box) box.style.display = cs.loadNotaOpen ? 'block' : 'none';
+  if (cs.loadNotaOpen){ const t=document.getElementById('load-nota-txt-'+cardId); if(t) t.focus(); }
 }
 
 // Ajustar reps con + / −
@@ -4739,7 +4811,7 @@ async function saveLoad(cardId, ejercicio) {
     action:'saveRegistro', usuario:state.user.usuario,
     semana:realSemanaIdx(), dia:state.dia,
     bloque: cardId.split('_')[0], ejercicio: ej,
-    carga_real: cargaStr, rpe:'', notas_jugador:'', tiempo_sesion:''
+    carga_real: cargaStr, rpe:'', notas_jugador: (cs.loadNota||'').trim(), tiempo_sesion:''
   });
 
   if (res.ok) {
@@ -4781,6 +4853,70 @@ async function onCoachSquadChange() {
 // ═══════════════════════════════════════════════════════════════
 // ── COACH PANEL ──────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
+// ── Filtro de rango del Análisis RPE ──
+var _rpeRango = '7d';           // '7d' | 'mes' | 'bloques'
+var _rpeBloquesSel = null;      // Set de nombres de bloque seleccionados (null = todos)
+var _rpeBloquesNombres = [];    // nombres disponibles (para índice)
+
+function rpeToggleBloqueIdx(idx){
+  const nombre = _rpeBloquesNombres[idx];
+  if(nombre==null) return;
+  if(!_rpeBloquesSel) _rpeBloquesSel=new Set();
+  if(_rpeBloquesSel.has(nombre)) _rpeBloquesSel.delete(nombre); else _rpeBloquesSel.add(nombre);
+  loadCoachPanel();
+}
+
+function rpeSetRango(r){
+  _rpeRango = r;
+  ['7d','mes','bloques'].forEach(x=>{
+    const b=document.getElementById('rpe-rango-'+x);
+    if(b) b.classList.toggle('active', x===r);
+  });
+  const picker=document.getElementById('rpe-bloques-picker');
+  if(picker) picker.style.display = (r==='bloques')?'block':'none';
+  loadCoachPanel();
+}
+function rpeToggleBloquesDropdown(){
+  const l=document.getElementById('rpe-bloques-list');
+  if(l) l.style.display = (l.style.display==='none'||!l.style.display)?'block':'none';
+}
+// Filtra el array de semanas del heatmap según el rango activo
+function _rpeFiltraChart(chart){
+  if(!chart || !chart.length) return chart;
+  if(_rpeRango==='bloques'){
+    if(!_rpeBloquesSel || _rpeBloquesSel.size===0) return chart; // todos
+    return chart.filter(s=>_rpeBloquesSel.has(s.nombreSemana||('Sem '+s.semana)));
+  }
+  // 7d o mes: por fecha de las sesiones
+  const dias = _rpeRango==='7d' ? 7 : 31;
+  const limite = new Date(); limite.setDate(limite.getDate()-dias);
+  return chart.filter(s=>{
+    const fechas=(s.sesiones||[]).map(ss=>ss.fecha).filter(Boolean);
+    if(!fechas.length) return false;
+    // incluir la semana si alguna sesión cae dentro del rango
+    return fechas.some(f=>{ const d=new Date(f); return !isNaN(d) && d>=limite; });
+  });
+}
+// Rellena el dropdown de bloques con los nombres disponibles
+function _rpeRellenaBloques(chart){
+  const list=document.getElementById('rpe-bloques-list');
+  const lbl=document.getElementById('rpe-bloques-label');
+  if(!list) return;
+  const nombres=(chart||[]).map(s=>s.nombreSemana||('Sem '+s.semana));
+  list.innerHTML = nombres.map((nm,idx)=>{
+    const sel = _rpeBloquesSel && _rpeBloquesSel.has(nm);
+    return `<div class="rpe-bloque-opt${sel?' sel':''}" onclick="rpeToggleBloqueIdx(${idx})">
+      <span class="rpe-bloque-chk">${sel?'✓':''}</span>
+      <span style="font-size:12px;color:var(--text)">${nm}</span>
+    </div>`;
+  }).join('') || '<div style="padding:8px;font-size:11px;color:var(--muted)">Sin bloques</div>';
+  _rpeBloquesNombres = nombres;
+  if(lbl){
+    const n = _rpeBloquesSel? _rpeBloquesSel.size : 0;
+    lbl.textContent = n===0 ? 'Todos los bloques' : (n+' bloque'+(n>1?'s':'')+' seleccionado'+(n>1?'s':''));
+  }
+}
+
 async function loadCoachPanel() {
   const semanaIdx    = state.semana - 1;
   const semanaNombre = (state.semanas && state.semanas[semanaIdx]) || ('Semana ' + state.semana);
@@ -4799,9 +4935,17 @@ async function loadCoachPanel() {
 
   // Usar rpeChart del squad seleccionado si existe.
   // Si hay filtro activo pero ese squad no tiene datos → array vacío (no mostrar datos de otros)
-  const rpeChartActivo = sqFilter
+  const rpeChartActivoFull = sqFilter
     ? (state.coachRpeBySquad[sqFilter] || [])
     : state.coachRpeChart;
+
+  // Mostrar filtro de rango y rellenar bloques
+  const filtroEl = document.getElementById('rpe-rango-filtro');
+  if (filtroEl) filtroEl.style.display = rpeChartActivoFull.length ? 'block' : 'none';
+  _rpeRellenaBloques(rpeChartActivoFull);
+
+  // Aplicar el filtro de rango seleccionado
+  const rpeChartActivo = _rpeFiltraChart(rpeChartActivoFull);
 
   const hoyStr  = fmtDate(new Date());
   const total   = equipoFiltrado.length;
