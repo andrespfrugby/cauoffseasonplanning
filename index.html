@@ -11,9 +11,11 @@
 :root {
   --bg:        #0d0f12;
   --surface:   #151920;
+  --surface1:  #181d25;
   --surface2:  #1c2330;
   --border:    rgba(255,255,255,0.08);
   --border2:   rgba(255,255,255,0.14);
+  --border-strong: rgba(255,255,255,0.22);
   --accent:    #e8142a;
   --accent2:   #00e5a0;
   --text:      #f0f2f5;
@@ -26,9 +28,11 @@
 body.light-mode {
   --bg:        #f2f4f8;
   --surface:   #ffffff;
+  --surface1:  #f6f7fa;
   --surface2:  #eaecf2;
   --border:    rgba(0,0,0,0.07);
   --border2:   rgba(0,0,0,0.13);
+  --border-strong: rgba(0,0,0,0.22);
   --accent:    #c0101f;
   --accent2:   #009e70;
   --text:      #111318;
@@ -1183,7 +1187,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   body { background:#fff !important; color:#111 !important; }
   :root {
-    --bg:#fff; --surface:#f8f8f8; --surface2:#efefef;
+    --bg:#fff; --surface:#f8f8f8; --surface1:#f6f6f6; --surface2:#efefef;
     --text:#111; --muted:#555;
     --border:rgba(0,0,0,.15); --border2:rgba(0,0,0,.2);
     --accent:#c0101f; --accent2:#00a068;
@@ -1814,7 +1818,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
             <span id="rpe-bloques-label" style="font-size:12px;color:var(--text)">Todos los bloques</span>
             <span style="font-size:10px;color:var(--muted)">▾</span>
           </div>
-          <div id="rpe-bloques-list" style="display:none;background:var(--surface1);border:1px solid var(--border2);border-radius:9px;margin-top:4px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.3);max-height:280px;overflow-y:auto;position:absolute;left:0;right:0;z-index:30"></div>
+          <div id="rpe-bloques-list" style="display:none;background:var(--surface);border:1px solid var(--border2);border-radius:9px;margin-top:4px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.4);max-height:280px;overflow-y:auto;position:absolute;left:0;right:0;z-index:200"></div>
         </div>
       </div>
       <div class="coach-chart-box" id="coach-rpe-chart" style="display:none">
@@ -4245,6 +4249,15 @@ function repSwitchMode(mode) {
   repLoadData();
 }
 
+// Caché de historiales RPE por usuario (evita re-pedir al filtrar mesociclo)
+var _repHistCache = {};
+async function _getHistCached(usuario){
+  if (_repHistCache[usuario]) return _repHistCache[usuario];
+  const r = await api({ action:'getHistorial', usuario, ejercicio:'RPE_GLOBAL' });
+  _repHistCache[usuario] = r;
+  return r;
+}
+
 async function repLoadData() {
   const body = document.getElementById('rep-body');
   if (!body) return;
@@ -4277,7 +4290,7 @@ async function repLoadData() {
 
     // Load historial for ALL players in parallel
     const histResults = await Promise.all(
-      equipo.map(j => api({ action:'getHistorial', usuario: j.usuario, ejercicio:'RPE_GLOBAL' }))
+      equipo.map(j => _getHistCached(j.usuario))
     );
 
     rows = equipo.map((j, idx) => {
@@ -4307,7 +4320,7 @@ async function repLoadData() {
     periodLabel = 'Mesociclo · ' + checks.length + ' semanas';
 
     const histResults = await Promise.all(
-      equipo.map(j => api({ action:'getHistorial', usuario: j.usuario, ejercicio:'RPE_GLOBAL' }))
+      equipo.map(j => _getHistCached(j.usuario))
     );
 
     rows = equipo.map((j, idx) => {
@@ -4330,7 +4343,7 @@ async function repLoadData() {
 
     // Load full historial per player and filter by month
     const histResults = await Promise.all(
-      equipo.map(j => api({ action:'getHistorial', usuario: j.usuario, ejercicio:'RPE_GLOBAL' }))
+      equipo.map(j => _getHistCached(j.usuario))
     );
 
     rows = equipo.map((j, idx) => {
@@ -4986,7 +4999,7 @@ function rpeToggleBloqueIdx(idx){
   if(nombre==null) return;
   if(!_rpeBloquesSel) _rpeBloquesSel=new Set();
   if(_rpeBloquesSel.has(nombre)) _rpeBloquesSel.delete(nombre); else _rpeBloquesSel.add(nombre);
-  loadCoachPanel();
+  loadCoachPanel(true); // true = usar datos en caché, no pedir al servidor
 }
 function rpeToggleBloquesDropdown(){
   const l=document.getElementById('rpe-bloques-list');
@@ -5043,15 +5056,18 @@ function _rpeRellenaBloques(chartOrdenado){
   }
 }
 
-async function loadCoachPanel() {
+async function loadCoachPanel(useCache) {
   const semanaIdx    = state.semana - 1;
   const semanaNombre = (state.semanas && state.semanas[semanaIdx]) || ('Semana ' + state.semana);
   document.getElementById('coach-sem-label').textContent = `${state.semanas?.length || 0} semanas · ${state.coachSquadFilter || 'todos los squads'}`;
-  const res = await api({ action:'getEquipo', semana:state.semana });
-  if (!res.ok) return;
-  state.coachEquipo       = res.equipo         || [];
-  state.coachRpeChart     = res.rpeChart        || [];
-  state.coachRpeBySquad   = res.rpeChartBySquad || {};
+  // Si useCache y ya tenemos datos, no volver a pedir al servidor (evita lentitud al filtrar bloques)
+  if (!(useCache && state.coachEquipo && state.coachEquipo.length)) {
+    const res = await api({ action:'getEquipo', semana:state.semana });
+    if (!res.ok) return;
+    state.coachEquipo       = res.equipo         || [];
+    state.coachRpeChart     = res.rpeChart        || [];
+    state.coachRpeBySquad   = res.rpeChartBySquad || {};
+  }
 
   // Filtrar por squad si hay uno seleccionado
   const sqFilter = state.coachSquadFilter || '';
@@ -5247,7 +5263,7 @@ async function renderAcwr(equipo) {
 
   // Load historial for all players in parallel
   const results = await Promise.all(
-    equipo.map(j => api({ action:'getHistorial', usuario: j.usuario, ejercicio:'RPE_GLOBAL' }))
+    equipo.map(j => _getHistCached(j.usuario))
   );
 
   // ── EWMA ACWR (Bourdon et al. 2017, validated in rugby/hockey) ──────────
@@ -5489,7 +5505,7 @@ async function renderDailyLoad(equipo) {
 
   // Load historial RPE_GLOBAL for all players in parallel
   const results = await Promise.all(
-    equipo.map(j => api({ action:'getHistorial', usuario: j.usuario, ejercicio:'RPE_GLOBAL' }))
+    equipo.map(j => _getHistCached(j.usuario))
   );
 
   // UA thresholds (Foster 2001 / Gabbett 2016)
@@ -5618,7 +5634,7 @@ async function renderLoadTrend(equipo, contentId) {
 
   // Load historial RPE_GLOBAL for all players
   const results = await Promise.all(
-    equipo.map(j => api({ action:'getHistorial', usuario: j.usuario, ejercicio:'RPE_GLOBAL' }))
+    equipo.map(j => _getHistCached(j.usuario))
   );
 
   // Build weekly UA per player using semana field from historial
