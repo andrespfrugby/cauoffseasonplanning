@@ -5650,14 +5650,26 @@ async function renderLoadTrend(equipo, contentId) {
       const min    = parseInt(h.tiempo_sesion);
       if (isNaN(semNum) || isNaN(rpe) || isNaN(min) || min <= 0) return;
       const ua = rpe * min;
-      if (!weeklyUA[semNum]) weeklyUA[semNum] = { totalUA: 0, playerCount: new Set(), sessions: 0 };
+      if (!weeklyUA[semNum]) weeklyUA[semNum] = { totalUA: 0, playerCount: new Set(), sessions: 0, minFecha: null };
       weeklyUA[semNum].totalUA    += ua;
       weeklyUA[semNum].playerCount.add(equipo[idx].usuario);
       weeklyUA[semNum].sessions++;
+      // guardar la fecha más antigua de la semana (para ordenar cronológicamente)
+      if (h.fecha) {
+        const d = new Date(h.fecha);
+        if (!isNaN(d) && (!weeklyUA[semNum].minFecha || d < weeklyUA[semNum].minFecha)) weeklyUA[semNum].minFecha = d;
+      }
     });
   });
 
-  const semNums = Object.keys(weeklyUA).map(Number).sort((a,b)=>a-b);
+  // Ordenar semanas por fecha de inicio (cronológico); sin fecha → por número al final
+  const semNums = Object.keys(weeklyUA).map(Number).sort((a,b)=>{
+    const fa = weeklyUA[a].minFecha, fb = weeklyUA[b].minFecha;
+    if (fa && fb) return fa - fb;
+    if (fa) return -1;
+    if (fb) return 1;
+    return a - b;
+  });
   if (!semNums.length) {
     content.innerHTML = '<div class="pevo-empty">Sin datos de RPE + tiempo para calcular la tendencia.</div>';
     return;
