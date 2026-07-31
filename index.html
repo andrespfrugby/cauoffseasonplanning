@@ -5650,21 +5650,30 @@ async function renderLoadTrend(equipo, contentId) {
       const min    = parseInt(h.tiempo_sesion);
       if (isNaN(semNum) || isNaN(rpe) || isNaN(min) || min <= 0) return;
       const ua = rpe * min;
-      if (!weeklyUA[semNum]) weeklyUA[semNum] = { totalUA: 0, playerCount: new Set(), sessions: 0, minFecha: null };
+      if (!weeklyUA[semNum]) weeklyUA[semNum] = { totalUA: 0, playerCount: new Set(), sessions: 0, fechas: [] };
       weeklyUA[semNum].totalUA    += ua;
       weeklyUA[semNum].playerCount.add(equipo[idx].usuario);
       weeklyUA[semNum].sessions++;
-      // guardar la fecha más antigua de la semana (para ordenar cronológicamente)
+      // guardar todas las fechas de la semana (para ordenar por la mediana, robusto a registros adelantados)
       if (h.fecha) {
         const d = new Date(h.fecha);
-        if (!isNaN(d) && (!weeklyUA[semNum].minFecha || d < weeklyUA[semNum].minFecha)) weeklyUA[semNum].minFecha = d;
+        if (!isNaN(d)) weeklyUA[semNum].fechas.push(d.getTime());
       }
     });
   });
 
-  // Ordenar semanas por fecha de inicio (cronológico); sin fecha → por número al final
+  // Fecha mediana de cada semana (robusta a registros adelantados sueltos)
+  const _medianaFecha = (arr) => {
+    if (!arr || !arr.length) return null;
+    const s = arr.slice().sort((a,b)=>a-b);
+    const m = Math.floor(s.length/2);
+    return s.length%2 ? s[m] : Math.round((s[m-1]+s[m])/2);
+  };
+  Object.keys(weeklyUA).forEach(k=>{ weeklyUA[k].medFecha = _medianaFecha(weeklyUA[k].fechas); });
+
+  // Ordenar semanas por fecha mediana (cronológico); sin fecha → por número al final
   const semNums = Object.keys(weeklyUA).map(Number).sort((a,b)=>{
-    const fa = weeklyUA[a].minFecha, fb = weeklyUA[b].minFecha;
+    const fa = weeklyUA[a].medFecha, fb = weeklyUA[b].medFecha;
     if (fa && fb) return fa - fb;
     if (fa) return -1;
     if (fb) return 1;
@@ -5676,13 +5685,26 @@ async function renderLoadTrend(equipo, contentId) {
   }
 
   // Average UA per player per week
-  const weekData = semNums.map(sem => {
+  const weekDataFull = semNums.map(sem => {
     const d       = weeklyUA[sem];
     const players = d.playerCount.size;
     const avgUA   = players > 0 ? Math.round(d.totalUA / players) : 0;
     const name    = weekNames[sem-1] || `Sem ${sem}`;
     return { sem, name, avgUA, players, sessions: d.sessions };
   });
+
+  // Guardar nombres disponibles para el desplegable de filtro
+  _trendNombres = weekDataFull.map(d => d.name);
+  // Filtrar por semanas seleccionadas (si hay selección)
+  const weekData = (_trendSel && _trendSel.size)
+    ? weekDataFull.filter(d => _trendSel.has(d.name))
+    : weekDataFull;
+
+  if (!weekData.length) {
+    content.innerHTML = _trendFiltroHTML() + '<div class="pevo-empty" style="padding:16px">Selecciona semanas para ver la tendencia.</div>';
+    _trendRellena();
+    return;
+  }
 
   // KPIs
   const currentSem = weekData[weekData.length - 1];
@@ -5727,7 +5749,7 @@ async function renderLoadTrend(equipo, contentId) {
 
   const currentC = uaColor(currentSem.avgUA);
 
-  content.innerHTML = `
+  content.innerHTML = _trendFiltroHTML() + `
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <div style="flex:1;background:${currentC.bg};border:0.5px solid ${currentC.border};border-radius:8px;padding:8px 10px;text-align:center">
         <div style="font-size:20px;font-weight:700;color:${currentC.txt};line-height:1">${currentSem.avgUA}</div>
@@ -5768,6 +5790,49 @@ async function renderLoadTrend(equipo, contentId) {
       <span style="font-size:8px;background:rgba(255,70,70,.15);border:0.5px solid rgba(255,70,70,.3);border-radius:4px;padding:2px 7px;color:#ff7070">&gt;2500 riesgo</span>
     </div>
     <div style="font-size:8px;color:var(--muted);margin-top:5px">UA = RPE × min · media por jugador activo · solo sesiones con tiempo registrado</div>`;
+  _trendRellena();
+}
+
+// ── Filtro de semanas de la tendencia de carga ──
+var _trendSel = null;        // Set de nombres seleccionados (null/vacío = todas)
+var _trendNombres = [];      // nombres disponibles
+function _trendFiltroHTML(){
+  return `<div style="position:relative;max-width:320px;margin-bottom:12px">
+    <div onclick="trendToggleDropdown()" style="background:var(--surface);border:1px solid var(--border2);border-radius:9px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+      <span id="trend-filtro-label" style="font-size:12px;color:var(--text)">Todas las semanas</span>
+      <span style="font-size:10px;color:var(--muted)">▾</span>
+    </div>
+    <div id="trend-filtro-list" style="display:none;background:var(--surface);border:1px solid var(--border2);border-radius:9px;margin-top:4px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.4);max-height:260px;overflow-y:auto;position:absolute;left:0;right:0;z-index:200"></div>
+  </div>`;
+}
+function trendToggleDropdown(){
+  const l=document.getElementById('trend-filtro-list');
+  if(l) l.style.display=(l.style.display==='none'||!l.style.display)?'block':'none';
+}
+function trendToggleSemIdx(idx){
+  const nm=_trendNombres[idx];
+  if(nm==null) return;
+  if(!_trendSel) _trendSel=new Set();
+  if(_trendSel.has(nm)) _trendSel.delete(nm); else _trendSel.add(nm);
+  // re-renderizar la tendencia con los datos en caché
+  const equipoTrend = (state.coachEquipo||[]).filter(j => !state.coachSquadFilter || (j.squad && j.squad.toLowerCase()===String(state.coachSquadFilter).toLowerCase()));
+  renderLoadTrendInto(equipoTrend, 'cc-trend-content');
+}
+function _trendRellena(){
+  const list=document.getElementById('trend-filtro-list');
+  const lbl=document.getElementById('trend-filtro-label');
+  if(!list) return;
+  list.innerHTML = _trendNombres.map((nm,idx)=>{
+    const sel=_trendSel && _trendSel.has(nm);
+    return `<div class="rpe-bloque-opt${sel?' sel':''}" onclick="trendToggleSemIdx(${idx})">
+      <span class="rpe-bloque-chk">${sel?'✓':''}</span>
+      <span style="font-size:12px;color:var(--text)">${nm}</span>
+    </div>`;
+  }).join('') || '<div style="padding:8px;font-size:11px;color:var(--muted)">Sin semanas</div>';
+  if(lbl){
+    const n=_trendSel?_trendSel.size:0;
+    lbl.textContent = n===0?'Todas las semanas':(n+' semana'+(n>1?'s':'')+' seleccionada'+(n>1?'s':''));
+  }
 }
 
 function renderPlayerSelector(equipo) {
