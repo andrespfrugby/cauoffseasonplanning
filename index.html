@@ -1028,6 +1028,13 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .video-modal-overlay.open { display:flex; }
 
 /* ── PLAYER PROFILE MODAL ── */
+.evo-chart-area { position:relative; }
+.evo-dot { position:absolute; width:9px; height:9px; border-radius:50%; background:var(--dc,#7bb8ff); transform:translate(-50%,-50%); cursor:pointer; transition:width .12s,height .12s; z-index:2; border:1.5px solid var(--surface); }
+.evo-dot.active { width:14px; height:14px; box-shadow:0 0 0 4px color-mix(in srgb, var(--dc,#7bb8ff) 25%, transparent); }
+.evo-tip { position:absolute; bottom:150%; left:50%; transform:translateX(-50%); background:rgba(28,28,34,.95); border:1px solid var(--border2); border-radius:8px; padding:6px 10px; font-size:11px; color:#fff; white-space:nowrap; pointer-events:none; z-index:10; text-align:center; line-height:1.4; }
+.evo-tip b { font-size:13px; }
+.evo-tip span { color:var(--muted); font-size:10px; }
+.evo-tip-sub { color:var(--muted); font-size:9px; margin-top:3px; border-top:1px solid var(--border2); padding-top:3px; }
 .player-modal-overlay {
   display:none; position:fixed; inset:0;
   background:rgba(0,0,0,.85); z-index:200;
@@ -1802,17 +1809,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <!-- ── SECCIÓN 1: RPE ── -->
       <div class="rpe-section-header">🍬 RPE</div>
       <div id="rpe-rango-filtro" style="display:none;margin-bottom:14px">
-        <div style="display:flex;gap:5px;background:var(--surface2);padding:4px;border-radius:10px;max-width:360px">
-          <button class="rpe-rango-btn active" id="rpe-rango-7d" onclick="rpeSetRango('7d')">7 días</button>
-          <button class="rpe-rango-btn" id="rpe-rango-mes" onclick="rpeSetRango('mes')">Último mes</button>
-          <button class="rpe-rango-btn" id="rpe-rango-bloques" onclick="rpeSetRango('bloques')">Por bloques</button>
-        </div>
-        <div id="rpe-bloques-picker" style="display:none;margin-top:8px;position:relative;max-width:360px">
+        <div style="position:relative;max-width:360px">
           <div id="rpe-bloques-toggle" onclick="rpeToggleBloquesDropdown()" style="background:var(--surface1);border:1px solid var(--border2);border-radius:9px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
             <span id="rpe-bloques-label" style="font-size:12px;color:var(--text)">Todos los bloques</span>
             <span style="font-size:10px;color:var(--muted)">▾</span>
           </div>
-          <div id="rpe-bloques-list" style="display:none;background:var(--surface1);border:1px solid var(--border2);border-radius:9px;margin-top:4px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.3);max-height:240px;overflow-y:auto;position:absolute;left:0;right:0;z-index:30"></div>
+          <div id="rpe-bloques-list" style="display:none;background:var(--surface1);border:1px solid var(--border2);border-radius:9px;margin-top:4px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.3);max-height:280px;overflow-y:auto;position:absolute;left:0;right:0;z-index:30"></div>
         </div>
       </div>
       <div class="coach-chart-box" id="coach-rpe-chart" style="display:none">
@@ -1831,11 +1833,13 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         </div>
       </div>
 
-      <!-- ── SECCIÓN 2: CARGA DEL EQUIPO ── -->
+      <!-- ── SECCIÓN 2: CARGA DEL EQUIPO (movida a Control de cargas) ── -->
+      <div style="display:none">
       <div class="rpe-section-header">📈 Carga del Equipo</div>
       <div class="coach-chart-box" id="coach-load-trend-chart" style="display:none">
         <div class="chart-section-title">Tendencia carga equipo — UA/semana</div>
         <div id="coach-load-trend-content"><div class="loader"><div class="spinner"></div></div></div>
+      </div>
       </div>
 
       <!-- ── SECCIÓN 3: LOAD MANAGEMENT (ACWR viejo movido a Control de cargas) ── -->
@@ -1846,9 +1850,11 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         <div id="coach-acwr-content"><div class="loader"><div class="spinner"></div></div></div>
       </div>
       </div>
+      <div style="display:none">
       <div class="coach-chart-box" id="coach-daily-load-chart" style="display:none">
         <div class="chart-section-title">Carga diaria equipo — esta semana (UA)</div>
         <div id="coach-daily-load-content"><div class="loader"><div class="spinner"></div></div></div>
+      </div>
       </div>
       </div><!-- /load-view-analisis -->
 
@@ -2311,6 +2317,94 @@ function wellnessSelectDate(dateStr) {
 }
 
 
+// ── Tooltip compartido para gráficas de la ficha (hover/toque) ──
+function evoDotShow(el){
+  el.classList.add('active');
+  let tip = el.querySelector('.evo-tip');
+  if (!tip){
+    tip = document.createElement('div');
+    tip.className = 'evo-tip';
+    tip.innerHTML = el.dataset.tip || '';
+    el.appendChild(tip);
+  }
+}
+function evoDotHide(el){
+  el.classList.remove('active');
+  const tip = el.querySelector('.evo-tip');
+  if (tip) tip.remove();
+}
+document.addEventListener('touchstart', function(e){
+  if (!e.target.classList || !e.target.classList.contains('evo-dot')){
+    document.querySelectorAll('.evo-dot.active').forEach(d=>evoDotHide(d));
+  }
+}, true);
+
+function _scoreColor(v){ return v==null?'#888' : v>=67?'#00e5a0' : v>=34?'#ffc04d' : '#ff7070'; }
+
+// ── Gráfica de evolución del READINESS SCORE ──
+function buildReadinessChart(wellData, W=260, H=52) {
+  if (!wellData || !wellData.length) return '';
+  // usar readiness_score; filtrar los que lo tengan
+  const data = wellData.filter(h => h.readiness_score!=null && h.readiness_score!=='' && !isNaN(parseFloat(h.readiness_score)));
+  if (!data.length) return '';
+  const scores = data.map(h=>parseFloat(h.readiness_score));
+  const lastS = scores[scores.length-1];
+  const lastCol = _scoreColor(lastS);
+
+  const fmtTip = (h) => {
+    const partes = [];
+    if(h.ganas_entrenar!=null&&h.ganas_entrenar!=='') partes.push(`Ganas ${h.ganas_entrenar}`);
+    if(h.dolor!=null&&h.dolor!=='') partes.push(`Dolor ${h.dolor}`);
+    if(h.fatiga!=null&&h.fatiga!=='') partes.push(`Fatiga ${h.fatiga}`);
+    if(h.calidad_sueno!=null&&h.calidad_sueno!=='') partes.push(`Sueño ${h.calidad_sueno}`);
+    const sc = Math.round(parseFloat(h.readiness_score));
+    return `<b style="color:${_scoreColor(sc)}">${sc}</b> score<br><span>${h.fecha?h.fecha.slice(5):''}</span>` +
+           (partes.length?`<div class="evo-tip-sub">${partes.join(' · ')}</div>`:'');
+  };
+
+  let svgContent = '', dots = '';
+  if (data.length === 1) {
+    const cy = Math.round(H/2);
+    svgContent = `<line x1="0" y1="${cy}" x2="${W}" y2="${cy}" stroke="${lastCol}" stroke-width="1.5" stroke-dasharray="5,4" opacity=".4"/>`;
+    dots = `<div class="evo-dot" style="left:50%;top:${(cy/H*100).toFixed(1)}%;--dc:${lastCol}" data-tip='${fmtTip(data[0])}' onmouseenter="evoDotShow(this)" onmouseleave="evoDotHide(this)" ontouchstart="evoDotShow(this)"></div>`;
+  } else {
+    const minS = Math.min(...scores)-4, maxS = Math.max(...scores)+4;
+    const rng = (maxS-minS)||1;
+    const tx = i => (i/(data.length-1))*W;
+    const ty = v => H-((v-minS)/rng)*(H-12)-6;
+    const pts = data.map((h,i)=>`${tx(i).toFixed(1)},${ty(parseFloat(h.readiness_score)).toFixed(1)}`).join(' ');
+    const areaPoints = `${tx(0).toFixed(1)},${H} ` + pts + ` ${tx(data.length-1).toFixed(1)},${H}`;
+    svgContent = `
+      <defs><linearGradient id="rg${_uaGradId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${lastCol}" stop-opacity=".22"/><stop offset="100%" stop-color="${lastCol}" stop-opacity="0"/>
+      </linearGradient></defs>
+      <polygon points="${areaPoints}" fill="url(#rg${_uaGradId})"/>
+      <polyline points="${pts}" fill="none" stroke="${lastCol}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    _uaGradId++;
+    dots = data.map((h,i)=>{
+      const x=tx(i), y=ty(parseFloat(h.readiness_score));
+      const sc=parseFloat(h.readiness_score);
+      return `<div class="evo-dot" style="left:${(x/W*100).toFixed(2)}%;top:${(y/H*100).toFixed(2)}%;--dc:${_scoreColor(sc)}" data-tip='${fmtTip(h)}' onmouseenter="evoDotShow(this)" onmouseleave="evoDotHide(this)" ontouchstart="evoDotShow(this)"></div>`;
+    }).join('');
+  }
+
+  const dateRow = data.length >= 2
+    ? `<div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:2px"><span>${data[0].fecha.slice(5)}</span><span>${data[data.length-1].fecha.slice(5)}</span></div>`
+    : `<div style="font-size:8px;color:var(--muted);text-align:center;margin-top:2px">${data[0].fecha.slice(5)}</div>`;
+
+  return `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-top:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Evolución readiness</div>
+      <div style="font-size:13px;font-weight:700;color:${lastCol}">${Math.round(lastS)}</div>
+    </div>
+    <div class="evo-chart-area" style="position:relative">
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;display:block">${svgContent}</svg>
+      ${dots}
+    </div>
+    ${dateRow}
+  </div>`;
+}
+
 // ── SHARED WEIGHT CHART BUILDER ───────────────────────────────
 function buildWeightChart(pesoData, W=260, H=52) {
   if (!pesoData || !pesoData.length) return '';
@@ -2366,12 +2460,29 @@ function buildWeightChart(pesoData, W=260, H=52) {
     ? `<div style="font-size:13px;font-weight:700;color:#7bb8ff">${lastP} kg <span style="font-size:11px;color:${diffCol}">(${diffStr})</span></div>`
     : `<div style="font-size:13px;font-weight:700;color:#7bb8ff">${lastP} kg</div>`;
 
+  // Puntos interactivos con tooltip (peso + fecha)
+  let wDots = '';
+  if (pesoData.length === 1) {
+    wDots = `<div class="evo-dot" style="left:50%;top:50%;--dc:#7bb8ff" data-tip='<b style="color:#7bb8ff">${lastP}</b> kg<br><span>${pesoData[0].fecha.slice(5)}</span>' onmouseenter="evoDotShow(this)" onmouseleave="evoDotHide(this)" ontouchstart="evoDotShow(this)"></div>`;
+  } else {
+    const minP2 = Math.min(...pesos)-0.3, maxP2 = Math.max(...pesos)+0.3;
+    const tx = i => (i/(pesoData.length-1))*W;
+    const ty = v => H-((v-minP2)/(maxP2-minP2))*(H-12)-6;
+    wDots = pesoData.map((h,i)=>{
+      const x=tx(i), y=ty(parseFloat(h.peso_corporal)), p=parseFloat(h.peso_corporal);
+      return `<div class="evo-dot" style="left:${(x/W*100).toFixed(2)}%;top:${(y/H*100).toFixed(2)}%;--dc:#7bb8ff" data-tip='<b style="color:#7bb8ff">${p}</b> kg<br><span>${h.fecha.slice(5)}</span>' onmouseenter="evoDotShow(this)" onmouseleave="evoDotHide(this)" ontouchstart="evoDotShow(this)"></div>`;
+    }).join('');
+  }
+
   return `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-top:10px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Evolución peso</div>
       ${header}
     </div>
-    <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;display:block">${svgContent}</svg>
+    <div class="evo-chart-area" style="position:relative">
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;display:block">${svgContent}</svg>
+      ${wDots}
+    </div>
     ${dateRow}
   </div>`;
 }
@@ -3315,6 +3426,9 @@ async function renderWeekSummary() {
   const weightChartHtml = resWellness.ok && resWellness.wellness
     ? buildWeightChart(resWellness.wellness.filter(h=>h.peso_corporal&&parseFloat(h.peso_corporal)>0))
     : '';
+  const readinessChartHtml = resWellness.ok && resWellness.wellness
+    ? buildReadinessChart(resWellness.wellness)
+    : '';
 
   // ── Calendario wellness ─────────────────────────────────────
 
@@ -3345,6 +3459,7 @@ async function renderWeekSummary() {
       </div>
       ${daysSection}
       ${weightChartHtml}
+      ${readinessChartHtml}
       ${rankingHtml}
     </div>`;
   container.style.display = 'block';
@@ -3884,7 +3999,16 @@ async function renderControlCargas() {
       }).join('') : '<div class="cd-empty">Sin datos de carga este periodo.</div>'}
     </div>
 
-    <div style="font-size:9px;color:var(--muted);margin-top:12px;line-height:1.5">ACWR = carga aguda (media 7d) ÷ crónica (media 4 sem). UA = RPE × min. Cada jugador vs. su propia base. Gabbett (2016), Hulin (2016), Foster (2001).</div>`;
+    <div style="font-size:9px;color:var(--muted);margin-top:12px;line-height:1.5">ACWR = carga aguda (media 7d) ÷ crónica (media 4 sem). UA = RPE × min. Cada jugador vs. su propia base. Gabbett (2016), Hulin (2016), Foster (2001).</div>
+
+    <div style="margin-top:22px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:2px">📈 Tendencia carga equipo</div>
+      <div id="cc-trend-content"><div class="loader"><div class="spinner"></div></div></div>
+    </div>`;
+
+  // Renderizar la tendencia de carga del equipo (movida desde Análisis RPE)
+  const equipoTrend = (state.coachEquipo||[]).filter(j => !squad || (j.squad && j.squad.toLowerCase()===String(squad).toLowerCase()));
+  renderLoadTrendInto(equipoTrend, 'cc-trend-content');
 }
 
 
@@ -4853,9 +4977,8 @@ async function onCoachSquadChange() {
 // ═══════════════════════════════════════════════════════════════
 // ── COACH PANEL ──────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
-// ── Filtro de rango del Análisis RPE ──
-var _rpeRango = '7d';           // '7d' | 'mes' | 'bloques'
-var _rpeBloquesSel = null;      // Set de nombres de bloque seleccionados (null = todos)
+// ── Filtro de bloques del heatmap RPE medio por sesión ──
+var _rpeBloquesSel = null;      // Set de nombres de bloque seleccionados (null/vacío = todos)
 var _rpeBloquesNombres = [];    // nombres disponibles (para índice)
 
 function rpeToggleBloqueIdx(idx){
@@ -4865,52 +4988,55 @@ function rpeToggleBloqueIdx(idx){
   if(_rpeBloquesSel.has(nombre)) _rpeBloquesSel.delete(nombre); else _rpeBloquesSel.add(nombre);
   loadCoachPanel();
 }
-
-function rpeSetRango(r){
-  _rpeRango = r;
-  ['7d','mes','bloques'].forEach(x=>{
-    const b=document.getElementById('rpe-rango-'+x);
-    if(b) b.classList.toggle('active', x===r);
-  });
-  const picker=document.getElementById('rpe-bloques-picker');
-  if(picker) picker.style.display = (r==='bloques')?'block':'none';
-  loadCoachPanel();
-}
 function rpeToggleBloquesDropdown(){
   const l=document.getElementById('rpe-bloques-list');
   if(l) l.style.display = (l.style.display==='none'||!l.style.display)?'block':'none';
 }
-// Filtra el array de semanas del heatmap según el rango activo
-function _rpeFiltraChart(chart){
-  if(!chart || !chart.length) return chart;
-  if(_rpeRango==='bloques'){
-    if(!_rpeBloquesSel || _rpeBloquesSel.size===0) return chart; // todos
-    return chart.filter(s=>_rpeBloquesSel.has(s.nombreSemana||('Sem '+s.semana)));
-  }
-  // 7d o mes: por fecha de las sesiones
-  const dias = _rpeRango==='7d' ? 7 : 31;
-  const limite = new Date(); limite.setDate(limite.getDate()-dias);
-  return chart.filter(s=>{
-    const fechas=(s.sesiones||[]).map(ss=>ss.fecha).filter(Boolean);
-    if(!fechas.length) return false;
-    // incluir la semana si alguna sesión cae dentro del rango
-    return fechas.some(f=>{ const d=new Date(f); return !isNaN(d) && d>=limite; });
+// Fechas de un bloque (primer→último registro)
+function _bloqueFechas(sem){
+  const fechas=((sem && sem.sesiones)||[]).map(ss=>ss.fecha).filter(Boolean).map(f=>new Date(f)).filter(d=>!isNaN(d));
+  if(!fechas.length) return null;
+  fechas.sort((a,b)=>a-b);
+  return { ini:fechas[0], fin:fechas[fechas.length-1] };
+}
+function _bloqueRango(sem){
+  const f=_bloqueFechas(sem);
+  if(!f) return '';
+  const dd=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+  return f.ini.getTime()===f.fin.getTime()?dd(f.ini):`${dd(f.ini)}\u2013${dd(f.fin)}`;
+}
+// Ordena bloques por fecha de inicio (desempata por fin); sin fecha al final
+function _rpeOrdenaBloques(chart){
+  return (chart||[]).slice().sort((a,b)=>{
+    const fa=_bloqueFechas(a), fb=_bloqueFechas(b);
+    if(!fa && !fb) return 0;
+    if(!fa) return 1;
+    if(!fb) return -1;
+    return (fa.ini-fb.ini) || (fa.fin-fb.fin);
   });
 }
-// Rellena el dropdown de bloques con los nombres disponibles
-function _rpeRellenaBloques(chart){
+// Filtra SOLO por bloques seleccionados (afecta solo al heatmap RPE medio por sesión)
+function _rpeFiltraChart(chart){
+  if(!chart || !chart.length) return chart;
+  if(!_rpeBloquesSel || _rpeBloquesSel.size===0) return chart;
+  return chart.filter(s=>_rpeBloquesSel.has(s.nombreSemana||('Sem '+s.semana)));
+}
+// Rellena el dropdown de bloques (ordenados por fecha, con su rango)
+function _rpeRellenaBloques(chartOrdenado){
   const list=document.getElementById('rpe-bloques-list');
   const lbl=document.getElementById('rpe-bloques-label');
   if(!list) return;
-  const nombres=(chart||[]).map(s=>s.nombreSemana||('Sem '+s.semana));
+  const nombres=(chartOrdenado||[]).map(s=>s.nombreSemana||('Sem '+s.semana));
+  _rpeBloquesNombres = nombres;
   list.innerHTML = nombres.map((nm,idx)=>{
     const sel = _rpeBloquesSel && _rpeBloquesSel.has(nm);
+    const rango = _bloqueRango(chartOrdenado[idx]);
     return `<div class="rpe-bloque-opt${sel?' sel':''}" onclick="rpeToggleBloqueIdx(${idx})">
-      <span class="rpe-bloque-chk">${sel?'✓':''}</span>
-      <span style="font-size:12px;color:var(--text)">${nm}</span>
+      <span class="rpe-bloque-chk">${sel?'\u2713':''}</span>
+      <span style="font-size:12px;color:var(--text);flex:1">${nm}</span>
+      ${rango?`<span style="font-size:9px;color:var(--muted);margin-left:6px">${rango}</span>`:''}
     </div>`;
   }).join('') || '<div style="padding:8px;font-size:11px;color:var(--muted)">Sin bloques</div>';
-  _rpeBloquesNombres = nombres;
   if(lbl){
     const n = _rpeBloquesSel? _rpeBloquesSel.size : 0;
     lbl.textContent = n===0 ? 'Todos los bloques' : (n+' bloque'+(n>1?'s':'')+' seleccionado'+(n>1?'s':''));
@@ -4935,16 +5061,16 @@ async function loadCoachPanel() {
 
   // Usar rpeChart del squad seleccionado si existe.
   // Si hay filtro activo pero ese squad no tiene datos → array vacío (no mostrar datos de otros)
-  const rpeChartActivoFull = sqFilter
+  const rpeChartActivoFull = _rpeOrdenaBloques(sqFilter
     ? (state.coachRpeBySquad[sqFilter] || [])
-    : state.coachRpeChart;
+    : state.coachRpeChart);
 
-  // Mostrar filtro de rango y rellenar bloques
+  // Mostrar filtro de bloques y rellenarlo (ya ordenado por fecha)
   const filtroEl = document.getElementById('rpe-rango-filtro');
   if (filtroEl) filtroEl.style.display = rpeChartActivoFull.length ? 'block' : 'none';
   _rpeRellenaBloques(rpeChartActivoFull);
 
-  // Aplicar el filtro de rango seleccionado
+  // El filtro de bloques SOLO afecta al heatmap "RPE medio por sesión"
   const rpeChartActivo = _rpeFiltraChart(rpeChartActivoFull);
 
   const hoyStr  = fmtDate(new Date());
@@ -5078,8 +5204,7 @@ async function loadCoachPanel() {
 
   renderPlayerSelector(equipoFiltrado);
   renderAcwr(equipoFiltrado);
-  renderDailyLoad(equipoFiltrado);
-  renderLoadTrend(equipoFiltrado);
+  // renderDailyLoad y renderLoadTrend movidas/eliminadas del Análisis RPE
 }
 
 function renderTeamLoadChart(semanaNombre, chart) {
@@ -5472,11 +5597,21 @@ async function renderDailyLoad(equipo) {
     </div>`;
 }
 
-async function renderLoadTrend(equipo) {
-  const el      = document.getElementById('coach-load-trend-chart');
-  const content = document.getElementById('coach-load-trend-content');
-  if (!el || !content) return;
-  el.style.display = 'block';
+function renderLoadTrendInto(equipo, contentId){
+  return renderLoadTrend(equipo, contentId);
+}
+async function renderLoadTrend(equipo, contentId) {
+  let el, content;
+  if (contentId) {
+    content = document.getElementById(contentId);
+    el = content; // en el destino nuevo no hay wrapper aparte
+    if (!content) return;
+  } else {
+    el      = document.getElementById('coach-load-trend-chart');
+    content = document.getElementById('coach-load-trend-content');
+    if (!el || !content) return;
+    el.style.display = 'block';
+  }
   content.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
 
   const now = new Date();
@@ -6939,6 +7074,7 @@ async function openWellnessPlayerModal(usuario, nombre) {
   }).filter(Boolean).join('') : '';
 
   const weightChart = buildWeightChart((wellRes.ok&&wellRes.wellness ? wellRes.wellness.filter(h=>h.peso_corporal&&parseFloat(h.peso_corporal)>0) : []), 240, 52);
+  const readinessChart = buildReadinessChart((wellRes.ok&&wellRes.wellness ? wellRes.wellness : []), 240, 52);
 
   const readinessTab = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
@@ -6954,7 +7090,8 @@ async function openWellnessPlayerModal(usuario, nombre) {
       </div>
       <div style="flex:1;display:flex;gap:5px;flex-wrap:wrap">${chips7||'<span style="font-size:12px;color:var(--muted)">Sin datos hoy</span>'}</div>
     </div>
-    ${weightChart}`;
+    ${weightChart}
+    ${readinessChart}`;
 
   // ── Entrenamientos tab content ──
   const rpeHist = histRes.ok && histRes.historial ? histRes.historial.filter(h=>h.ejercicio==='RPE_GLOBAL'&&h.rpe).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha)) : [];
