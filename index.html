@@ -3432,6 +3432,7 @@ function loadSub(sub) {
 }
 
 // Tooltip de los puntos de UA (hover en PC, toque en móvil)
+var _uaGradId = 0;
 function cdDotShow(el){
   el.classList.add('active');
   let tip = el.querySelector('.cd-tip');
@@ -3507,10 +3508,9 @@ async function renderCargaDiaria() {
       return `<rect x="${x}" y="${y}" width="${bw}" height="${padT+plotH-y}" rx="2" fill="#4a90c2"/>${valTxt}`;
     }).join('');
 
-    // Media RPE: línea discontinua
+    // Media RPE: línea fina gris discreta (referencia)
     const mediaY = yFor(media);
-    const mediaCol = media >= 8 ? '#c43b3b' : media >= 5 ? '#c78a20' : '#3a9c6e';
-    const mediaLine = `<line x1="${padL}" y1="${mediaY}" x2="${padL+plotW}" y2="${mediaY}" stroke="${mediaCol}" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+    const mediaLine = `<line x1="${padL}" y1="${mediaY}" x2="${padL+plotW}" y2="${mediaY}" stroke="#888" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>`;
 
     // Línea de carga UA (rpe × min) superpuesta, escala propia — color MORADO
     let uaLine = '', uaDots = '';
@@ -3522,8 +3522,20 @@ async function renderCargaDiaria() {
       if (pts.length) {
         // Línea en el SVG (deformación no importa en una línea fina)
         const yUA = v => padT + plotH - frac(v)*plotH;
-        const poly = pts.map(p=>`${(padL + slot*p.i + slot/2).toFixed(1)},${yUA(p.v).toFixed(1)}`).join(' ');
-        uaLine = pts.length>1 ? `<polyline points="${poly}" fill="none" stroke="#a855f7" stroke-width="2" vector-effect="non-scaling-stroke"/>` : '';
+        const coords = pts.map(p=>({ x: padL + slot*p.i + slot/2, y: yUA(p.v) }));
+        const poly = coords.map(c=>`${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
+        // Área degradada bajo la línea
+        let area = '';
+        if (coords.length > 1) {
+          const base = padT + plotH;
+          const areaPath = `M${coords[0].x.toFixed(1)},${coords[0].y.toFixed(1)} ` +
+            coords.slice(1).map(c=>`L${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ') +
+            ` L${coords[coords.length-1].x.toFixed(1)},${base} L${coords[0].x.toFixed(1)},${base} Z`;
+          area = `<defs><linearGradient id="uaGrad${_uaGradId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a855f7" stop-opacity="0.32"/><stop offset="100%" stop-color="#a855f7" stop-opacity="0"/></linearGradient></defs><path d="${areaPath}" fill="url(#uaGrad${_uaGradId})"/>`;
+        }
+        const lineOnly = coords.length>1 ? `<polyline points="${poly}" fill="none" stroke="#a855f7" stroke-width="2" vector-effect="non-scaling-stroke"/>` : '';
+        uaLine = area + lineOnly;
+        _uaGradId++;
         // Puntos como divs HTML posicionados en % (interactivos)
         uaDots = pts.map(p=>{
           const leftP = ((padL + slot*p.i + slot/2)/W*100).toFixed(2);
@@ -3585,13 +3597,13 @@ async function renderCargaDiaria() {
       <div class="cd-kpi" style="border-top-color:#ff7a70"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_partido)}">${fmtN(pr.rpe_partido)}</div><div class="cd-kpi-lbl">Partido</div></div>
     </div>
 
-    <div class="cd-chart-title">RPE Gym <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA (toca el punto)</span></div>
+    <div class="cd-chart-title">RPE Gym <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA</span></div>
     ${barSet(j => j.rpe_gym, j => j.ua_gym)}
 
-    <div class="cd-chart-title">RPE Entrenamiento de campo <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA (toca el punto)</span></div>
+    <div class="cd-chart-title">RPE Entrenamiento de campo <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA</span></div>
     ${barSet(j => j.rpe_campo, j => j.ua_campo)}
 
-    <div class="cd-chart-title">RPE Partido <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA (toca el punto)</span></div>
+    <div class="cd-chart-title">RPE Partido <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA</span></div>
     ${barSet(j => j.rpe_partido, j => j.ua_partido)}`;
 }
 
