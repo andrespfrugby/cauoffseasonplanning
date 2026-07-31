@@ -1502,6 +1502,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .cc-jstat-l{font-size:8px;color:var(--muted)}
 .cc-svg-wrap{background:var(--surface1);border-radius:10px;padding:8px;margin-bottom:8px}
 .cd-names{display:flex;justify-content:space-around;margin-top:3px}
+.cd-ua-vals{display:flex;justify-content:space-around;margin-top:2px}
+.cd-ua-val{flex:1;text-align:center;font-size:9px;font-weight:700;color:#ff8c42;white-space:nowrap}
 .cd-name{flex:1;text-align:center;font-size:9px;color:#a8a8ac;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 1px}
 .cd-chart-title{font-size:11px;font-weight:600;color:var(--text);margin:0 0 5px}
 .cd-empty{font-size:12px;color:var(--muted);text-align:center;padding:20px}
@@ -3448,7 +3450,7 @@ async function renderCargaDiaria() {
   // Barras verticales: color por RPE
   function rpeCol(v){ return v==null?'var(--border-strong)':v>=8?'#ff7070':v>=5?'#ffc04d':'#00e5a0'; }
   // Gráfica estilo XPS COMPACTA: barras azules, bandas de fondo, media discontinua
-  function barSet(getter) {
+  function barSet(getter, uaGetter) {
     const withData = eq.filter(j => getter(j) != null);
     if (!withData.length) return '<div class="cd-empty">Sin registros este día.</div>';
     const ordered = withData.slice().sort((a,b)=>getter(b)-getter(a));
@@ -3478,24 +3480,70 @@ async function renderCargaDiaria() {
       return `<rect x="${x}" y="${y}" width="${bw}" height="${padT+plotH-y}" rx="2" fill="#4a90c2"/>${valTxt}`;
     }).join('');
 
-    // Media: solo línea discontinua, color según zona (tonos oscuros para contraste)
+    // Media RPE: línea discontinua
     const mediaY = yFor(media);
     const mediaCol = media >= 8 ? '#c43b3b' : media >= 5 ? '#c78a20' : '#3a9c6e';
     const mediaLine = `<line x1="${padL}" y1="${mediaY}" x2="${padL+plotW}" y2="${mediaY}" stroke="${mediaCol}" stroke-width="1.5" stroke-dasharray="4 3"/>`;
 
-    // Nombres como HTML debajo (rectos, legibles), alineados con las barras
+    // Línea de carga UA (rpe × min) superpuesta, escala propia
+    let uaLayer = '';
+    if (uaGetter) {
+      const uas = ordered.map(j => uaGetter(j));
+      const maxUA = Math.max(...uas.filter(v=>v!=null), 1);
+      const yUA = v => padT + plotH - (v/maxUA)*(plotH*0.85); // 85% del alto para dejar margen arriba
+      const pts = ordered.map((j,i)=>({ v:uaGetter(j), cx: padL + slot*i + slot/2 })).filter(p=>p.v!=null);
+      if (pts.length) {
+        const poly = pts.map(p=>`${p.cx.toFixed(1)},${yUA(p.v).toFixed(1)}`).join(' ');
+        const line = pts.length>1 ? `<polyline points="${poly}" fill="none" stroke="#ff8c42" stroke-width="2" vector-effect="non-scaling-stroke"/>` : '';
+        const dots = pts.map(p=>`<circle cx="${p.cx.toFixed(1)}" cy="${yUA(p.v).toFixed(1)}" r="3" fill="#ff8c42"/>`).join('');
+        uaLayer = line + dots;
+      }
+    }
+
+    // Nombres HTML debajo
     const nameChars = n > 12 ? 4 : n > 8 ? 6 : 9;
     const names = ordered.map(j=>{
       let nm = String(j.nombre||'').split(',')[0].trim().split(/\s+/)[0];
       if (nm.length > nameChars) nm = nm.slice(0, nameChars)+'…';
       return `<span class="cd-name">${nm}</span>`;
     }).join('');
-    // padding-left proporcional al eje Y para alinear con el área de barras
     const leftPct = (padL/W*100).toFixed(1), rightPct = (padR/W*100).toFixed(1);
 
+    // valores UA como HTML sobre cada punto (para que no se deformen con preserveAspectRatio)
+    let uaVals = '';
+    if (uaGetter) {
+      const uas = ordered.map(j=>uaGetter(j));
+      if (uas.some(v=>v!=null)) {
+        uaVals = `<div class="cd-ua-vals" style="padding-left:${leftPct}%;padding-right:${rightPct}%">${
+          ordered.map(j=>{const v=uaGetter(j); return `<span class="cd-ua-val">${v!=null?v:''}</span>`;}).join('')
+        }</div>`;
+      }
+    }
+
     return `<div class="cd-svg-wrap">
-      <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:auto">${bandRects}${gridY}${bars}${mediaLine}</svg>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:auto">${bandRects}${gridY}${bars}${mediaLine}${uaLayer}</svg>
+      ${uaVals}
       <div class="cd-names" style="padding-left:${leftPct}%;padding-right:${rightPct}%">${names}</div>
+    </div>`;
+  }
+
+  // Chips de los 3 jugadores con más carga (UA = rpe × min) ese día
+  function topCarga(getter) {
+    const conUA = eq.map(j=>({nombre:j.nombre, ua:getter(j)})).filter(x=>x.ua!=null && x.ua>0);
+    if (!conUA.length) return '';
+    const top = conUA.sort((a,b)=>b.ua-a.ua).slice(0,3);
+    return `<div style="background:var(--surface1);border-radius:10px;padding:10px 12px;margin:-4px 0 16px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px">Más carga · UA</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${top.map(t=>{
+          const nm = String(t.nombre||'').split(',')[0].trim();
+          return `<span style="display:inline-flex;align-items:center;gap:6px;background:#4a90c218;border:1px solid #4a90c250;border-radius:14px;padding:4px 11px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#4a90c2"></span>
+            <span style="font-size:12px;color:var(--text)">${nm}</span>
+            <span style="font-size:12px;font-weight:700;color:#4a90c2">${t.ua}</span>
+          </span>`;
+        }).join('')}
+      </div>
     </div>`;
   }
 
@@ -3513,14 +3561,14 @@ async function renderCargaDiaria() {
       <div class="cd-kpi" style="border-top-color:#ff7a70"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_partido)}">${fmtN(pr.rpe_partido)}</div><div class="cd-kpi-lbl">Partido</div></div>
     </div>
 
-    <div class="cd-chart-title">RPE Gym</div>
-    ${barSet(j => j.rpe_gym)}
+    <div class="cd-chart-title">RPE Gym <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA</span></div>
+    ${barSet(j => j.rpe_gym, j => j.ua_gym)}
 
-    <div class="cd-chart-title">RPE Entrenamiento de campo</div>
-    ${barSet(j => j.rpe_campo)}
+    <div class="cd-chart-title">RPE Entrenamiento de campo <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA</span></div>
+    ${barSet(j => j.rpe_campo, j => j.ua_campo)}
 
-    <div class="cd-chart-title">RPE Partido</div>
-    ${barSet(j => j.rpe_partido)}`;
+    <div class="cd-chart-title">RPE Partido <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA</span></div>
+    ${barSet(j => j.rpe_partido, j => j.ua_partido)}`;
 }
 
 // ═══════════════════════════════════════════════════════════════
