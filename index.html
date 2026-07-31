@@ -1502,8 +1502,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .cc-jstat-l{font-size:8px;color:var(--muted)}
 .cc-svg-wrap{background:var(--surface1);border-radius:10px;padding:8px;margin-bottom:8px}
 .cd-names{display:flex;justify-content:space-around;margin-top:3px}
-.cd-ua-vals{display:flex;justify-content:space-around;margin-top:2px}
-.cd-ua-val{flex:1;text-align:center;font-size:9px;font-weight:700;color:#ff8c42;white-space:nowrap}
+.cd-chart-area{position:relative}
+.cd-uadot{position:absolute;width:9px;height:9px;border-radius:50%;background:#a855f7;transform:translate(-50%,-50%);cursor:pointer;transition:width .12s,height .12s;z-index:2;border:1.5px solid var(--surface1)}
+.cd-uadot.active{width:15px;height:15px;box-shadow:0 0 0 4px rgba(168,85,247,.22)}
+.cd-tip{position:absolute;bottom:140%;left:50%;transform:translateX(-50%);background:rgba(30,30,36,.92);border:1px solid rgba(168,85,247,.5);border-radius:7px;padding:5px 9px;font-size:11px;color:#fff;white-space:nowrap;pointer-events:none;z-index:5;text-align:center;line-height:1.3}
+.cd-tip b{color:#c98bff;font-size:13px}
+.cd-tip span{color:#a8a8ac;font-size:10px}
 .cd-name{flex:1;text-align:center;font-size:9px;color:#a8a8ac;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 1px}
 .cd-chart-title{font-size:11px;font-weight:600;color:var(--text);margin:0 0 5px}
 .cd-empty{font-size:12px;color:var(--muted);text-align:center;padding:20px}
@@ -3427,6 +3431,29 @@ function loadSub(sub) {
   if (sub === 'control') renderControlCargas();
 }
 
+// Tooltip de los puntos de UA (hover en PC, toque en móvil)
+function cdDotShow(el){
+  el.classList.add('active');
+  let tip = el.querySelector('.cd-tip');
+  if (!tip){
+    tip = document.createElement('div');
+    tip.className = 'cd-tip';
+    tip.innerHTML = `<b>${el.dataset.ua}</b> UA<br><span>${el.dataset.nm}</span>`;
+    el.appendChild(tip);
+  }
+}
+function cdDotHide(el){
+  el.classList.remove('active');
+  const tip = el.querySelector('.cd-tip');
+  if (tip) tip.remove();
+}
+// cerrar tooltips al tocar fuera (móvil)
+document.addEventListener('touchstart', function(e){
+  if (!e.target.classList || !e.target.classList.contains('cd-uadot')){
+    document.querySelectorAll('.cd-uadot.active').forEach(d=>cdDotHide(d));
+  }
+}, true);
+
 async function renderCargaDiaria() {
   const c = document.getElementById('carga-diaria-content');
   if (!c) return;
@@ -3485,18 +3512,24 @@ async function renderCargaDiaria() {
     const mediaCol = media >= 8 ? '#c43b3b' : media >= 5 ? '#c78a20' : '#3a9c6e';
     const mediaLine = `<line x1="${padL}" y1="${mediaY}" x2="${padL+plotW}" y2="${mediaY}" stroke="${mediaCol}" stroke-width="1.5" stroke-dasharray="4 3"/>`;
 
-    // Línea de carga UA (rpe × min) superpuesta, escala propia
-    let uaLayer = '';
+    // Línea de carga UA (rpe × min) superpuesta, escala propia — color MORADO
+    let uaLine = '', uaDots = '';
     if (uaGetter) {
       const uas = ordered.map(j => uaGetter(j));
       const maxUA = Math.max(...uas.filter(v=>v!=null), 1);
-      const yUA = v => padT + plotH - (v/maxUA)*(plotH*0.85); // 85% del alto para dejar margen arriba
-      const pts = ordered.map((j,i)=>({ v:uaGetter(j), cx: padL + slot*i + slot/2 })).filter(p=>p.v!=null);
+      const frac = v => (v/maxUA)*0.85; // fracción del alto (85% para margen arriba)
+      const pts = ordered.map((j,i)=>({ v:uaGetter(j), i, nombre:String(j.nombre||'').split(',')[0].trim() })).filter(p=>p.v!=null);
       if (pts.length) {
-        const poly = pts.map(p=>`${p.cx.toFixed(1)},${yUA(p.v).toFixed(1)}`).join(' ');
-        const line = pts.length>1 ? `<polyline points="${poly}" fill="none" stroke="#ff8c42" stroke-width="2" vector-effect="non-scaling-stroke"/>` : '';
-        const dots = pts.map(p=>`<circle cx="${p.cx.toFixed(1)}" cy="${yUA(p.v).toFixed(1)}" r="3" fill="#ff8c42"/>`).join('');
-        uaLayer = line + dots;
+        // Línea en el SVG (deformación no importa en una línea fina)
+        const yUA = v => padT + plotH - frac(v)*plotH;
+        const poly = pts.map(p=>`${(padL + slot*p.i + slot/2).toFixed(1)},${yUA(p.v).toFixed(1)}`).join(' ');
+        uaLine = pts.length>1 ? `<polyline points="${poly}" fill="none" stroke="#a855f7" stroke-width="2" vector-effect="non-scaling-stroke"/>` : '';
+        // Puntos como divs HTML posicionados en % (interactivos)
+        uaDots = pts.map(p=>{
+          const leftP = ((padL + slot*p.i + slot/2)/W*100).toFixed(2);
+          const topP  = ((yUA(p.v))/H*100).toFixed(2);
+          return `<div class="cd-uadot" style="left:${leftP}%;top:${topP}%" data-ua="${p.v}" data-nm="${p.nombre}" onmouseenter="cdDotShow(this)" onmouseleave="cdDotHide(this)" ontouchstart="cdDotShow(this)"></div>`;
+        }).join('');
       }
     }
 
@@ -3509,20 +3542,11 @@ async function renderCargaDiaria() {
     }).join('');
     const leftPct = (padL/W*100).toFixed(1), rightPct = (padR/W*100).toFixed(1);
 
-    // valores UA como HTML sobre cada punto (para que no se deformen con preserveAspectRatio)
-    let uaVals = '';
-    if (uaGetter) {
-      const uas = ordered.map(j=>uaGetter(j));
-      if (uas.some(v=>v!=null)) {
-        uaVals = `<div class="cd-ua-vals" style="padding-left:${leftPct}%;padding-right:${rightPct}%">${
-          ordered.map(j=>{const v=uaGetter(j); return `<span class="cd-ua-val">${v!=null?v:''}</span>`;}).join('')
-        }</div>`;
-      }
-    }
-
     return `<div class="cd-svg-wrap">
-      <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:auto">${bandRects}${gridY}${bars}${mediaLine}${uaLayer}</svg>
-      ${uaVals}
+      <div class="cd-chart-area" style="position:relative">
+        <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:auto">${bandRects}${gridY}${bars}${mediaLine}${uaLine}</svg>
+        ${uaDots}
+      </div>
       <div class="cd-names" style="padding-left:${leftPct}%;padding-right:${rightPct}%">${names}</div>
     </div>`;
   }
@@ -3561,13 +3585,13 @@ async function renderCargaDiaria() {
       <div class="cd-kpi" style="border-top-color:#ff7a70"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_partido)}">${fmtN(pr.rpe_partido)}</div><div class="cd-kpi-lbl">Partido</div></div>
     </div>
 
-    <div class="cd-chart-title">RPE Gym <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA</span></div>
+    <div class="cd-chart-title">RPE Gym <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA (toca el punto)</span></div>
     ${barSet(j => j.rpe_gym, j => j.ua_gym)}
 
-    <div class="cd-chart-title">RPE Entrenamiento de campo <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA</span></div>
+    <div class="cd-chart-title">RPE Entrenamiento de campo <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA (toca el punto)</span></div>
     ${barSet(j => j.rpe_campo, j => j.ua_campo)}
 
-    <div class="cd-chart-title">RPE Partido <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA</span></div>
+    <div class="cd-chart-title">RPE Partido <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA (toca el punto)</span></div>
     ${barSet(j => j.rpe_partido, j => j.ua_partido)}`;
 }
 
