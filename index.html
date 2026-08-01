@@ -134,6 +134,12 @@ body.light-mode .wsumm-rank-row { background:#f8f9fc; border-color:rgba(0,0,0,.0
 body.light-mode .coach-chart-box { background:#fff; border-color:rgba(0,0,0,.1); }
 /* ── WELLNESS / READINESS ─────────────────────────────────── */
 .wellness-arc-val{font-size:54px;font-weight:500;line-height:1;text-align:center;transition:color .15s}
+.wbat-row{display:flex;gap:8px;justify-content:space-between;width:100%;max-width:300px;margin:0 auto}
+.wbat-label{font-size:13px;text-align:center;margin-bottom:16px;min-height:18px;font-weight:500;transition:color .15s}
+.wbat{flex:1;text-align:center;cursor:pointer;transition:transform .12s}
+.wbat-body{border:2px solid var(--border2);border-radius:6px;padding:3px;display:flex;flex-direction:column;gap:2px;position:relative;background:var(--surface1);transition:all .12s}
+.wbat-tip{position:absolute;top:-5px;left:50%;transform:translateX(-50%);width:11px;height:3px;border-radius:1px;transition:background .12s}
+.wbat-n{font-size:12px;margin-top:6px;transition:color .12s}
 .wellness-arc-lbl{font-size:12px;text-align:center;margin-top:5px;min-height:18px;transition:color .15s}
 .wellness-slider-wrap{width:100%;max-width:220px;margin-top:18px}
 input[type=range].w-slider{
@@ -1645,6 +1651,39 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .pb-fields label{display:flex;flex-direction:column;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;gap:3px}
 .pb-fields input{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;font-weight:600;outline:none;font-family:var(--font-body)}
 .pb-loadrow{display:flex;gap:5px;margin-top:8px}
+/* ── Editor de prescripción élite ── */
+.pe-toprow{display:flex;gap:12px;align-items:flex-end;margin-bottom:12px}
+.pe-mini{display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;flex:0 0 90px}
+.pe-mini input{background:var(--surface1);border:1px solid var(--border2);border-radius:7px;padding:7px 9px;font-size:14px;color:var(--text);font-family:inherit;width:100%;box-sizing:border-box}
+.pe-modo{flex:1}
+.pe-modo-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:3px}
+.pe-serie-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pe-rango-tog{display:flex;align-items:center;gap:5px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px}
+.pe-rango-tog input{accent-color:var(--accent)}
+.pe-rango-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.pe-rango-row input{width:56px;background:var(--surface1);border:1px solid var(--border2);border-radius:7px;padding:6px 9px;font-size:14px;color:var(--text);text-align:center;font-family:inherit}
+.pe-series{display:flex;flex-direction:column;gap:6px}
+.pe-serie{display:flex;align-items:center;gap:7px}
+.pe-sn{font-size:11px;color:var(--muted);width:22px;flex-shrink:0}
+.pe-serie-hl .pe-sn{color:var(--accent);font-weight:600}
+.pe-inp{flex:1;display:flex;align-items:center;gap:3px;background:var(--surface1);border:1px solid var(--border2);border-radius:7px;padding:6px 9px}
+.pe-serie-hl .pe-inp{border-color:rgba(232,20,42,.4);background:rgba(232,20,42,.08)}
+.pe-inp input{width:100%;border:none;background:transparent;font-size:14px;color:var(--text);text-align:center;font-family:inherit;outline:none;min-width:0}
+.pe-serie-hl .pe-inp input{color:var(--accent);font-weight:600}
+.pe-u{font-size:11px;color:var(--muted);flex-shrink:0}
+.pe-x{font-size:12px;color:var(--muted);flex-shrink:0}
+.pe-rng-global{justify-content:center;color:var(--muted);font-size:13px}
+.pe-del{font-size:11px;color:var(--muted);cursor:pointer;flex-shrink:0;width:16px;text-align:center}
+.pe-del:hover{color:var(--accent)}
+.pe-serie-actions{display:flex;gap:6px;margin-top:8px}
+.pe-add,.pe-eq{font-size:11px;padding:5px 11px;border-radius:6px;cursor:pointer;font-family:inherit;background:transparent}
+.pe-add{color:var(--muted);border:1px dashed var(--border2)}
+.pe-eq{color:var(--muted);border:1px solid var(--border2)}
+.pe-add:hover,.pe-eq:hover{color:var(--text);border-color:var(--border-strong)}
+.pe-vid{cursor:pointer;color:var(--accent);font-size:13px;margin-right:6px}
+.pe-vid-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.pe-vid-box{position:relative;max-width:480px;width:100%}
+.pe-vid-close{position:absolute;top:-30px;right:0;color:#fff;font-size:20px;cursor:pointer}
 .lc{font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);color:var(--muted);cursor:pointer}
 .lc.on{background:rgba(0,229,160,.12);color:var(--accent2);border-color:rgba(0,229,160,.35)}
 .pb-cmp{margin-top:12px}
@@ -2343,7 +2382,7 @@ document.addEventListener('touchstart', function(e){
   }
 }, true);
 
-function _scoreColor(v){ return v==null?'#888' : v>=67?'#00e5a0' : v>=34?'#ffc04d' : '#ff7070'; }
+function _scoreColor(v){ return v==null?'#888' : v>=13?'#00e5a0' : v>=7?'#ffc04d' : '#ff7070'; }
 
 // ── Gráfica de evolución del READINESS SCORE ──
 function buildReadinessChart(wellData, W=260, H=52) {
@@ -6575,12 +6614,12 @@ let _savingSession = false;
 
 // ══ WELLNESS / READINESS ══════════════════════════════════════
 
-const W_COLORS = ['','#ff7070','#ff7070','#ff7070','#ffc04d','#ffc04d','#ffc04d','#00e5a0','#00e5a0','#00e5a0','#00e5a0'];
+const W_COLORS = ['','#ff5050','#ff9d3f','#ffd23f','#7ed957','#00e5a0'];
 const W_LABELS = {
-  ganas: ['','el cuerpo pide descanso','muy bajo','bajo hoy','algo bajo','nivel normal','nivel normal','con ganas — buena energía','con ganas — buena energía','casi al máximo','al máximo — listo para rendir'],
-  dolor: ['','dolor intenso','dolor fuerte','dolor notable','molestia notable','molestia moderada','algo de tensión','casi sin molestias','muy bien','excelente','sin ningún dolor'],
-  fatiga:['','muy fatigado','fatiga intensa','bastante fatigado','cargado','fatiga moderada','algo cansado','descansado','bien descansado','muy fresco','completamente fresco'],
-  sleep: ['','muy mala','mala','bastante mala','pobre','regular','aceptable','buena','muy buena','excelente','perfecta']
+  ganas: ['','el cuerpo pide descanso','con pocas ganas','ganas normales','con ganas','al máximo — listo para rendir'],
+  dolor: ['','dolor intenso','dolor notable','algo de molestia','casi sin molestias','sin ningún dolor'],
+  fatiga:['','muy fatigado','bastante cansado','algo cansado','bien descansado','completamente fresco'],
+  sleep: ['','muy mala','mala','regular','buena','excelente']
 };
 
 let _wellnessState = { cur:1, vals:{1:null,2:null,3:null,4:null}, hrs:null, peso:'' };
@@ -6588,25 +6627,40 @@ let _wellnessState = { cur:1, vals:{1:null,2:null,3:null,4:null}, hrs:null, peso
 function calcWellnessScore(vals) {
   const g=parseFloat(vals[1])||0, d=parseFloat(vals[2])||0,
         f=parseFloat(vals[3])||0, c=parseFloat(vals[4])||0;
-  return Math.round((g*0.30 + d*0.20 + f*0.25 + c*0.25)*10);
+  // Escala 1-5 · 4 preguntas → total sobre 20 (igual que el backend)
+  return Math.round(g + d + f + c);
 }
 
-function wellnessArcPt(v) {
-  const a = -Math.PI + ((v-1)/9)*Math.PI;
-  return { x: 110+98*Math.cos(a), y: 112+98*Math.sin(a) };
-}
-
-function wellnessArcUpdate(q, v) {
+function wellnessBatPick(q, v) {
   _wellnessState.vals[q] = v;
-  const off = Math.round(308*(1-(v-1)/9));
-  const arc = document.getElementById('warc'+q); if(arc) arc.setAttribute('stroke-dashoffset',off);
-  const p   = wellnessArcPt(v);
-  const dot = document.getElementById('wdot'+q); if(dot){ dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('fill',W_COLORS[v]); }
-  const vEl = document.getElementById('wval'+q); if(vEl){ vEl.textContent=v; vEl.style.color=W_COLORS[v]; }
+  // re-render de las baterías de esta pregunta
+  const wrap = document.getElementById('wbat-row-'+q);
+  if (wrap) wrap.innerHTML = _wellnessBatsHTML(q, v);
   const lKey = {1:'ganas',2:'dolor',3:'fatiga',4:'sleep'};
-  const lEl  = document.getElementById('wlbl'+q); if(lEl){ lEl.textContent=W_LABELS[lKey[q]][v]; lEl.style.color=W_COLORS[v]; }
-  // next button color
+  const lEl = document.getElementById('wbat-lbl-'+q);
+  if (lEl){ lEl.textContent = W_LABELS[lKey[q]][v]||''; lEl.style.color = W_COLORS[v]||'var(--muted)'; }
   const nb = document.getElementById('wbnext'); if(nb) nb.style.background = W_COLORS[v]||'#e8142a';
+}
+
+// HTML de las 5 baterías de una pregunta (v = valor seleccionado)
+function _wellnessBatsHTML(q, sel) {
+  let out = '';
+  for (let n=1;n<=5;n++){
+    const on = n===sel;
+    const col = W_COLORS[n];
+    let cells = '';
+    for (let k=5;k>=1;k--){
+      cells += `<div style="height:6px;border-radius:1px;background:${k<=n?col:'var(--surface2)'}"></div>`;
+    }
+    out += `<div class="wbat" onclick="wellnessBatPick(${q},${n})" style="${on?'transform:scale(1.08)':''}">
+      <div class="wbat-body" style="border-color:${on?col:'var(--border2)'};${on?'box-shadow:0 0 0 3px '+col+'33':''}">
+        <div class="wbat-tip" style="background:${on?col:'var(--border2)'}"></div>
+        ${cells}
+      </div>
+      <div class="wbat-n" style="color:${on?col:'var(--muted)'};font-weight:${on?'700':'400'}">${n}</div>
+    </div>`;
+  }
+  return out;
 }
 
 function wellnessHrsUpdate(h) {
@@ -6650,10 +6704,10 @@ function renderWellnessQuestion(container, q) {
   const total=6;
   const pct  = Math.round((q/total)*100);
   const qDefs = [
-    { n:1, txt:'Ganas de entrenar hoy',     sub:'1 = muy bajo · 10 = al máximo',     lkey:'ganas', defVal:7 },
-    { n:2, txt:'Dolor muscular / articular', sub:'1 = dolor intenso · 10 = sin dolor', lkey:'dolor', defVal:7 },
-    { n:3, txt:'Fatiga acumulada',           sub:'1 = muy fatigado · 10 = fresco',     lkey:'fatiga',defVal:6 },
-    { n:4, txt:'Calidad de sueño',           sub:'1 = muy mala · 10 = excelente',      lkey:'sleep', defVal:7 },
+    { n:1, txt:'Ganas de entrenar hoy',     sub:'', lkey:'ganas', defVal:4 },
+    { n:2, txt:'Dolor muscular / articular', sub:'', lkey:'dolor', defVal:4 },
+    { n:3, txt:'Fatiga acumulada',           sub:'', lkey:'fatiga',defVal:3 },
+    { n:4, txt:'Calidad de sueño',           sub:'', lkey:'sleep', defVal:4 },
     { n:5, txt:'Horas de sueño',             sub:'Desliza para ajustar',               lkey:'hrs',   defVal:null },
     { n:6, txt:'Peso corporal',              sub:'Báscula · kg · opcional — puedes saltar',lkey:'peso',  defVal:null },
   ];
@@ -6670,23 +6724,10 @@ function renderWellnessQuestion(container, q) {
 
   let inputHtml = '';
   if (isSlider) {
-    const off = Math.round(308*(1-(curVal-1)/9));
-    const p   = wellnessArcPt(curVal);
+    const lblTxt = W_LABELS[def.lkey][curVal]||'';
     inputHtml = `
-      <svg width="220" height="118" viewBox="0 0 220 118" style="overflow:visible" aria-hidden="true">
-        <defs><linearGradient id="wgr" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#ff7070"/><stop offset="45%" stop-color="#ffc04d"/><stop offset="100%" stop-color="#00e5a0"/>
-        </linearGradient></defs>
-        <path d="M12 112 A98 98 0 0 1 208 112" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="8" stroke-linecap="round"/>
-        <path id="warc${q}" d="M12 112 A98 98 0 0 1 208 112" fill="none" stroke="url(#wgr)" stroke-width="8" stroke-linecap="round" stroke-dasharray="308" stroke-dashoffset="${off}"/>
-        <circle id="wdot${q}" cx="${p.x}" cy="${p.y}" r="9" fill="${col}" stroke="var(--bg)" stroke-width="3"/>
-      </svg>
-      <div class="wellness-arc-val" id="wval${q}" style="color:${col}">${curVal}</div>
-      <div class="wellness-arc-lbl" id="wlbl${q}" style="color:${col}">${W_LABELS[def.lkey][curVal]}</div>
-      <div class="wellness-slider-wrap">
-        <input type="range" class="w-slider" min="1" max="10" value="${curVal}" step="1" oninput="wellnessArcUpdate(${q},+this.value)">
-        <div class="w-slider-ends"><span>1</span><span>10</span></div>
-      </div>`;
+      <div class="wbat-label" id="wbat-lbl-${q}" style="color:${col}">${lblTxt}</div>
+      <div class="wbat-row" id="wbat-row-${q}">${_wellnessBatsHTML(q, curVal)}</div>`;
   } else if (isHrs) {
     const hVal = _wellnessState.hrs || 7;
     const hCol = hVal<6?'#ff7070':hVal<=9?'#00e5a0':'#ffc04d';
@@ -6924,16 +6965,16 @@ async function wellnessSave() {
 
 function renderWellnessDone(container, entry, history) {
   const score  = parseFloat(entry?.readiness_score||0);
-  const col    = score>=70?'#00e5a0':score>=50?'#ffc04d':'#ff7070';
-  const title  = score>=80?'Excelente estado de readiness':score>=65?'Buen estado de forma':score>=50?'Estado moderado':'Necesitas recuperación';
+  const col    = score>=14?'#00e5a0':score>=10?'#ffc04d':'#ff7070';
+  const title  = score>=16?'Excelente estado de readiness':score>=13?'Buen estado de forma':score>=10?'Estado moderado':'Necesitas recuperación';
   const circ   = 2*Math.PI*46;
-  const off    = Math.round(circ*(1-score/100));
+  const off    = Math.round(circ*(1-score/20));
 
   const chips = [
-    entry.ganas_entrenar ? `Ganas ${entry.ganas_entrenar}/10`:'',
-    entry.dolor          ? `Dolor ${entry.dolor}/10`:'',
-    entry.fatiga         ? `Fatiga ${entry.fatiga}/10`:'',
-    entry.calidad_sueno  ? `Sueño ${entry.calidad_sueno}/10`:'',
+    entry.ganas_entrenar ? `Ganas ${entry.ganas_entrenar}/5`:'',
+    entry.dolor          ? `Dolor ${entry.dolor}/5`:'',
+    entry.fatiga         ? `Fatiga ${entry.fatiga}/5`:'',
+    entry.calidad_sueno  ? `Sueño ${entry.calidad_sueno}/5`:'',
     entry.horas_sueno    ? `${entry.horas_sueno}h de sueño`:'',
     entry.peso_corporal  ? `${entry.peso_corporal} kg`:'',
   ].filter(Boolean).map(c=>`<div class="wchip">${c}</div>`).join('');
@@ -6985,10 +7026,10 @@ async function renderReadinessDashboard() {
   if (sqFilter) equipo = equipo.filter(j => j.squad && j.squad.toLowerCase() === sqFilter.toLowerCase());
 
   const media      = res.mediaScore;
-  const alertas    = equipo.filter(j=>j.score!==null&&j.score<50).length;
+  const alertas    = equipo.filter(j=>j.score!==null&&j.score<10).length;
   const sinResp    = equipo.filter(j=>j.score===null).length;
   const respondidos= equipo.filter(j=>j.score!==null).length;
-  const mediaCol   = media===null?'var(--muted)':media>=70?'var(--accent2)':media>=50?'#ffc04d':'var(--danger)';
+  const mediaCol   = media===null?'var(--muted)':media>=14?'var(--accent2)':media>=10?'#ffc04d':'var(--danger)';
 
   // KPI row
   const kpis = `<div class="kpi-row" style="margin-bottom:12px">
@@ -7002,9 +7043,9 @@ async function renderReadinessDashboard() {
   function metricCell(val) {
     if (val === null || val === undefined || val === '') return `<td style="text-align:center;color:var(--muted);font-size:12px">—</td>`;
     const v   = parseFloat(val);
-    const col = v>=7 ? 'rgba(0,229,160,.12)'   : v>=5 ? 'rgba(255,192,77,.12)'   : 'rgba(232,20,42,.15)';
-    const tcl = v>=7 ? '#00e5a0'                : v>=5 ? '#ffc04d'                : '#ff7070';
-    const bold= v<5;
+    const col = v>=4 ? 'rgba(0,229,160,.12)'   : v>=3 ? 'rgba(255,192,77,.12)'   : 'rgba(232,20,42,.15)';
+    const tcl = v>=4 ? '#00e5a0'                : v>=3 ? '#ffc04d'                : '#ff7070';
+    const bold= v<3;
     return `<td style="text-align:center;padding:6px 4px">
       <div style="background:${col};border-radius:5px;padding:4px 6px;font-size:13px;font-weight:${bold?700:500};color:${tcl};min-width:28px;text-align:center">${v%1===0?v:v.toFixed(1)}</div>
     </td>`;
@@ -7020,7 +7061,7 @@ async function renderReadinessDashboard() {
   }
   function scoreCell(score, delta) {
     if (score===null) return `<td style="text-align:center;color:var(--muted);font-size:12px">—</td>`;
-    const col = score>=70?'#00e5a0':score>=50?'#ffc04d':'#ff7070';
+    const col = score>=14?'#00e5a0':score>=10?'#ffc04d':'#ff7070';
     const deltaStr = delta!==null ? `<div style="font-size:9px;color:${delta>=0?'#00e5a0':'#ff7070'}">${delta>=0?'↑':'↓'}${Math.abs(delta)}</div>` : '';
     return `<td style="text-align:center;padding:6px 4px">
       <div style="font-size:16px;font-weight:700;color:${col}">${Math.round(score)}</div>${deltaStr}
@@ -7033,14 +7074,14 @@ async function renderReadinessDashboard() {
 
   const tableRows = equipo.map(j => {
     const sc  = j.score;
-    const scCol = sc===null?'#7a8494':sc>=70?'#00e5a0':sc>=50?'#ffc04d':'#ff7070';
+    const scCol = sc===null?'#7a8494':sc>=14?'#00e5a0':sc>=10?'#ffc04d':'#ff7070';
     const today = j.today || {};
     const initials = j.nombre.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
     // Mini trend bars from 7-day history
     const trendBarsHtml = (j.trend||[]).map(v => {
       if (v===null) return `<div style="width:3px;height:4px;border-radius:1px;background:var(--border2);align-self:flex-end"></div>`;
-      const bc = v>=70?'#00e5a0':v>=50?'#ffc04d':'#ff7070';
-      const bh = Math.max(3,Math.round((v/100)*14));
+      const bc = v>=14?'#00e5a0':v>=10?'#ffc04d':'#ff7070';
+      const bh = Math.max(3,Math.round((v/20)*14));
       return `<div style="width:3px;height:${bh}px;border-radius:1px;background:${bc};align-self:flex-end"></div>`;
     }).join('');
     return `<tr style="cursor:pointer" onclick="openWellnessPlayerModal('${j.usuario}','${j.nombre.replace(/'/g,"\\'")}')">
@@ -7077,7 +7118,7 @@ async function renderReadinessDashboard() {
     return `<td style="text-align:center;padding:8px 4px;font-size:13px;font-weight:700;color:var(--text)">${v%1===0?v:v.toFixed(1)}</td>`;
   }
   const avgScore = avgOf(j => j.score);
-  const avgScoreCol = avgScore===null?'var(--muted)':avgScore>=70?'#00e5a0':avgScore>=50?'#ffc04d':'#ff7070';
+  const avgScoreCol = avgScore===null?'var(--muted)':avgScore>=14?'#00e5a0':avgScore>=10?'#ffc04d':'#ff7070';
   const promedioRow = `<tr style="border-top:2px solid var(--accent);background:rgba(232,20,42,.06)">
     <td style="padding:8px 10px;white-space:nowrap;border-right:0.5px solid var(--border);position:sticky;left:0;background:rgba(40,20,22,.6)">
       <div style="display:flex;align-items:center;gap:7px">
@@ -7176,7 +7217,7 @@ async function openWellnessPlayerModal(usuario, nombre) {
           <circle cx="27" cy="27" r="22" fill="none" stroke="var(--border2)" stroke-width="5"/>
           <circle cx="27" cy="27" r="22" fill="none" stroke="${scoreCol}" stroke-width="5"
             stroke-linecap="round" stroke-dasharray="${Math.round(2*Math.PI*22)}"
-            stroke-dashoffset="${scoreHoy!==null?Math.round(2*Math.PI*22*(1-scoreHoy/100)):Math.round(2*Math.PI*22)}"
+            stroke-dashoffset="${scoreHoy!==null?Math.round(2*Math.PI*22*(1-scoreHoy/20)):Math.round(2*Math.PI*22)}"
             transform="rotate(-90 27 27)"/>
         </svg>
         <div style="position:relative;top:-38px;text-align:center;font-size:15px;font-weight:700;color:${scoreCol}">${scoreHoy!==null?Math.round(scoreHoy):'—'}</div>
@@ -7882,6 +7923,7 @@ function addExerciseToBlock(dayIdx,blockIdx){
 function openExerciseFields(dayIdx,blockIdx,ei){
   // toca un ejercicio ya puesto -> abrir campos de prescripcion (modal inline)
   _plan.fieldEdit={ dayIdx, blockIdx, ei };
+  _presEd=null;
   renderFieldsModal();
 }
 
@@ -7992,30 +8034,209 @@ function pickExercise(id){
 }
 
 // ---- Modal de campos de prescripcion + control de carga ----
+// Parsea la carga+reps guardadas a un array de series editable
+function _parseSeries(it){
+  const tipo = it.tipo_carga || '%';
+  const cargaStr = it.carga || '';
+  const nSets = parseInt(it.sets) || 0;
+  // valores de intensidad por serie
+  let intens = [];
+  if (tipo === '%') {
+    const m = cargaStr.match(/\d+\.?\d*%/g);
+    intens = m ? m.map(x=>x.replace('%','')) : (cargaStr? [cargaStr.replace(/[^0-9.]/g,'')] : []);
+  } else {
+    // RIR/RPE: pueden venir separados por / o espacio
+    const m = cargaStr.match(/\d+\.?\d*/g);
+    intens = m || [];
+  }
+  // reps por serie (soporta rango "8-10" global o por serie)
+  const repsStr = it.reps || '';
+  const rango = isRepRange(repsStr);
+  let repsArr = [];
+  if (rango) {
+    // un solo rango para todas
+    repsArr = [];
+  } else {
+    const parts = String(repsStr).split(/[\/\s]+/).map(p=>p.trim()).filter(Boolean);
+    repsArr = parts;
+  }
+  const n = Math.max(nSets, intens.length, repsArr.length, 1);
+  const series = [];
+  for (let i=0;i<n;i++){
+    series.push({
+      intens: intens[i] != null ? intens[i] : (intens[0]||''),
+      rep:    repsArr[i] != null ? repsArr[i] : (repsArr[0]||'')
+    });
+  }
+  // rango global
+  let repMin='', repMax='';
+  if (rango){ const mm = repsStr.match(/(\d+)\s*-\s*(\d+)/); if(mm){ repMin=mm[1]; repMax=mm[2]; } }
+  return { series, usaRango: rango, repMin, repMax };
+}
+// Sincroniza el array de series de vuelta a los campos legacy (carga/reps/sets)
+function _syncSeries(it, ed){
+  const tipo = it.tipo_carga || '%';
+  it.sets = String(ed.series.length);
+  // carga: concatenar intensidades
+  if (tipo === '%'){
+    it.carga = ed.series.map(s=> s.intens? s.intens+'%':'').filter(Boolean).join('');
+  } else {
+    it.carga = ed.series.map(s=> s.intens||'').filter(Boolean).join('/');
+  }
+  // reps: si usa rango global → "min-max"; si no, por serie separadas por espacio
+  if (ed.usaRango){
+    it.reps = (ed.repMin && ed.repMax) ? `${ed.repMin}-${ed.repMax}` : (ed.repMin||ed.repMax||'');
+  } else {
+    it.reps = ed.series.map(s=> s.rep||'').filter(Boolean).join(' ');
+  }
+}
+
+var _presEd = null; // estado de edición del modal
+
 function renderFieldsModal(){
   const {dayIdx,blockIdx,ei}=_plan.fieldEdit;
   const it=_plan.week.data.dias[dayIdx].bloques[blockIdx].ejercicios[ei];
-  const lt=it.tipo_carga||'%';
+  if(!it.tipo_carga) it.tipo_carga='%';
+  const lt=it.tipo_carga;
+  if(!_presEd) _presEd = _parseSeries(it);
+  const ed = _presEd;
+  const unidad = lt==='%'?'%':lt;
   const modal=document.getElementById('picker-modal');
+
+  const seriesHTML = ed.series.map((s,i)=>{
+    const esUlt = i===ed.series.length-1;
+    const hl = (i>0 && (s.intens!==ed.series[0].intens || s.rep!==ed.series[0].rep)); // difiere de la 1ª
+    return `<div class="pe-serie${hl?' pe-serie-hl':''}">
+      <span class="pe-sn">S${i+1}</span>
+      <div class="pe-inp">
+        <input value="${s.intens||''}" placeholder="${lt==='%'?'75':lt==='RIR'?'2':'8'}" inputmode="decimal"
+          oninput="presSetSerie(${i},'intens',this.value)"><span class="pe-u">${unidad}</span>
+      </div>
+      <span class="pe-x">×</span>
+      ${ed.usaRango
+        ? `<div class="pe-inp pe-rng-global">${ed.repMin||'—'}–${ed.repMax||'—'}<span class="pe-u">reps</span></div>`
+        : `<div class="pe-inp"><input value="${s.rep||''}" placeholder="8" inputmode="numeric" oninput="presSetSerie(${i},'rep',this.value)"><span class="pe-u">reps</span></div>`}
+      ${ed.series.length>1?`<span class="pe-del" onclick="presDelSerie(${i})">&#10005;</span>`:'<span class="pe-del" style="visibility:hidden">&#10005;</span>'}
+    </div>`;
+  }).join('');
+
+  const rangoBox = ed.usaRango ? `
+    <div class="pe-rango-row">
+      <input value="${ed.repMin||''}" placeholder="min" inputmode="numeric" oninput="presSetRango('repMin',this.value)">
+      <span>–</span>
+      <input value="${ed.repMax||''}" placeholder="max" inputmode="numeric" oninput="presSetRango('repMax',this.value)">
+      <span style="font-size:11px;color:var(--muted)">reps (todas las series)</span>
+    </div>` : '';
+
   modal.innerHTML=`
     <div class="picker-backdrop" onclick="closeFields(event)">
       <div class="fields-box" onclick="event.stopPropagation()">
-        <div class="fields-hd"><span class="bl">${it.orden||''}</span><span style="font-size:14px;font-weight:600;flex:1">${it.ejercicio}</span><span class="picker-x" onclick="closeFields()">&#10005;</span></div>
-        <div class="pb-fields">
-          <label>Sets<input value="${it.sets||''}" oninput="setField('sets',this.value)"></label>
-          <label>Reps<input value="${it.reps||''}" oninput="setField('reps',this.value)"></label>
-          <label>Tempo<input value="${it.tempo||''}" oninput="setField('tempo',this.value)"></label>
-          <label>Carga<input value="${it.carga||''}" oninput="setField('carga',this.value)"></label>
+        <div class="fields-hd">
+          <span class="bl">${it.orden||''}</span>
+          <span style="font-size:14px;font-weight:600;flex:1">${it.ejercicio}</span>
+          ${it.video_url?`<span class="pe-vid" onclick="presPlayVideoEd()" title="Ver vídeo">&#9654;</span>`:''}
+          <span class="picker-x" onclick="closeFields()">&#10005;</span>
         </div>
-        <div class="pb-loadrow">
-          ${['%','RIR','RPE'].map(t=>`<span class="lc${lt===t?' on':''}" onclick="setField('tipo_carga','${t}')">${t}</span>`).join('')}
+
+        <div class="pe-toprow">
+          <label class="pe-mini">Tempo<input value="${it.tempo||''}" oninput="setField('tempo',this.value)" placeholder="3-1-1"></label>
+          <div class="pe-modo">
+            <span class="pe-modo-lbl">Intensidad</span>
+            <div class="pb-loadrow">
+              ${['%','RIR','RPE'].map(t=>`<span class="lc${lt===t?' on':''}" onclick="presSetTipo('${t}')">${t}</span>`).join('')}
+            </div>
+          </div>
         </div>
+
+        <div class="pe-serie-hdr">
+          <span>Por serie</span>
+          <label class="pe-rango-tog">
+            <input type="checkbox" ${ed.usaRango?'checked':''} onchange="presToggleRango(this.checked)">
+            rango de reps
+          </label>
+        </div>
+        ${rangoBox}
+        <div class="pe-series">${seriesHTML}</div>
+        <div class="pe-serie-actions">
+          <button class="pe-add" onclick="presAddSerie()">&#43; serie</button>
+          <button class="pe-eq" onclick="presIgualar()">igualar a la 1ª</button>
+        </div>
+
         <div id="cmp-box" class="pb-cmp"></div>
         <button class="pe-save" onclick="closeFields()" style="margin-top:12px">Hecho</button>
       </div>
     </div>`;
   modal.style.display='block';
   updateLoadCompare();
+}
+
+function presSetSerie(i,campo,val){
+  _presEd.series[i][campo]=val;
+  // autocompletado: si edito la S1, propago a las que sean iguales/vacías
+  if(i===0){
+    for(let k=1;k<_presEd.series.length;k++){
+      // solo propagar si esa serie no fue modificada individualmente (heurística: estaba vacía o igual al valor viejo)
+      if(!_presEd.series[k][campo] || _presEd.series[k]._auto){
+        _presEd.series[k][campo]=val; _presEd.series[k]._auto=true;
+      }
+    }
+  } else {
+    _presEd.series[i]._auto=false; // esta serie ya es manual
+  }
+  _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
+  clearTimeout(_cmpTO); _cmpTO=setTimeout(updateLoadCompare,350);
+  renderFieldsModal();
+}
+function presSetRango(campo,val){
+  _presEd[campo]=val;
+  _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
+  clearTimeout(_cmpTO); _cmpTO=setTimeout(updateLoadCompare,350);
+}
+function presToggleRango(on){
+  _presEd.usaRango=on;
+  if(on && !_presEd.repMin){ _presEd.repMin=_presEd.series[0].rep||''; }
+  _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
+  renderFieldsModal();
+}
+function presAddSerie(){
+  const last=_presEd.series[_presEd.series.length-1]||{intens:'',rep:''};
+  _presEd.series.push({intens:last.intens,rep:last.rep,_auto:true});
+  _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
+  renderFieldsModal();
+}
+function presDelSerie(i){
+  if(_presEd.series.length<=1) return;
+  _presEd.series.splice(i,1);
+  _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
+  renderFieldsModal();
+}
+function presIgualar(){
+  const s0=_presEd.series[0];
+  _presEd.series.forEach((s,i)=>{ if(i>0){ s.intens=s0.intens; s.rep=s0.rep; s._auto=true; } });
+  _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
+  renderFieldsModal();
+}
+function presSetTipo(t){
+  const it=_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei];
+  it.tipo_carga=t;
+  _syncSeries(it,_presEd);
+  renderFieldsModal();
+}
+function presPlayVideoEd(){
+  const it=_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei];
+  presPlayVideo(it.video_url||'');
+}
+function presPlayVideo(url){
+  if(!url) return;
+  const m=document.getElementById('picker-modal');
+  const overlay=document.createElement('div');
+  overlay.className='pe-vid-overlay';
+  overlay.onclick=function(e){ if(e.target===overlay) overlay.remove(); };
+  overlay.innerHTML=`<div class="pe-vid-box">
+    <div class="pe-vid-close" onclick="this.closest('.pe-vid-overlay').remove()">&#10005;</div>
+    <video src="${url}" controls autoplay playsinline style="width:100%;border-radius:8px;background:#000"></video>
+  </div>`;
+  document.body.appendChild(overlay);
 }
 function setField(f,v){
   const {dayIdx,blockIdx,ei}=_plan.fieldEdit;
@@ -8028,6 +8249,7 @@ function closeFields(e){
   const modal=document.getElementById('picker-modal');
   modal.style.display='none'; modal.innerHTML='';
   _plan.fieldEdit=null;
+  _presEd=null;
   renderWeekEditor();
 }
 function tempoTUT(t){ if(!t) return null; const d=String(t).replace(/[^0-9]/g,'').split('').map(Number); return d.length?d.reduce((s,v)=>s+v,0):null; }
