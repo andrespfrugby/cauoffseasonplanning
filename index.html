@@ -2447,7 +2447,7 @@ function buildReadinessChart(wellData, W=260, H=52) {
     const rng = (maxS-minS)||1;
     const tx = i => (i/(data.length-1))*W;
     const ty = v => H-((v-minS)/rng)*(H-12)-6;
-    const pts = data.map((h,i)=>`${tx(i).toFixed(1)},${ty(parseFloat(h.readiness_score)).toFixed(1)}`).join(' ');
+    const pts = data.map((h,i)=>`${tx(i).toFixed(1)},${ty(scores[i]).toFixed(1)}`).join(' ');
     const areaPoints = `${tx(0).toFixed(1)},${H} ` + pts + ` ${tx(data.length-1).toFixed(1)},${H}`;
     svgContent = `
       <defs><linearGradient id="rg${_uaGradId}" x1="0" y1="0" x2="0" y2="1">
@@ -2457,8 +2457,8 @@ function buildReadinessChart(wellData, W=260, H=52) {
       <polyline points="${pts}" fill="none" stroke="${lastCol}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
     _uaGradId++;
     dots = data.map((h,i)=>{
-      const x=tx(i), y=ty(parseFloat(h.readiness_score));
-      const sc=parseFloat(h.readiness_score);
+      const x=tx(i), y=ty(scores[i]);
+      const sc=scores[i];
       return `<div class="evo-dot" style="left:${(x/W*100).toFixed(2)}%;top:${(y/H*100).toFixed(2)}%;--dc:${_scoreColor(sc)}" data-tip='${fmtTip(h)}' onmouseenter="evoDotShow(this)" onmouseleave="evoDotHide(this)" ontouchstart="evoDotShow(this)"></div>`;
     }).join('');
   }
@@ -7261,6 +7261,20 @@ async function openWellnessPlayerModal(usuario, nombre) {
   const weightChart = buildWeightChart((wellRes.ok&&wellRes.wellness ? wellRes.wellness.filter(h=>h.peso_corporal&&parseFloat(h.peso_corporal)>0) : []), 240, 52);
   const readinessChart = buildReadinessChart((wellRes.ok&&wellRes.wellness ? wellRes.wellness : []), 240, 52);
 
+  // RPE promedio 7 días (gym + campo + partido)
+  const _hoy7 = new Date(); _hoy7.setDate(_hoy7.getDate()-7);
+  const rpe7arr = (histRes.ok && histRes.historial ? histRes.historial : [])
+    .filter(h=>{ const r=parseFloat(h.rpe); if(isNaN(r)||r<=0) return false; const f=h.fecha?new Date(h.fecha):null; return f && !isNaN(f) && f>=_hoy7; })
+    .map(h=>parseFloat(h.rpe));
+  const rpe7 = rpe7arr.length ? Math.round((rpe7arr.reduce((s,v)=>s+v,0)/rpe7arr.length)*10)/10 : null;
+  const rpe7Col = rpe7==null?'var(--muted)':rpe7>=8?'#ff5050':rpe7>=5?'#ffc04d':'#00e5a0';
+  const rpe7Chip = rpe7!=null
+    ? `<div style="background:${rpe7Col}1e;border:0.5px solid ${rpe7Col}55;border-radius:8px;padding:7px 12px;display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:16px;font-weight:700;color:${rpe7Col}">${rpe7}</span>
+        <span style="font-size:11px;color:var(--muted)">RPE promedio · últimos 7 días (${rpe7arr.length} sesiones)</span>
+      </div>`
+    : '';
+
   const readinessTab = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
       <div style="width:54px;height:54px;flex-shrink:0">
@@ -7275,6 +7289,7 @@ async function openWellnessPlayerModal(usuario, nombre) {
       </div>
       <div style="flex:1;display:flex;gap:5px;flex-wrap:wrap">${chips7||'<span style="font-size:12px;color:var(--muted)">Sin datos hoy</span>'}</div>
     </div>
+    ${rpe7Chip}
     ${weightChart}
     ${readinessChart}`;
 
