@@ -1652,35 +1652,44 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .pb-fields input{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;font-weight:600;outline:none;font-family:var(--font-body)}
 .pb-loadrow{display:flex;gap:5px;margin-top:8px}
 /* ── Editor de prescripción élite ── */
-.pe-toprow{display:flex;gap:12px;align-items:flex-end;margin-bottom:12px}
-.pe-mini{display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;flex:0 0 90px}
-.pe-mini input{background:var(--surface1);border:1px solid var(--border2);border-radius:7px;padding:7px 9px;font-size:14px;color:var(--text);font-family:inherit;width:100%;box-sizing:border-box}
+.fields-box-xl{max-width:480px!important;padding:22px!important}
+.fields-box-xl .fields-hd{margin-bottom:16px;gap:10px}
+.pe-toprow{display:flex;gap:14px;align-items:flex-end;margin-bottom:16px}
+.pe-mini{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;flex:0 0 110px}
+.pe-mini input{background:var(--surface1);border:1px solid var(--border2);border-radius:8px;padding:9px 11px;font-size:16px;color:var(--text);font-family:inherit;width:100%;box-sizing:border-box}
 .pe-modo{flex:1}
-.pe-modo-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:3px}
-.pe-serie-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.pe-rango-tog{display:flex;align-items:center;gap:5px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px}
-.pe-rango-tog input{accent-color:var(--accent)}
-.pe-rango-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.pe-rango-row input{width:56px;background:var(--surface1);border:1px solid var(--border2);border-radius:7px;padding:6px 9px;font-size:14px;color:var(--text);text-align:center;font-family:inherit}
-.pe-series{display:flex;flex-direction:column;gap:6px}
-.pe-serie{display:flex;align-items:center;gap:7px}
-.pe-sn{font-size:11px;color:var(--muted);width:22px;flex-shrink:0}
-.pe-serie-hl .pe-sn{color:var(--accent);font-weight:600}
-.pe-inp{flex:1;display:flex;align-items:center;gap:3px;background:var(--surface1);border:1px solid var(--border2);border-radius:7px;padding:6px 9px}
-.pe-serie-hl .pe-inp{border-color:rgba(232,20,42,.4);background:rgba(232,20,42,.08)}
-.pe-inp input{width:100%;border:none;background:transparent;font-size:14px;color:var(--text);text-align:center;font-family:inherit;outline:none;min-width:0}
+.pe-modo-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:4px}
+.pe-modo .pb-loadrow{margin-top:0}
+.pe-modo .lc{flex:1;text-align:center;padding:9px 0;font-size:14px;border-radius:8px;border:1px solid var(--border2);cursor:pointer;color:var(--muted)}
+.pe-modo .lc.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.pe-serie-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pe-rango-tog{display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:12px}
+.pe-rango-tog input{accent-color:var(--accent);width:16px;height:16px}
+.pe-rango-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.pe-rango-row input{width:64px;background:var(--surface1);border:1px solid var(--border2);border-radius:8px;padding:8px 11px;font-size:16px;color:var(--text);text-align:center;font-family:inherit}
+.pe-series{display:flex;flex-direction:column;gap:9px}
+.pe-serie{display:flex;align-items:center;gap:9px}
+.pe-sn{font-size:13px;color:var(--muted);width:26px;flex-shrink:0;font-weight:600}
+.pe-serie-hl .pe-sn{color:var(--accent)}
+.pe-inp{flex:1;display:flex;align-items:center;gap:4px;background:var(--surface1);border:1px solid var(--border2);border-radius:8px;padding:9px 11px}
+.pe-serie-hl .pe-inp{border-color:rgba(232,20,42,.45);background:rgba(232,20,42,.08)}
+.pe-inp input{width:100%;border:none;background:transparent;font-size:17px;color:var(--text);text-align:center;font-family:inherit;outline:none;min-width:0;-moz-appearance:textfield}
+.pe-inp input::-webkit-outer-spin-button,.pe-inp input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .pe-serie-hl .pe-inp input{color:var(--accent);font-weight:600}
-.pe-u{font-size:11px;color:var(--muted);flex-shrink:0}
-.pe-x{font-size:12px;color:var(--muted);flex-shrink:0}
-.pe-rng-global{justify-content:center;color:var(--muted);font-size:13px}
-.pe-del{font-size:11px;color:var(--muted);cursor:pointer;flex-shrink:0;width:16px;text-align:center}
+.pe-u{font-size:12px;color:var(--muted);flex-shrink:0}
+.pe-x{font-size:14px;color:var(--muted);flex-shrink:0}
+.pe-rng-global{justify-content:center;color:var(--muted);font-size:15px}
+.pe-del{font-size:13px;color:var(--muted);cursor:pointer;flex-shrink:0;width:18px;text-align:center}
 .pe-del:hover{color:var(--accent)}
-.pe-serie-actions{display:flex;gap:6px;margin-top:8px}
-.pe-add,.pe-eq{font-size:11px;padding:5px 11px;border-radius:6px;cursor:pointer;font-family:inherit;background:transparent}
+.pe-serie-actions{display:flex;gap:8px;margin-top:12px}
+.pe-add,.pe-eq{font-size:12px;padding:7px 14px;border-radius:7px;cursor:pointer;font-family:inherit;background:transparent}
 .pe-add{color:var(--muted);border:1px dashed var(--border2)}
 .pe-eq{color:var(--muted);border:1px solid var(--border2)}
 .pe-add:hover,.pe-eq:hover{color:var(--text);border-color:var(--border-strong)}
-.pe-vid{cursor:pointer;color:var(--accent);font-size:13px;margin-right:6px}
+.pe-nota-lbl{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:16px 0 6px}
+.pe-nota{width:100%;box-sizing:border-box;background:var(--surface1);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;resize:vertical;min-height:52px;outline:none}
+.pe-nota:focus{border-color:var(--accent2)}
+.pe-vid{cursor:pointer;color:var(--accent);font-size:13px;margin-right:6px;white-space:nowrap}
 .pe-vid-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
 .pe-vid-box{position:relative;max-width:480px;width:100%}
 .pe-vid-close{position:absolute;top:-30px;right:0;color:#fff;font-size:20px;cursor:pointer}
@@ -2390,7 +2399,7 @@ function buildReadinessChart(wellData, W=260, H=52) {
   // usar readiness_score; filtrar los que lo tengan
   const data = wellData.filter(h => h.readiness_score!=null && h.readiness_score!=='' && !isNaN(parseFloat(h.readiness_score)));
   if (!data.length) return '';
-  const scores = data.map(h=>parseFloat(h.readiness_score));
+  const scores = data.map(h=>{ const v=parseFloat(h.readiness_score); return v>20 ? Math.round(v/5) : v; });
   const lastS = scores[scores.length-1];
   const lastCol = _scoreColor(lastS);
 
@@ -2400,7 +2409,7 @@ function buildReadinessChart(wellData, W=260, H=52) {
     if(h.dolor!=null&&h.dolor!=='') partes.push(`Dolor ${h.dolor}`);
     if(h.fatiga!=null&&h.fatiga!=='') partes.push(`Fatiga ${h.fatiga}`);
     if(h.calidad_sueno!=null&&h.calidad_sueno!=='') partes.push(`Sueño ${h.calidad_sueno}`);
-    const sc = Math.round(parseFloat(h.readiness_score));
+    const sc = (function(){ const v=Math.round(parseFloat(h.readiness_score)); return v>20?Math.round(v/5):v; })();
     return `<b style="color:${_scoreColor(sc)}">${sc}</b> score<br><span>${h.fecha?h.fecha.slice(5):''}</span>` +
            (partes.length?`<div class="evo-tip-sub">${partes.join(' · ')}</div>`:'');
   };
@@ -2441,7 +2450,7 @@ function buildReadinessChart(wellData, W=260, H=52) {
       <div style="font-size:13px;font-weight:700;color:${lastCol}">${Math.round(lastS)}</div>
     </div>
     <div class="evo-chart-area" style="position:relative">
-      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;display:block">${svgContent}</svg>
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:${H}px;display:block">${svgContent}</svg>
       ${dots}
     </div>
     ${dateRow}
@@ -2523,7 +2532,7 @@ function buildWeightChart(pesoData, W=260, H=52) {
       ${header}
     </div>
     <div class="evo-chart-area" style="position:relative">
-      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;display:block">${svgContent}</svg>
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:${H}px;display:block">${svgContent}</svg>
       ${wDots}
     </div>
     ${dateRow}
@@ -7025,7 +7034,20 @@ async function renderReadinessDashboard() {
   let equipo = res.equipo || [];
   if (sqFilter) equipo = equipo.filter(j => j.squad && j.squad.toLowerCase() === sqFilter.toLowerCase());
 
-  const media      = res.mediaScore;
+  // ── Compatibilidad de escalas: registros viejos usaban 1-10 (score 0-100).
+  // Los normalizamos a la escala nueva 1-5 (score 0-20) para que se vean bien mezclados.
+  const _n5 = v => (v!=null && v!=='' && !isNaN(parseFloat(v)) && parseFloat(v)>5) ? Math.round(parseFloat(v)/2) : v;
+  equipo.forEach(j=>{
+    if (j.score!=null && !isNaN(parseFloat(j.score)) && parseFloat(j.score)>20) j.score = Math.round(parseFloat(j.score)/5);
+    if (Array.isArray(j.trend)) j.trend = j.trend.map(v => (v!=null && !isNaN(parseFloat(v)) && parseFloat(v)>20) ? Math.round(parseFloat(v)/5) : v);
+    if (j.today){
+      ['ganas_entrenar','dolor','fatiga','calidad_sueno'].forEach(k=>{ if(j.today[k]!=null) j.today[k]=_n5(j.today[k]); });
+    }
+  });
+
+  // media recalculada desde los scores ya normalizados (no la del backend, que puede venir en escala vieja)
+  const _scoresValidos = equipo.map(j=>j.score).filter(s=>s!=null && !isNaN(parseFloat(s)));
+  const media      = _scoresValidos.length ? Math.round(_scoresValidos.reduce((a,b)=>a+parseFloat(b),0)/_scoresValidos.length) : null;
   const alertas    = equipo.filter(j=>j.score!==null&&j.score<10).length;
   const sinResp    = equipo.filter(j=>j.score===null).length;
   const respondidos= equipo.filter(j=>j.score!==null).length;
@@ -7078,10 +7100,12 @@ async function renderReadinessDashboard() {
     const today = j.today || {};
     const initials = j.nombre.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
     // Mini trend bars from 7-day history
-    const trendBarsHtml = (j.trend||[]).map(v => {
-      if (v===null) return `<div style="width:3px;height:4px;border-radius:1px;background:var(--border2);align-self:flex-end"></div>`;
+    const trendBarsHtml = (j.trend||[]).map(vRaw => {
+      if (vRaw===null) return `<div style="width:3px;height:4px;border-radius:1px;background:var(--border2);align-self:flex-end"></div>`;
+      // Compatibilidad: datos viejos venían en escala 0-100; los nuevos en 0-20. Normalizar a /20.
+      const v = vRaw > 20 ? vRaw/5 : vRaw;
       const bc = v>=14?'#00e5a0':v>=10?'#ffc04d':'#ff7070';
-      const bh = Math.max(3,Math.round((v/20)*14));
+      const bh = Math.max(3, Math.min(14, Math.round((v/20)*14)));
       return `<div style="width:3px;height:${bh}px;border-radius:1px;background:${bc};align-self:flex-end"></div>`;
     }).join('');
     return `<tr style="cursor:pointer" onclick="openWellnessPlayerModal('${j.usuario}','${j.nombre.replace(/'/g,"\\'")}')">
@@ -7191,14 +7215,18 @@ async function openWellnessPlayerModal(usuario, nombre) {
 
   const hist7    = (wellRes.ok && wellRes.wellness) ? wellRes.wellness.slice(-14) : [];
   const lastW    = hist7[hist7.length-1];
-  const scoreHoy = lastW ? parseFloat(lastW.readiness_score||0) : null;
-  const scoreCol = scoreHoy===null?'var(--muted)':scoreHoy>=70?'#00e5a0':scoreHoy>=50?'#ffc04d':'#ff7070';
-  const W_COLS   = ['','#ff7070','#ff7070','#ff7070','#ffc04d','#ffc04d','#ffc04d','#00e5a0','#00e5a0','#00e5a0','#00e5a0'];
+  // Compatibilidad de escalas: datos viejos (1-10, score 0-100) → nueva (1-5, score 0-20)
+  const _n5v = v => (v!=null && v!=='' && !isNaN(parseFloat(v)) && parseFloat(v)>5) ? parseFloat(v)/2 : parseFloat(v);
+  let scoreHoy = lastW ? parseFloat(lastW.readiness_score||0) : null;
+  if (scoreHoy!==null && scoreHoy>20) scoreHoy = Math.round(scoreHoy/5);
+  const scoreCol = scoreHoy===null?'var(--muted)':scoreHoy>=14?'#00e5a0':scoreHoy>=10?'#ffc04d':'#ff7070';
+  const W_COLS   = ['','#ff5050','#ff9d3f','#ffd23f','#7ed957','#00e5a0'];
 
   // ── Readiness tab content ──
   const chips7 = lastW ? ['ganas_entrenar','dolor','fatiga','calidad_sueno','horas_sueno'].map(k=>{
-    const v=parseFloat(lastW[k]); if(isNaN(v)) return '';
+    let v=parseFloat(lastW[k]); if(isNaN(v)) return '';
     const isH=k==='horas_sueno';
+    if(!isH) v=_n5v(v); // normalizar métricas 1-10 → 1-5
     const c=isH?(v>=7&&v<=9?'#00e5a0':v<6?'#ff7070':'#ffc04d'):(W_COLS[Math.round(v)]||'#ffc04d');
     const lbl={'ganas_entrenar':'Ganas','dolor':'Dolor','fatiga':'Fatiga','calidad_sueno':'Sueño','horas_sueno':'Horas'}[k];
     return `<div style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:7px;padding:5px 8px;text-align:center">
@@ -8102,11 +8130,10 @@ function renderFieldsModal(){
   const ed = _presEd;
   const unidad = lt==='%'?'%':lt;
   const modal=document.getElementById('picker-modal');
+  const vid = it.video || it.video_url || '';
 
   const seriesHTML = ed.series.map((s,i)=>{
-    const esUlt = i===ed.series.length-1;
-    const hl = (i>0 && (s.intens!==ed.series[0].intens || s.rep!==ed.series[0].rep)); // difiere de la 1ª
-    return `<div class="pe-serie${hl?' pe-serie-hl':''}">
+    return `<div class="pe-serie" id="pe-serie-${i}">
       <span class="pe-sn">S${i+1}</span>
       <div class="pe-inp">
         <input value="${s.intens||''}" placeholder="${lt==='%'?'75':lt==='RIR'?'2':'8'}" inputmode="decimal"
@@ -8125,16 +8152,16 @@ function renderFieldsModal(){
       <input value="${ed.repMin||''}" placeholder="min" inputmode="numeric" oninput="presSetRango('repMin',this.value)">
       <span>–</span>
       <input value="${ed.repMax||''}" placeholder="max" inputmode="numeric" oninput="presSetRango('repMax',this.value)">
-      <span style="font-size:11px;color:var(--muted)">reps (todas las series)</span>
+      <span style="font-size:12px;color:var(--muted)">reps (todas las series)</span>
     </div>` : '';
 
   modal.innerHTML=`
     <div class="picker-backdrop" onclick="closeFields(event)">
-      <div class="fields-box" onclick="event.stopPropagation()">
+      <div class="fields-box fields-box-xl" onclick="event.stopPropagation()">
         <div class="fields-hd">
           <span class="bl">${it.orden||''}</span>
-          <span style="font-size:14px;font-weight:600;flex:1">${it.ejercicio}</span>
-          ${it.video_url?`<span class="pe-vid" onclick="presPlayVideoEd()" title="Ver vídeo">&#9654;</span>`:''}
+          <span style="font-size:17px;font-weight:600;flex:1">${it.ejercicio}</span>
+          ${vid?`<span class="pe-vid" onclick="presPlayVideoEd()" title="Ver vídeo">&#9654; vídeo</span>`:''}
           <span class="picker-x" onclick="closeFields()">&#10005;</span>
         </div>
 
@@ -8162,35 +8189,55 @@ function renderFieldsModal(){
           <button class="pe-eq" onclick="presIgualar()">igualar a la 1ª</button>
         </div>
 
+        <label class="pe-nota-lbl">Nota / cue técnico</label>
+        <textarea class="pe-nota" placeholder="Ej: pie elevado sobre step, rango completo, control excéntrico..." oninput="setField('nota',this.value)">${it.nota||''}</textarea>
+
         <div id="cmp-box" class="pb-cmp"></div>
-        <button class="pe-save" onclick="closeFields()" style="margin-top:12px">Hecho</button>
+        <button class="pe-save" onclick="closeFields()" style="margin-top:14px">Hecho</button>
       </div>
     </div>`;
   modal.style.display='block';
   updateLoadCompare();
 }
 
+// Actualiza el resaltado de series (difieren de la 1ª) SIN re-renderizar
+function _presRefreshHL(){
+  const ed=_presEd; if(!ed) return;
+  ed.series.forEach((s,i)=>{
+    const el=document.getElementById('pe-serie-'+i);
+    if(!el) return;
+    const hl = (i>0 && s.intens && (s.intens!==ed.series[0].intens || s.rep!==ed.series[0].rep));
+    el.classList.toggle('pe-serie-hl', !!hl);
+  });
+}
+
 function presSetSerie(i,campo,val){
   _presEd.series[i][campo]=val;
-  // autocompletado: si edito la S1, propago a las que sean iguales/vacías
+  // autocompletado: si edito la S1, propago a las que no fueron tocadas
   if(i===0){
     for(let k=1;k<_presEd.series.length;k++){
-      // solo propagar si esa serie no fue modificada individualmente (heurística: estaba vacía o igual al valor viejo)
       if(!_presEd.series[k][campo] || _presEd.series[k]._auto){
         _presEd.series[k][campo]=val; _presEd.series[k]._auto=true;
+        // actualizar el input de esa serie en vivo (sin re-render global)
+        const row=document.getElementById('pe-serie-'+k);
+        if(row){ const inps=row.querySelectorAll('input'); const idx=campo==='intens'?0:1; if(inps[idx]) inps[idx].value=val; }
       }
     }
   } else {
-    _presEd.series[i]._auto=false; // esta serie ya es manual
+    _presEd.series[i]._auto=false;
   }
   _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
-  clearTimeout(_cmpTO); _cmpTO=setTimeout(updateLoadCompare,350);
-  renderFieldsModal();
+  _presRefreshHL();
+  clearTimeout(_cmpTO); _cmpTO=setTimeout(updateLoadCompare,400);
 }
 function presSetRango(campo,val){
   _presEd[campo]=val;
   _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
-  clearTimeout(_cmpTO); _cmpTO=setTimeout(updateLoadCompare,350);
+  // actualizar los textos "min–max" de cada serie sin re-render
+  document.querySelectorAll('.pe-rng-global').forEach(el=>{
+    el.childNodes[0].nodeValue = (_presEd.repMin||'—')+'–'+(_presEd.repMax||'—');
+  });
+  clearTimeout(_cmpTO); _cmpTO=setTimeout(updateLoadCompare,400);
 }
 function presToggleRango(on){
   _presEd.usaRango=on;
@@ -8224,19 +8271,8 @@ function presSetTipo(t){
 }
 function presPlayVideoEd(){
   const it=_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei];
-  presPlayVideo(it.video_url||'');
-}
-function presPlayVideo(url){
-  if(!url) return;
-  const m=document.getElementById('picker-modal');
-  const overlay=document.createElement('div');
-  overlay.className='pe-vid-overlay';
-  overlay.onclick=function(e){ if(e.target===overlay) overlay.remove(); };
-  overlay.innerHTML=`<div class="pe-vid-box">
-    <div class="pe-vid-close" onclick="this.closest('.pe-vid-overlay').remove()">&#10005;</div>
-    <video src="${url}" controls autoplay playsinline style="width:100%;border-radius:8px;background:#000"></video>
-  </div>`;
-  document.body.appendChild(overlay);
+  const url=it.video||it.video_url||'';
+  if(url) openVideoModal(it.ejercicio||'Vídeo', url);
 }
 function setField(f,v){
   const {dayIdx,blockIdx,ei}=_plan.fieldEdit;
