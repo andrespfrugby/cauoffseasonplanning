@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAU Offseason Planner</title>
+<title>CAU Preseason Planner</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/dist/tabler-icons.min.css">
 <style>
@@ -1701,7 +1701,22 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .lc{font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);color:var(--muted);cursor:pointer}
 .lc.on{background:rgba(0,229,160,.12);color:var(--accent2);border-color:rgba(0,229,160,.35)}
 .pb-cmp{margin-top:12px}
-.pb-cmp-ttl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:10px 0 7px}
+.rst-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#ff5050;color:#fff;font-size:10px;font-weight:700;margin-left:3px}
+.al-summary{display:flex;gap:8px;margin-bottom:16px}
+.al-sum-box{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px;text-align:center}
+.al-sum-alert{background:rgba(255,80,80,.1);border-color:rgba(255,80,80,.3)}
+.al-sum-n{font-size:22px;font-weight:700;color:#ff5050;line-height:1}
+.al-sum-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:3px}
+.al-list{display:flex;flex-direction:column;gap:9px}
+.al-card{background:var(--surface);border:1px solid rgba(255,80,80,.25);border-left:3px solid #ff5050;border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color .15s}
+.al-card:hover{border-color:rgba(255,80,80,.5)}
+.al-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.al-avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,80,80,.15);border:1.5px solid rgba(255,80,80,.4);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#ff5050;flex-shrink:0}
+.al-name{font-size:14px;font-weight:600;color:var(--text)}
+.al-pos{font-size:10px;color:var(--muted)}
+.al-chips{display:flex;gap:6px;flex-wrap:wrap}
+.al-chip{font-size:10px;padding:3px 8px;border-radius:5px;white-space:nowrap}
+.al-rojo{background:rgba(255,80,80,.12);color:#ff5050}
 .pb-cmp-load,.pb-cmp-empty{font-size:11px;color:var(--muted);font-style:italic}
 .pb-prev-box{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;margin-top:6px}
 .pb-prev-ttl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
@@ -1756,7 +1771,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   <div class="login-bg"></div>
   <div class="login-box">
         <img src="data:image/png;base64,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" alt="CAU Rugby Valencia" style="width:110px;height:110px;object-fit:contain;display:block;margin:0 auto 18px;filter:drop-shadow(0 0 16px rgba(232,20,42,0.3))">
-    <div class="login-logo"><span class="cau">CAU</span><span class="rest">OFFSEASON</span></div>
+    <div class="login-logo"><span class="cau">CAU</span><span class="rest">PRESEASON</span></div>
     <div class="login-sub">Club Planner · Summer 2026</div>
     <div class="field-group">
       <label>Usuario</label>
@@ -1774,7 +1789,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 <!-- APP -->
 <div id="screen-app">
   <div class="topbar">
-    <div class="topbar-logo"><span class="cau">CAU</span><span class="rest">OFFSEASON</span></div>
+    <div class="topbar-logo"><span class="cau">CAU</span><span class="rest">PRESEASON</span></div>
     <div class="topbar-right">
       <div class="player-badge">
         <div class="avatar" id="avatar-initials">?</div>
@@ -2007,9 +2022,11 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div class="load-subnav">
         <button class="load-subtab active" id="rst-wellness" onclick="readinessSub('wellness')">Wellness</button>
         <button class="load-subtab" id="rst-dolor" onclick="readinessSub('dolor')">Dolor muscular</button>
+        <button class="load-subtab" id="rst-alertas" onclick="readinessSub('alertas')">⚠ Alertas <span id="rst-alertas-badge" class="rst-badge" style="display:none"></span></button>
       </div>
       <div id="readiness-content"><div class="loader"><div class="spinner"></div></div></div>
       <div id="molestias-content" style="display:none"></div>
+      <div id="alertas-content" style="display:none"></div>
     </div>
 
     <!-- ══ JUGADOR: Mi semana ══ -->
@@ -7316,13 +7333,15 @@ function onReadinessDateChange() {
 var _readinessSub = 'wellness';
 function readinessSub(sub) {
   _readinessSub = sub;
-  ['wellness','dolor'].forEach(s=>{
+  ['wellness','dolor','alertas'].forEach(s=>{
     const btn=document.getElementById('rst-'+s);
     if(btn) btn.classList.toggle('active', s===sub);
   });
   document.getElementById('readiness-content').style.display  = sub==='wellness'?'':'none';
   document.getElementById('molestias-content').style.display = sub==='dolor'?'':'none';
+  document.getElementById('alertas-content').style.display = sub==='alertas'?'':'none';
   if (sub==='dolor') renderMolestias();
+  else if (sub==='alertas') renderAlertas();
 }
 
 // Silueta en pequeño coloreada (coach) — recibe lista de zonas marcadas
@@ -7339,6 +7358,159 @@ function _bodyMiniSVG(zonas) {
     ${_bodyBaseSVG()}
     ${zf.map(paint).join('')}${ze.map(paint).join('')}
   </svg>`;
+}
+
+async function renderAlertas() {
+  const c = document.getElementById('alertas-content');
+  if (!c) return;
+  const hoyStr = new Date().toISOString().slice(0,10);
+  const picker = document.getElementById('readiness-date-picker');
+  const fecha = (picker && picker.value) ? picker.value : hoyStr;
+  const squad = state.coachSquadFilter || '';
+  c.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  // Cargar readiness, molestias y control de cargas (ACWR) en paralelo
+  const _mesAlert = _ccMes || (new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'));
+  const [wRes, mRes, ccRes] = await Promise.all([
+    api({ action:'getWellnessEquipo', fecha }),
+    api({ action:'getMolestiasEquipo', fecha, squad }),
+    api({ action:'getControlCargas', squad, mes:_mesAlert, modo:'total' })
+  ]);
+
+  // Mapa ACWR por usuario
+  const acwrMap = {};
+  if (ccRes.ok && Array.isArray(ccRes.acwr)) ccRes.acwr.forEach(a=>{ acwrMap[a.usuario]={ratio:a.ratio,aguda:a.aguda,cronica:a.cronica}; });
+
+  // Molestias por usuario (solo intensidad alta cuenta como alerta)
+  const molMap = {};
+  if (mRes.ok && Array.isArray(mRes.jugadores)) mRes.jugadores.forEach(j=>{
+    const zonas = (j.zonas&&j.zonas.zonas) ? j.zonas.zonas : (Array.isArray(j.zonas)?j.zonas:[]);
+    const altas = zonas.filter(z=>z.intensidad==='alta');
+    if (altas.length) molMap[j.usuario]={ zonas:altas, nombre:j.nombre, squad:j.squad };
+  });
+
+  // Equipo readiness
+  let equipo = (wRes.ok && wRes.equipo) ? wRes.equipo : [];
+  if (squad) equipo = equipo.filter(j => j.squad && j.squad.toLowerCase() === squad.toLowerCase());
+
+  // Normalizar score viejo (0-100 → 0-20)
+  const _sc = v => (v!=null && !isNaN(parseFloat(v)) && parseFloat(v)>20) ? Math.round(parseFloat(v)/5) : v;
+
+  // Construir lista de alertas: readiness rojo (<10 /20) O dolor alto
+  const alertas = [];
+  const vistos = new Set();
+  equipo.forEach(j=>{
+    const score = j.score!=null ? _sc(j.score) : null;
+    const readinessRojo = (score!=null && score<10);
+    const dolor = molMap[j.usuario];
+    if (readinessRojo || dolor){
+      alertas.push({
+        usuario: j.usuario, nombre: j.nombre, squad: j.squad,
+        rugbyposition: j.rugbyposition||j.posicion||'',
+        score, readinessRojo, dolor: dolor?dolor.zonas:null,
+        acwr: acwrMap[j.usuario]?acwrMap[j.usuario].ratio:null,
+        rpe7: null
+      });
+      vistos.add(j.usuario);
+    }
+  });
+  // Jugadores con dolor alto pero que no aparecen en el equipo readiness (por si acaso)
+  Object.keys(molMap).forEach(u=>{
+    if (!vistos.has(u)){
+      const m=molMap[u];
+      if (squad && m.squad && m.squad.toLowerCase()!==squad.toLowerCase()) return;
+      alertas.push({ usuario:u, nombre:m.nombre, squad:m.squad, rugbyposition:'', score:null, readinessRojo:false, dolor:m.zonas, acwr:acwrMap[u]?acwrMap[u].ratio:null, rpe7:null });
+    }
+  });
+
+  // Badge en el botón
+  const badge = document.getElementById('rst-alertas-badge');
+  if (badge){ if(alertas.length){ badge.textContent=alertas.length; badge.style.display=''; } else badge.style.display='none'; }
+
+  // Precargar historiales de los alertados para calcular su RPE 7d (usa caché)
+  if (alertas.length){
+    await Promise.all(alertas.map(a=>_getHistCached(a.usuario)));
+    alertas.forEach(a=>{ a.rpe7 = _rpe7dPromedio({usuario:a.usuario}); });
+  }
+
+  const totalPlantilla = equipo.length;
+
+  if (!alertas.length){
+    c.innerHTML = `<div class="hist-empty" style="text-align:center;padding:34px 16px">
+      <div style="font-size:34px;margin-bottom:8px">✅</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:4px">Sin alertas ${fecha===hoyStr?'hoy':'ese día'}</div>
+      <div style="font-size:12px;color:var(--muted)">Ningún jugador con readiness bajo ni dolor muscular alto.</div>
+    </div>`;
+    return;
+  }
+
+  const cards = alertas.map(a=>{
+    const inicial = (a.nombre||'?').split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    const scoreCol = a.score==null?'#8a8a8e':a.score>=14?'#00e5a0':a.score>=10?'#ffc04d':'#ff5050';
+    const chips = [];
+    if (a.readinessRojo) chips.push(`<span class="al-chip al-rojo">● Readiness bajo</span>`);
+    if (a.dolor && a.dolor.length){
+      const zn = a.dolor.map(z=>z.label).slice(0,3).join(', ');
+      chips.push(`<span class="al-chip al-rojo">● Dolor alto: ${zn}</span>`);
+    }
+    // ACWR chip
+    if (a.acwr!=null){
+      const acCol=_ccZonaAcwr(a.acwr);
+      const acLbl=a.acwr<0.8?'subcarga':a.acwr<=1.3?'óptimo':a.acwr<=1.5?'elevado':'riesgo';
+      chips.push(`<span class="al-chip" style="background:${acCol}1e;color:${acCol}">ACWR ${a.acwr.toFixed(2)} · ${acLbl}</span>`);
+    }
+    // RPE 7d chip
+    if (a.rpe7!=null){
+      const rc=a.rpe7>=8?'#ff5050':a.rpe7>=5?'#ffc04d':'#00e5a0';
+      chips.push(`<span class="al-chip" style="background:${rc}1e;color:${rc}">RPE 7d ${a.rpe7.toFixed(1)}</span>`);
+    }
+    return `<div class="al-card" onclick="openWellnessPlayerModal('${a.usuario}','${(a.nombre||'').replace(/'/g,"\\'")}')">
+      <div class="al-top">
+        <div class="al-avatar">${inicial}</div>
+        <div style="flex:1;min-width:0">
+          <div class="al-name">${(a.nombre||'').split(',')[0]}</div>
+          <div class="al-pos">${[a.rugbyposition,a.squad].filter(Boolean).join(' · ')}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-weight:700;color:${scoreCol}">${a.score!=null?a.score:'—'}</div>
+          <div style="font-size:8px;color:var(--muted)">readiness /20</div>
+        </div>
+      </div>
+      <div class="al-chips">${chips.join('')}</div>
+    </div>`;
+  }).join('');
+
+  c.innerHTML = `
+    <div class="al-summary">
+      <div class="al-sum-box al-sum-alert">
+        <div class="al-sum-n">${alertas.length}</div>
+        <div class="al-sum-l">Requieren atención</div>
+      </div>
+      <div class="al-sum-box">
+        <div class="al-sum-n" style="color:var(--text)">${totalPlantilla}</div>
+        <div class="al-sum-l">Total plantilla</div>
+      </div>
+    </div>
+    <div class="al-list">${cards}</div>`;
+}
+
+// RPE promedio 7 días del jugador (desde la caché de historiales; gym+campo+partido)
+function _rpe7dPromedio(j){
+  const cache = _repHistCache[j.usuario];
+  if (!cache || !cache.ok || !Array.isArray(cache.historial)) return null;
+  const limite = new Date(); limite.setDate(limite.getDate()-7);
+  const rpes = [];
+  cache.historial.forEach(h=>{
+    // registros con RPE: RPE_GLOBAL (gym) o FIELD_* (campo/partido)
+    const rpe = parseFloat(h.rpe);
+    if (isNaN(rpe) || rpe<=0) return;
+    let f = h.fecha ? new Date(h.fecha) : null;
+    // FIELD guarda la fecha real en notas (col I) a veces; usar h.fecha si válida
+    if (!f || isNaN(f)) return;
+    if (f >= limite) rpes.push(rpe);
+  });
+  if (!rpes.length) return null;
+  return rpes.reduce((s,v)=>s+v,0)/rpes.length;
 }
 
 async function renderMolestias() {
