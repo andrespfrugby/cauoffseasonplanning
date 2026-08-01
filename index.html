@@ -1635,10 +1635,15 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .picker-body{display:flex;flex:1;overflow:hidden;min-height:200px}
 .picker-list{flex:1;overflow-y:auto;border-right:1px solid var(--border)}
 .picker-filters{width:150px;overflow-y:auto;background:var(--surface2)}
-.ex{display:flex;align-items:center;gap:9px;padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer}
-.eth{width:30px;height:22px;border-radius:4px;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;flex-shrink:0;overflow:hidden}
+.ex{display:flex;align-items:center;gap:9px;padding:8px 10px;border-bottom:1px solid var(--border)}
+.eth{width:44px;height:32px;border-radius:5px;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;flex-shrink:0;overflow:hidden;position:relative;cursor:pointer}
+.eth-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);color:#fff;font-size:11px;opacity:0;transition:opacity .15s}
+.eth:hover .eth-play{opacity:1}
+.ex-info{flex:1;cursor:pointer;min-width:0}
 .enm{font-size:13px;font-weight:500}
 .ety{font-size:10px;color:var(--muted)}
+.ex-add{flex-shrink:0;width:30px;height:30px;border-radius:7px;border:1px solid var(--border2);background:var(--surface);color:var(--accent2);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:var(--font-body)}
+.ex-add:hover{background:var(--accent2);color:#0d0f12;border-color:var(--accent2)}
 .fh{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 10px 4px;font-weight:700}
 .fo{display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:11px;cursor:pointer;color:var(--muted)}
 .fo.on{color:var(--accent);font-weight:600}
@@ -8001,9 +8006,15 @@ function pickerListHtml(){
     const th=ytThumb(e.video);
     const tags=exTagsArr(e).slice(0,3).map(t=>t.replace(/_/g,' ')).join(' · ');
     const nm=q?e.name.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<mark>$1</mark>'):e.name;
-    return `<div class="ex" onclick="pickExercise('${String(e.id)}')">
-      <span class="eth">${th?`<img src="${th}" style="width:100%;height:100%;object-fit:cover">`:'&#9654;'}</span>
-      <div><div class="enm">${nm}</div><div class="ety">${tags||'sin clasificar'}</div></div>
+    const nameEsc=e.name.replace(/'/g,"\\'");
+    const vidEsc=(e.video||'').replace(/'/g,"\\'");
+    const thumbInner = th
+      ? `<img src="${th}" style="width:100%;height:100%;object-fit:cover"><span class="eth-play">&#9654;</span>`
+      : '&#9654;';
+    return `<div class="ex">
+      <span class="eth"${e.video?` onclick="event.stopPropagation();openVideoModal('${nameEsc}','${vidEsc}')" title="Ver vídeo"`:''}>${thumbInner}</span>
+      <div class="ex-info" onclick="pickExercise('${String(e.id)}')"><div class="enm">${nm}</div><div class="ety">${tags||'sin clasificar'}</div></div>
+      <button class="ex-add" onclick="event.stopPropagation();pickExercise('${String(e.id)}')" title="Añadir">&#43;</button>
     </div>`;
   }).join('');
 }
