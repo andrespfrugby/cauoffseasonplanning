@@ -1701,20 +1701,21 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .lc{font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);color:var(--muted);cursor:pointer}
 .lc.on{background:rgba(0,229,160,.12);color:var(--accent2);border-color:rgba(0,229,160,.35)}
 .pb-cmp{margin-top:12px}
-.pb-cmp-ttl{font-size:10px;color:var(--muted);font-style:italic;margin-bottom:6px}
+.pb-cmp-ttl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:10px 0 7px}
 .pb-cmp-load,.pb-cmp-empty{font-size:11px;color:var(--muted);font-style:italic}
-.pb-cmprow{display:flex;align-items:center;gap:9px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:5px}
-.pb-cmpic{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.pb-prev-box{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;margin-top:6px}
+.pb-prev-ttl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.pb-prev-val{font-size:13px;color:var(--text);font-weight:500}
+.pb-cmprow{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;margin-bottom:5px}
+.pb-cmpic{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
 .pb-cmprow.up .pb-cmpic{background:rgba(0,229,160,.15);color:var(--accent2)}
-.pb-cmprow.down .pb-cmpic{background:rgba(123,184,255,.15);color:#7bb8ff}
+.pb-cmprow.down .pb-cmpic{background:rgba(255,80,80,.15);color:#ff5050}
 .pb-cmprow.flat .pb-cmpic{background:var(--surface);color:var(--muted)}
-.pb-cmptop{display:flex;justify-content:space-between;font-size:12px;font-weight:500}
-.pb-cmpsub{font-size:10px;color:var(--muted);margin-top:2px}
-.pb-cmpsub b{color:var(--text)}
-.pb-delta{font-size:11px;font-weight:700;padding:1px 7px;border-radius:12px}
-.pb-delta.up{background:rgba(0,229,160,.15);color:var(--accent2)}
-.pb-delta.down{background:rgba(123,184,255,.15);color:#7bb8ff}
-.pb-delta.flat{background:var(--surface);color:var(--muted)}
+.pb-cmplbl{font-size:13px;color:var(--text);flex:1;font-weight:500}
+.pb-cmpval{font-size:13px;font-weight:600}
+.pb-cmprow.up .pb-cmpval{color:var(--accent2)}
+.pb-cmprow.down .pb-cmpval{color:#ff5050}
+.pb-cmprow.flat .pb-cmpval{color:var(--muted)}
 .pb-warn{display:flex;gap:7px;background:rgba(255,192,77,.08);border:1px solid rgba(255,192,77,.2);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:11px;color:#e0a830;line-height:1.5}
 #tab-coach-planner mark{background:rgba(255,192,77,.3);color:#e0a830;border-radius:2px;padding:0 1px}
 
@@ -8307,29 +8308,105 @@ async function updateLoadCompare(){
   const {dayIdx,blockIdx,ei}=_plan.fieldEdit;
   const it=_plan.week.data.dias[dayIdx].bloques[blockIdx].ejercicios[ei];
   const box=document.getElementById('cmp-box'); if(!box) return;
-  box.innerHTML='<div class="pb-cmp-load">comparando...</div>';
+  box.innerHTML='<div class="pb-cmp-load">comparando…</div>';
   const res=await api({ action:'getPrevPrescription', squad:_plan.week.squad, fecha_inicio_actual:_plan.week.fecha_inicio, ejercicio:it.ejercicio, exclude_id:_plan.week.id||'' });
   const prev=res.ok?res.prev:null;
   if(!prev){ box.innerHTML='<div class="pb-cmp-empty">Sin datos de la semana anterior para este ejercicio</div>'; return; }
+
+  // Resumen legible de la semana anterior
+  const tipoPrev = prev.tipo_carga || '%';
+  const prevResumen = [
+    (parseInt(prev.sets)||_presCountSeries(prev.carga)||'?')+' series',
+    _intensResumen(prev.carga, tipoPrev),
+    _repsResumen(prev.reps)
+  ].filter(Boolean).join(' · ');
+
   const rows=[];
-  const vN=(parseInt(it.sets)||0)*(repsTotal(it.reps)||0), vP=(parseInt(prev.sets)||0)*(repsTotal(prev.reps)||0);
-  if(vN&&vP) rows.push(cmpRow('Volumen','sets x reps',vP+' reps',vN+' reps',vN,vP));
-  const iN=loadNum(it.carga), iP=loadNum(prev.carga);
-  if(iN!=null&&iP!=null) rows.push(cmpRow('Intensidad','carga',prev.carga,it.carga,iN,iP));
-  const tN=tempoTUT(it.tempo), tP=tempoTUT(prev.tempo);
-  if(tN!=null&&tP!=null) rows.push(cmpRow('Tiempo bajo tension','s/rep',tP+'s',tN+'s',tN,tP));
-  const sN=parseInt(it.sets)||0, sP=parseInt(prev.sets)||0;
-  if(sN&&sP) rows.push(cmpRow('Sets','',sP,sN,sN,sP));
+
+  // ── Intensidad (interpretar según tipo: verde = más exigente) ──
+  const tipoAhora = it.tipo_carga || '%';
+  const iN=_intensEsfuerzo(it.carga, tipoAhora), iP=_intensEsfuerzo(prev.carga, tipoPrev);
+  if(iN!=null&&iP!=null){
+    const nota = tipoAhora==='RIR' ? ' (menos RIR)' : '';
+    rows.push(cmpRow('Intensidad', _intensResumen(prev.carga,tipoPrev)+' → '+_intensResumen(it.carga,tipoAhora)+nota, iN, iP));
+  }
+
+  // ── Volumen (nº de series) ──
+  const sN=parseInt(it.sets)||_presCountSeries(it.carga)||0, sP=parseInt(prev.sets)||_presCountSeries(prev.carga)||0;
+  if(sN&&sP) rows.push(cmpRow('Volumen', sP+' → '+sN+' series', sN, sP));
+
+  // ── Repeticiones (media por serie) ──
+  const rN=_repsMedia(it.reps), rP=_repsMedia(prev.reps);
+  if(rN!=null&&rP!=null) rows.push(cmpRow('Repeticiones', _repsResumen(prev.reps)+' → '+_repsResumen(it.reps), rN, rP));
+
   let warn='';
-  if(vN>vP&&iN>iP) warn='<div class="pb-warn">&#9889; Subes volumen e intensidad a la vez. Semana de choque - vigila el ACWR.</div>';
-  box.innerHTML='<div class="pb-cmp-ttl">Progresion respecto a la semana anterior</div>'+rows.join('')+warn;
+  if(sN>sP && iN>iP) warn='<div class="pb-warn">&#9889; Subes volumen e intensidad a la vez. Semana de choque — vigila el ACWR.</div>';
+
+  box.innerHTML=`
+    <div class="pb-prev-box">
+      <div class="pb-prev-ttl">Semana anterior</div>
+      <div class="pb-prev-val">${prevResumen}</div>
+    </div>
+    <div class="pb-cmp-ttl">Progresión vs. semana anterior</div>
+    ${rows.join('')||'<div class="pb-cmp-empty">No hay datos suficientes para comparar</div>'}
+    ${warn}`;
 }
-function cmpRow(label,unit,prevTxt,nowTxt,now,prev){
-  let dir='flat',dt='=';
+
+// Nº de series a partir de la carga "75%80%85%" o "3/2/2"
+function _presCountSeries(carga){
+  if(!carga) return 0;
+  const m = String(carga).match(/\d+\.?\d*%/g) || String(carga).split('/').filter(Boolean);
+  return m ? m.length : 0;
+}
+// Resumen legible de intensidad
+function _intensResumen(carga, tipo){
+  if(!carga) return '';
+  if(tipo==='%'){
+    const m=String(carga).match(/\d+\.?\d*/g);
+    if(!m) return '';
+    const uniq=[...new Set(m)];
+    return uniq.length===1 ? uniq[0]+'%' : m[0]+'–'+m[m.length-1]+'%';
+  }
+  const m=String(carga).match(/\d+\.?\d*/g);
+  if(!m) return '';
+  const uniq=[...new Set(m)];
+  return (uniq.length===1?uniq[0]:m[0]+'–'+m[m.length-1])+' '+tipo;
+}
+// Valor de ESFUERZO (mayor = más exigente). RIR invertido.
+function _intensEsfuerzo(carga, tipo){
+  const m=String(carga||'').match(/\d+\.?\d*/g);
+  if(!m) return null;
+  const vals=m.map(parseFloat);
+  const media=vals.reduce((s,v)=>s+v,0)/vals.length;
+  if(tipo==='RIR') return -media; // menos RIR = más esfuerzo → invertimos
+  return media; // % y RPE: más = más esfuerzo
+}
+// Reps: resumen y media
+function _repsResumen(reps){
+  if(!reps) return '';
+  const s=String(reps).trim();
+  if(/^\d+\s*-\s*\d+$/.test(s)) return s.replace(/\s/g,'')+' reps'; // rango
+  const m=s.match(/\d+/g);
+  if(!m) return '';
+  const uniq=[...new Set(m)];
+  return (uniq.length===1?uniq[0]:m.join('/'))+' reps';
+}
+function _repsMedia(reps){
+  const m=String(reps||'').match(/\d+/g);
+  if(!m) return null;
+  const vals=m.map(Number);
+  return vals.reduce((s,v)=>s+v,0)/vals.length;
+}
+
+function cmpRow(label, detalle, now, prev){
+  let dir='flat';
   if(now>prev) dir='up'; else if(now<prev) dir='down';
-  if(prev!==0&&now!==prev){ const pct=Math.round(((now-prev)/prev)*100); dt=(pct>0?'+':'')+pct+'%'; }
-  const icon=dir==='up'?'&#8593;':dir==='down'?'&#8595;':'=';
-  return `<div class="pb-cmprow ${dir}"><span class="pb-cmpic">${icon}</span><div style="flex:1"><div class="pb-cmptop"><span>${label}</span><span class="pb-delta ${dir}">${dt}</span></div><div class="pb-cmpsub">${prevTxt} &#8594; <b>${nowTxt}</b>${unit?' · '+unit:''}</div></div></div>`;
+  const icon = dir==='up'?'&#8593;' : dir==='down'?'&#8595;' : '=';
+  return `<div class="pb-cmprow ${dir}">
+    <span class="pb-cmpic">${icon}</span>
+    <span class="pb-cmplbl">${label}</span>
+    <span class="pb-cmpval">${detalle}</span>
+  </div>`;
 }
 
 // ---- Guardar semana ----
