@@ -1706,6 +1706,11 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .pe-modo .lc{flex:1;text-align:center;padding:9px 0;font-size:14px;border-radius:8px;border:1px solid var(--border2);cursor:pointer;color:var(--muted)}
 .pe-modo .lc.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
 .pe-serie-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pe-repunit{display:flex;gap:3px}
+.pe-repunit .ru{font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border2);cursor:pointer;color:var(--muted);text-transform:none;letter-spacing:0}
+.pe-repunit .ru.on{background:var(--accent2);color:#0d0f12;border-color:var(--accent2);font-weight:600}
+.lc-bw{font-weight:700}
+.lc-bw.on{background:var(--accent2)!important;color:#0d0f12!important;border-color:var(--accent2)!important}
 .pe-rango-tog{display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:12px}
 .pe-rango-tog input{accent-color:var(--accent);width:16px;height:16px}
 .pe-rango-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
@@ -8481,7 +8486,10 @@ function _parseSeries(it){
   const nSets = parseInt(it.sets) || 0;
   // valores de intensidad por serie
   let intens = [];
-  if (tipo === '%') {
+  const esBW = /^BW$/i.test(cargaStr.trim());
+  if (esBW) {
+    intens = [];
+  } else if (tipo === '%') {
     const m = cargaStr.match(/\d+\.?\d*%/g);
     intens = m ? m.map(x=>x.replace('%','')) : (cargaStr? [cargaStr.replace(/[^0-9.]/g,'')] : []);
   } else {
@@ -8489,16 +8497,17 @@ function _parseSeries(it){
     const m = cargaStr.match(/\d+\.?\d*/g);
     intens = m || [];
   }
-  // reps por serie (soporta rango "8-10" global o por serie)
+  // reps por serie (soporta rango "8-10" global o por serie). Detecta tiempo (30'', 1'30'')
   const repsStr = it.reps || '';
-  const rango = isRepRange(repsStr);
+  const esTiempo = repsStr.includes("'");
+  const rango = isRepRange(repsStr) || isTimeRange(repsStr);
   let repsArr = [];
   if (rango) {
-    // un solo rango para todas
     repsArr = [];
   } else {
     const parts = String(repsStr).split(/[\/\s]+/).map(p=>p.trim()).filter(Boolean);
-    repsArr = parts;
+    // quitar los apóstrofes para editar solo el número
+    repsArr = parts.map(p=>p.replace(/'/g,''));
   }
   const n = Math.max(nSets, intens.length, repsArr.length, 1);
   const series = [];
@@ -8508,26 +8517,34 @@ function _parseSeries(it){
       rep:    repsArr[i] != null ? repsArr[i] : (repsArr[0]||'')
     });
   }
-  // rango global
+  // rango global (reps o tiempo)
   let repMin='', repMax='';
-  if (rango){ const mm = repsStr.match(/(\d+)\s*-\s*(\d+)/); if(mm){ repMin=mm[1]; repMax=mm[2]; } }
-  return { series, usaRango: rango, repMin, repMax };
+  if (rango){ const mm = repsStr.match(/(\d+)\s*[-]\s*(\d+)/); if(mm){ repMin=mm[1]; repMax=mm[2]; } }
+  // tipo de reps: reps | seg | rango
+  const tipoReps = rango ? 'rango' : (esTiempo ? 'seg' : 'reps');
+  return { series, usaRango: rango, repMin, repMax, tipoReps, esBW };
 }
 // Sincroniza el array de series de vuelta a los campos legacy (carga/reps/sets)
 function _syncSeries(it, ed){
   const tipo = it.tipo_carga || '%';
   it.sets = String(ed.series.length);
-  // carga: concatenar intensidades
-  if (tipo === '%'){
+  // carga: BW, o concatenar intensidades
+  if (ed.esBW){
+    it.carga = 'BW';
+  } else if (tipo === '%'){
     it.carga = ed.series.map(s=> s.intens? s.intens+'%':'').filter(Boolean).join('');
   } else {
     it.carga = ed.series.map(s=> s.intens||'').filter(Boolean).join('/');
   }
-  // reps: si usa rango global → "min-max"; si no, por serie separadas por espacio
+  // sufijo de tiempo si el modo es segundos/rango-de-tiempo
+  const esSeg = ed.tipoReps==='seg' || (ed.tipoReps==='rango' && ed._rangoSeg);
+  const suf = v => esSeg && v ? v+"''" : v;
+  // reps: rango global → "min-max"; si no, por serie
   if (ed.usaRango){
-    it.reps = (ed.repMin && ed.repMax) ? `${ed.repMin}-${ed.repMax}` : (ed.repMin||ed.repMax||'');
+    const mn=suf(ed.repMin), mx=suf(ed.repMax);
+    it.reps = (ed.repMin && ed.repMax) ? `${mn}-${mx}` : (mn||mx||'');
   } else {
-    it.reps = ed.series.map(s=> s.rep||'').filter(Boolean).join(' ');
+    it.reps = ed.series.map(s=> suf(s.rep)||'').filter(Boolean).join(' ');
   }
 }
 
@@ -8540,9 +8557,13 @@ function renderFieldsModal(){
   const lt=it.tipo_carga;
   if(!_presEd) _presEd = _parseSeries(it);
   const ed = _presEd;
+  if(!ed.tipoReps) ed.tipoReps='reps';
   const unidad = lt==='%'?'%':lt;
   const modal=document.getElementById('picker-modal');
   const vid = it.video || it.video_url || '';
+  const esSeg = ed.tipoReps==='seg';
+  const esRango = ed.tipoReps==='rango';
+  const repUnit = esSeg ? 'seg' : (esRango?'':'reps');
 
   const seriesHTML = ed.series.map((s,i)=>{
     return `<div class="pe-serie" id="pe-serie-${i}">
@@ -8552,19 +8573,21 @@ function renderFieldsModal(){
           oninput="presSetSerie(${i},'intens',this.value)"><span class="pe-u">${unidad}</span>
       </div>
       <span class="pe-x">×</span>
-      ${ed.usaRango
-        ? `<div class="pe-inp pe-rng-global">${ed.repMin||'—'}–${ed.repMax||'—'}<span class="pe-u">reps</span></div>`
-        : `<div class="pe-inp"><input value="${s.rep||''}" placeholder="8" inputmode="numeric" oninput="presSetSerie(${i},'rep',this.value)"><span class="pe-u">reps</span></div>`}
+      ${esRango
+        ? `<div class="pe-inp pe-rng-global">${ed.repMin||'—'}–${ed.repMax||'—'}<span class="pe-u">${ed._rangoSeg?'seg':'reps'}</span></div>`
+        : `<div class="pe-inp"><input value="${s.rep||''}" placeholder="${esSeg?'30':'8'}" inputmode="numeric" oninput="presSetSerie(${i},'rep',this.value)"><span class="pe-u">${repUnit}</span></div>`}
       ${ed.series.length>1?`<span class="pe-del" onclick="presDelSerie(${i})">&#10005;</span>`:'<span class="pe-del" style="visibility:hidden">&#10005;</span>'}
     </div>`;
   }).join('');
 
-  const rangoBox = ed.usaRango ? `
+  const rangoBox = esRango ? `
     <div class="pe-rango-row">
       <input value="${ed.repMin||''}" placeholder="min" inputmode="numeric" oninput="presSetRango('repMin',this.value)">
       <span>–</span>
       <input value="${ed.repMax||''}" placeholder="max" inputmode="numeric" oninput="presSetRango('repMax',this.value)">
-      <span style="font-size:12px;color:var(--muted)">reps (todas las series)</span>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" ${ed._rangoSeg?'checked':''} onchange="presRangoSeg(this.checked)" style="accent-color:var(--accent);width:15px;height:15px"> en segundos
+      </label>
     </div>` : '';
 
   modal.innerHTML=`
@@ -8583,16 +8606,16 @@ function renderFieldsModal(){
             <span class="pe-modo-lbl">Intensidad</span>
             <div class="pb-loadrow">
               ${['%','RIR','RPE'].map(t=>`<span class="lc${lt===t?' on':''}" onclick="presSetTipo('${t}')">${t}</span>`).join('')}
+              <span class="lc lc-bw${ed.esBW?' on':''}" onclick="presToggleBW()" title="Peso corporal">BW</span>
             </div>
           </div>
         </div>
 
         <div class="pe-serie-hdr">
           <span>Por serie</span>
-          <label class="pe-rango-tog">
-            <input type="checkbox" ${ed.usaRango?'checked':''} onchange="presToggleRango(this.checked)">
-            rango de reps
-          </label>
+          <div class="pe-repunit">
+            ${[['reps','reps'],['seg','seg'],['rango','rango']].map(([v,l])=>`<span class="ru${ed.tipoReps===v?' on':''}" onclick="presSetTipoReps('${v}')">${l}</span>`).join('')}
+          </div>
         </div>
         ${rangoBox}
         <div class="pe-series">${seriesHTML}</div>
@@ -8651,9 +8674,21 @@ function presSetRango(campo,val){
   });
   clearTimeout(_cmpTO); _cmpTO=setTimeout(updateLoadCompare,400);
 }
-function presToggleRango(on){
-  _presEd.usaRango=on;
-  if(on && !_presEd.repMin){ _presEd.repMin=_presEd.series[0].rep||''; }
+function presSetTipoReps(t){
+  _presEd.tipoReps=t;
+  _presEd.usaRango=(t==='rango');
+  if(t==='rango' && !_presEd.repMin){ _presEd.repMin=_presEd.series[0].rep||''; }
+  if(t==='seg') _presEd._rangoSeg=true; // por defecto seg si eliges seg
+  _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
+  renderFieldsModal();
+}
+function presRangoSeg(on){
+  _presEd._rangoSeg=on;
+  _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
+  renderFieldsModal();
+}
+function presToggleBW(){
+  _presEd.esBW=!_presEd.esBW;
   _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
   renderFieldsModal();
 }
