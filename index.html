@@ -518,6 +518,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .hist-pop-serie { font-size:10px; background:var(--surface2); border-radius:4px; padding:3px 7px; color:var(--text); white-space:nowrap; }
 .hist-pop-serie b { color:var(--muted); font-weight:600; margin-right:2px; }
 .hist-pop-nota { font-size:11px; color:var(--text); line-height:1.4; font-style:italic; border-top:1px solid var(--border2); padding-top:6px; }
+.hist-pop-series-list{display:flex;flex-direction:column;gap:5px;margin-bottom:7px}
+.hist-pop-serie-row{display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:6px;padding:5px 9px;gap:12px}
+.hist-pop-serie-n{font-size:10px;color:var(--muted);white-space:nowrap}
+.hist-pop-serie-v{font-size:12px;color:var(--text);font-weight:600;white-space:nowrap}
 .load-saved-lbl { font-size:12px; color:var(--accent2); font-weight:600; padding:4px 0; }
 
 /* ── HISTORIAL — OPCIÓN C (tarjetas scroll horizontal) ── */
@@ -2158,11 +2162,24 @@ function rpeClass(rpe) {
 // "80%"           → ["80%"]
 // "RPE 7"         → ["RPE 7"]
 // ""              → [""]
-function parseLoadTargets(loadObjetivo) {
-  if (!loadObjetivo) return [''];
-  const pctMatches = loadObjetivo.match(/\d+\.?\d*%/g);
-  if (pctMatches && pctMatches.length > 0) return pctMatches;
-  return [loadObjetivo.trim() || ''];
+function parseLoadTargets(loadObjetivo, nSets) {
+  let targets;
+  if (!loadObjetivo) targets = [''];
+  else {
+    const pctMatches = loadObjetivo.match(/\d+\.?\d*%/g);
+    if (pctMatches && pctMatches.length > 0) targets = pctMatches;
+    else targets = [loadObjetivo.trim() || ''];
+  }
+  // Si hay un número de series mayor que los targets, expandir repitiendo
+  // (así 3 sets al 70% → 3 boxes, y el jugador puede meter peso distinto en cada uno)
+  const n = parseInt(nSets);
+  if (!isNaN(n) && n > targets.length) {
+    const base = targets.length ? targets : [''];
+    const out = [];
+    for (let i = 0; i < n; i++) out.push(base[i] != null ? base[i] : base[base.length - 1]);
+    targets = out;
+  }
+  return targets;
 }
 
 // ── STATE ─────────────────────────────────────────────────────
@@ -2962,13 +2979,14 @@ function renderCard(e) {
   const loadObjEsc = (e.load_objetivo||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
 
   const repsEsc    = (e.reps||'').replace(/'/g,"\\'");
+  const setsEsc    = String(e.sets||'').replace(/'/g,"\\'");
 
   const actionsHtml = `
     <div class="ex-card-actions-wrap">
     <div style="display:flex;flex-direction:column;gap:4px;padding:0 13px 10px">
       <div style="display:flex;gap:4px">
         <button type="button" class="btn-action btn-action-hist" style="flex:1" title="Historial de carga"
-                onclick="toggleCardPanel('hist','${cardId}','${nombreEsc}','${loadObjEsc}','${repsEsc}')">
+                onclick="toggleCardPanel('hist','${cardId}','${nombreEsc}','${loadObjEsc}','${repsEsc}','${setsEsc}')">
           <span class="btn-action-icon">⟳</span><span>Historial</span>
         </button>
         <button type="button" class="btn-action btn-action-video ${hasVideo?'':'no-url'}" style="flex:1"
@@ -2979,7 +2997,7 @@ function renderCard(e) {
       </div>
       <div style="display:flex;gap:4px">
         ${hasLoadBtn ? `<button type="button" class="btn-action" style="flex:1;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.3);color:var(--accent2)" title="Registrar carga"
-                onclick="toggleCardPanel('load','${cardId}','${nombreEsc}','${loadObjEsc}','${repsEsc}')">
+                onclick="toggleCardPanel('load','${cardId}','${nombreEsc}','${loadObjEsc}','${repsEsc}','${setsEsc}')">
           <span class="btn-action-icon">＋</span><span>Carga</span>
         </button>` : ''}
         <button type="button" class="btn-action btn-action-hist" style="flex:1" title="Timer descanso"
@@ -4496,7 +4514,7 @@ function exportReportPDF() {
 }
 
 // ── CARD PANEL TOGGLE ─────────────────────────────────────────
-function toggleCardPanel(type, cardId, ejercicio, loadObj, reps) {
+function toggleCardPanel(type, cardId, ejercicio, loadObj, reps, sets) {
   const histEl = document.getElementById('panel-hist-'+cardId);
   const loadEl = document.getElementById('panel-load-'+cardId);
   const isOpen = type==='hist'
@@ -4508,6 +4526,7 @@ function toggleCardPanel(type, cardId, ejercicio, loadObj, reps) {
   state.cards[cardId].ejercicio = ejercicio;
   if (loadObj !== undefined) state.cards[cardId].loadObj = loadObj;
   if (reps   !== undefined) state.cards[cardId].reps    = reps;
+  if (sets   !== undefined) state.cards[cardId].sets    = sets;
   if (!isOpen) {
     if (type==='hist') { histEl.classList.remove('hidden'); renderHistPanel(cardId, ejercicio, histEl); }
     else               { loadEl.classList.remove('hidden'); renderLoadPanel(cardId, loadEl); }
@@ -4614,20 +4633,25 @@ async function renderHistPanel(cardId, ejercicio, el) {
     const isLatest  = i === 0;
     const dateLabel = dd_mm(h.fecha);
     const rawCarga  = sanitizeCarga(h.carga);
-    const setVals   = rawCarga.includes('/') ? rawCarga.split('/') : [rawCarga];
+    const setValsRaw = rawCarga.includes('/') ? rawCarga.split('/') : [rawCarga];
+    // Cada serie puede venir como "100" o "100x8" (kg x reps)
+    const series = setValsRaw.map(s=>{
+      const m = String(s).match(/^([\d.]+)\s*x\s*(\d+)$/i);
+      if (m) return { kg: parseFloat(m[1]), reps: parseInt(m[2]), raw:s };
+      const k = parseFloat(s);
+      return { kg: isNaN(k)?null:k, reps: null, raw:s };
+    });
+    const kgList = series.map(s=>s.kg).filter(v=>v!=null);
+    const maxKg = kgList.length ? Math.max(...kgList) : null;
+    const tieneSeries = series.length > 1;
 
+    // Box: peso máximo de ese día (número grande)
     let setsHtml;
-    if (setVals.length > 1) {
-      setsHtml = setVals.map((v, si) => {
-        const label = targets[si] ? targets[si] : `S${si+1}`;
-        return `<div class="hist-card-row">
-          <span class="hist-card-pct">${label}</span>
-          <span class="hist-card-kg">${v} kg</span>
-        </div>`;
-      }).join('');
+    if (maxKg!=null) {
+      setsHtml = `<div class="hist-card-single-kg">${maxKg % 1===0?maxKg:maxKg}</div>
+                  <div class="hist-card-kg-unit">kg${tieneSeries?' máx sesión':''}</div>`;
     } else {
-      setsHtml = `<div class="hist-card-single-kg">${rawCarga}</div>
-                  <div class="hist-card-kg-unit">kg</div>`;
+      setsHtml = `<div class="hist-card-single-kg">${rawCarga}</div><div class="hist-card-kg-unit">kg</div>`;
     }
 
     // 1RM con delta vs sesión anterior si existe
@@ -4635,7 +4659,6 @@ async function renderHistPanel(cardId, ejercicio, el) {
     const rm = rms[i];
     if (rm !== null) {
       let deltaHtml = '';
-      // buscar sesión anterior con 1rm
       for (let j = i + 1; j < rms.length; j++) {
         if (rms[j] !== null) {
           const diff = rm - rms[j];
@@ -4662,13 +4685,15 @@ async function renderHistPanel(cardId, ejercicio, el) {
     // Nota del ejercicio (si hay) + popover con series desglosadas
     const notaTxt = (h.notas!=null ? String(h.notas) : '').trim();
     const tieneNota = notaTxt.length > 0;
-    const tieneSeries = setVals.length > 1;
     const popId = `histpop-${cardId}-${i}`;
     let infoBtn = '', popover = '';
     if (tieneNota || tieneSeries) {
       infoBtn = `<span class="hist-info-btn" onclick="event.stopPropagation();histTogglePop('${popId}')">i</span>`;
-      const seriesPop = tieneSeries ? `<div class="hist-pop-series">${
-        setVals.map((v,si)=>{ const label = targets[si]?targets[si]:`S${si+1}`; return `<span class="hist-pop-serie"><b>${label}</b> ${v}</span>`; }).join('')
+      const seriesPop = tieneSeries ? `<div class="hist-pop-series-list">${
+        series.map((s,si)=>`<div class="hist-pop-serie-row">
+          <span class="hist-pop-serie-n">Serie ${si+1}</span>
+          <span class="hist-pop-serie-v">${s.kg!=null?s.kg+' kg':s.raw}${s.reps!=null?' × '+s.reps:''}</span>
+        </div>`).join('')
       }</div>` : '';
       const notaPop = tieneNota ? `<div class="hist-pop-nota">${notaTxt}</div>` : '';
       popover = `<div class="hist-pop" id="${popId}"><div class="hist-pop-date">${dateLabel}</div>${seriesPop}${notaPop}</div>`;
@@ -4793,7 +4818,7 @@ function renderLoadPanel(cardId, el) {
   }
 
   // ── Parsear targets y reps ──
-  const targets    = parseLoadTargets(cs.loadObj || '');
+  const targets    = parseLoadTargets(cs.loadObj || '', cs.sets);
   cs.targets       = targets;
   const repsStr    = cs.reps || '';
   const hasRange   = isRepRange(repsStr);
@@ -4823,15 +4848,15 @@ function renderLoadPanel(cardId, el) {
     const dots  = dotsN > 0 ? Array(dotsN).fill('<div class="load-rep-dot"></div>').join('') : '';
     const repLbl = reps ? `${reps} reps` : hasRange ? `${repsStr} reps` : '';
 
-    // Si es rango: mostrar input de reps bajo el kg
+    // Si es rango: mostrar input de reps bajo el kg (sin texto de objetivo, ya está en la prescripción)
     const repsInputHtml = hasRange ? `
       <div style="border-top:0.5px solid rgba(255,255,255,.1);margin-top:5px;padding-top:5px">
-        <div style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">${repsStr} reps</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:4px">
           <button onclick="event.stopPropagation();adjReps('${cardId}',${idx},-1)" style="width:18px;height:18px;border-radius:4px;border:0.5px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
           <span id="reps-val-${cardId}-${idx}" style="font-size:12px;font-weight:700;min-width:20px;text-align:center;color:${actualR?'var(--accent2)':'rgba(255,255,255,.2)'}">${actualR||'—'}</span>
           <button onclick="event.stopPropagation();adjReps('${cardId}',${idx},+1)" style="width:18px;height:18px;border-radius:4px;border:0.5px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
         </div>
+        <div style="font-size:7px;color:var(--muted);text-align:center;margin-top:2px">reps</div>
       </div>` : '';
 
     // Si es rango de tiempo: mostrar stepper de segundos
