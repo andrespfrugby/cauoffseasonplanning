@@ -1620,6 +1620,9 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .sslabel{font-size:8px;color:var(--accent2);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px}
 .ss-inner{display:flex;flex-direction:column;gap:5px;border-left:2px solid var(--accent2);padding-left:8px}
 .ss-add{margin-top:6px;width:100%;padding:6px;border-radius:6px;border:1px dashed rgba(0,229,160,.3);background:transparent;color:var(--accent2);font-size:10px;cursor:pointer;font-family:var(--font-body)}
+.blk-title-player{display:flex;align-items:center;gap:9px;margin:14px 0 8px;padding:0 2px}
+.blk-title-letra{width:22px;height:22px;border-radius:6px;background:rgba(232,20,42,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.blk-title-txt{font-size:13px;font-weight:600;color:var(--text);letter-spacing:.01em}
 .single-wrap{margin-bottom:6px}
 .brow{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;cursor:pointer;position:relative}
 .brow-handle{font-size:14px;color:var(--muted);flex-shrink:0;cursor:pointer;padding:0 2px;line-height:1;letter-spacing:-1px}
@@ -2877,7 +2880,9 @@ async function loadRutina() {
   // Try cache first (offline support)
   const cached = cacheGet(semana, state.dia, squad);
   if (cached) {
-    renderSession(cached.ejercicios, cached.nombreSemana, cached.sessionNotes||'', cached.dayTitle||'');
+    _aplicarNombresBloque(cached.ejercicios, semana, state.dia, squad, cached.nombreSemana).then(()=>{
+      renderSession(cached.ejercicios, cached.nombreSemana, cached.sessionNotes||'', cached.dayTitle||'');
+    });
     api({ action:'getRutina', semana, dia:state.dia, squad }).then(res => {
       if (res.ok && res.ejercicios && res.ejercicios.length) {
         cacheSet(semana, state.dia, squad, res);
@@ -2897,6 +2902,8 @@ async function loadRutina() {
     return;
   }
   cacheSet(semana, state.dia, squad, res);
+  // Cruzar nombres de bloque desde la plantilla publicada (si existe)
+  await _aplicarNombresBloque(res.ejercicios, semana, state.dia, squad, res.nombreSemana);
   renderSession(res.ejercicios, res.nombreSemana||'', res.sessionNotes||'', res.dayTitle||'');
   // Restore any in-progress weights from localStorage
   if (progressLoad()) {
@@ -3046,6 +3053,37 @@ function renderCard(e) {
 }
 
 // ── RENDER SESSION ────────────────────────────────────────────
+// Cruza los nombres de bloque desde la plantilla publicada del planner.
+// Sin riesgo: si no hay plantilla o no coincide, los ejercicios salen igual (sin título).
+let _bloqueNombresCache = null;
+async function _aplicarNombresBloque(ejercicios, semana, dia, squad, nombreSemana){
+  if(!ejercicios || !ejercicios.length) return;
+  try{
+    if(!_bloqueNombresCache){
+      const wr = await api({ action:'getWeeks', squad, onlyVisible:true });
+      _bloqueNombresCache = (wr.ok && wr.weeks) ? wr.weeks : [];
+    }
+    const weeks = _bloqueNombresCache;
+    if(!weeks.length) return;
+    // Buscar la plantilla cuyo nombre de semana coincida con la que ve el jugador
+    const norm = s => String(s||'').trim().toLowerCase();
+    let plantilla = weeks.find(w => norm(w.nombre)===norm(nombreSemana));
+    if(!plantilla && weeks.length===1) plantilla = weeks[0]; // si solo hay una, usarla
+    if(!plantilla || !plantilla.data || !plantilla.data.dias) return;
+    // El día del jugador (1..5) → índice del array de días
+    const diaObj = plantilla.data.dias[dia-1] || plantilla.data.dias.find(d=>String(d.dia)===String(dia));
+    if(!diaObj || !diaObj.bloques) return;
+    // Mapa letra → nombre
+    const mapa = {};
+    diaObj.bloques.forEach(b=>{ if(b.letra && b.nombre) mapa[String(b.letra).toUpperCase()]=b.nombre; });
+    // Aplicar a cada ejercicio según su letra de bloque
+    ejercicios.forEach(e=>{
+      const letra = blockLetter(e.bloque);
+      if(mapa[letra]) e.bloque_nombre = mapa[letra];
+    });
+  }catch(err){ /* silencioso: si falla, no se muestran títulos */ }
+}
+
 function renderSession(ejercicios, nombreSemana, sessionNotes, dayTitle) {
   const container = document.getElementById('session-container');
   const prep = ejercicios.filter(e=>e.fase==='prep');
@@ -3116,8 +3154,26 @@ function renderSession(ejercicios, nombreSemana, sessionNotes, dayTitle) {
     ${notesHtml}
     ${prep.length ? `<div class="phase-header" style="color:rgba(160,200,255,.7);border-bottom:0">🧱 Prep</div>${prep.map(renderCard).join('')}` : ''}
     <div class="phase-header" style="margin-top:${prep.length?'1.25rem':'0'}">💥 Main Block</div>
-    ${main.map(renderCard).join('')}
+    ${renderMainWithBlocks(main)}
     ${renderSessionPanel()}`;
+}
+
+// Renderiza los ejercicios main insertando un título de bloque cuando cambia de bloque
+function renderMainWithBlocks(main){
+  let html='', lastLetra=null;
+  main.forEach(e=>{
+    const letra = blockLetter(e.bloque);
+    if(letra!==lastLetra){
+      lastLetra=letra;
+      // nombre del bloque (si el backend lo trae en e.bloque_nombre)
+      const nombre = (e.bloque_nombre||'').trim();
+      if(nombre){
+        html += `<div class="blk-title-player"><span class="blk-title-letra">${letra}</span><span class="blk-title-txt">${nombre}</span></div>`;
+      }
+    }
+    html += renderCard(e);
+  });
+  return html;
 }
 
 // ── SESSION PANEL ─────────────────────────────────────────────
