@@ -1621,7 +1621,20 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .ss-inner{display:flex;flex-direction:column;gap:5px;border-left:2px solid var(--accent2);padding-left:8px}
 .ss-add{margin-top:6px;width:100%;padding:6px;border-radius:6px;border:1px dashed rgba(0,229,160,.3);background:transparent;color:var(--accent2);font-size:10px;cursor:pointer;font-family:var(--font-body)}
 .single-wrap{margin-bottom:6px}
-.brow{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;cursor:pointer}
+.brow{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;cursor:pointer;position:relative}
+.brow-handle{font-size:14px;color:var(--muted);flex-shrink:0;cursor:pointer;padding:0 2px;line-height:1;letter-spacing:-1px}
+.brow-handle:hover{color:var(--text)}
+.brow-menu{display:none;position:absolute;left:6px;top:100%;margin-top:2px;z-index:50;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:4px;box-shadow:0 4px 16px rgba(0,0,0,.4);min-width:90px}
+.brow-menu.open{display:block}
+.brow-menu button{display:flex;align-items:center;gap:7px;width:100%;padding:7px 10px;background:transparent;border:none;color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font-body);border-radius:5px;text-align:left}
+.brow-menu button:hover{background:var(--surface2)}
+.brow-menu button span{font-size:13px;color:var(--accent2);width:12px}
+.blk-name-row{margin-bottom:5px}
+.sslabel-row{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.sslabel-tag{font-size:8px;color:var(--accent2);background:rgba(0,229,160,.12);border-radius:4px;padding:2px 6px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;flex-shrink:0}
+.blk-name{flex:1;width:100%;background:transparent;border:none;border-bottom:1px dashed var(--border2);color:var(--text);font-size:12px;font-weight:600;padding:3px 2px;font-family:var(--font-body);outline:none}
+.blk-name::placeholder{color:var(--muted);font-weight:400}
+.blk-name:focus{border-bottom-color:var(--accent2)}
 .bl{width:24px;height:22px;border-radius:5px;background:rgba(232,20,42,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
 .bth{width:28px;height:20px;border-radius:4px;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;flex-shrink:0;overflow:hidden}
 .bnm{font-size:12px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -8070,26 +8083,56 @@ function renderDayCard(d,i){
 }
 function renderBlockRow(b,dayIdx,blockIdx){
   const isSuper=b.tipo==='superserie';
+  const nEj=(b.ejercicios||[]).length;
   const rows=(b.ejercicios||[]).map((it,ei)=>{
     const th=ytThumb(it.video);
     const presc=[it.sets?it.sets+'x':'',it.reps||'',it.carga||''].filter(Boolean).join(' ');
+    const canUp = ei>0, canDown = ei<nEj-1;
     return `<div class="brow" onclick="openExerciseFields(${dayIdx},${blockIdx},${ei})">
+      <span class="brow-handle" onclick="event.stopPropagation();toggleRowMenu('${dayIdx}_${blockIdx}_${ei}')" title="Reordenar">&#8942;</span>
       <span class="bl">${it.orden||''}</span>
       <div class="bth">${th?`<img src="${th}" style="width:100%;height:100%;object-fit:cover">`:'&#9654;'}</div>
       <span class="bnm">${it.ejercicio||'<i style=color:var(--muted)>elegir ejercicio</i>'}</span>
       <span class="bmini">${presc}</span>
       <span class="brow-del" onclick="event.stopPropagation();removeExerciseFromBlock(${dayIdx},${blockIdx},${ei})">&#10005;</span>
+      <div class="brow-menu" id="rowmenu-${dayIdx}_${blockIdx}_${ei}">
+        ${canUp?`<button onclick="event.stopPropagation();moveExercise(${dayIdx},${blockIdx},${ei},-1)"><span>&#8593;</span> Subir</button>`:''}
+        ${canDown?`<button onclick="event.stopPropagation();moveExercise(${dayIdx},${blockIdx},${ei},1)"><span>&#8595;</span> Bajar</button>`:''}
+      </div>
     </div>`;
   }).join('');
   const addMore=isSuper?`<button class="ss-add" onclick="addExerciseToBlock(${dayIdx},${blockIdx})">&#43; anadir a superserie</button>`:'';
+  // Nombre editable del bloque
+  const nombrePh = isSuper ? `Superserie ${b.letra||''}` : (b.letra?`Bloque ${b.letra}`:'Bloque');
+  const nameInput = `<input class="blk-name" value="${(b.nombre||'').replace(/"/g,'&quot;')}" placeholder="${nombrePh}" onclick="event.stopPropagation()" oninput="setBlockName(${dayIdx},${blockIdx},this.value)">`;
   if(isSuper){
     return `<div class="superblk">
-      <div class="sslabel">Superserie ${b.letra||''}</div>
+      <div class="sslabel-row">${nameInput}<span class="sslabel-tag">SS ${b.letra||''}</span></div>
       <div class="ss-inner">${rows}</div>
       ${addMore}
     </div>`;
   }
-  return `<div class="single-wrap">${rows}</div>`;
+  return `<div class="single-wrap"><div class="blk-name-row">${nameInput}</div>${rows}</div>`;
+}
+function setBlockName(dayIdx,blockIdx,val){
+  _plan.week.data.dias[dayIdx].bloques[blockIdx].nombre=val;
+}
+function toggleRowMenu(key){
+  const el=document.getElementById('rowmenu-'+key);
+  if(!el) return;
+  const abierto=el.classList.contains('open');
+  document.querySelectorAll('.brow-menu.open').forEach(m=>m.classList.remove('open'));
+  if(!abierto){ el.classList.add('open'); if(!window._rowMenuListener){ window._rowMenuListener=true; document.addEventListener('click',function(e){ if(!e.target.closest('.brow-handle')&&!e.target.closest('.brow-menu')) document.querySelectorAll('.brow-menu.open').forEach(m=>m.classList.remove('open')); }); } }
+}
+function moveExercise(dayIdx,blockIdx,ei,dir){
+  const arr=_plan.week.data.dias[dayIdx].bloques[blockIdx].ejercicios;
+  const ni=ei+dir;
+  if(ni<0||ni>=arr.length) return;
+  const tmp=arr[ei]; arr[ei]=arr[ni]; arr[ni]=tmp;
+  // recalcular orden (letra+numero)
+  const b=_plan.week.data.dias[dayIdx].bloques[blockIdx];
+  arr.forEach((it,idx)=>{ it.orden=(b.letra||'?')+(idx+1); });
+  renderWeekEditor();
 }
 // ── SEMAFORO por tipo de dia (autodeteccion del titulo) ──
 function dayType(title){
