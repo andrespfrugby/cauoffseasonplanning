@@ -1663,6 +1663,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .pw-draft{flex:1;padding:11px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body)}
 .pw-publish{flex:1;padding:11px;border-radius:8px;border:none;background:var(--accent2);color:#0d0f12;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-body)}
 .pw-export{flex:1;padding:9px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body)}
+.cpsq-list{display:flex;flex-direction:column;gap:8px}
+.cpsq-opt{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--surface2);border:1px solid var(--border2);border-radius:9px;cursor:pointer;font-size:14px}
+.cpsq-opt input{accent-color:var(--accent2);width:17px;height:17px}
+.cpsq-opt span{text-transform:capitalize}
 .pw-export:hover{color:var(--text);border-color:var(--border-strong)}
 .picker-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:12px}
 .picker-box{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:440px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
@@ -9090,10 +9094,62 @@ async function saveWeekNow(){
   if(res.ok){
     if(res.id && !w.id) w.id=res.id;
     limpiarBorrador();
-    alert('Semana guardada ✓\n\nPara que los jugadores la vean, actívala en Settings.');
-    _plan.week=null;
-    renderWeeksList();
+    // Ofrecer copiar a otros squads
+    const otros=SQUADS.filter(sq=>sq!==w.squad);
+    if(otros.length){
+      mostrarCopiarSquads(w, clean, otros);
+    } else {
+      alert('Semana guardada ✓\n\nPara que los jugadores la vean, actívala en Settings.');
+      _plan.week=null; renderWeeksList();
+    }
   } else { btns.forEach(b=>{ b.disabled=false; b.textContent='Guardar semana'; }); alert('Error: '+(res.error||'')); }
+}
+
+// Modal: ¿aplicar esta semana a otros squads?
+function mostrarCopiarSquads(w, cleanData, otros){
+  const modal=document.getElementById('picker-modal');
+  const checks=otros.map(sq=>`<label class="cpsq-opt">
+    <input type="checkbox" value="${sq}"> <span>${sq}</span>
+  </label>`).join('');
+  modal.innerHTML=`
+    <div class="picker-backdrop" onclick="_cerrarCopiar(event)">
+      <div class="fields-box" onclick="event.stopPropagation()" style="max-width:360px">
+        <div style="font-size:16px;font-weight:600;margin-bottom:6px">Semana guardada ✓</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px">¿Quieres aplicar esta misma estructura a otros squads? Se creará una copia independiente que podrás editar por separado.</div>
+        <div class="cpsq-list">${checks}</div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button class="pe-eq" style="flex:1" onclick="_finCopiar(false)">No, gracias</button>
+          <button class="pe-save" style="flex:1;margin:0" onclick="_finCopiar(true)">Copiar a seleccionados</button>
+        </div>
+      </div>
+    </div>`;
+  modal.style.display='block';
+  _copiarCtx={ w, cleanData };
+}
+var _copiarCtx=null;
+function _cerrarCopiar(e){ if(e && e.target.closest('.fields-box')) return; _finCopiar(false); }
+async function _finCopiar(hacer){
+  const modal=document.getElementById('picker-modal');
+  if(!hacer || !_copiarCtx){
+    modal.style.display='none'; modal.innerHTML='';
+    _copiarCtx=null; _plan.week=null; renderWeeksList();
+    return;
+  }
+  const seleccionados=[...modal.querySelectorAll('.cpsq-list input:checked')].map(c=>c.value);
+  if(!seleccionados.length){ modal.style.display='none'; modal.innerHTML=''; _copiarCtx=null; _plan.week=null; renderWeeksList(); return; }
+  const {w, cleanData}=_copiarCtx;
+  modal.querySelector('.pe-save').textContent='Copiando…';
+  let ok=0;
+  for(const sq of seleccionados){
+    const r=await api({ action:'saveWeek', id:'', nombre:w.nombre, squad:sq,
+      fecha_inicio:w.fecha_inicio, fecha_fin:w.fecha_fin, data:JSON.parse(JSON.stringify(cleanData)),
+      visible:false, creado_por:(state.user&&state.user.usuario)||'' });
+    if(r.ok) ok++;
+  }
+  modal.style.display='none'; modal.innerHTML='';
+  _copiarCtx=null; _plan.week=null;
+  alert(`Copiada a ${ok} squad${ok!==1?'s':''} ✓\n\nCada copia es independiente. Actívalas en Settings cuando estén listas.`);
+  renderWeeksList();
 }
 
 </script>
