@@ -7387,11 +7387,11 @@ async function renderAlertas() {
   c.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
 
   // Cargar readiness, molestias y control de cargas (ACWR) en paralelo
-  const _mesAlert = _ccMes || (new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'));
+  const _mesAlert = (fecha && /^\d{4}-\d{2}/.test(fecha)) ? fecha.slice(0,7) : (_ccMes || (new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')));
   const [wRes, mRes, ccRes] = await Promise.all([
     api({ action:'getWellnessEquipo', fecha }),
     api({ action:'getMolestiasEquipo', fecha, squad }),
-    api({ action:'getControlCargas', squad, mes:_mesAlert, modo:'total' })
+    api({ action:'getControlCargas', squad, mes:_mesAlert, modo:'total', fecha })
   ]);
 
   // Mapa ACWR por usuario
