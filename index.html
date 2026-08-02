@@ -2642,8 +2642,21 @@ function buildWeightChart(pesoData, W=260, H=52) {
 // ── API ───────────────────────────────────────────────────────
 async function api(payload) {
   try {
-    const url = APPS_SCRIPT_URL + '?payload=' + encodeURIComponent(JSON.stringify(payload));
-    const r   = await fetch(url, { redirect:'follow' });
+    const body = JSON.stringify(payload);
+    let r;
+    // Payloads grandes (ej. guardar semana del planner) por POST para no exceder el límite de URL.
+    // GET para el resto (más rápido y cacheable).
+    if (body.length > 1500) {
+      r = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: 'payload=' + encodeURIComponent(body)
+      });
+    } else {
+      const url = APPS_SCRIPT_URL + '?payload=' + encodeURIComponent(body);
+      r = await fetch(url, { redirect:'follow' });
+    }
     const txt = await r.text();
     try { return JSON.parse(txt); } catch { return { ok:false, error:'Respuesta inesperada.' }; }
   } catch(err) {
