@@ -1662,6 +1662,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .addb{flex:1;padding:8px;border-radius:7px;border:1px dashed var(--border2);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font-body)}
 .pw-draft{flex:1;padding:11px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body)}
 .pw-publish{flex:1;padding:11px;border-radius:8px;border:none;background:var(--accent2);color:#0d0f12;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-body)}
+.pw-export{flex:1;padding:9px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body)}
+.pw-export:hover{color:var(--text);border-color:var(--border-strong)}
 .picker-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:12px}
 .picker-box{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:440px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
 .picker-switch-banner{background:rgba(0,229,160,.1);color:var(--accent2);font-size:12px;padding:9px 14px;border-bottom:1px solid rgba(0,229,160,.2);text-align:center}
@@ -1730,6 +1732,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .pe-del{font-size:13px;color:var(--muted);cursor:pointer;flex-shrink:0;width:18px;text-align:center}
 .pe-del:hover{color:var(--accent)}
 .pe-serie-actions{display:flex;gap:8px;margin-top:12px}
+.pe-setsrango-tog{display:flex;align-items:center;gap:7px;margin-top:14px;font-size:12px;color:var(--muted);cursor:pointer}
+.pe-setsrango-tog input{accent-color:var(--accent);width:16px;height:16px}
 .pe-add,.pe-eq{font-size:12px;padding:7px 14px;border-radius:7px;cursor:pointer;font-family:inherit;background:transparent}
 .pe-add{color:var(--muted);border:1px dashed var(--border2)}
 .pe-eq{color:var(--muted);border:1px solid var(--border2)}
@@ -2211,7 +2215,10 @@ function parseLoadTargets(loadObjetivo, nSets) {
   }
   // Si hay un número de series mayor que los targets, expandir repitiendo
   // (así 3 sets al 70% → 3 boxes, y el jugador puede meter peso distinto en cada uno)
-  const n = parseInt(nSets);
+  // nSets puede ser "3" o rango "3-4" → usar el máximo (el jugador hace las que pueda)
+  let n;
+  const rm = String(nSets||'').match(/^(\d+)\s*-\s*(\d+)$/);
+  n = rm ? parseInt(rm[2]) : parseInt(nSets);
   if (!isNaN(n) && n > targets.length) {
     const base = targets.length ? targets : [''];
     const out = [];
@@ -7910,6 +7917,15 @@ async function renderPlanner(){
     if(c) c.innerHTML='<div class="pe-box" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">&#128295;</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">Backend pendiente de desplegar</div><div style="font-size:12px;color:var(--muted);line-height:1.6">El Planner ya está integrado en la app, pero necesita las acciones nuevas en tu Apps Script para leer los ejercicios y guardar semanas.<br><br>Sigue el archivo <b>1_BACKEND_appscript.md</b> (añadir columnas al Sheet + pegar las funciones + desplegar nueva versión). El resto de la app funciona con normalidad mientras tanto.</div></div>';
     return;
   }
+  // Recuperar borrador no guardado (si recargó sin querer)
+  if(!_plan.week){
+    const draft=recuperarBorrador();
+    if(draft && draft.data && (draft.data.dias||[]).length){
+      _plan.week=draft;
+      renderWeekEditor();
+      return;
+    }
+  }
   plannerSub(_plan.sub);
 }
 
@@ -8131,27 +8147,40 @@ function editWeek(id){
   renderWeekEditor();
 }
 function renderWeekEditor(){
+  autosaveLocal(); // guarda borrador local en cada re-render (cada edición)
+  scheduleAutosaveServer(); // programa guardado en servidor
   const w=_plan.week;
   const squadOpts=SQUADS.map(sq=>`<option value="${sq}"${w.squad===sq?' selected':''}>${sq}</option>`).join('');
   const daysHtml=(w.data.dias||[]).map((d,i)=>renderDayCard(d,i)).join('');
   document.getElementById('planner-content').innerHTML=`
-    <button class="pback" onclick="renderWeeksList()">&#8249; volver a semanas</button>
+    <button class="pback" onclick="cerrarEditor()">&#8249; volver a semanas</button>
     <div class="pw-box">
-      <input class="inp" style="font-size:15px;font-weight:600;margin-bottom:10px" placeholder="Titulo de la semana (ej. OFFSEASON WEEK 1)" value="${w.nombre}" oninput="_plan.week.nombre=this.value">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <input class="inp" style="font-size:15px;font-weight:600;margin:0;flex:1" placeholder="Titulo de la semana (ej. OFFSEASON WEEK 1)" value="${w.nombre}" oninput="_plan.week.nombre=this.value;autosaveLocal();scheduleAutosaveServer()">
+        <span id="autosave-estado" style="font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0"></span>
+      </div>
       <div class="pe-addlbl">Rango de fechas</div>
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px">
-        <input type="date" class="inp" value="${w.fecha_inicio}" onchange="_plan.week.fecha_inicio=this.value">
+        <input type="date" class="inp" value="${w.fecha_inicio}" onchange="_plan.week.fecha_inicio=this.value;autosaveLocal()">
         <span style="color:var(--muted);font-size:12px">a</span>
-        <input type="date" class="inp" value="${w.fecha_fin}" onchange="_plan.week.fecha_fin=this.value">
+        <input type="date" class="inp" value="${w.fecha_fin}" onchange="_plan.week.fecha_fin=this.value;autosaveLocal()">
       </div>
-      <select class="semana-select" style="margin:0" onchange="_plan.week.squad=this.value">${squadOpts}</select>
+      <select class="semana-select" style="margin:0" onchange="_plan.week.squad=this.value;autosaveLocal()">${squadOpts}</select>
     </div>
     <div id="pw-days">${daysHtml||'<div class="hist-empty" style="text-align:center;padding:14px">Anade el primer dia</div>'}</div>
     <button class="pw-addday" onclick="addDay()">&#43; anadir dia</button>
     <div style="display:flex;gap:8px;margin-top:12px">
       <button class="pw-publish" style="flex:1" onclick="saveWeekNow()">Guardar semana</button>
     </div>
-    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.5">La visibilidad para jugadores se gestiona en <b>Settings</b></div>`;
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="pw-export" onclick="exportWeekCSV()">&#8681; CSV</button>
+      <button class="pw-export" onclick="exportWeekPDF()">&#8681; PDF</button>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.5">Se guarda solo mientras editas · La visibilidad se gestiona en <b>Settings</b></div>`;
+}
+function cerrarEditor(){
+  // Al volver, el borrador local se mantiene por si acaso; se limpia al guardar
+  renderWeeksList();
 }
 function renderDayCard(d,i){
   const open=d._open!==false;
@@ -8239,7 +8268,16 @@ function moveBlock(dayIdx,blockIdx,dir){
   const ni=blockIdx+dir;
   if(ni<0||ni>=arr.length) return;
   const tmp=arr[blockIdx]; arr[blockIdx]=arr[ni]; arr[ni]=tmp;
+  reasignarLetras(dayIdx);
   renderWeekEditor();
+}
+// Reasigna las letras de los bloques por su posición: 1º=A, 2º=B... y recalcula A1,A2,B1...
+function reasignarLetras(dayIdx){
+  const day=_plan.week.data.dias[dayIdx];
+  (day.bloques||[]).forEach((b,bi)=>{
+    b.letra=String.fromCharCode(65+bi); // A, B, C...
+    (b.ejercicios||[]).forEach((it,idx)=>{ it.orden=b.letra+(idx+1); });
+  });
 }
 function toggleDayMenu(i){
   const el=document.getElementById('daymenu-'+i);
@@ -8330,7 +8368,7 @@ function addBlock(dayIdx,tipo){
   // abrir selector para el primer ejercicio
   addExerciseToBlock(dayIdx,blockIdx);
 }
-function removeBlock(dayIdx,blockIdx){ _plan.week.data.dias[dayIdx].bloques.splice(blockIdx,1); renderWeekEditor(); }
+function removeBlock(dayIdx,blockIdx){ _plan.week.data.dias[dayIdx].bloques.splice(blockIdx,1); reasignarLetras(dayIdx); renderWeekEditor(); }
 function removeExerciseFromBlock(dayIdx,blockIdx,ei){
   const b=_plan.week.data.dias[dayIdx].bloques[blockIdx];
   b.ejercicios.splice(ei,1);
@@ -8496,7 +8534,13 @@ function pickExercise(id){
 function _parseSeries(it){
   const tipo = it.tipo_carga || '%';
   const cargaStr = it.carga || '';
-  const nSets = parseInt(it.sets) || 0;
+  // sets puede ser "3" o rango "3-4"
+  const setsStr = String(it.sets||'').trim();
+  const setsRangoM = setsStr.match(/^(\d+)\s*-\s*(\d+)$/);
+  const setsRango = !!setsRangoM;
+  const setsMin = setsRangoM ? setsRangoM[1] : '';
+  const setsMax = setsRangoM ? setsRangoM[2] : '';
+  const nSets = setsRango ? parseInt(setsMax) : (parseInt(it.sets) || 0);
   // valores de intensidad por serie
   let intens = [];
   const esBW = /^BW$/i.test(cargaStr.trim());
@@ -8535,12 +8579,17 @@ function _parseSeries(it){
   if (rango){ const mm = repsStr.match(/(\d+)\s*[-]\s*(\d+)/); if(mm){ repMin=mm[1]; repMax=mm[2]; } }
   // tipo de reps: reps | seg | rango
   const tipoReps = rango ? 'rango' : (esTiempo ? 'seg' : 'reps');
-  return { series, usaRango: rango, repMin, repMax, tipoReps, esBW };
+  return { series, usaRango: rango, repMin, repMax, tipoReps, esBW, setsRango, setsMin, setsMax };
 }
 // Sincroniza el array de series de vuelta a los campos legacy (carga/reps/sets)
 function _syncSeries(it, ed){
   const tipo = it.tipo_carga || '%';
-  it.sets = String(ed.series.length);
+  // sets: rango "3-4" o número fijo. El nº de series editadas = máximo del rango.
+  if (ed.setsRango && ed.setsMin && ed.setsMax){
+    it.sets = `${ed.setsMin}-${ed.setsMax}`;
+  } else {
+    it.sets = String(ed.series.length);
+  }
   // carga: BW, o concatenar intensidades
   if (ed.esBW){
     it.carga = 'BW';
@@ -8637,6 +8686,18 @@ function renderFieldsModal(){
           <button class="pe-eq" onclick="presIgualar()">igualar a la 1ª</button>
         </div>
 
+        <label class="pe-setsrango-tog">
+          <input type="checkbox" ${ed.setsRango?'checked':''} onchange="presToggleSetsRango(this.checked)">
+          rango de series (flexible)
+        </label>
+        ${ed.setsRango ? `
+        <div class="pe-rango-row">
+          <input value="${ed.setsMin||''}" placeholder="mín" inputmode="numeric" oninput="presSetSetsRango('setsMin',this.value)">
+          <span>–</span>
+          <input value="${ed.setsMax||''}" placeholder="máx" inputmode="numeric" oninput="presSetSetsRango('setsMax',this.value)">
+          <span style="font-size:12px;color:var(--muted)">series · el jugador hace las que pueda</span>
+        </div>` : ''}
+
         <label class="pe-nota-lbl">Nota / cue técnico</label>
         <textarea class="pe-nota" placeholder="Ej: pie elevado sobre step, rango completo, control excéntrico..." oninput="setField('nota',this.value)">${it.nota||''}</textarea>
 
@@ -8704,6 +8765,26 @@ function presToggleBW(){
   _presEd.esBW=!_presEd.esBW;
   _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
   renderFieldsModal();
+}
+function presToggleSetsRango(on){
+  _presEd.setsRango=on;
+  if(on){
+    if(!_presEd.setsMin) _presEd.setsMin=String(_presEd.series.length);
+    if(!_presEd.setsMax) _presEd.setsMax=String(_presEd.series.length+1);
+  }
+  _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
+  renderFieldsModal();
+}
+function presSetSetsRango(campo,val){
+  _presEd[campo]=val;
+  // ajustar el nº de series editables al máximo del rango
+  if(campo==='setsMax'){
+    const mx=parseInt(val)||0;
+    while(_presEd.series.length<mx){ const last=_presEd.series[_presEd.series.length-1]||{intens:'',rep:''}; _presEd.series.push({intens:last.intens,rep:last.rep,_auto:true}); }
+    while(_presEd.series.length>mx && _presEd.series.length>1){ _presEd.series.pop(); }
+  }
+  _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
+  clearTimeout(_cmpTO); _cmpTO=setTimeout(updateLoadCompare,400);
 }
 function presAddSerie(){
   const last=_presEd.series[_presEd.series.length-1]||{intens:'',rep:''};
@@ -8858,6 +8939,142 @@ function cmpRow(label, detalle, now, prev){
 }
 
 // ---- Guardar semana ----
+// ── AUTOGUARDADO del planner ──────────────────────────────
+const PLAN_DRAFT_KEY = 'cau_plan_draft';
+let _autosaveServerTO = null;
+let _lastServerSave = 0;
+
+function autosaveLocal(){
+  try{
+    if(!_plan || !_plan.week) return;
+    localStorage.setItem(PLAN_DRAFT_KEY, JSON.stringify({ week:_plan.week, ts:Date.now() }));
+    _mostrarAutosaveEstado('local');
+  }catch(e){}
+}
+
+function scheduleAutosaveServer(){
+  // Guarda en servidor como máximo cada 20s, solo si la semana ya tiene título
+  if(!_plan || !_plan.week || !_plan.week.nombre || !_plan.week.nombre.trim()) return;
+  clearTimeout(_autosaveServerTO);
+  _autosaveServerTO = setTimeout(async ()=>{
+    await autosaveServer();
+  }, 4000); // 4s tras el último cambio
+}
+
+async function autosaveServer(){
+  const w=_plan && _plan.week;
+  if(!w || !w.nombre || !w.nombre.trim()) return;
+  try{
+    const clean=JSON.parse(JSON.stringify(w.data||{dias:[]}));
+    (clean.dias||[]).forEach(d=>{ delete d._open; });
+    const vis = (w.id && w.visible === true) ? true : false;
+    const res=await api({ action:'saveWeek', id:w.id||'', nombre:w.nombre, squad:w.squad,
+      fecha_inicio:w.fecha_inicio, fecha_fin:w.fecha_fin, data:clean,
+      visible:vis, creado_por:(state.user&&state.user.usuario)||'' });
+    if(res.ok){
+      if(res.id && !w.id) w.id=res.id; // adopta el id generado para futuros guardados
+      _lastServerSave=Date.now();
+      _mostrarAutosaveEstado('server');
+    }
+  }catch(e){}
+}
+
+function _mostrarAutosaveEstado(tipo){
+  const el=document.getElementById('autosave-estado');
+  if(!el) return;
+  if(tipo==='server'){ el.textContent='✓ Guardado'; el.style.color='var(--accent2)'; }
+  else { el.textContent='guardando…'; el.style.color='var(--muted)'; }
+}
+
+function recuperarBorrador(){
+  try{
+    const raw=localStorage.getItem(PLAN_DRAFT_KEY);
+    if(!raw) return null;
+    const d=JSON.parse(raw);
+    return (d && d.week) ? d.week : null;
+  }catch(e){ return null; }
+}
+
+function limpiarBorrador(){
+  try{ localStorage.removeItem(PLAN_DRAFT_KEY); }catch(e){}
+}
+
+// ── EXPORTAR SEMANA ───────────────────────────────────────
+function _weekRows(){
+  const w=_plan.week; const rows=[];
+  (w.data.dias||[]).forEach((d,di)=>{
+    const diaTit=d.titulo||`Día ${di+1}`;
+    (d.bloques||[]).forEach(b=>{
+      const blkNom=b.nombre||(b.letra?`Bloque ${b.letra}`:'Bloque');
+      (b.ejercicios||[]).forEach(it=>{
+        rows.push({
+          dia:diaTit, fecha:d.fecha||'', bloque:blkNom, orden:it.orden||'',
+          ejercicio:it.ejercicio||'', series:it.sets||'', reps:it.reps||'',
+          intensidad:it.carga||'', tipo:it.tipo_carga||'', tempo:it.tempo||'', nota:it.nota||''
+        });
+      });
+    });
+  });
+  return rows;
+}
+function exportWeekCSV(){
+  const w=_plan.week;
+  const rows=_weekRows();
+  if(!rows.length){ alert('No hay ejercicios para exportar'); return; }
+  const cab=['Día','Fecha','Bloque','Orden','Ejercicio','Series','Reps','Intensidad','Tipo','Tempo','Nota'];
+  const esc=v=>{ const s=String(v==null?'':v); return /[",;\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  const lineas=[cab.join(';')];
+  rows.forEach(r=>lineas.push([r.dia,r.fecha,r.bloque,r.orden,r.ejercicio,r.series,r.reps,r.intensidad,r.tipo,r.tempo,r.nota].map(esc).join(';')));
+  const csv='\ufeff'+lineas.join('\n'); // BOM para acentos en Excel
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=(w.nombre||'semana').replace(/[^\w-]/g,'_')+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function exportWeekPDF(){
+  const w=_plan.week;
+  const rows=_weekRows();
+  if(!rows.length){ alert('No hay ejercicios para exportar'); return; }
+  // Agrupar por día → bloque
+  const dias={};
+  rows.forEach(r=>{ (dias[r.dia]=dias[r.dia]||{})[r.bloque]=(dias[r.dia][r.bloque]||[]); dias[r.dia][r.bloque].push(r); });
+  let cuerpo='';
+  Object.keys(dias).forEach(dia=>{
+    const fecha=(_plan.week.data.dias.find(d=>(d.titulo||'')===dia)||{}).fecha||'';
+    cuerpo+=`<h2>${dia}${fecha?` <span class="f">${fecha}</span>`:''}</h2>`;
+    Object.keys(dias[dia]).forEach(blk=>{
+      cuerpo+=`<h3>${blk}</h3><table><thead><tr><th>#</th><th>Ejercicio</th><th>Series</th><th>Reps</th><th>Intensidad</th><th>Tempo</th><th>Nota</th></tr></thead><tbody>`;
+      dias[dia][blk].forEach(r=>{
+        cuerpo+=`<tr><td>${r.orden}</td><td>${r.ejercicio}</td><td>${r.series}</td><td>${r.reps}</td><td>${r.intensidad}${r.tipo&&r.tipo!=='%'?' '+r.tipo:''}</td><td>${r.tempo}</td><td>${r.nota}</td></tr>`;
+      });
+      cuerpo+=`</tbody></table>`;
+    });
+  });
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${w.nombre||'Semana'}</title>
+  <style>
+    body{font-family:Arial,sans-serif;color:#222;padding:24px;max-width:900px;margin:0 auto}
+    h1{color:#e8142a;border-bottom:2px solid #e8142a;padding-bottom:6px;font-size:22px}
+    .sub{color:#666;font-size:13px;margin:4px 0 18px}
+    h2{font-size:17px;margin:22px 0 4px;color:#111}
+    h2 .f{font-weight:normal;color:#888;font-size:13px}
+    h3{font-size:13px;color:#e8142a;margin:12px 0 4px;text-transform:uppercase;letter-spacing:.03em}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+    th{background:#f4f4f6;text-align:left;padding:5px 7px;border:1px solid #ddd;font-size:11px}
+    td{padding:5px 7px;border:1px solid #e2e2e6;vertical-align:top}
+    @media print{ h2{page-break-after:avoid} table{page-break-inside:avoid} }
+  </style></head><body>
+    <h1>${w.nombre||'Semana'}</h1>
+    <div class="sub">${w.squad||''} · ${w.fecha_inicio||''}${w.fecha_fin?' a '+w.fecha_fin:''}</div>
+    ${cuerpo}
+    <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`;
+  const vent=window.open('','_blank');
+  if(!vent){ alert('Permite las ventanas emergentes para exportar el PDF'); return; }
+  vent.document.write(html); vent.document.close();
+}
+
 async function saveWeekNow(){
   const w=_plan.week;
   if(!w.nombre.trim()){ alert('Ponle titulo a la semana'); return; }
@@ -8871,6 +9088,8 @@ async function saveWeekNow(){
     fecha_inicio:w.fecha_inicio, fecha_fin:w.fecha_fin, data:clean,
     visible:vis, creado_por:(state.user&&state.user.usuario)||'' });
   if(res.ok){
+    if(res.id && !w.id) w.id=res.id;
+    limpiarBorrador();
     alert('Semana guardada ✓\n\nPara que los jugadores la vean, actívala en Settings.');
     _plan.week=null;
     renderWeeksList();
