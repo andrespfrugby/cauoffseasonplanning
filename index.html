@@ -1633,6 +1633,14 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .brow-menu button:hover{background:var(--surface2)}
 .brow-menu button span{font-size:13px;color:var(--accent2);width:12px}
 .blk-name-row{margin-bottom:5px}
+.blk-handle-wrap{position:relative;flex-shrink:0}
+.blk-handle{font-size:15px;color:var(--muted);cursor:pointer;padding:0 2px;line-height:1;letter-spacing:-1px}
+.blk-handle:hover{color:var(--accent2)}
+.blk-menu{display:none;position:absolute;left:0;top:100%;margin-top:3px;z-index:60;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:4px;box-shadow:0 4px 16px rgba(0,0,0,.45);min-width:150px}
+.blk-menu.open{display:block}
+.blk-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:8px 11px;background:transparent;border:none;color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font-body);border-radius:5px;text-align:left}
+.blk-menu button:hover{background:var(--surface2)}
+.blk-menu button span{font-size:13px;color:var(--accent2);width:12px;flex-shrink:0}
 .sslabel-row{display:flex;align-items:center;gap:7px;margin-bottom:6px}
 .sslabel-tag{font-size:8px;color:var(--accent2);background:rgba(0,229,160,.12);border-radius:4px;padding:2px 6px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;flex-shrink:0}
 .blk-name{flex:1;width:100%;background:transparent;border:none;border-bottom:1px dashed var(--border2);color:var(--text);font-size:12px;font-weight:600;padding:3px 2px;font-family:var(--font-body);outline:none}
@@ -8161,17 +8169,40 @@ function renderBlockRow(b,dayIdx,blockIdx){
   // Nombre editable del bloque
   const nombrePh = isSuper ? `Superserie ${b.letra||''}` : (b.letra?`Bloque ${b.letra}`:'Bloque');
   const nameInput = `<input class="blk-name" value="${(b.nombre||'').replace(/"/g,'&quot;')}" placeholder="${nombrePh}" onclick="event.stopPropagation()" oninput="setBlockName(${dayIdx},${blockIdx},this.value)">`;
+  // Manija para mover el bloque entero (subir/bajar dentro del día)
+  const nBloques = (_plan.week.data.dias[dayIdx].bloques||[]).length;
+  const bCanUp = blockIdx>0, bCanDown = blockIdx<nBloques-1;
+  const blkHandle = `<span class="blk-handle" onclick="event.stopPropagation();toggleBlockMenu('${dayIdx}_${blockIdx}')" title="Mover bloque">&#8942;</span>
+    <div class="blk-menu" id="blkmenu-${dayIdx}_${blockIdx}">
+      ${bCanUp?`<button onclick="event.stopPropagation();moveBlock(${dayIdx},${blockIdx},-1)"><span>&#8593;</span> Subir bloque</button>`:''}
+      ${bCanDown?`<button onclick="event.stopPropagation();moveBlock(${dayIdx},${blockIdx},1)"><span>&#8595;</span> Bajar bloque</button>`:''}
+      <button onclick="event.stopPropagation();removeBlock(${dayIdx},${blockIdx})"><span style="color:var(--accent)">&#10005;</span> Eliminar bloque</button>
+    </div>`;
   if(isSuper){
     return `<div class="superblk">
-      <div class="sslabel-row">${nameInput}<span class="sslabel-tag">SS ${b.letra||''}</span></div>
+      <div class="sslabel-row"><span class="blk-handle-wrap">${blkHandle}</span>${nameInput}<span class="sslabel-tag">SS ${b.letra||''}</span></div>
       <div class="ss-inner">${rows}</div>
       ${addMore}
     </div>`;
   }
-  return `<div class="single-wrap"><div class="blk-name-row">${nameInput}</div>${rows}</div>`;
+  return `<div class="single-wrap"><div class="blk-name-row" style="display:flex;align-items:center;gap:6px"><span class="blk-handle-wrap">${blkHandle}</span>${nameInput}</div>${rows}</div>`;
 }
 function setBlockName(dayIdx,blockIdx,val){
   _plan.week.data.dias[dayIdx].bloques[blockIdx].nombre=val;
+}
+function toggleBlockMenu(key){
+  const el=document.getElementById('blkmenu-'+key);
+  if(!el) return;
+  const abierto=el.classList.contains('open');
+  document.querySelectorAll('.blk-menu.open,.brow-menu.open').forEach(m=>m.classList.remove('open'));
+  if(!abierto){ el.classList.add('open'); if(!window._blkMenuListener){ window._blkMenuListener=true; document.addEventListener('click',function(e){ if(!e.target.closest('.blk-handle')&&!e.target.closest('.blk-menu')) document.querySelectorAll('.blk-menu.open').forEach(m=>m.classList.remove('open')); }); } }
+}
+function moveBlock(dayIdx,blockIdx,dir){
+  const arr=_plan.week.data.dias[dayIdx].bloques;
+  const ni=blockIdx+dir;
+  if(ni<0||ni>=arr.length) return;
+  const tmp=arr[blockIdx]; arr[blockIdx]=arr[ni]; arr[ni]=tmp;
+  renderWeekEditor();
 }
 function toggleRowMenu(key){
   const el=document.getElementById('rowmenu-'+key);
