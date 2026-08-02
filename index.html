@@ -7447,7 +7447,7 @@ async function renderAlertas() {
   // Precargar historiales de los alertados para calcular su RPE 7d (usa caché)
   if (alertas.length){
     await Promise.all(alertas.map(a=>_getHistCached(a.usuario)));
-    alertas.forEach(a=>{ a.rpe7 = _rpe7dPromedio({usuario:a.usuario}); });
+    alertas.forEach(a=>{ a.rpe7 = _rpe7dPromedio({usuario:a.usuario}, fecha); });
   }
 
   const totalPlantilla = equipo.length;
@@ -7480,6 +7480,8 @@ async function renderAlertas() {
     if (a.rpe7!=null){
       const rc=a.rpe7>=8?'#ff5050':a.rpe7>=5?'#ffc04d':'#00e5a0';
       chips.push(`<span class="al-chip" style="background:${rc}1e;color:${rc}">RPE 7d ${a.rpe7.toFixed(1)}</span>`);
+    } else {
+      chips.push(`<span class="al-chip" style="background:var(--surface2);color:var(--muted)">Sin sesiones 7d</span>`);
     }
     return `<div class="al-card" onclick="openWellnessPlayerModal('${a.usuario}','${(a.nombre||'').replace(/'/g,"\\'")}')">
       <div class="al-top">
@@ -7512,19 +7514,19 @@ async function renderAlertas() {
 }
 
 // RPE promedio 7 días del jugador (desde la caché de historiales; gym+campo+partido)
-function _rpe7dPromedio(j){
+function _rpe7dPromedio(j, fechaRef){
   const cache = _repHistCache[j.usuario];
   if (!cache || !cache.ok || !Array.isArray(cache.historial)) return null;
-  const limite = new Date(); limite.setDate(limite.getDate()-7);
+  const ref = (fechaRef && /^\d{4}-\d{2}-\d{2}/.test(fechaRef)) ? new Date(fechaRef+'T23:59:59') : new Date();
+  const limite = new Date(ref); limite.setDate(limite.getDate()-7);
   const rpes = [];
   cache.historial.forEach(h=>{
     // registros con RPE: RPE_GLOBAL (gym) o FIELD_* (campo/partido)
     const rpe = parseFloat(h.rpe);
     if (isNaN(rpe) || rpe<=0) return;
     let f = h.fecha ? new Date(h.fecha) : null;
-    // FIELD guarda la fecha real en notas (col I) a veces; usar h.fecha si válida
     if (!f || isNaN(f)) return;
-    if (f >= limite) rpes.push(rpe);
+    if (f >= limite && f <= ref) rpes.push(rpe);
   });
   if (!rpes.length) return null;
   return rpes.reduce((s,v)=>s+v,0)/rpes.length;
