@@ -1633,6 +1633,14 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .brow-menu button:hover{background:var(--surface2)}
 .brow-menu button span{font-size:13px;color:var(--accent2);width:12px}
 .blk-name-row{margin-bottom:5px}
+.day-handle-wrap{position:relative;flex-shrink:0}
+.day-handle{font-size:16px;color:var(--muted);cursor:pointer;padding:0 3px;line-height:1;letter-spacing:-1px}
+.day-handle:hover{color:var(--accent2)}
+.day-menu{display:none;position:absolute;left:0;top:100%;margin-top:3px;z-index:70;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:4px;box-shadow:0 4px 16px rgba(0,0,0,.45);min-width:130px}
+.day-menu.open{display:block}
+.day-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:8px 11px;background:transparent;border:none;color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font-body);border-radius:5px;text-align:left}
+.day-menu button:hover{background:var(--surface2)}
+.day-menu button span{font-size:13px;color:var(--accent2);width:12px;flex-shrink:0}
 .blk-handle-wrap{position:relative;flex-shrink:0}
 .blk-handle{font-size:15px;color:var(--muted);cursor:pointer;padding:0 2px;line-height:1;letter-spacing:-1px}
 .blk-handle:hover{color:var(--accent2)}
@@ -1656,6 +1664,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .pw-publish{flex:1;padding:11px;border-radius:8px;border:none;background:var(--accent2);color:#0d0f12;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-body)}
 .picker-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:12px}
 .picker-box{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:440px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+.picker-switch-banner{background:rgba(0,229,160,.1);color:var(--accent2);font-size:12px;padding:9px 14px;border-bottom:1px solid rgba(0,229,160,.2);text-align:center}
+.picker-switch-banner b{font-weight:700}
 .picker-top{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border)}
 .picker-top input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:14px;font-family:var(--font-body)}
 .picker-count{font-size:9px;color:var(--muted);white-space:nowrap}
@@ -8128,8 +8138,16 @@ function renderWeekEditor(){
 function renderDayCard(d,i){
   const open=d._open!==false;
   const blocks=(d.bloques||[]).map((b,bi)=>renderBlockRow(b,i,bi)).join('');
+  const nDias=(_plan.week.data.dias||[]).length;
+  const dCanUp=i>0, dCanDown=i<nDias-1;
+  const dayHandle=`<span class="day-handle-wrap"><span class="day-handle" onclick="event.stopPropagation();toggleDayMenu(${i})" title="Mover día">&#8942;</span>
+    <div class="day-menu" id="daymenu-${i}">
+      ${dCanUp?`<button onclick="event.stopPropagation();moveDay(${i},-1)"><span>&#8593;</span> Subir día</button>`:''}
+      ${dCanDown?`<button onclick="event.stopPropagation();moveDay(${i},1)"><span>&#8595;</span> Bajar día</button>`:''}
+    </div></span>`;
   return `<div class="day-card">
     <div class="day-hd" onclick="toggleDay(${i})">
+      ${dayHandle}
       <span class="chev">${open?'&#9660;':'&#9654;'}</span>
       <span id="daysem-${i}" style="display:flex;align-items:center">${daySemaforo(d.titulo||'')}</span>
       <input class="dinp" placeholder="Titulo del dia (ej. High Day)" value="${d.titulo||''}" oninput="event.stopPropagation();refreshDaySemaforo(${i},this.value)" onclick="event.stopPropagation()">
@@ -8162,6 +8180,7 @@ function renderBlockRow(b,dayIdx,blockIdx){
       <div class="brow-menu" id="rowmenu-${dayIdx}_${blockIdx}_${ei}">
         ${canUp?`<button onclick="event.stopPropagation();moveExercise(${dayIdx},${blockIdx},${ei},-1)"><span>&#8593;</span> Subir</button>`:''}
         ${canDown?`<button onclick="event.stopPropagation();moveExercise(${dayIdx},${blockIdx},${ei},1)"><span>&#8595;</span> Bajar</button>`:''}
+        <button onclick="event.stopPropagation();switchExercise(${dayIdx},${blockIdx},${ei})"><span>&#8646;</span> Cambiar ejercicio</button>
       </div>
     </div>`;
   }).join('');
@@ -8202,6 +8221,20 @@ function moveBlock(dayIdx,blockIdx,dir){
   const ni=blockIdx+dir;
   if(ni<0||ni>=arr.length) return;
   const tmp=arr[blockIdx]; arr[blockIdx]=arr[ni]; arr[ni]=tmp;
+  renderWeekEditor();
+}
+function toggleDayMenu(i){
+  const el=document.getElementById('daymenu-'+i);
+  if(!el) return;
+  const abierto=el.classList.contains('open');
+  document.querySelectorAll('.day-menu.open,.blk-menu.open,.brow-menu.open').forEach(m=>m.classList.remove('open'));
+  if(!abierto){ el.classList.add('open'); if(!window._dayMenuListener){ window._dayMenuListener=true; document.addEventListener('click',function(e){ if(!e.target.closest('.day-handle')&&!e.target.closest('.day-menu')) document.querySelectorAll('.day-menu.open').forEach(m=>m.classList.remove('open')); }); } }
+}
+function moveDay(i,dir){
+  const arr=_plan.week.data.dias;
+  const ni=i+dir;
+  if(ni<0||ni>=arr.length) return;
+  const tmp=arr[i]; arr[i]=arr[ni]; arr[ni]=tmp;
   renderWeekEditor();
 }
 function toggleRowMenu(key){
@@ -8300,6 +8333,12 @@ function addExerciseToBlock(dayIdx,blockIdx){
   _plan.picker={ dayIdx, blockIdx, q:'', filters:{} };
   renderExercisePicker();
 }
+function switchExercise(dayIdx,blockIdx,ei){
+  // abre la galería en modo "reemplazar": mantiene la prescripción, cambia solo el ejercicio
+  document.querySelectorAll('.brow-menu.open').forEach(m=>m.classList.remove('open'));
+  _plan.picker={ dayIdx, blockIdx, ei, replace:true, q:'', filters:{} };
+  renderExercisePicker();
+}
 function openExerciseFields(dayIdx,blockIdx,ei){
   // toca un ejercicio ya puesto -> abrir campos de prescripcion (modal inline)
   _plan.fieldEdit={ dayIdx, blockIdx, ei };
@@ -8376,9 +8415,16 @@ function renderExercisePicker(){
     return `<div class="fh">${cc.lbl}</div>${opts}`;
   }).join('');
   const modal=document.getElementById('picker-modal');
+  const _pk=_plan.picker;
+  let switchBanner='';
+  if(_pk.replace && _pk.ei!=null){
+    const itAnt=_plan.week.data.dias[_pk.dayIdx].bloques[_pk.blockIdx].ejercicios[_pk.ei];
+    switchBanner=`<div class="picker-switch-banner">&#8646; Cambiando <b>${(itAnt&&itAnt.ejercicio)||'ejercicio'}</b> · se mantiene la prescripción</div>`;
+  }
   const html=`
     <div class="picker-backdrop" onclick="closePicker(event)">
       <div class="picker-box" onclick="event.stopPropagation()">
+        ${switchBanner}
         <div class="picker-top">
           <span>&#128269;</span>
           <input type="text" placeholder="Buscar ejercicio..." value="${_plan.picker.q}" oninput="pickerSearchInput(this.value)" autofocus>
@@ -8409,10 +8455,18 @@ function closePicker(e){
 }
 function pickExercise(id){
   const ex=_plan.exercises.find(e=>String(e.id)===String(id)); if(!ex) return;
-  const {dayIdx,blockIdx}=_plan.picker;
+  const {dayIdx,blockIdx,ei,replace}=_plan.picker;
   const b=_plan.week.data.dias[dayIdx].bloques[blockIdx];
-  b.ejercicios.push({ ejercicio:ex.name, video:ex.video, sets:'', reps:'', tempo:'', carga:'', tipo_carga:'%', orden:'' });
-  reorderBlock(dayIdx);
+  if(replace && ei!=null && b.ejercicios[ei]){
+    // Reemplazar: mantener prescripción (sets, reps, tempo, carga, tipo_carga, orden), cambiar ejercicio+vídeo
+    const it=b.ejercicios[ei];
+    it.ejercicio=ex.name;
+    it.video=ex.video;
+    it.nota=''; // la nota era específica del ejercicio anterior
+  } else {
+    b.ejercicios.push({ ejercicio:ex.name, video:ex.video, sets:'', reps:'', tempo:'', carga:'', tipo_carga:'%', orden:'' });
+    reorderBlock(dayIdx);
+  }
   const modal=document.getElementById('picker-modal');
   modal.style.display='none'; modal.innerHTML='';
   _plan.picker=null;
