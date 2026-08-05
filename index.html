@@ -1602,6 +1602,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .pub{font-size:10px;padding:3px 9px;border-radius:12px;background:var(--surface);color:var(--muted);cursor:pointer;flex-shrink:0}
 .pub.on{background:rgba(0,229,160,.15);color:var(--accent2)}
 .wk-del{font-size:14px;cursor:pointer;opacity:.6;flex-shrink:0}
+.wk-dup{font-size:15px;cursor:pointer;opacity:.6;flex-shrink:0;color:var(--accent2)}
+.wk-dup:hover{opacity:1}
 .wk-days{padding:6px 13px 10px}
 .day{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);font-size:12px;font-weight:500;cursor:pointer}
 .day:last-child{border-bottom:none}
@@ -2213,9 +2215,15 @@ function parseLoadTargets(loadObjetivo, nSets) {
   let targets;
   if (!loadObjetivo) targets = [''];
   else {
-    const pctMatches = loadObjetivo.match(/\d+\.?\d*%/g);
-    if (pctMatches && pctMatches.length > 0) targets = pctMatches;
-    else targets = [loadObjetivo.trim() || ''];
+    const s = loadObjetivo.trim();
+    // rango de intensidad "75-80%" o "7-8" (RPE/RIR) o etiqueta "RPE 8" → objetivo único
+    if (/^\d+\.?\d*\s*-\s*\d+\.?\d*%?$/.test(s) || /^(RPE|RIR)\s/i.test(s) || /^BW$/i.test(s)) {
+      targets = [s];
+    } else {
+      const pctMatches = s.match(/\d+\.?\d*%/g);
+      if (pctMatches && pctMatches.length > 0) targets = pctMatches;
+      else targets = [s || ''];
+    }
   }
   // Si hay un número de series mayor que los targets, expandir repitiendo
   // (así 3 sets al 70% → 3 boxes, y el jugador puede meter peso distinto en cada uno)
@@ -8108,6 +8116,7 @@ async function renderWeeksList(){
             <div class="wk-meta">${w.squad} · ${fmtRange(w.fecha_inicio,w.fecha_fin)} · ${dias.length} dias · ${totalEj} ej.</div>
           </div>
           <span class="pub ${w.visible?'on':''}" title="Se gestiona en Settings">${w.visible?'&#128065; Visible':'&#128064; Oculta'}</span>
+          <span class="wk-dup" onclick="event.stopPropagation();duplicarSemana('${w.id}')" title="Duplicar semana">&#10697;</span>
           <span class="wk-del" onclick="event.stopPropagation();delWeek('${w.id}')">&#128465;</span>
         </div>
         <div class="wk-days">${daysHtml||'<div style="font-size:11px;color:var(--muted);padding:6px">Sin dias aun</div>'}</div>
@@ -8142,6 +8151,31 @@ function newWeek(){
     fecha_inicio:today.toISOString().slice(0,10), fecha_fin:end.toISOString().slice(0,10),
     data:{ dias:[] } };
   renderWeekEditor();
+}
+// Duplica una semana: copia toda la estructura con nombre nuevo y la abre para editar
+function duplicarSemana(id){
+  const orig=_plan.weeks.find(w=>String(w.id)===String(id));
+  if(!orig){ alert('No se encontró la semana'); return; }
+  // Sugerir nombre incrementando el número final si lo hay
+  let nuevoNombre=orig.nombre;
+  const m=orig.nombre.match(/^(.*?)(\d+)(\D*)$/);
+  if(m){ nuevoNombre=m[1]+(parseInt(m[2])+1)+m[3]; }
+  else { nuevoNombre=orig.nombre+' (copia)'; }
+  // Copia profunda, sin id (para que se cree como nueva)
+  const copia=JSON.parse(JSON.stringify(orig));
+  copia.id='';
+  copia.nombre=nuevoNombre;
+  copia.visible=false;
+  // Desplazar fechas una semana adelante si las hay
+  copia.fecha_inicio=_sumarDias(orig.fecha_inicio,7);
+  copia.fecha_fin=_sumarDias(orig.fecha_fin,7);
+  (copia.data&&copia.data.dias||[]).forEach(d=>{ d.fecha=_sumarDias(d.fecha,7); d._open=true; });
+  _plan.week=copia;
+  renderWeekEditor();
+}
+function _sumarDias(fecha,n){
+  if(!fecha) return fecha;
+  try{ const d=new Date(fecha+'T00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }catch(e){ return fecha; }
 }
 function editWeek(id){
   const w=_plan.weeks.find(x=>String(x.id)===String(id)); if(!w) return;
@@ -8548,6 +8582,11 @@ function _parseSeries(it){
   // valores de intensidad por serie
   let intens = [];
   const esBW = /^BW$/i.test(cargaStr.trim());
+  // ¿rango de intensidad? "75-80%" o "7-8" (RPE/RIR)
+  const intensRangoM = cargaStr.match(/^(\d+\.?\d*)\s*-\s*(\d+\.?\d*)%?$/);
+  const intensRango = !esBW && !!intensRangoM;
+  const intensMin = intensRangoM ? intensRangoM[1] : '';
+  const intensMax = intensRangoM ? intensRangoM[2] : '';
   if (esBW) {
     intens = [];
   } else if (tipo === '%') {
@@ -8583,7 +8622,7 @@ function _parseSeries(it){
   if (rango){ const mm = repsStr.match(/(\d+)\s*[-]\s*(\d+)/); if(mm){ repMin=mm[1]; repMax=mm[2]; } }
   // tipo de reps: reps | seg | rango
   const tipoReps = rango ? 'rango' : (esTiempo ? 'seg' : 'reps');
-  return { series, usaRango: rango, repMin, repMax, tipoReps, esBW, setsRango, setsMin, setsMax };
+  return { series, usaRango: rango, repMin, repMax, tipoReps, esBW, setsRango, setsMin, setsMax, intensRango, intensMin, intensMax };
 }
 // Sincroniza el array de series de vuelta a los campos legacy (carga/reps/sets)
 function _syncSeries(it, ed){
@@ -8594,9 +8633,12 @@ function _syncSeries(it, ed){
   } else {
     it.sets = String(ed.series.length);
   }
-  // carga: BW, o concatenar intensidades
+  // carga: BW, rango de intensidad, o por serie
   if (ed.esBW){
     it.carga = 'BW';
+  } else if (ed.intensRango && ed.intensMin && ed.intensMax){
+    // rango global de intensidad: "75-80%" o (RPE/RIR) "7-8"
+    it.carga = (tipo === '%') ? `${ed.intensMin}-${ed.intensMax}%` : `${ed.intensMin}-${ed.intensMax}`;
   } else if (tipo === '%'){
     it.carga = ed.series.map(s=> s.intens? s.intens+'%':'').filter(Boolean).join('');
   } else {
@@ -8630,14 +8672,17 @@ function renderFieldsModal(){
   const esSeg = ed.tipoReps==='seg';
   const esRango = ed.tipoReps==='rango';
   const repUnit = esSeg ? 'seg' : (esRango?'':'reps');
+  const intR = ed.intensRango && !ed.esBW;
 
   const seriesHTML = ed.series.map((s,i)=>{
+    const intensCell = ed.esBW
+      ? `<div class="pe-inp pe-rng-global" style="color:var(--accent2)">BW<span class="pe-u"></span></div>`
+      : (intR
+        ? `<div class="pe-inp pe-rng-global">${ed.intensMin||'—'}–${ed.intensMax||'—'}<span class="pe-u">${unidad}</span></div>`
+        : `<div class="pe-inp"><input value="${s.intens||''}" placeholder="${lt==='%'?'75':lt==='RIR'?'2':'8'}" inputmode="decimal" oninput="presSetSerie(${i},'intens',this.value)"><span class="pe-u">${unidad}</span></div>`);
     return `<div class="pe-serie" id="pe-serie-${i}">
       <span class="pe-sn">S${i+1}</span>
-      <div class="pe-inp">
-        <input value="${s.intens||''}" placeholder="${lt==='%'?'75':lt==='RIR'?'2':'8'}" inputmode="decimal"
-          oninput="presSetSerie(${i},'intens',this.value)"><span class="pe-u">${unidad}</span>
-      </div>
+      ${intensCell}
       <span class="pe-x">×</span>
       ${esRango
         ? `<div class="pe-inp pe-rng-global">${ed.repMin||'—'}–${ed.repMax||'—'}<span class="pe-u">${ed._rangoSeg?'seg':'reps'}</span></div>`
@@ -8676,6 +8721,19 @@ function renderFieldsModal(){
             </div>
           </div>
         </div>
+
+        ${!ed.esBW ? `
+        <label class="pe-setsrango-tog" style="margin-top:10px">
+          <input type="checkbox" ${ed.intensRango?'checked':''} onchange="presToggleIntensRango(this.checked)">
+          rango de ${lt==='%'?'%':lt} (ej. ${lt==='%'?'75-80':lt==='RIR'?'2-3':'7-8'})
+        </label>
+        ${ed.intensRango ? `
+        <div class="pe-rango-row">
+          <input value="${ed.intensMin||''}" placeholder="mín" inputmode="decimal" oninput="presSetIntensRango('intensMin',this.value)">
+          <span>–</span>
+          <input value="${ed.intensMax||''}" placeholder="máx" inputmode="decimal" oninput="presSetIntensRango('intensMax',this.value)">
+          <span style="font-size:12px;color:var(--muted)">${lt==='%'?'%':lt} (todas las series)</span>
+        </div>` : ''}` : ''}
 
         <div class="pe-serie-hdr">
           <span>Por serie</span>
@@ -8767,8 +8825,23 @@ function presRangoSeg(on){
 }
 function presToggleBW(){
   _presEd.esBW=!_presEd.esBW;
+  if(_presEd.esBW) _presEd.intensRango=false;
   _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
   renderFieldsModal();
+}
+function presToggleIntensRango(on){
+  _presEd.intensRango=on;
+  if(on && !_presEd.intensMin){ _presEd.intensMin=_presEd.series[0].intens||''; }
+  _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
+  renderFieldsModal();
+}
+function presSetIntensRango(campo,val){
+  _presEd[campo]=val;
+  _syncSeries(_plan.week.data.dias[_plan.fieldEdit.dayIdx].bloques[_plan.fieldEdit.blockIdx].ejercicios[_plan.fieldEdit.ei], _presEd);
+  document.querySelectorAll('.pe-rng-global').forEach(el=>{
+    if(el.childNodes[0]) el.childNodes[0].nodeValue=(_presEd.intensMin||'—')+'–'+(_presEd.intensMax||'—');
+  });
+  clearTimeout(_cmpTO); _cmpTO=setTimeout(updateLoadCompare,400);
 }
 function presToggleSetsRango(on){
   _presEd.setsRango=on;
