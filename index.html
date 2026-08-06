@@ -1607,8 +1607,13 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .rr-rtab{font-size:10px;color:var(--muted);padding:4px 9px;border-radius:6px;border:1px solid var(--border2);cursor:pointer}
 .rr-rtab.on{background:var(--surface2);color:var(--text);border-color:var(--border-strong)}
 .quad-wrap{position:relative;padding-left:16px;padding-bottom:18px}
-.quad-grid{position:relative;width:100%;aspect-ratio:1.4/1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;border-radius:8px;overflow:hidden;border:1px solid var(--border2)}
-.quad-cell{display:flex;align-items:flex-start;padding:6px}
+.quad-grid{position:relative;width:100%;height:300px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;border-radius:8px;overflow:hidden;border:1px solid var(--border2)}
+.quad-cell{display:flex;padding:8px}
+.quad-cell span{font-size:10px;font-weight:600;height:fit-content}
+.qc-tl{background:rgba(255,80,80,.16);align-items:flex-start;justify-content:flex-start}
+.qc-tr{background:rgba(0,229,160,.16);align-items:flex-start;justify-content:flex-end}
+.qc-bl{background:rgba(255,157,63,.14);align-items:flex-end;justify-content:flex-start}
+.qc-br{background:rgba(74,160,220,.14);align-items:flex-end;justify-content:flex-end}
 .quad-cell span{font-size:9px;font-weight:600}
 .quad-dot{position:absolute;width:26px;height:26px;border-radius:50%;background:var(--surface);border:2px solid var(--accent2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--text);transform:translate(-50%,-50%);cursor:pointer;z-index:5}
 .quad-dot:hover{z-index:10;box-shadow:0 0 0 3px rgba(255,255,255,.1)}
@@ -5547,15 +5552,22 @@ function _quadranteHTML(cuad){
   // Solo jugadores con ambos valores
   const pts=cuad.filter(c=>c.rpe!=null && c.readiness!=null);
   if(!pts.length) return '<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Faltan datos de RPE o readiness</div>';
-  // posición: X=readiness 0-20, Y=RPE 0-10 (invertido, alto arriba)
+  // posición escalada para que los CORTES caigan en el centro (50%):
+  // readiness: corte en 10 → x=50%. RPE: corte en 8 → y=50% (invertido, alto arriba).
   const dots=pts.map(c=>{
-    const xPct=Math.max(4,Math.min(96, c.readiness/20*100));
-    const yPct=Math.max(4,Math.min(96, 100 - c.rpe/10*100));
+    // readiness 0-20, corte en 10 al centro
+    const xPct = c.readiness<=10
+      ? Math.max(4, c.readiness/10*50)
+      : Math.min(96, 50 + (c.readiness-10)/10*50);
+    // RPE 0-10, corte en 8 al centro (invertido: alto arriba)
+    const yUp = c.rpe>=8
+      ? Math.max(4, 50 - (c.rpe-8)/2*50)      // 8→50%, 10→arriba
+      : Math.min(96, 50 + (8-c.rpe)/8*50);    // 8→50%, 0→abajo
+    const yPct = yUp;
     const ini=(c.nombre||c.usuario).split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
-    // color del punto según la zona (RPE alto/bajo × readiness alto/bajo)
-    // cortes: RPE alto ≥8 (medio ≥5) · readiness: bajo <10, alto ≥14
-    const rpeAlto = c.rpe>=5;              // "carga" (medio-alto)
-    const redBajo = c.readiness<14;        // no está fresco del todo
+    // color según zona con TUS cortes: RPE alto ≥8 · readiness bajo <10
+    const rpeAlto = c.rpe>=8;
+    const redBajo = c.readiness<10;
     let col;
     if(rpeAlto && redBajo)      col='#ff5050';   // arriba-izq: no asimila (rojo)
     else if(rpeAlto && !redBajo) col='#00e5a0';  // arriba-der: recupera bien (verde)
@@ -5566,14 +5578,14 @@ function _quadranteHTML(cuad){
   }).join('');
   return `<div class="quad-wrap">
     <div class="quad-grid">
-      <div class="quad-cell" style="background:rgba(255,80,80,.16)"><span style="color:#ff5050">No asimila</span></div>
-      <div class="quad-cell" style="background:rgba(0,229,160,.16);text-align:right"><span style="color:#00e5a0">Recupera ✓</span></div>
-      <div class="quad-cell" style="background:rgba(255,157,63,.14);align-self:flex-end"><span style="color:#ff9d3f">Vigilar</span></div>
-      <div class="quad-cell" style="background:rgba(74,160,220,.14);text-align:right;align-self:flex-end"><span style="color:#4aa0dc">Fresco</span></div>
+      <div class="quad-cell qc-tl"><span style="color:#ff5050">No asimila</span></div>
+      <div class="quad-cell qc-tr"><span style="color:#00e5a0">Recupera ✓</span></div>
+      <div class="quad-cell qc-bl"><span style="color:#ff9d3f">Vigilar</span></div>
+      <div class="quad-cell qc-br"><span style="color:#4aa0dc">Fresco</span></div>
       ${dots}
     </div>
-    <div class="quad-axis-x">← readiness bajo · readiness alto →</div>
-    <div class="quad-axis-y">← RPE alto · RPE bajo →</div>
+    <div class="quad-axis-x">← readiness &lt;10 · ≥10 →</div>
+    <div class="quad-axis-y">← RPE ≥8 · &lt;8 →</div>
     <div id="quad-tip" class="quad-tip" style="display:none"></div>
   </div>`;
 }
