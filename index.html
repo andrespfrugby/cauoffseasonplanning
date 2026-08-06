@@ -1606,6 +1606,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .rr-range-tabs{display:flex;gap:4px}
 .rr-rtab{font-size:10px;color:var(--muted);padding:4px 9px;border-radius:6px;border:1px solid var(--border2);cursor:pointer}
 .rr-rtab.on{background:var(--surface2);color:var(--text);border-color:var(--border-strong)}
+.quad-daynav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.quad-navbtn{width:30px;height:30px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.quad-navbtn:hover{border-color:var(--border-strong)}
+.quad-fecha{font-size:13px;font-weight:600;color:var(--text);min-width:52px;text-align:center}
+.quad-hoybtn{margin-left:auto;font-size:11px;padding:6px 12px;border-radius:7px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer}
+.quad-hoybtn:hover{color:var(--text)}
 .quad-wrap{position:relative;padding-left:16px;padding-bottom:18px}
 .quad-grid{position:relative;width:100%;height:300px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;border-radius:8px;overflow:hidden;border:1px solid var(--border2)}
 .quad-cell{display:flex;padding:8px}
@@ -1994,7 +2000,13 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 
       <div class="coach-chart-box" id="coach-quad-chart">
         <div class="chart-section-title">Cuadrante de recuperación</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">RPE de la última sesión × readiness de hoy. Arriba-derecha = recupera bien.</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">RPE de la última sesión × readiness del día. Arriba-derecha = recupera bien.</div>
+        <div class="quad-daynav">
+          <button class="quad-navbtn" onclick="quadNavDia(-1)" title="Día anterior">&#8249;</button>
+          <span id="quad-fecha-label" class="quad-fecha">hoy</span>
+          <button class="quad-navbtn" onclick="quadNavDia(1)" title="Día siguiente">&#8250;</button>
+          <button class="quad-hoybtn" onclick="quadNavHoy()">hoy</button>
+        </div>
         <div id="coach-quad-content"><div class="loader"><div class="spinner"></div></div></div>
       </div>
 
@@ -5497,12 +5509,47 @@ async function cargarRpeReadinessSerie(){
   const quad = document.getElementById('coach-quad-content');
   if(!cont) return;
   const squad = state.coachSquadFilter || '';
-  const fechaRef = (document.getElementById('readiness-date-picker')||{}).value || '';
-  const res = await api({ action:'getRpeReadinessSerie', squad, dias:_rrRange, fechaRef });
-  if(!res.ok){ cont.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Sin datos</div>'; if(quad) quad.innerHTML=''; return; }
-  _rrData = res;
-  cont.innerHTML = _rrChartSVG(res.serie);
-  if(quad) quad.innerHTML = _quadranteHTML(res.cuadrante);
+  // La gráfica usa la fecha del picker de readiness; el cuadrante su propia fecha navegable.
+  const fechaRefGrafica = (document.getElementById('readiness-date-picker')||{}).value || '';
+  const res = await api({ action:'getRpeReadinessSerie', squad, dias:_rrRange, fechaRef:fechaRefGrafica });
+  if(!res.ok){ cont.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Sin datos</div>'; if(quad) quad.innerHTML=''; }
+  else { _rrData = res; cont.innerHTML = _rrChartSVG(res.serie); }
+  // cargar el cuadrante (con su fecha propia)
+  cargarCuadrante();
+}
+var _quadFecha = null; // fecha del cuadrante (null = hoy / la del picker)
+async function cargarCuadrante(){
+  const quad = document.getElementById('coach-quad-content');
+  if(!quad) return;
+  const squad = state.coachSquadFilter || '';
+  // fecha: la de navegación, o la del picker de readiness, o hoy
+  const fechaRef = _quadFecha || (document.getElementById('readiness-date-picker')||{}).value || '';
+  _quadActualizarLabel(fechaRef);
+  const res = await api({ action:'getRpeReadinessSerie', squad, dias:1, fechaRef });
+  if(!res.ok || !res.cuadrante){ quad.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Sin datos</div>'; return; }
+  quad.innerHTML = _quadranteHTML(res.cuadrante);
+}
+function _quadActualizarLabel(fechaRef){
+  const el=document.getElementById('quad-fecha-label');
+  if(!el) return;
+  const hoyStr=new Date().toISOString().slice(0,10);
+  const f = fechaRef || hoyStr;
+  if(f===hoyStr){ el.textContent='hoy'; }
+  else { const p=f.split('-'); el.textContent = p.length===3 ? `${p[2]}/${p[1]}` : f; }
+}
+function quadNavDia(dir){
+  const hoyStr=new Date().toISOString().slice(0,10);
+  const base = _quadFecha || (document.getElementById('readiness-date-picker')||{}).value || hoyStr;
+  const d=new Date(base+'T00:00'); d.setDate(d.getDate()+dir);
+  const nueva=d.toISOString().slice(0,10);
+  // no permitir ir al futuro más allá de hoy
+  if(nueva>hoyStr){ return; }
+  _quadFecha=nueva;
+  cargarCuadrante();
+}
+function quadNavHoy(){
+  _quadFecha=null;
+  cargarCuadrante();
 }
 function _rrChartSVG(serie){
   if(!serie || !serie.length) return '<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Sin registros en este periodo</div>';
