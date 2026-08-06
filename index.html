@@ -1947,26 +1947,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <!-- ── SECCIÓN 1: RPE ── -->
       <div class="rpe-section-header">🍬 RPE</div>
 
-      <!-- Gráfica promedio equipo: RPE (barras) + readiness (línea) -->
-      <div class="coach-chart-box" id="coach-rr-chart">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <div class="chart-section-title" style="margin:0">Carga vs. recuperación del equipo</div>
-          <div class="rr-range-tabs">
-            <span class="rr-rtab on" id="rr-tab-7" onclick="rrSetRange(7)">7 días</span>
-            <span class="rr-rtab" id="rr-tab-30" onclick="rrSetRange(30)">Mes</span>
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Barra = RPE del día · Línea = readiness. Barra alta → mira la línea del día siguiente.</div>
-        <div id="coach-rr-content"><div class="loader"><div class="spinner"></div></div></div>
-      </div>
-
-      <!-- Cuadrante recuperación: RPE última sesión × readiness hoy -->
-      <div class="coach-chart-box" id="coach-quad-chart">
-        <div class="chart-section-title">Cuadrante de recuperación</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">RPE de la última sesión × readiness de hoy. Arriba-derecha = recupera bien.</div>
-        <div id="coach-quad-content"><div class="loader"><div class="spinner"></div></div></div>
-      </div>
-
       <div id="rpe-rango-filtro" style="display:none;margin-bottom:14px">
         <div style="position:relative;max-width:360px">
           <div id="rpe-bloques-toggle" onclick="rpeToggleBloquesDropdown()" style="background:var(--surface1);border:1px solid var(--border2);border-radius:9px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
@@ -1990,6 +1970,27 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         <div id="coach-player-evo-content">
           <div class="pevo-empty">Selecciona un jugador para ver su evolución.</div>
         </div>
+      </div>
+
+      <!-- ── Carga vs. recuperación (gráfica promedio + cuadrante) ── -->
+      <div class="rpe-section-header">🔋 Carga vs. Recuperación</div>
+
+      <div class="coach-chart-box" id="coach-rr-chart">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div class="chart-section-title" style="margin:0">Carga vs. recuperación del equipo</div>
+          <div class="rr-range-tabs">
+            <span class="rr-rtab on" id="rr-tab-7" onclick="rrSetRange(7)">7 días</span>
+            <span class="rr-rtab" id="rr-tab-30" onclick="rrSetRange(30)">Mes</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Barra = RPE de la sesión · Línea = readiness del día siguiente. Ves cómo recuperan de cada día de carga.</div>
+        <div id="coach-rr-content"><div class="loader"><div class="spinner"></div></div></div>
+      </div>
+
+      <div class="coach-chart-box" id="coach-quad-chart">
+        <div class="chart-section-title">Cuadrante de recuperación</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">RPE de la última sesión × readiness de hoy. Arriba-derecha = recupera bien.</div>
+        <div id="coach-quad-content"><div class="loader"><div class="spinner"></div></div></div>
       </div>
 
       <!-- ── SECCIÓN 2: CARGA DEL EQUIPO (movida a Control de cargas) ── -->
@@ -5551,13 +5552,15 @@ function _quadranteHTML(cuad){
     const xPct=Math.max(4,Math.min(96, c.readiness/20*100));
     const yPct=Math.max(4,Math.min(96, 100 - c.rpe/10*100));
     const ini=(c.nombre||c.usuario).split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
-    // color del borde según zona de recuperación
-    const alto=c.rpe>=8, medioRpe=c.rpe>=5;
-    const redAlto=c.readiness>=14, redBajo=c.readiness<10;
-    let col='#00e5a0';
-    if(redBajo && medioRpe) col='#ff5050';        // carga + readiness bajo = no asimila
-    else if(redBajo) col='#ff9d3f';                // readiness bajo sin carga = vigilar
-    else if(c.readiness<14) col='#ffc04d';         // readiness medio
+    // color del punto según la zona (RPE alto/bajo × readiness alto/bajo)
+    // cortes: RPE alto ≥8 (medio ≥5) · readiness: bajo <10, alto ≥14
+    const rpeAlto = c.rpe>=5;              // "carga" (medio-alto)
+    const redBajo = c.readiness<14;        // no está fresco del todo
+    let col;
+    if(rpeAlto && redBajo)      col='#ff5050';   // arriba-izq: no asimila (rojo)
+    else if(rpeAlto && !redBajo) col='#00e5a0';  // arriba-der: recupera bien (verde)
+    else if(!rpeAlto && redBajo) col='#ff9d3f';  // abajo-izq: vigilar (naranja)
+    else                         col='#4aa0dc';  // abajo-der: fresco (azul claro)
     return `<div class="quad-dot" style="left:${xPct}%;top:${yPct}%;border-color:${col}"
       onclick="quadTip(event,'${(c.nombre||c.usuario).replace(/'/g,'')}','${c.rpe}','${c.rpeFecha||''}','${c.readiness}')">${ini}</div>`;
   }).join('');
@@ -5566,7 +5569,7 @@ function _quadranteHTML(cuad){
       <div class="quad-cell" style="background:rgba(255,80,80,.16)"><span style="color:#ff5050">No asimila</span></div>
       <div class="quad-cell" style="background:rgba(0,229,160,.16);text-align:right"><span style="color:#00e5a0">Recupera ✓</span></div>
       <div class="quad-cell" style="background:rgba(255,157,63,.14);align-self:flex-end"><span style="color:#ff9d3f">Vigilar</span></div>
-      <div class="quad-cell" style="background:rgba(0,229,160,.08);text-align:right;align-self:flex-end"><span style="color:#00e5a0">Fresco</span></div>
+      <div class="quad-cell" style="background:rgba(74,160,220,.14);text-align:right;align-self:flex-end"><span style="color:#4aa0dc">Fresco</span></div>
       ${dots}
     </div>
     <div class="quad-axis-x">← readiness bajo · readiness alto →</div>
