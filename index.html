@@ -6113,7 +6113,15 @@ async function renderLoadTrend(equipo, contentId) {
     const d       = weeklyUA[sem];
     const players = d.playerCount.size;
     const avgUA   = players > 0 ? Math.round(d.totalUA / players) : 0;
-    const name    = weekNames[sem-1] || `Sem ${sem}`;
+    // Buscar el nombre de la semana por su índice real (state.semanaIndices),
+    // que cubre tanto las de la hoja como las del planner (índices 1000+).
+    let name = `Sem ${sem}`;
+    if (state.semanaIndices && state.semanaIndices.length) {
+      const pos = state.semanaIndices.indexOf(sem);
+      if (pos >= 0 && weekNames[pos]) name = weekNames[pos];
+    } else if (weekNames[sem-1]) {
+      name = weekNames[sem-1];
+    }
     return { sem, name, avgUA, players, sessions: d.sessions };
   });
 
