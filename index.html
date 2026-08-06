@@ -1603,6 +1603,18 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .pub.on{background:rgba(0,229,160,.15);color:var(--accent2)}
 .wk-del{font-size:14px;cursor:pointer;opacity:.6;flex-shrink:0}
 .wk-dup{font-size:15px;cursor:pointer;opacity:.6;flex-shrink:0;color:var(--accent2)}
+.rr-range-tabs{display:flex;gap:4px}
+.rr-rtab{font-size:10px;color:var(--muted);padding:4px 9px;border-radius:6px;border:1px solid var(--border2);cursor:pointer}
+.rr-rtab.on{background:var(--surface2);color:var(--text);border-color:var(--border-strong)}
+.quad-wrap{position:relative;padding-left:16px;padding-bottom:18px}
+.quad-grid{position:relative;width:100%;aspect-ratio:1.4/1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;border-radius:8px;overflow:hidden;border:1px solid var(--border2)}
+.quad-cell{display:flex;align-items:flex-start;padding:6px}
+.quad-cell span{font-size:9px;font-weight:600}
+.quad-dot{position:absolute;width:26px;height:26px;border-radius:50%;background:var(--surface);border:2px solid var(--accent2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--text);transform:translate(-50%,-50%);cursor:pointer;z-index:5}
+.quad-dot:hover{z-index:10;box-shadow:0 0 0 3px rgba(255,255,255,.1)}
+.quad-axis-x{text-align:center;font-size:9px;color:var(--muted);margin-top:5px}
+.quad-axis-y{position:absolute;left:-8px;top:50%;transform:rotate(-90deg) translateX(50%);transform-origin:left center;font-size:9px;color:var(--muted);white-space:nowrap}
+.quad-tip{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--text);line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,.5);z-index:20;white-space:nowrap}
 .wk-dup:hover{opacity:1}
 .wk-days{padding:6px 13px 10px}
 .day{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);font-size:12px;font-weight:500;cursor:pointer}
@@ -1934,6 +1946,27 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div id="load-view-analisis" style="display:none">
       <!-- ── SECCIÓN 1: RPE ── -->
       <div class="rpe-section-header">🍬 RPE</div>
+
+      <!-- Gráfica promedio equipo: RPE (barras) + readiness (línea) -->
+      <div class="coach-chart-box" id="coach-rr-chart">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div class="chart-section-title" style="margin:0">Carga vs. recuperación del equipo</div>
+          <div class="rr-range-tabs">
+            <span class="rr-rtab on" id="rr-tab-7" onclick="rrSetRange(7)">7 días</span>
+            <span class="rr-rtab" id="rr-tab-30" onclick="rrSetRange(30)">Mes</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Barra = RPE del día · Línea = readiness. Barra alta → mira la línea del día siguiente.</div>
+        <div id="coach-rr-content"><div class="loader"><div class="spinner"></div></div></div>
+      </div>
+
+      <!-- Cuadrante recuperación: RPE última sesión × readiness hoy -->
+      <div class="coach-chart-box" id="coach-quad-chart">
+        <div class="chart-section-title">Cuadrante de recuperación</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">RPE de la última sesión × readiness de hoy. Arriba-derecha = recupera bien.</div>
+        <div id="coach-quad-content"><div class="loader"><div class="spinner"></div></div></div>
+      </div>
+
       <div id="rpe-rango-filtro" style="display:none;margin-bottom:14px">
         <div style="position:relative;max-width:360px">
           <div id="rpe-bloques-toggle" onclick="rpeToggleBloquesDropdown()" style="background:var(--surface1);border:1px solid var(--border2);border-radius:9px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
@@ -5440,7 +5473,116 @@ async function loadCoachPanel(useCache) {
 
   renderPlayerSelector(equipoFiltrado);
   renderAcwr(equipoFiltrado);
+  cargarRpeReadinessSerie();
   // renderDailyLoad y renderLoadTrend movidas/eliminadas del Análisis RPE
+}
+
+// ── Gráfica promedio (RPE barras + readiness línea) + cuadrante ──
+var _rrRange = 7;
+var _rrData = null;
+function rrSetRange(n){
+  _rrRange = n;
+  document.getElementById('rr-tab-7').classList.toggle('on', n===7);
+  document.getElementById('rr-tab-30').classList.toggle('on', n===30);
+  cargarRpeReadinessSerie();
+}
+async function cargarRpeReadinessSerie(){
+  const cont = document.getElementById('coach-rr-content');
+  const quad = document.getElementById('coach-quad-content');
+  if(!cont) return;
+  const squad = state.coachSquadFilter || '';
+  const fechaRef = (document.getElementById('readiness-date-picker')||{}).value || '';
+  const res = await api({ action:'getRpeReadinessSerie', squad, dias:_rrRange, fechaRef });
+  if(!res.ok){ cont.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Sin datos</div>'; if(quad) quad.innerHTML=''; return; }
+  _rrData = res;
+  cont.innerHTML = _rrChartSVG(res.serie);
+  if(quad) quad.innerHTML = _quadranteHTML(res.cuadrante);
+}
+function _rrChartSVG(serie){
+  if(!serie || !serie.length) return '<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Sin registros en este periodo</div>';
+  const W=340, H=170, padL=28, padB=22, padT=10;
+  const innerW=W-padL-4, innerH=H-padB-padT;
+  const n=serie.length;
+  const bw=Math.max(6, Math.min(30, innerW/n*0.6));
+  const step=innerW/n;
+  const rpeCol=v=> v==null?'#4a4a52': v<5?'#00e5a0': v<8?'#ffc04d':'#ff5050';
+  const redCol=v=> v==null?'#4a4a52': v<10?'#ff5050': v<14?'#ffc04d':'#00e5a0';
+  // barras RPE (0-10) y línea readiness (0-20)
+  let bars='', pts=[], dots='', labels='';
+  serie.forEach((d,i)=>{
+    const cx=padL+step*i+step/2;
+    if(d.rpe!=null){
+      const h=Math.max(2, d.rpe/10*innerH);
+      bars+=`<rect x="${cx-bw/2}" y="${padT+innerH-h}" width="${bw}" height="${h}" rx="2" fill="${rpeCol(d.rpe)}" opacity=".55"><title>${d.fecha} · RPE ${d.rpe} (${d.nRpe})</title></rect>`;
+    }
+    if(d.readiness!=null){
+      const y=padT+innerH-(d.readiness/20*innerH);
+      pts.push([cx,y]);
+      dots+=`<circle cx="${cx}" cy="${y}" r="3.5" fill="${redCol(d.readiness)}"><title>${d.fecha} · Readiness ${d.readiness}/20 (${d.nRed})</title></circle>`;
+    } else { pts.push(null); }
+    // etiqueta fecha (día/mes corto)
+    const fp=d.fecha.split('-'); const lbl=fp.length===3?fp[2]:d.fecha;
+    if(n<=10 || i%Math.ceil(n/10)===0) labels+=`<text x="${cx}" y="${H-6}" font-size="7" fill="#8a8a8e" text-anchor="middle">${lbl}</text>`;
+  });
+  // línea readiness (uniendo puntos no nulos consecutivos)
+  let poly='';
+  for(let i=0;i<pts.length;i++){
+    if(!pts[i]) continue;
+    let j=i+1; while(j<pts.length && !pts[j]) j++;
+    if(j<pts.length && pts[j]) poly+=`<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${pts[j][0]}" y2="${pts[j][1]}" stroke="#00e5a0" stroke-width="2.2"/>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:180px">
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+innerH}" stroke="#2a2a30" stroke-width="1"/>
+    <line x1="${padL}" y1="${padT+innerH}" x2="${W-4}" y2="${padT+innerH}" stroke="#2a2a30" stroke-width="1"/>
+    ${bars}${poly}${dots}${labels}
+  </svg>
+  <div style="display:flex;gap:16px;justify-content:center;margin-top:6px">
+    <span style="font-size:10px;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;background:#ffc04d;opacity:.6;border-radius:2px;vertical-align:-1px"></span> RPE equipo</span>
+    <span style="font-size:10px;color:var(--muted)"><span style="display:inline-block;width:14px;height:2px;background:#00e5a0;vertical-align:3px"></span> Readiness</span>
+  </div>`;
+}
+function _quadranteHTML(cuad){
+  if(!cuad || !cuad.length) return '<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Sin datos para el cuadrante</div>';
+  // Solo jugadores con ambos valores
+  const pts=cuad.filter(c=>c.rpe!=null && c.readiness!=null);
+  if(!pts.length) return '<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Faltan datos de RPE o readiness</div>';
+  // posición: X=readiness 0-20, Y=RPE 0-10 (invertido, alto arriba)
+  const dots=pts.map(c=>{
+    const xPct=Math.max(4,Math.min(96, c.readiness/20*100));
+    const yPct=Math.max(4,Math.min(96, 100 - c.rpe/10*100));
+    const ini=(c.nombre||c.usuario).split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
+    // color del borde según zona de recuperación
+    const alto=c.rpe>=8, medioRpe=c.rpe>=5;
+    const redAlto=c.readiness>=14, redBajo=c.readiness<10;
+    let col='#00e5a0';
+    if(redBajo && medioRpe) col='#ff5050';        // carga + readiness bajo = no asimila
+    else if(redBajo) col='#ff9d3f';                // readiness bajo sin carga = vigilar
+    else if(c.readiness<14) col='#ffc04d';         // readiness medio
+    return `<div class="quad-dot" style="left:${xPct}%;top:${yPct}%;border-color:${col}"
+      onclick="quadTip(event,'${(c.nombre||c.usuario).replace(/'/g,'')}','${c.rpe}','${c.rpeFecha||''}','${c.readiness}')">${ini}</div>`;
+  }).join('');
+  return `<div class="quad-wrap">
+    <div class="quad-grid">
+      <div class="quad-cell" style="background:rgba(255,80,80,.16)"><span style="color:#ff5050">No asimila</span></div>
+      <div class="quad-cell" style="background:rgba(0,229,160,.16);text-align:right"><span style="color:#00e5a0">Recupera ✓</span></div>
+      <div class="quad-cell" style="background:rgba(255,157,63,.14);align-self:flex-end"><span style="color:#ff9d3f">Vigilar</span></div>
+      <div class="quad-cell" style="background:rgba(0,229,160,.08);text-align:right;align-self:flex-end"><span style="color:#00e5a0">Fresco</span></div>
+      ${dots}
+    </div>
+    <div class="quad-axis-x">← readiness bajo · readiness alto →</div>
+    <div class="quad-axis-y">← RPE alto · RPE bajo →</div>
+    <div id="quad-tip" class="quad-tip" style="display:none"></div>
+  </div>`;
+}
+function quadTip(e, nombre, rpe, rpeFecha, readiness){
+  e.stopPropagation();
+  const tip=document.getElementById('quad-tip');
+  if(!tip) return;
+  const fechaTxt = rpeFecha ? ' ('+rpeFecha.split('-').slice(1).reverse().join('/')+')' : '';
+  tip.innerHTML=`<b>${nombre}</b><br>RPE última sesión: ${rpe}${fechaTxt}<br>Readiness hoy: ${readiness}/20`;
+  tip.style.display='block';
+  clearTimeout(window._quadTipTO);
+  window._quadTipTO=setTimeout(()=>{ tip.style.display='none'; }, 3500);
 }
 
 function renderTeamLoadChart(semanaNombre, chart) {
