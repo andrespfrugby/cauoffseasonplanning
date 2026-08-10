@@ -3493,12 +3493,17 @@ async function renderTesting(){
   const cont = document.getElementById('testing-content');
   if(!cont) return;
   cont.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-  const res = await api({ action:'getTests', usuario: (state.user&&state.user.usuario)||'', squad: (state.user&&state.user.squad)||state.squad||'' });
-  if(!res || !res.ok){ cont.innerHTML = '<div class="pevo-empty">No se pudieron cargar los tests.</div>'; return; }
+  const usuarioEnv = (state.user&&state.user.usuario)||'';
+  const squadEnv = (state.user&&state.user.squad)||state.squad||'';
+  const res = await api({ action:'getTests', usuario: usuarioEnv, squad: squadEnv });
+  if(!res || !res.ok){
+    cont.innerHTML = `<div class="pevo-empty">No se pudieron cargar los tests.<br><br><small style="color:var(--muted)">usuario enviado: "${usuarioEnv}"<br>respuesta: ${JSON.stringify(res).slice(0,300)}</small></div>`;
+    return;
+  }
   if(res.aviso){ cont.innerHTML = `<div class="pevo-empty">${res.aviso}</div>`; return; }
   _testingData = res;
   if(!res.tests || !res.tests.length){
-    cont.innerHTML = '<div class="test-hd">🎯 Mis Tests</div><div class="pevo-empty">Aún no tienes resultados de tests registrados.</div>';
+    cont.innerHTML = `<div class="test-hd">🎯 Mis Tests</div><div class="pevo-empty">Aún no tienes resultados de tests registrados.<br><br><small style="color:var(--muted)">usuario enviado: "${usuarioEnv}"<br>tests devueltos: ${(res.tests||[]).length}<br>debug: ${JSON.stringify({nombre:res.nombre,miPos:res.miPos,aviso:res.aviso}).slice(0,200)}</small></div>`;
     return;
   }
   renderTestingList();
