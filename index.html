@@ -1607,6 +1607,48 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .rr-rtab{font-size:10px;color:var(--muted);padding:4px 9px;border-radius:6px;border:1px solid var(--border2);cursor:pointer}
 .rr-rtab.on{background:var(--surface2);color:var(--text);border-color:var(--border-strong)}
 .quad-daynav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+/* ── TESTING ── */
+.test-hd{font-size:17px;font-weight:700;color:var(--text);margin-bottom:14px}
+.test-list{display:flex;flex-direction:column;background:var(--surface1);border-radius:12px;overflow:hidden}
+.test-row{display:flex;align-items:center;gap:12px;padding:14px 14px;border-bottom:1px solid var(--border2);cursor:pointer}
+.test-row:last-child{border-bottom:none}
+.test-row:active{background:var(--surface2)}
+.test-row-nm{flex:1;font-size:14px;color:var(--text)}
+.test-row-val{font-size:18px;font-weight:700;color:var(--text)}
+.test-row-arrow{font-size:13px;font-weight:600;width:56px;text-align:right}
+.test-row-chev{color:var(--border-strong);font-size:16px}
+.test-u{font-size:11px;color:var(--muted);font-weight:400}
+.test-foot{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5}
+.test-detail-hd{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.test-back{font-size:22px;color:var(--muted);cursor:pointer;line-height:1}
+.test-detail-nm{font-size:16px;font-weight:600;color:var(--text);flex:1}
+.test-cup{font-size:20px;cursor:pointer}
+.test-detail-val{display:flex;align-items:flex-end;gap:12px;margin-bottom:16px}
+.test-big{font-size:40px;font-weight:800;color:var(--text);line-height:1}
+.test-big-arrow{font-size:14px;font-weight:600;margin-bottom:6px}
+.test-vs{font-size:11px;color:var(--muted);font-weight:400}
+.test-graph{background:var(--surface1);border-radius:12px;padding:14px 10px;margin-bottom:14px}
+.test-graph-empty{background:var(--surface1);border-radius:12px;padding:26px 14px;text-align:center;font-size:12px;color:var(--muted);margin-bottom:14px}
+.test-cmp{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.test-cmp-cell{background:var(--surface1);border-radius:10px;padding:13px 8px;text-align:center}
+.test-cmp-v{font-size:19px;font-weight:700;color:var(--text)}
+.test-cmp-l{font-size:9px;color:var(--muted);margin-top:3px;letter-spacing:.03em}
+.test-rm-line{font-size:13px;color:var(--muted);margin-top:6px;position:relative}
+.test-info{cursor:pointer;color:var(--accent2);font-size:12px;margin-left:2px}
+.test-rm-pop{position:absolute;left:0;top:100%;margin-top:4px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;padding:8px 11px;font-size:11px;color:var(--text);line-height:1.6;box-shadow:0 4px 16px rgba(0,0,0,.5);z-index:20;white-space:nowrap}
+.test-graph-lbl{font-size:11px;color:var(--text);font-weight:600;margin:4px 0 6px}
+.test-cmp-title{font-size:10px;color:var(--muted);margin:14px 0 6px}
+.test-rank-tabs{display:flex;gap:6px;margin-bottom:14px}
+.test-rank-tab{flex:1;text-align:center;font-size:12px;color:var(--muted);padding:9px;border-radius:8px;background:var(--surface1);border:1px solid var(--border2);cursor:pointer}
+.test-rank-tab.on{background:var(--accent2);color:#0d0f12;border-color:var(--accent2);font-weight:600}
+.test-rank-list{display:flex;flex-direction:column;gap:8px}
+.test-rank-card{display:flex;align-items:center;gap:14px;background:var(--surface1);border-radius:10px;padding:14px;border:1px solid transparent}
+.test-rank-card.yo{background:rgba(0,229,160,.08);border-color:rgba(0,229,160,.25)}
+.test-rank-num{font-size:20px;font-weight:800;color:var(--muted);width:24px;text-align:center}
+.test-rank-card:nth-child(1) .test-rank-num{color:#ffc04d}
+.test-rank-nm{flex:1;font-size:14px;color:var(--text)}
+.test-rank-card.yo .test-rank-nm{color:var(--accent2);font-weight:600}
+.test-rank-val{font-size:16px;font-weight:700;color:var(--text)}
 .quad-navbtn{width:30px;height:30px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
 .quad-navbtn:hover{border-color:var(--border-strong)}
 .quad-fecha{font-size:13px;font-weight:600;color:var(--text);min-width:52px;text-align:center}
@@ -2138,6 +2180,11 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div id="week-summary-box"></div>
     </div>
 
+    <!-- ══ JUGADOR: Testing ══ -->
+    <div id="tab-testing" class="tab-section" style="display:none">
+      <div id="testing-content"></div>
+    </div>
+
     <!-- ══ JUGADOR: Field Load ══ -->
     <div id="tab-fieldload" class="tab-section" style="display:none">
       <div id="fieldload-content"></div>
@@ -2192,6 +2239,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
     <div class="bn-item" id="bn-misemana" onclick="switchTab('misemana')" style="display:none">
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="4" height="8" rx="1"/><rect x="9.5" y="7" width="4" height="13" rx="1"/><rect x="16" y="3" width="4" height="17" rx="1"/></svg></div>
       <div class="bn-lbl">Stats</div>
+    </div>
+    <div class="bn-item" id="bn-testing" onclick="switchTab('testing')" style="display:none">
+      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></div>
+      <div class="bn-lbl">Testing</div>
     </div>
     <!-- coach -->
     <div class="bn-item" id="bn-readiness" onclick="switchTab('readiness')" style="display:none">
@@ -3433,6 +3484,236 @@ async function saveSession() {
   }
 }
 
+// ══════════════ TESTING (jugador) ══════════════
+var _testingData = null;
+var _testRankScope = 'pos'; // 'pos' | 'eq'
+
+async function renderTesting(){
+  const cont = document.getElementById('testing-content');
+  if(!cont) return;
+  cont.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const res = await api({ action:'getTests', usuario: state.usuario, squad: state.squad||'' });
+  if(!res || !res.ok){ cont.innerHTML = '<div class="pevo-empty">No se pudieron cargar los tests.</div>'; return; }
+  if(res.aviso){ cont.innerHTML = `<div class="pevo-empty">${res.aviso}</div>`; return; }
+  _testingData = res;
+  if(!res.tests || !res.tests.length){
+    cont.innerHTML = '<div class="test-hd">🎯 Mis Tests</div><div class="pevo-empty">Aún no tienes resultados de tests registrados.</div>';
+    return;
+  }
+  renderTestingList();
+}
+
+function renderTestingList(){
+  const cont = document.getElementById('testing-content');
+  const d = _testingData;
+  let rows = d.tests.map(t=>{
+    const flecha = _testFlecha(t);
+    const val = _fmtTestVal(t.ultimo, t.unidad);
+    return `<div class="test-row" onclick="renderTestDetail('${t.id}')">
+      <div class="test-row-nm">${t.nombre}</div>
+      <div class="test-row-val">${val}</div>
+      <div class="test-row-arrow" style="color:${flecha.color}">${flecha.txt}</div>
+      <span class="test-row-chev">›</span>
+    </div>`;
+  }).join('');
+  cont.innerHTML = `<div class="test-hd">🎯 Mis Tests</div>
+    <div class="test-list">${rows}</div>
+    <div class="test-foot">Tu último resultado y el cambio respecto al test anterior. Toca uno para ver tu evolución.</div>`;
+}
+
+// Flecha de cambio (respeta si "más es mejor" o "menos es mejor")
+function _testFlecha(t){
+  if(t.ultimo==null || t.penultimo==null) return { txt:'—', color:'var(--muted)' };
+  const diff = Math.round((t.ultimo - t.penultimo)*100)/100;
+  if(diff===0) return { txt:'=', color:'var(--muted)' };
+  const mejora = t.mejorMas ? diff>0 : diff<0;
+  const signo = diff>0 ? '+' : '';
+  const arrow = diff>0 ? '↑' : '↓';
+  return { txt:`${arrow} ${signo}${diff}`, color: mejora ? 'var(--accent2)' : '#ff5050' };
+}
+
+function _fmtTestVal(v, unidad){
+  if(v==null) return '—';
+  return `${v}<span class="test-u"> ${unidad||''}</span>`;
+}
+
+function renderTestDetail(id){
+  const cont = document.getElementById('testing-content');
+  const t = _testingData.tests.find(x=>x.id===id);
+  if(!t) return;
+
+  // ── Test de FUERZA con ratio ──
+  if(t.esFuerza && t.ratio!=null){
+    const flechaR = _testFlechaRatio(t);
+    const grafRatio = _testGraphSVGArr(t.serieRatio, 'var(--accent2)', '× BW');
+    const grafRM = _testGraphSVGArr(t.serie, '#4aa0dc', t.unidad||'kg');
+    const rPos = t.mediaRatioPos!=null ? t.mediaRatioPos : '—';
+    const rEq  = t.mediaRatioEq!=null ? t.mediaRatioEq : '—';
+    const kgPos = t.mediaPos!=null ? t.mediaPos : '—';
+    const kgEq  = t.mediaEquipo!=null ? t.mediaEquipo : '—';
+    const pesoTxt = t.miPeso ? `peso ${t.miPeso} kg${t.miPesoFecha?' · '+_fmtFechaCorta(t.miPesoFecha):''}` : 'sin peso en wellness';
+    cont.innerHTML = `
+      <div class="test-detail-hd">
+        <span class="test-back" onclick="renderTestingList()">‹</span>
+        <span class="test-detail-nm">${t.nombre}</span>
+        <span class="test-cup" onclick="renderTestRanking('${t.id}')" title="Rankings">🏆</span>
+      </div>
+      <div class="test-detail-val">
+        <div>
+          <div class="test-big">${t.ratio}<span class="test-u"> × BW</span></div>
+          <div class="test-rm-line">1RM ${t.ultimo} ${t.unidad||'kg'}
+            <span class="test-info" onclick="_toggleRmInfo(event)" title="Detalle">ⓘ</span>
+            <span class="test-rm-pop" style="display:none">RM ${t.ultimo} ${t.unidad||'kg'}<br>${pesoTxt}<br>Ratio: ${t.ultimo} / ${t.miPeso||'—'} = ${t.ratio}</span>
+          </div>
+        </div>
+        <div class="test-big-arrow" style="color:${flechaR.color}">${flechaR.txt} <span class="test-vs">vs. anterior</span></div>
+      </div>
+      <div class="test-graph-lbl">Progresión del ratio (× BW)</div>
+      ${grafRatio}
+      <div class="test-graph-lbl">Progresión del 1RM (${t.unidad||'kg'})</div>
+      ${grafRM}
+      <div class="test-cmp-title">Ratio × BW</div>
+      <div class="test-cmp">
+        <div class="test-cmp-cell"><div class="test-cmp-v">${t.ratio}</div><div class="test-cmp-l">TÚ</div></div>
+        <div class="test-cmp-cell"><div class="test-cmp-v" style="color:#4aa0dc">${rPos}</div><div class="test-cmp-l">TU POSICIÓN</div></div>
+        <div class="test-cmp-cell"><div class="test-cmp-v" style="color:var(--muted)">${rEq}</div><div class="test-cmp-l">EQUIPO</div></div>
+      </div>
+      <div class="test-cmp-title">1RM en ${t.unidad||'kg'}</div>
+      <div class="test-cmp">
+        <div class="test-cmp-cell"><div class="test-cmp-v">${t.ultimo}</div><div class="test-cmp-l">TÚ</div></div>
+        <div class="test-cmp-cell"><div class="test-cmp-v" style="color:#4aa0dc">${kgPos}</div><div class="test-cmp-l">TU POSICIÓN</div></div>
+        <div class="test-cmp-cell"><div class="test-cmp-v" style="color:var(--muted)">${kgEq}</div><div class="test-cmp-l">EQUIPO</div></div>
+      </div>`;
+    return;
+  }
+
+  // ── Test normal ──
+  const flecha = _testFlecha(t);
+  const graf = _testGraphSVG(t);
+  const cmpPos = t.mediaPos!=null ? t.mediaPos : '—';
+  const cmpEq  = t.mediaEquipo!=null ? t.mediaEquipo : '—';
+  cont.innerHTML = `
+    <div class="test-detail-hd">
+      <span class="test-back" onclick="renderTestingList()">‹</span>
+      <span class="test-detail-nm">${t.nombre}</span>
+      <span class="test-cup" onclick="renderTestRanking('${t.id}')" title="Rankings">🏆</span>
+    </div>
+    <div class="test-detail-val">
+      <div class="test-big">${t.ultimo}<span class="test-u"> ${t.unidad||''}</span></div>
+      <div class="test-big-arrow" style="color:${flecha.color}">${flecha.txt} <span class="test-vs">vs. anterior</span></div>
+    </div>
+    ${graf}
+    <div class="test-cmp">
+      <div class="test-cmp-cell"><div class="test-cmp-v">${_fmtTestVal(t.ultimo,t.unidad)}</div><div class="test-cmp-l">TÚ</div></div>
+      <div class="test-cmp-cell"><div class="test-cmp-v" style="color:#4aa0dc">${_fmtTestVal(cmpPos,t.unidad)}</div><div class="test-cmp-l">TU POSICIÓN</div></div>
+      <div class="test-cmp-cell"><div class="test-cmp-v" style="color:var(--muted)">${_fmtTestVal(cmpEq,t.unidad)}</div><div class="test-cmp-l">EQUIPO</div></div>
+    </div>`;
+}
+function _toggleRmInfo(e){
+  e.stopPropagation();
+  const pop = e.target.parentElement.querySelector('.test-rm-pop');
+  if(pop) pop.style.display = pop.style.display==='none'?'inline-block':'none';
+}
+function _fmtFechaCorta(f){ const p=(f||'').split('-'); return p.length===3?`${p[2]}/${p[1]}`:f; }
+function _testFlechaRatio(t){
+  if(t.ratio==null || t.penultimoRatio==null) return { txt:'—', color:'var(--muted)' };
+  const diff = Math.round((t.ratio - t.penultimoRatio)*100)/100;
+  if(diff===0) return { txt:'=', color:'var(--muted)' };
+  const mejora = t.mejorMas ? diff>0 : diff<0;
+  const signo = diff>0?'+':'';
+  return { txt:`${diff>0?'↑':'↓'} ${signo}${diff}`, color: mejora?'var(--accent2)':'#ff5050' };
+}
+
+// Gráfica solo con el progreso del jugador (sin líneas de media/objetivo)
+function _testGraphSVG(t){
+  const s = t.serie||[];
+  if(s.length<2) return '<div class="test-graph-empty">Necesitas al menos 2 registros para ver tu evolución.</div>';
+  const W=340,H=120,padL=30,padB=24,padT=12;
+  const innerW=W-padL-8, innerH=H-padB-padT;
+  const vals=s.map(p=>p.valor);
+  let min=Math.min(...vals), max=Math.max(...vals);
+  if(min===max){ min-=1; max+=1; }
+  const rango=max-min;
+  const x=i=> padL + (s.length===1?innerW/2:innerW*i/(s.length-1));
+  const y=v=> padT + innerH - ((v-min)/rango*innerH);
+  let pts=s.map((p,i)=>`${x(i)},${y(p.valor)}`).join(' ');
+  let dots=s.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.valor)}" r="${i===s.length-1?4.5:3}" fill="var(--accent2)" ${i===s.length-1?'stroke="var(--surface)" stroke-width="2"':''}><title>${p.fecha}: ${p.valor}</title></circle>`).join('');
+  let labels=s.map((p,i)=>{
+    if(s.length>6 && i%Math.ceil(s.length/6)!==0 && i!==s.length-1) return '';
+    const fp=(p.fecha||'').split('-'); const lbl=fp.length===3?`${fp[2]}/${fp[1]}`:'';
+    return `<text x="${x(i)}" y="${H-8}" font-size="8" fill="var(--muted)" text-anchor="middle">${lbl}</text>`;
+  }).join('');
+  return `<div class="test-graph"><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:130px">
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+innerH}" stroke="var(--border2)" stroke-width="1"/>
+    <line x1="${padL}" y1="${padT+innerH}" x2="${W-8}" y2="${padT+innerH}" stroke="var(--border2)" stroke-width="1"/>
+    <polyline points="${pts}" fill="none" stroke="var(--accent2)" stroke-width="2.5"/>
+    ${dots}${labels}
+  </svg></div>`;
+}
+
+// Gráfica genérica desde un array [{fecha,valor}] con color y eje Y numérico
+function _testGraphSVGArr(serie, color, unidad){
+  const s = serie||[];
+  if(s.length<2) return '<div class="test-graph-empty">Necesitas al menos 2 registros.</div>';
+  const W=340,H=96,padL=34,padB=22,padT=14;
+  const innerW=W-padL-8, innerH=H-padB-padT;
+  const vals=s.map(p=>p.valor);
+  let min=Math.min(...vals), max=Math.max(...vals);
+  if(min===max){ min-=1; max+=1; }
+  const rango=max-min;
+  const x=i=> padL + innerW*i/(s.length-1);
+  const y=v=> padT + innerH - ((v-min)/rango*innerH);
+  const pts=s.map((p,i)=>`${x(i)},${y(p.valor)}`).join(' ');
+  const dots=s.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.valor)}" r="${i===s.length-1?4.5:3}" fill="${color}" ${i===s.length-1?'stroke="var(--surface)" stroke-width="2"':''}><title>${p.fecha}: ${p.valor}</title></circle>`).join('');
+  // eje Y: 3 valores (max, medio, min)
+  const mid=Math.round((min+rango/2)*100)/100;
+  const yLabels=`
+    <text x="${padL-4}" y="${padT+4}" font-size="8" fill="var(--muted)" text-anchor="end">${Math.round(max*100)/100}</text>
+    <text x="${padL-4}" y="${padT+innerH/2+3}" font-size="8" fill="var(--muted)" text-anchor="end">${mid}</text>
+    <text x="${padL-4}" y="${padT+innerH+2}" font-size="8" fill="var(--muted)" text-anchor="end">${Math.round(min*100)/100}</text>`;
+  const labels=s.map((p,i)=>{
+    if(s.length>6 && i%Math.ceil(s.length/6)!==0 && i!==s.length-1) return '';
+    const fp=(p.fecha||'').split('-'); const lbl=fp.length===3?`${fp[2]}/${fp[1]}`:'';
+    return `<text x="${x(i)}" y="${H-6}" font-size="7" fill="var(--muted)" text-anchor="middle">${lbl}</text>`;
+  }).join('');
+  const ultimo=s[s.length-1].valor;
+  return `<div class="test-graph"><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:104px">
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+innerH}" stroke="var(--border2)" stroke-width="1"/>
+    <line x1="${padL}" y1="${padT+innerH}" x2="${W-8}" y2="${padT+innerH}" stroke="var(--border2)" stroke-width="1"/>
+    <line x1="${padL}" y1="${padT+innerH/2}" x2="${W-8}" y2="${padT+innerH/2}" stroke="var(--surface2)" stroke-width="1"/>
+    ${yLabels}
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5"/>
+    ${dots}${labels}
+    <text x="${x(s.length-1)}" y="${y(ultimo)-8}" font-size="9" fill="${color}" text-anchor="middle" font-weight="700">${ultimo}</text>
+  </svg></div>`;
+}
+
+function renderTestRanking(id){
+  const cont = document.getElementById('testing-content');
+  const t = _testingData.tests.find(x=>x.id===id);
+  if(!t) return;
+  const scope = _testRankScope;
+  const lista = scope==='pos' ? (t.top3Pos||[]) : (t.top3Eq||[]);
+  const unidadRank = t.esFuerza ? '× BW' : (t.unidad||'');
+  const subt = t.esFuerza ? ' (por ratio RM:BW)' : '';
+  let cards = lista.length ? lista.map((r,i)=>`
+    <div class="test-rank-card${r.esYo?' yo':''}">
+      <span class="test-rank-num">${i+1}</span>
+      <span class="test-rank-nm">${r.nombre}${r.esYo?' · tú':''}</span>
+      <span class="test-rank-val">${r.valor}<span class="test-u"> ${unidadRank}</span></span>
+    </div>`).join('') : '<div class="test-graph-empty">Sin datos suficientes.</div>';
+  cont.innerHTML = `
+    <div class="test-detail-hd">
+      <span class="test-back" onclick="renderTestDetail('${t.id}')">‹</span>
+      <span class="test-detail-nm">${t.nombre} · Ranking${subt}</span>
+    </div>
+    <div class="test-rank-tabs">
+      <span class="test-rank-tab${scope==='pos'?' on':''}" onclick="_testRankScope='pos';renderTestRanking('${t.id}')">Mi posición</span>
+      <span class="test-rank-tab${scope==='eq'?' on':''}" onclick="_testRankScope='eq';renderTestRanking('${t.id}')">Todo el equipo</span>
+    </div>
+    <div class="test-rank-list">${cards}</div>`;
+}
+
 async function renderWeekSummary() {
   const container = document.getElementById('week-summary-box');
   if (!container) return;
@@ -3741,7 +4022,7 @@ const COACH_TABS  = ['jugadores','rpe','reports','sesion'];
 
 function initNav() {
   // All nav items — hide all first
-  const allNavIds = ['bn-sesion','bn-misemana','bn-fieldload','bn-wellness','bn-readiness','bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-planner','bn-settings'];
+  const allNavIds = ['bn-sesion','bn-misemana','bn-testing','bn-fieldload','bn-wellness','bn-readiness','bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-planner','bn-settings'];
   allNavIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
 
   if (state.isCoach) {
@@ -3752,8 +4033,8 @@ function initNav() {
     });
     switchTab('readiness');
   } else {
-    // Player: Readiness · Session · Stats
-    ['bn-wellness','bn-fieldload','bn-sesion','bn-misemana'].forEach(id => {
+    // Player: Readiness · Session · Stats · Testing
+    ['bn-wellness','bn-fieldload','bn-sesion','bn-misemana','bn-testing'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
@@ -3763,7 +4044,7 @@ function initNav() {
 
 function switchTab(tab) {
   state.activeTab = tab;
-  const allTabs = ['tab-sesion','tab-misemana','tab-fieldload','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports','tab-coach-settings','tab-wellness','tab-coach-readiness','tab-coach-planner'];
+  const allTabs = ['tab-sesion','tab-misemana','tab-testing','tab-fieldload','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports','tab-coach-settings','tab-wellness','tab-coach-readiness','tab-coach-planner'];
   allTabs.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
@@ -3772,6 +4053,7 @@ function switchTab(tab) {
   const tabMap = {
     'sesion':     'tab-sesion',
     'misemana':   'tab-misemana',
+    'testing':    'tab-testing',
     'fieldload':  'tab-fieldload',
     'jugadores':  'tab-coach-jugadores',
     'rpe':        'tab-coach-rpe',
@@ -3787,6 +4069,7 @@ function switchTab(tab) {
   const navMap = {
     'sesion':     state.isCoach ? 'bn-sesion-coach' : 'bn-sesion',
     'misemana':   'bn-misemana',
+    'testing':    'bn-testing',
     'fieldload':  'bn-fieldload',
     'jugadores':  'bn-jugadores',
     'rpe':        'bn-rpe',
@@ -3816,6 +4099,7 @@ function switchTab(tab) {
     renderReportsPanel();
   }
   if (tab === 'wellness')   renderWellnessTab();
+  if (tab === 'testing')    renderTesting();
   if (tab === 'readiness')  { _syncAllSquads(state.coachSquadFilter || ''); renderReadinessDashboard(); }
   if (tab === 'settings')   renderSettingsPanel();
   if (tab === 'planner')    renderPlanner();
