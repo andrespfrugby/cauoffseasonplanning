@@ -1638,6 +1638,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .test-rm-pop{position:absolute;left:0;top:100%;margin-top:4px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;padding:8px 11px;font-size:11px;color:var(--text);line-height:1.6;box-shadow:0 4px 16px rgba(0,0,0,.5);z-index:20;white-space:nowrap}
 .test-graph-lbl{font-size:11px;color:var(--text);font-weight:600;margin:4px 0 6px}
 .test-cmp-title{font-size:10px;color:var(--muted);margin:14px 0 6px}
+.test-aviso{background:rgba(255,192,77,.1);border:1px solid rgba(255,192,77,.25);border-radius:8px;padding:10px 12px;font-size:11px;color:#ffc04d;margin-bottom:14px;line-height:1.5}
 .test-rank-tabs{display:flex;gap:6px;margin-bottom:14px}
 .test-rank-tab{flex:1;text-align:center;font-size:12px;color:var(--muted);padding:9px;border-radius:8px;background:var(--surface1);border:1px solid var(--border2);cursor:pointer}
 .test-rank-tab.on{background:var(--accent2);color:#0d0f12;border-color:var(--accent2);font-weight:600}
@@ -3492,7 +3493,7 @@ async function renderTesting(){
   const cont = document.getElementById('testing-content');
   if(!cont) return;
   cont.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-  const res = await api({ action:'getTests', usuario: state.usuario, squad: state.squad||'' });
+  const res = await api({ action:'getTests', usuario: (state.user&&state.user.usuario)||'', squad: (state.user&&state.user.squad)||state.squad||'' });
   if(!res || !res.ok){ cont.innerHTML = '<div class="pevo-empty">No se pudieron cargar los tests.</div>'; return; }
   if(res.aviso){ cont.innerHTML = `<div class="pevo-empty">${res.aviso}</div>`; return; }
   _testingData = res;
@@ -3541,6 +3542,32 @@ function renderTestDetail(id){
   const cont = document.getElementById('testing-content');
   const t = _testingData.tests.find(x=>x.id===id);
   if(!t) return;
+
+  // ── Test de FUERZA sin peso cercano: solo RM + aviso ──
+  if(t.esFuerza && t.ratio==null){
+    const flecha = _testFlecha(t);
+    const graf = _testGraphSVG(t);
+    const cmpPos = t.mediaPos!=null ? t.mediaPos : '—';
+    const cmpEq  = t.mediaEquipo!=null ? t.mediaEquipo : '—';
+    cont.innerHTML = `
+      <div class="test-detail-hd">
+        <span class="test-back" onclick="renderTestingList()">‹</span>
+        <span class="test-detail-nm">${t.nombre}</span>
+        <span class="test-cup" onclick="renderTestRanking('${t.id}')" title="Rankings">🏆</span>
+      </div>
+      <div class="test-detail-val">
+        <div class="test-big">${t.ultimo}<span class="test-u"> ${t.unidad||''}</span></div>
+        <div class="test-big-arrow" style="color:${flecha.color}">${flecha.txt} <span class="test-vs">vs. anterior</span></div>
+      </div>
+      <div class="test-aviso">Para ver el ratio × BW hace falta un peso en el wellness de la misma semana del test (±7 días).</div>
+      ${graf}
+      <div class="test-cmp">
+        <div class="test-cmp-cell"><div class="test-cmp-v">${_fmtTestVal(t.ultimo,t.unidad)}</div><div class="test-cmp-l">TÚ</div></div>
+        <div class="test-cmp-cell"><div class="test-cmp-v" style="color:#4aa0dc">${_fmtTestVal(cmpPos,t.unidad)}</div><div class="test-cmp-l">TU POSICIÓN</div></div>
+        <div class="test-cmp-cell"><div class="test-cmp-v" style="color:var(--muted)">${_fmtTestVal(cmpEq,t.unidad)}</div><div class="test-cmp-l">EQUIPO</div></div>
+      </div>`;
+    return;
+  }
 
   // ── Test de FUERZA con ratio ──
   if(t.esFuerza && t.ratio!=null){
