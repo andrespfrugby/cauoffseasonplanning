@@ -3488,6 +3488,7 @@ async function saveSession() {
 // ══════════════ TESTING (jugador) ══════════════
 var _testingData = null;
 var _testRankScope = 'pos'; // 'pos' | 'eq'
+var _testActualId = null;
 
 async function renderTesting(){
   const cont = document.getElementById('testing-content');
@@ -3496,14 +3497,11 @@ async function renderTesting(){
   const usuarioEnv = (state.user&&state.user.usuario)||'';
   const squadEnv = (state.user&&state.user.squad)||state.squad||'';
   const res = await api({ action:'getTests', usuario: usuarioEnv, squad: squadEnv });
-  if(!res || !res.ok){
-    cont.innerHTML = `<div class="pevo-empty">No se pudieron cargar los tests.<br><br><small style="color:var(--muted)">usuario enviado: "${usuarioEnv}"<br>respuesta: ${JSON.stringify(res).slice(0,300)}</small></div>`;
-    return;
-  }
+  if(!res || !res.ok){ cont.innerHTML = '<div class="pevo-empty">No se pudieron cargar los tests.</div>'; return; }
   if(res.aviso){ cont.innerHTML = `<div class="pevo-empty">${res.aviso}</div>`; return; }
   _testingData = res;
   if(!res.tests || !res.tests.length){
-    cont.innerHTML = `<div class="test-hd">🎯 Mis Tests</div><div class="pevo-empty">Aún no tienes resultados de tests registrados.<br><br><small style="color:var(--muted)">usuario enviado: "${usuarioEnv}"<br>tests devueltos: ${(res.tests||[]).length}<br>debug: ${JSON.stringify({nombre:res.nombre,miPos:res.miPos,aviso:res.aviso}).slice(0,200)}</small></div>`;
+    cont.innerHTML = '<div class="test-hd">Testing</div><div class="pevo-empty">Aún no tienes resultados de tests registrados.</div>';
     return;
   }
   renderTestingList();
@@ -3512,19 +3510,18 @@ async function renderTesting(){
 function renderTestingList(){
   const cont = document.getElementById('testing-content');
   const d = _testingData;
-  let rows = d.tests.map(t=>{
+  let rows = d.tests.map((t,idx)=>{
     const flecha = _testFlecha(t);
     const val = _fmtTestVal(t.ultimo, t.unidad);
-    return `<div class="test-row" onclick="renderTestDetail('${t.id}')">
+    return `<div class="test-row" onclick="renderTestDetailIdx(${idx})">
       <div class="test-row-nm">${t.nombre}</div>
       <div class="test-row-val">${val}</div>
       <div class="test-row-arrow" style="color:${flecha.color}">${flecha.txt}</div>
       <span class="test-row-chev">›</span>
     </div>`;
   }).join('');
-  cont.innerHTML = `<div class="test-hd">🎯 Mis Tests</div>
-    <div class="test-list">${rows}</div>
-    <div class="test-foot">Tu último resultado y el cambio respecto al test anterior. Toca uno para ver tu evolución.</div>`;
+  cont.innerHTML = `<div class="test-hd">Testing</div>
+    <div class="test-list">${rows}</div>`;
 }
 
 // Flecha de cambio (respeta si "más es mejor" o "menos es mejor")
@@ -3543,9 +3540,15 @@ function _fmtTestVal(v, unidad){
   return `${v}<span class="test-u"> ${unidad||''}</span>`;
 }
 
+function renderTestDetailIdx(idx){
+  const t = _testingData.tests[idx];
+  if(!t) return;
+  renderTestDetail(t.id);
+}
 function renderTestDetail(id){
   const cont = document.getElementById('testing-content');
-  const t = _testingData.tests.find(x=>x.id===id);
+  if(id!=null) _testActualId = id;
+  const t = _testingData.tests.find(x=>x.id===_testActualId);
   if(!t) return;
 
   // ── Test de FUERZA sin peso cercano: solo RM + aviso ──
@@ -3558,7 +3561,7 @@ function renderTestDetail(id){
       <div class="test-detail-hd">
         <span class="test-back" onclick="renderTestingList()">‹</span>
         <span class="test-detail-nm">${t.nombre}</span>
-        <span class="test-cup" onclick="renderTestRanking('${t.id}')" title="Rankings">🏆</span>
+        <span class="test-cup" onclick="renderTestRanking()" title="Rankings">🏆</span>
       </div>
       <div class="test-detail-val">
         <div class="test-big">${t.ultimo}<span class="test-u"> ${t.unidad||''}</span></div>
@@ -3588,7 +3591,7 @@ function renderTestDetail(id){
       <div class="test-detail-hd">
         <span class="test-back" onclick="renderTestingList()">‹</span>
         <span class="test-detail-nm">${t.nombre}</span>
-        <span class="test-cup" onclick="renderTestRanking('${t.id}')" title="Rankings">🏆</span>
+        <span class="test-cup" onclick="renderTestRanking()" title="Rankings">🏆</span>
       </div>
       <div class="test-detail-val">
         <div>
@@ -3628,7 +3631,7 @@ function renderTestDetail(id){
     <div class="test-detail-hd">
       <span class="test-back" onclick="renderTestingList()">‹</span>
       <span class="test-detail-nm">${t.nombre}</span>
-      <span class="test-cup" onclick="renderTestRanking('${t.id}')" title="Rankings">🏆</span>
+      <span class="test-cup" onclick="renderTestRanking()" title="Rankings">🏆</span>
     </div>
     <div class="test-detail-val">
       <div class="test-big">${t.ultimo}<span class="test-u"> ${t.unidad||''}</span></div>
@@ -3660,7 +3663,7 @@ function _testFlechaRatio(t){
 function _testGraphSVG(t){
   const s = t.serie||[];
   if(s.length<2) return '<div class="test-graph-empty">Necesitas al menos 2 registros para ver tu evolución.</div>';
-  const W=340,H=120,padL=30,padB=24,padT=12;
+  const W=340,H=124,padL=30,padB=24,padT=20;
   const innerW=W-padL-8, innerH=H-padB-padT;
   const vals=s.map(p=>p.valor);
   let min=Math.min(...vals), max=Math.max(...vals);
@@ -3669,17 +3672,23 @@ function _testGraphSVG(t){
   const x=i=> padL + (s.length===1?innerW/2:innerW*i/(s.length-1));
   const y=v=> padT + innerH - ((v-min)/rango*innerH);
   let pts=s.map((p,i)=>`${x(i)},${y(p.valor)}`).join(' ');
-  let dots=s.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.valor)}" r="${i===s.length-1?4.5:3}" fill="var(--accent2)" ${i===s.length-1?'stroke="var(--surface)" stroke-width="2"':''}><title>${p.fecha}: ${p.valor}</title></circle>`).join('');
+  let dots=s.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.valor)}" r="${i===s.length-1?4.5:3}" fill="var(--accent2)" ${i===s.length-1?'stroke="var(--surface)" stroke-width="2"':''}></circle>`).join('');
+  // valor encima de cada punto (alterna arriba/abajo si hay muchos para no solaparse)
+  let valLabels=s.map((p,i)=>{
+    const arriba = y(p.valor) > padT+14; // si hay sitio arriba
+    const yv = arriba ? y(p.valor)-8 : y(p.valor)+14;
+    return `<text x="${x(i)}" y="${yv}" font-size="8.5" fill="var(--text)" text-anchor="middle" font-weight="600">${p.valor}</text>`;
+  }).join('');
   let labels=s.map((p,i)=>{
     if(s.length>6 && i%Math.ceil(s.length/6)!==0 && i!==s.length-1) return '';
     const fp=(p.fecha||'').split('-'); const lbl=fp.length===3?`${fp[2]}/${fp[1]}`:'';
     return `<text x="${x(i)}" y="${H-8}" font-size="8" fill="var(--muted)" text-anchor="middle">${lbl}</text>`;
   }).join('');
-  return `<div class="test-graph"><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:130px">
+  return `<div class="test-graph"><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:134px">
     <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+innerH}" stroke="var(--border2)" stroke-width="1"/>
     <line x1="${padL}" y1="${padT+innerH}" x2="${W-8}" y2="${padT+innerH}" stroke="var(--border2)" stroke-width="1"/>
     <polyline points="${pts}" fill="none" stroke="var(--accent2)" stroke-width="2.5"/>
-    ${dots}${labels}
+    ${dots}${valLabels}${labels}
   </svg></div>`;
 }
 
@@ -3722,7 +3731,8 @@ function _testGraphSVGArr(serie, color, unidad){
 
 function renderTestRanking(id){
   const cont = document.getElementById('testing-content');
-  const t = _testingData.tests.find(x=>x.id===id);
+  if(id) _testActualId = id;
+  const t = _testingData.tests.find(x=>x.id===_testActualId);
   if(!t) return;
   const scope = _testRankScope;
   const lista = scope==='pos' ? (t.top3Pos||[]) : (t.top3Eq||[]);
@@ -3733,17 +3743,21 @@ function renderTestRanking(id){
       <span class="test-rank-num">${i+1}</span>
       <span class="test-rank-nm">${r.nombre}${r.esYo?' · tú':''}</span>
       <span class="test-rank-val">${r.valor}<span class="test-u"> ${unidadRank}</span></span>
-    </div>`).join('') : '<div class="test-graph-empty">Sin datos suficientes.</div>';
+    </div>`).join('') : '<div class="test-graph-empty">Sin datos suficientes en este grupo.</div>';
   cont.innerHTML = `
     <div class="test-detail-hd">
-      <span class="test-back" onclick="renderTestDetail('${t.id}')">‹</span>
+      <span class="test-back" onclick="renderTestDetail(_testActualId)">‹</span>
       <span class="test-detail-nm">${t.nombre} · Ranking${subt}</span>
     </div>
     <div class="test-rank-tabs">
-      <span class="test-rank-tab${scope==='pos'?' on':''}" onclick="_testRankScope='pos';renderTestRanking('${t.id}')">Mi posición</span>
-      <span class="test-rank-tab${scope==='eq'?' on':''}" onclick="_testRankScope='eq';renderTestRanking('${t.id}')">Todo el equipo</span>
+      <span class="test-rank-tab${scope==='pos'?' on':''}" onclick="_testRankSet('pos')">Mi posición</span>
+      <span class="test-rank-tab${scope==='eq'?' on':''}" onclick="_testRankSet('eq')">Todo el equipo</span>
     </div>
     <div class="test-rank-list">${cards}</div>`;
+}
+function _testRankSet(scope){
+  _testRankScope = scope;
+  renderTestRanking();
 }
 
 async function renderWeekSummary() {
