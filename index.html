@@ -1609,6 +1609,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .quad-daynav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 /* ── TESTING ── */
 .test-hd{font-size:17px;font-weight:700;color:var(--text);margin-bottom:14px}
+.test-hd-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.test-hd-row .test-hd{margin-bottom:0}
+.test-pdf-btn{font-size:12px;font-weight:600;color:var(--accent2);background:transparent;border:1px solid var(--accent2);border-radius:8px;padding:7px 14px;cursor:pointer}
+.test-pdf-btn:active{background:rgba(0,229,160,.1)}
 .test-list{display:flex;flex-direction:column;background:var(--surface1);border-radius:12px;overflow:hidden}
 .test-row{display:flex;align-items:center;gap:12px;padding:14px 14px;border-bottom:1px solid var(--border2);cursor:pointer}
 .test-row:last-child{border-bottom:none}
@@ -3520,8 +3524,96 @@ function renderTestingList(){
       <span class="test-row-chev">›</span>
     </div>`;
   }).join('');
-  cont.innerHTML = `<div class="test-hd">Testing</div>
+  cont.innerHTML = `<div class="test-hd-row">
+      <div class="test-hd">Testing</div>
+      <button class="test-pdf-btn" onclick="exportTestingPDF()">⭳ PDF</button>
+    </div>
     <div class="test-list">${rows}</div>`;
+}
+
+// Exporta un PDF con la cabecera del jugador y las gráficas de evolución de cada test
+function exportTestingPDF(){
+  const d = _testingData;
+  if(!d || !d.tests || !d.tests.length){ alert('No hay tests para exportar'); return; }
+  const nombre = d.nombre || (state.user&&state.user.usuario) || 'Jugador';
+  const pos = d.miPos || '';
+  const hoy = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' });
+
+  // gráficas de cada test (reutiliza el SVG, en variante clara para papel)
+  let bloques = d.tests.map(t=>{
+    const svg = _testGraphSVGPrint(t);
+    const val = t.ultimo!=null ? `${t.ultimo} ${t.unidad||''}` : '—';
+    return `<div class="pdf-test">
+      <div class="pdf-test-hd"><span class="pdf-test-nm">${t.nombre}</span><span class="pdf-test-val">${val}</span></div>
+      ${svg}
+    </div>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Testing · ${nombre}</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#111;padding:32px 36px}
+      .pdf-head{border-bottom:3px solid #e8142a;padding-bottom:14px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end}
+      .pdf-head h1{font-size:24px;color:#111}
+      .pdf-head .sub{font-size:13px;color:#666;margin-top:4px}
+      .pdf-club{font-size:20px;font-weight:800;color:#e8142a;letter-spacing:.05em}
+      .pdf-test{margin-bottom:26px;page-break-inside:avoid;border:1px solid #e5e5e5;border-radius:10px;padding:16px 18px}
+      .pdf-test-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+      .pdf-test-nm{font-size:15px;font-weight:700;color:#111}
+      .pdf-test-val{font-size:16px;font-weight:800;color:#e8142a}
+      .pdf-foot{margin-top:20px;font-size:10px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:12px}
+      svg{width:100%;height:auto}
+      @media print{ body{padding:20px} .pdf-test{border-color:#ddd} }
+    </style></head><body>
+    <div class="pdf-head">
+      <div>
+        <h1>${nombre}</h1>
+        <div class="sub">${pos?pos+' · ':''}Reporte de testing · ${hoy}</div>
+      </div>
+      <div class="pdf-club">CAU RUGBY</div>
+    </div>
+    ${bloques}
+    <div class="pdf-foot">Generado desde CAU Preseason Planner · ${hoy}</div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},400);}<\/script>
+    </body></html>`;
+
+  const w = window.open('', '_blank');
+  if(!w){ alert('Permite las ventanas emergentes para exportar el PDF'); return; }
+  w.document.write(html);
+  w.document.close();
+}
+
+// Versión de la gráfica para impresión (colores oscuros sobre blanco)
+function _testGraphSVGPrint(t){
+  const s = (t.esFuerza && t.serieRatio) ? t.serieRatio : (t.serie||[]);
+  const unidad = (t.esFuerza && t.serieRatio) ? '× BW' : (t.unidad||'');
+  if(s.length<2) return `<div style="font-size:12px;color:#999;padding:12px 0">Sin datos suficientes para la gráfica (${s.length} registro).</div>`;
+  const W=680,H=180,padL=44,padB=28,padT=24;
+  const innerW=W-padL-12, innerH=H-padB-padT;
+  const vals=s.map(p=>p.valor);
+  let min=Math.min(...vals), max=Math.max(...vals);
+  if(min===max){ min-=1; max+=1; }
+  const rango=max-min;
+  const x=i=> padL + innerW*i/(s.length-1);
+  const y=v=> padT + innerH - ((v-min)/rango*innerH);
+  const pts=s.map((p,i)=>`${x(i)},${y(p.valor)}`).join(' ');
+  const dots=s.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.valor)}" r="4" fill="#00b380"/>`).join('');
+  const valLabels=s.map((p,i)=>`<text x="${x(i)}" y="${y(p.valor)-9}" font-size="11" fill="#111" text-anchor="middle" font-weight="700">${p.valor}</text>`).join('');
+  const labels=s.map((p,i)=>{
+    const fp=(p.fecha||'').split('-'); const lbl=fp.length===3?`${fp[2]}/${fp[1]}/${fp[0].slice(2)}`:'';
+    return `<text x="${x(i)}" y="${H-8}" font-size="10" fill="#888" text-anchor="middle">${lbl}</text>`;
+  }).join('');
+  // eje Y
+  const yl=`<text x="${padL-6}" y="${padT+4}" font-size="10" fill="#888" text-anchor="end">${Math.round(max*100)/100}</text>
+    <text x="${padL-6}" y="${padT+innerH+2}" font-size="10" fill="#888" text-anchor="end">${Math.round(min*100)/100}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+innerH}" stroke="#ccc" stroke-width="1"/>
+    <line x1="${padL}" y1="${padT+innerH}" x2="${W-12}" y2="${padT+innerH}" stroke="#ccc" stroke-width="1"/>
+    ${yl}
+    <polyline points="${pts}" fill="none" stroke="#00b380" stroke-width="2.5"/>
+    ${dots}${valLabels}${labels}
+    ${unidad?`<text x="${padL}" y="14" font-size="10" fill="#aaa">${unidad}</text>`:''}
+  </svg>`;
 }
 
 // Flecha de cambio (respeta si "más es mejor" o "menos es mejor")
@@ -3760,18 +3852,25 @@ function _testRankSet(scope){
   renderTestRanking();
 }
 
-async function renderWeekSummary() {
+async function renderWeekSummary(useCache) {
   const container = document.getElementById('week-summary-box');
   if (!container) return;
   const mode   = _wsummMode || 'semana';
   const semStr = String(realSemanaIdx()); // ← real sheet index, matches what saveRegistro stores
 
-  const [resRpe, resCarga, resEquipo, resWellness] = await Promise.all([
-    api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' }),
-    api({ action:'getHistorial', usuario:state.user.usuario }),
-    api({ action:'getEquipo', semana:realSemanaIdx() }),
-    api({ action:'getWellness', usuario:state.user.usuario, dias:60 })
-  ]);
+  let resRpe, resCarga, resEquipo, resWellness;
+  // Si hay caché válido (mismo jugador y semana), reutilizar — el cambio semana/mes no re-pide al servidor
+  if (useCache && _wsummCache && _wsummCache.usuario === state.user.usuario && _wsummCache.sem === semStr) {
+    ({ resRpe, resCarga, resEquipo, resWellness } = _wsummCache);
+  } else {
+    [resRpe, resCarga, resEquipo, resWellness] = await Promise.all([
+      api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' }),
+      api({ action:'getHistorial', usuario:state.user.usuario }),
+      api({ action:'getEquipo', semana:realSemanaIdx() }),
+      api({ action:'getWellness', usuario:state.user.usuario, dias:60 })
+    ]);
+    _wsummCache = { usuario: state.user.usuario, sem: semStr, resRpe, resCarga, resEquipo, resWellness };
+  }
 
   if (!resRpe.ok || !resRpe.historial) return;
 
@@ -3786,7 +3885,14 @@ async function renderWeekSummary() {
     tiempoTotal = tiempos.length ? tiempos.reduce((s,v)=>s+v,0) : null;
     const hoyDow = new Date().getDay();
     const diasTrans = hoyDow === 0 ? 7 : hoyDow;
-    compliance  = diasTrans > 0 ? Math.round((totalDias / diasTrans) * 100) : 0;
+    // compliance correcto del backend (sesiones / días programados); respaldo: días transcurridos
+    let compBackend = null;
+    if (resEquipo.ok && resEquipo.equipo) {
+      const yo = resEquipo.equipo.find(j => j.usuario === state.user.usuario);
+      if (yo && typeof yo.complianceSem === 'number') compBackend = yo.complianceSem;
+    }
+    compliance  = (compBackend !== null) ? compBackend
+                  : (diasTrans > 0 ? Math.round((totalDias / diasTrans) * 100) : 0);
     periodLabel = (state.semanas && state.semanas[state.semana-1]) || `Semana ${state.semana}`;
   } else {
     // Month mode — aggregate all sessions from current month
@@ -3935,8 +4041,13 @@ async function renderWeekSummary() {
     const equipo = resEquipo.equipo.filter(j => !squad || (j.squad && j.squad.toLowerCase() === squad));
 
     const ranked = equipo.map(j => {
-      const seg  = (j.sesiones7dias||[]).filter(s=>s.guardada).length;
-      const comp = diasTrans2 > 0 ? Math.round((seg / diasTrans2) * 100) : 0;
+      // usar el compliance correcto del backend (sesiones guardadas / días programados)
+      let comp = (typeof j.complianceSem === 'number') ? j.complianceSem : null;
+      if (comp === null) {
+        // respaldo si el backend no lo trae: sesiones / días transcurridos
+        const seg = (j.sesiones7dias||[]).filter(s=>s.guardada).length;
+        comp = diasTrans2 > 0 ? Math.round((seg / diasTrans2) * 100) : 0;
+      }
       return { nombre: j.nombre, usuario: j.usuario, comp };
     }).sort((a,b) => b.comp - a.comp);
 
@@ -4611,12 +4722,14 @@ async function renderControlCargas() {
 
 
 let _wsummMode = 'semana';
+let _wsummCache = null;
 
 function wsummSwitch(mode) {
+  if (_wsummMode === mode) return; // ya está en ese modo
   _wsummMode = mode;
   document.getElementById('wsumm-btn-semana')?.classList.toggle('active', mode==='semana');
   document.getElementById('wsumm-btn-mes')?.classList.toggle('active', mode==='mes');
-  renderWeekSummary();
+  renderWeekSummary(true); // true = usar caché, no re-pedir al servidor (cambio instantáneo)
 }
 
 function onCoachSquadChangeReports() {
