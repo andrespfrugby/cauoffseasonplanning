@@ -1622,6 +1622,18 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .quad-daynav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 /* ── TESTING ── */
 .test-hd{font-size:17px;font-weight:700;color:var(--text);margin-bottom:14px}
+.sub-tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--surface1);border-radius:10px;padding:4px}
+.sub-tab{flex:1;text-align:center;font-size:13px;font-weight:600;color:var(--muted);padding:9px;border-radius:7px;border:none;background:transparent;cursor:pointer;font-family:var(--font-body)}
+.sub-tab.active{background:var(--accent);color:#fff}
+.scdoc-cat{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px;font-weight:600}
+.scdoc-list{display:flex;flex-direction:column;background:var(--surface1);border-radius:12px;overflow:hidden;margin-bottom:8px}
+.scdoc-row{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--border2);text-decoration:none;color:var(--text)}
+.scdoc-row:last-child{border-bottom:none}
+.scdoc-row:active{background:var(--surface2)}
+.scdoc-icon{font-size:18px}
+.scdoc-nm{flex:1;font-size:13px;color:var(--text)}
+.scdoc-tag{font-size:9px;background:var(--accent);color:#fff;border-radius:4px;padding:1px 6px;margin-left:6px;font-weight:700}
+.scdoc-open{font-size:11px;color:var(--accent2);font-weight:600}
 .test-hd-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .test-hd-row .test-hd{margin-bottom:0}
 .test-pdf-btn{font-size:12px;font-weight:600;color:var(--accent2);background:transparent;border:1px solid var(--accent2);border-radius:8px;padding:7px 14px;cursor:pointer}
@@ -2195,12 +2207,17 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 
     <!-- ══ JUGADOR: Mi semana ══ -->
     <div id="tab-misemana" class="tab-section" style="display:none">
+      <div class="sub-tabs">
+        <button class="sub-tab active" id="stt-stats" onclick="statsSub('stats')">Stats</button>
+        <button class="sub-tab" id="stt-testing" onclick="statsSub('testing')">Testing</button>
+      </div>
       <div id="week-summary-box"></div>
+      <div id="testing-content" style="display:none"></div>
     </div>
 
-    <!-- ══ JUGADOR: Testing ══ -->
-    <div id="tab-testing" class="tab-section" style="display:none">
-      <div id="testing-content"></div>
+    <!-- ══ JUGADOR: S&C Docs ══ -->
+    <div id="tab-scdocs" class="tab-section" style="display:none">
+      <div id="scdocs-content"></div>
     </div>
 
     <!-- ══ JUGADOR: Field Load ══ -->
@@ -2233,6 +2250,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         <button class="plan-tab active" id="plt-weeks" onclick="plannerSub('weeks')">Semanas</button>
         <button class="plan-tab" id="plt-gal" onclick="plannerSub('gal')">Galería</button>
         <button class="plan-tab" id="plt-indiv" onclick="plannerSub('indiv')">Individuales</button>
+        <button class="plan-tab" id="plt-docs" onclick="plannerSub('docs')">S&C Docs</button>
       </div>
       <div id="planner-content"><div class="loader"><div class="spinner"></div></div></div>
     </div>
@@ -2259,9 +2277,9 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="4" height="8" rx="1"/><rect x="9.5" y="7" width="4" height="13" rx="1"/><rect x="16" y="3" width="4" height="17" rx="1"/></svg></div>
       <div class="bn-lbl">Stats</div>
     </div>
-    <div class="bn-item" id="bn-testing" onclick="switchTab('testing')" style="display:none">
-      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></div>
-      <div class="bn-lbl">Testing</div>
+    <div class="bn-item" id="bn-scdocs" onclick="switchTab('scdocs')" style="display:none">
+      <div class="bn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg></div>
+      <div class="bn-lbl">S&C Docs</div>
     </div>
     <!-- coach -->
     <div class="bn-item" id="bn-readiness" onclick="switchTab('readiness')" style="display:none">
@@ -3575,6 +3593,27 @@ async function saveSession() {
   }
 }
 
+// ══════════════ SUBMENÚS STATS / TESTING ══════════════
+var _statsSub = 'stats';
+function statsSub(sub, force){
+  if(!force && _statsSub===sub) return;
+  _statsSub = sub;
+  const bS=document.getElementById('stt-stats'), bT=document.getElementById('stt-testing');
+  if(bS) bS.classList.toggle('active', sub==='stats');
+  if(bT) bT.classList.toggle('active', sub==='testing');
+  const wb=document.getElementById('week-summary-box');
+  const tc=document.getElementById('testing-content');
+  if(sub==='stats'){
+    if(wb) wb.style.display='';
+    if(tc) tc.style.display='none';
+    renderWeekSummary();
+  } else {
+    if(wb) wb.style.display='none';
+    if(tc) tc.style.display='';
+    renderTesting();
+  }
+}
+
 // ══════════════ TESTING (jugador) ══════════════
 var _testingData = null;
 var _testRankScope = 'pos'; // 'pos' | 'eq'
@@ -3938,6 +3977,37 @@ function _testRankSet(scope){
   renderTestRanking();
 }
 
+// ══════════════ S&C DOCS (jugador) ══════════════
+async function renderScDocs(){
+  const cont=document.getElementById('scdocs-content');
+  if(!cont) return;
+  cont.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  const res=await api({ action:'getDocs', usuario:(state.user&&state.user.usuario)||'', squad:state.squad||'' });
+  if(!res||!res.ok){ cont.innerHTML='<div class="pevo-empty">No se pudieron cargar los documentos.</div>'; return; }
+  const docs=res.docs||[];
+  if(!docs.length){
+    cont.innerHTML='<div class="test-hd">S&C Docs</div><div class="pevo-empty">Aún no hay documentos disponibles.</div>';
+    return;
+  }
+  // agrupar por categoría
+  const cats={};
+  docs.forEach(d=>{ const c=d.categoria||'General'; (cats[c]=cats[c]||[]).push(d); });
+  let html='<div class="test-hd">S&C Docs</div>';
+  Object.keys(cats).forEach(cat=>{
+    html+=`<div class="scdoc-cat">${cat}</div><div class="scdoc-list">`;
+    cats[cat].forEach(d=>{
+      const personal = d.ambito==='jugador';
+      html+=`<a class="scdoc-row" href="${d.url}" target="_blank" rel="noopener">
+        <span class="scdoc-icon">📄</span>
+        <span class="scdoc-nm">${d.titulo}${personal?' <span class="scdoc-tag">para ti</span>':''}</span>
+        <span class="scdoc-open">Abrir ›</span>
+      </a>`;
+    });
+    html+='</div>';
+  });
+  cont.innerHTML=html;
+}
+
 async function renderWeekSummary(useCache) {
   const container = document.getElementById('week-summary-box');
   if (!container) return;
@@ -4265,7 +4335,7 @@ const COACH_TABS  = ['jugadores','rpe','reports','sesion'];
 
 function initNav() {
   // All nav items — hide all first
-  const allNavIds = ['bn-sesion','bn-misemana','bn-testing','bn-fieldload','bn-wellness','bn-readiness','bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-planner','bn-settings'];
+  const allNavIds = ['bn-sesion','bn-misemana','bn-scdocs','bn-fieldload','bn-wellness','bn-readiness','bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-planner','bn-settings'];
   allNavIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
 
   if (state.isCoach) {
@@ -4277,7 +4347,7 @@ function initNav() {
     switchTab('readiness');
   } else {
     // Player: Readiness · Session · Stats · Testing
-    ['bn-wellness','bn-fieldload','bn-sesion','bn-misemana','bn-testing'].forEach(id => {
+    ['bn-wellness','bn-fieldload','bn-sesion','bn-misemana','bn-scdocs'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
@@ -4287,7 +4357,7 @@ function initNav() {
 
 function switchTab(tab) {
   state.activeTab = tab;
-  const allTabs = ['tab-sesion','tab-misemana','tab-testing','tab-fieldload','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports','tab-coach-settings','tab-wellness','tab-coach-readiness','tab-coach-planner'];
+  const allTabs = ['tab-sesion','tab-misemana','tab-scdocs','tab-fieldload','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports','tab-coach-settings','tab-wellness','tab-coach-readiness','tab-coach-planner'];
   allTabs.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
@@ -4296,7 +4366,7 @@ function switchTab(tab) {
   const tabMap = {
     'sesion':     'tab-sesion',
     'misemana':   'tab-misemana',
-    'testing':    'tab-testing',
+    'scdocs':     'tab-scdocs',
     'fieldload':  'tab-fieldload',
     'jugadores':  'tab-coach-jugadores',
     'rpe':        'tab-coach-rpe',
@@ -4312,7 +4382,7 @@ function switchTab(tab) {
   const navMap = {
     'sesion':     state.isCoach ? 'bn-sesion-coach' : 'bn-sesion',
     'misemana':   'bn-misemana',
-    'testing':    'bn-testing',
+    'scdocs':     'bn-scdocs',
     'fieldload':  'bn-fieldload',
     'jugadores':  'bn-jugadores',
     'rpe':        'bn-rpe',
@@ -4328,9 +4398,9 @@ function switchTab(tab) {
 
   // Load content on demand
   if (tab === 'misemana') {
-    const wb = document.getElementById('week-summary-box');
-    if (wb && !wb.innerHTML.trim()) renderWeekSummary();
-    else if (wb) renderWeekSummary();
+    // por defecto muestra el submenú Stats
+    _statsSub = _statsSub || 'stats';
+    statsSub(_statsSub, true);
   }
   if (tab === 'jugadores' || tab === 'rpe') {
     _syncAllSquads(state.coachSquadFilter || '');
@@ -4342,7 +4412,7 @@ function switchTab(tab) {
     renderReportsPanel();
   }
   if (tab === 'wellness')   renderWellnessTab();
-  if (tab === 'testing')    renderTesting();
+  if (tab === 'scdocs')     renderScDocs();
   if (tab === 'readiness')  { _syncAllSquads(state.coachSquadFilter || ''); renderReadinessDashboard(); }
   if (tab === 'settings')   renderSettingsPanel();
   if (tab === 'planner')    renderPlanner();
@@ -8684,13 +8754,95 @@ async function renderPlanner(){
 
 function plannerSub(sub){
   _plan.sub=sub;
-  ['weeks','gal','indiv'].forEach(s=>{
+  ['weeks','gal','indiv','docs'].forEach(s=>{
     const b=document.getElementById('plt-'+s);
     if(b) b.classList.toggle('active', s===sub);
   });
   if(sub==='gal') renderGallery();
   else if(sub==='indiv') renderIndividuales();
+  else if(sub==='docs') renderDocsManager();
   else renderWeeksList();
+}
+
+// ============ S&C DOCS MANAGER (coach) ============
+var _docsSquad = '';
+function _docsSetSquad(sq){ _docsSquad=sq; renderDocsManager(); }
+async function renderDocsManager(){
+  const c=document.getElementById('planner-content');
+  if(!c) return;
+  c.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  if(!_docsSquad) _docsSquad = state.coachSquadFilter || "men's xv";
+  const squad=_docsSquad;
+  const [resDocs, resJug]=await Promise.all([
+    api({ action:'getDocs', squad, soloCoach:true }),
+    api({ action:'getEquipo', semana:(typeof realSemanaIdx==='function'?realSemanaIdx():6), squad })
+  ]);
+  const docs=(resDocs.docs||[]);
+  const jugadores=(resJug.equipo||[]).filter(j=>!j.esCoach && (!j.squad||String(j.squad).toLowerCase()===squad.toLowerCase()));
+  _indivJugadores=jugadores;
+  const squadOpts=[["men's xv","Men's XV"],["women's","Women's"],["academy","Academy"]]
+    .map(([v,l])=>`<option value="${v}"${v===squad?' selected':''}>${l}</option>`).join('');
+  const jugOpts=jugadores.map(j=>`<option value="${j.usuario}">${j.nombre}</option>`).join('');
+
+  let listaHTML = docs.length ? docs.map(d=>{
+    const dest = d.ambito==='jugador' ? _nombreJug(d.usuario) : 'Todo el squad';
+    return `<div class="indiv-row">
+      <div class="indiv-row-info">
+        <div class="indiv-row-nm">${d.titulo}</div>
+        <div class="indiv-row-sub">${dest}${d.categoria?' · '+d.categoria:''}</div>
+      </div>
+      <span class="indiv-del" onclick="delDoc('${d.id}')">&#128465;</span>
+    </div>`;
+  }).join('') : '<div class="pevo-empty">Aún no has subido documentos.</div>';
+
+  c.innerHTML=`
+    <div class="indiv-new-box">
+      <div class="indiv-new-title">Subir documento S&C</div>
+      <label class="indiv-lbl">Squad</label>
+      <select id="doc-squad" class="semana-select" style="width:100%;margin-bottom:10px" onchange="_docsSetSquad(this.value)">${squadOpts}</select>
+      <label class="indiv-lbl">Dirigido a</label>
+      <select id="doc-ambito" class="semana-select" style="width:100%;margin-bottom:10px" onchange="_docAmbitoChange()">
+        <option value="squad">Todo el squad</option>
+        <option value="jugador">Un jugador concreto</option>
+      </select>
+      <div id="doc-jugador-wrap" style="display:none">
+        <label class="indiv-lbl">Jugador</label>
+        <select id="doc-jugador" class="semana-select" style="width:100%;margin-bottom:10px">
+          <option value="">— Selecciona jugador —</option>${jugOpts}
+        </select>
+      </div>
+      <label class="indiv-lbl">Título</label>
+      <input id="doc-titulo" class="semana-select" style="width:100%;margin-bottom:10px" placeholder="Ej. Guía de movilidad de cadera">
+      <label class="indiv-lbl">Categoría (opcional)</label>
+      <input id="doc-categoria" class="semana-select" style="width:100%;margin-bottom:10px" placeholder="Ej. Movilidad, Fuerza, Nutrición">
+      <label class="indiv-lbl">Enlace al PDF (Google Drive, Dropbox...)</label>
+      <input id="doc-url" class="semana-select" style="width:100%;margin-bottom:12px" placeholder="https://...">
+      <button class="indiv-add-btn" onclick="crearDoc()">Subir documento</button>
+    </div>
+    <div class="indiv-list-title">Documentos subidos</div>
+    <div class="indiv-list">${listaHTML}</div>`;
+}
+function _docAmbitoChange(){
+  const v=document.getElementById('doc-ambito').value;
+  const wrap=document.getElementById('doc-jugador-wrap');
+  if(wrap) wrap.style.display = v==='jugador' ? '' : 'none';
+}
+async function crearDoc(){
+  const ambito=document.getElementById('doc-ambito').value;
+  const usuario=ambito==='jugador'?document.getElementById('doc-jugador').value:'';
+  const titulo=document.getElementById('doc-titulo').value.trim();
+  const url=document.getElementById('doc-url').value.trim();
+  const categoria=document.getElementById('doc-categoria').value.trim();
+  if(!titulo){ alert('Ponle un título'); return; }
+  if(!url){ alert('Pega el enlace al PDF'); return; }
+  if(ambito==='jugador' && !usuario){ alert('Selecciona el jugador'); return; }
+  const res=await api({ action:'saveDoc', ambito, squad:_docsSquad, usuario, titulo, url, categoria, creado_por:(state.user&&state.user.usuario)||'' });
+  if(res.ok){ renderDocsManager(); } else { alert('Error: '+(res.error||'')); }
+}
+async function delDoc(id){
+  if(!confirm('¿Borrar este documento?')) return;
+  await api({ action:'deleteDoc', id });
+  renderDocsManager();
 }
 
 // ============ INDIVIDUALES (extras por jugador) ============
