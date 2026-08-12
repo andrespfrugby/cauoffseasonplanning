@@ -1607,6 +1607,13 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .indiv-new-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px}
 .indiv-lbl{display:block;font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
 .indiv-add-btn{width:100%;padding:11px;border-radius:8px;border:none;background:var(--accent2);color:#0d0f12;font-size:13px;font-weight:700;cursor:pointer}
+.doc-ambito-tabs{display:flex;gap:6px;margin-bottom:12px}
+.doc-ambito-tab{flex:1;text-align:center;font-size:11px;color:var(--muted);padding:8px 4px;border-radius:7px;background:var(--surface2);border:1px solid var(--border2);cursor:pointer}
+.doc-ambito-tab.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.doc-chks{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+.doc-chk{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;cursor:pointer;font-size:12px;color:var(--text)}
+.doc-chk input{width:16px;height:16px;accent-color:var(--accent)}
+.doc-cancel-btn{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;margin-top:8px}
 .indiv-list-title{font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em}
 .indiv-list{display:flex;flex-direction:column;background:var(--surface1);border-radius:12px;overflow:hidden}
 .indiv-row{display:flex;align-items:center;gap:10px;padding:13px 14px;border-bottom:1px solid var(--border2)}
@@ -3996,7 +4003,7 @@ async function renderScDocs(){
   const cont=document.getElementById('scdocs-content');
   if(!cont) return;
   cont.innerHTML='<div class="loader"><div class="spinner"></div></div>';
-  const res=await api({ action:'getDocs', usuario:(state.user&&state.user.usuario)||'', squad:state.squad||'' });
+  const res=await api({ action:'getDocs', usuario:(state.user&&state.user.usuario)||'', squad:state.squad||'', rol:state.rol||'' });
   if(!res||!res.ok){ cont.innerHTML='<div class="pevo-empty">No se pudieron cargar los documentos.</div>'; return; }
   const docs=res.docs||[];
   if(!docs.length){
@@ -8794,81 +8801,143 @@ function plannerSub(sub){
 // ============ S&C DOCS MANAGER (coach) ============
 var _docsSquad = '';
 function _docsSetSquad(sq){ _docsSquad=sq; renderDocsManager(); }
+var _docEdit = null; // doc en edición o null
 async function renderDocsManager(){
   const c=document.getElementById('planner-content');
   if(!c) return;
   c.innerHTML='<div class="loader"><div class="spinner"></div></div>';
-  if(!_docsSquad) _docsSquad = state.coachSquadFilter || "men's xv";
-  const squad=_docsSquad;
-  const [resDocs, resJug]=await Promise.all([
-    api({ action:'getDocs', squad, soloCoach:true }),
-    api({ action:'getEquipo', semana:(typeof realSemanaIdx==='function'?realSemanaIdx():6), squad })
+  // cargar todos los docs + jugadores de todos los squads (para poder elegir cualquiera)
+  const [resDocs, resM, resW, resA]=await Promise.all([
+    api({ action:'getDocs', soloCoach:true }),
+    api({ action:'getEquipo', semana:1, squad:"men's xv" }),
+    api({ action:'getEquipo', semana:1, squad:"women's" }),
+    api({ action:'getEquipo', semana:1, squad:"academy" })
   ]);
   const docs=(resDocs.docs||[]);
-  const jugadores=(resJug.equipo||[]).filter(j=>!j.esCoach && (!j.squad||String(j.squad).toLowerCase()===squad.toLowerCase()));
-  _indivJugadores=jugadores;
-  const squadOpts=[["men's xv","Men's XV"],["women's","Women's"],["academy","Academy"]]
-    .map(([v,l])=>`<option value="${v}"${v===squad?' selected':''}>${l}</option>`).join('');
-  const jugOpts=jugadores.map(j=>`<option value="${j.usuario}">${j.nombre}</option>`).join('');
+  const jugTodos=[]
+    .concat((resM.equipo||[]).map(j=>({...j,_sq:"men's xv"})))
+    .concat((resW.equipo||[]).map(j=>({...j,_sq:"women's"})))
+    .concat((resA.equipo||[]).map(j=>({...j,_sq:"academy"})))
+    .filter(j=>!j.esCoach);
+  _docJugTodos=jugTodos;
+  _indivJugadores=jugTodos;
+
+  // valores actuales (si estamos editando)
+  const e=_docEdit||{};
+  const ambito=e.ambito||'squad';
+  const squadsSel=(e.ambito==='squad'?String(e.squad||'').toLowerCase().split(',').map(s=>s.trim()).filter(Boolean):[]);
+  const rolesSel=(e.ambito==='staff'?String(e.squad||'').toLowerCase().split(',').map(s=>s.trim()).filter(Boolean):[]);
+
+  const chk=(val,arr)=>arr.indexOf(val)!==-1?'checked':'';
+  const squadsChecks=[["men's xv","Men's XV"],["women's","Women's"],["academy","Academy"]]
+    .map(([v,l])=>`<label class="doc-chk"><input type="checkbox" class="doc-squad-chk" value="${v}" ${chk(v,squadsSel)}><span>${l}</span></label>`).join('');
+  const staffChecks=[["coach","Coaches"],["fisio","Fisios"],["s&c","S&C"]]
+    .map(([v,l])=>`<label class="doc-chk"><input type="checkbox" class="doc-staff-chk" value="${v}" ${chk(v,rolesSel)}><span>${l}</span></label>`).join('');
+  const jugOpts=jugTodos.map(j=>`<option value="${j.usuario}"${e.usuario===j.usuario?' selected':''}>${j.nombre} (${j._sq})</option>`).join('');
 
   let listaHTML = docs.length ? docs.map(d=>{
-    const dest = d.ambito==='jugador' ? _nombreJug(d.usuario) : 'Todo el squad';
+    let dest='';
+    if(d.ambito==='jugador') dest=_nombreJug(d.usuario);
+    else if(d.ambito==='staff') dest='Staff: '+String(d.squad||'').split(',').map(_docRolLabel).join(', ');
+    else dest=String(d.squad||'').split(',').map(_docSquadLabel).join(', ')||'Squad';
     return `<div class="indiv-row">
       <div class="indiv-row-info">
         <div class="indiv-row-nm">${d.titulo}</div>
         <div class="indiv-row-sub">${dest}${d.categoria?' · '+d.categoria:''}</div>
       </div>
+      <span class="indiv-edit" onclick="editDoc('${d.id}')">&#9998;</span>
       <span class="indiv-del" onclick="delDoc('${d.id}')">&#128465;</span>
     </div>`;
   }).join('') : '<div class="pevo-empty">Aún no has subido documentos.</div>';
 
   c.innerHTML=`
     <div class="indiv-new-box">
-      <div class="indiv-new-title">Subir documento S&C</div>
-      <label class="indiv-lbl">Squad</label>
-      <select id="doc-squad" class="semana-select" style="width:100%;margin-bottom:10px" onchange="_docsSetSquad(this.value)">${squadOpts}</select>
+      <div class="indiv-new-title">${_docEdit?'Editar documento':'Subir documento S&C'}</div>
       <label class="indiv-lbl">Dirigido a</label>
-      <select id="doc-ambito" class="semana-select" style="width:100%;margin-bottom:10px" onchange="_docAmbitoChange()">
-        <option value="squad">Todo el squad</option>
-        <option value="jugador">Un jugador concreto</option>
-      </select>
-      <div id="doc-jugador-wrap" style="display:none">
+      <div class="doc-ambito-tabs">
+        <span class="doc-ambito-tab${ambito==='squad'?' on':''}" onclick="_docSetAmbito('squad')">Squads</span>
+        <span class="doc-ambito-tab${ambito==='jugador'?' on':''}" onclick="_docSetAmbito('jugador')">Un jugador</span>
+        <span class="doc-ambito-tab${ambito==='staff'?' on':''}" onclick="_docSetAmbito('staff')">Staff</span>
+      </div>
+      <input type="hidden" id="doc-ambito" value="${ambito}">
+      <div id="doc-squads-wrap" style="display:${ambito==='squad'?'block':'none'}">
+        <label class="indiv-lbl">¿Qué squads?</label>
+        <div class="doc-chks">${squadsChecks}</div>
+      </div>
+      <div id="doc-jugador-wrap" style="display:${ambito==='jugador'?'block':'none'}">
         <label class="indiv-lbl">Jugador</label>
         <select id="doc-jugador" class="semana-select" style="width:100%;margin-bottom:10px">
           <option value="">— Selecciona jugador —</option>${jugOpts}
         </select>
       </div>
+      <div id="doc-staff-wrap" style="display:${ambito==='staff'?'block':'none'}">
+        <label class="indiv-lbl">¿Qué staff?</label>
+        <div class="doc-chks">${staffChecks}</div>
+      </div>
       <label class="indiv-lbl">Título</label>
-      <input id="doc-titulo" class="semana-select" style="width:100%;margin-bottom:10px" placeholder="Ej. Guía de movilidad de cadera">
+      <input id="doc-titulo" class="semana-select" style="width:100%;margin-bottom:10px" placeholder="Ej. Guía de movilidad de cadera" value="${(e.titulo||'').replace(/"/g,'&quot;')}">
       <label class="indiv-lbl">Categoría (opcional)</label>
-      <input id="doc-categoria" class="semana-select" style="width:100%;margin-bottom:10px" placeholder="Ej. Movilidad, Fuerza, Nutrición">
+      <input id="doc-categoria" class="semana-select" style="width:100%;margin-bottom:10px" placeholder="Ej. Movilidad, Fuerza, Nutrición" value="${(e.categoria||'').replace(/"/g,'&quot;')}">
       <label class="indiv-lbl">Enlace al PDF (Google Drive, Dropbox...)</label>
-      <input id="doc-url" class="semana-select" style="width:100%;margin-bottom:12px" placeholder="https://...">
-      <button class="indiv-add-btn" onclick="crearDoc()">Subir documento</button>
+      <input id="doc-url" class="semana-select" style="width:100%;margin-bottom:12px" placeholder="https://..." value="${(e.url||'').replace(/"/g,'&quot;')}">
+      <button class="indiv-add-btn" onclick="crearDoc()">${_docEdit?'Guardar cambios':'Subir documento'}</button>
+      ${_docEdit?'<button class="doc-cancel-btn" onclick="_docCancelEdit()">Cancelar edición</button>':''}
     </div>
     <div class="indiv-list-title">Documentos subidos</div>
     <div class="indiv-list">${listaHTML}</div>`;
 }
-function _docAmbitoChange(){
-  const v=document.getElementById('doc-ambito').value;
-  const wrap=document.getElementById('doc-jugador-wrap');
-  if(wrap) wrap.style.display = v==='jugador' ? '' : 'none';
+var _docJugTodos=[];
+function _docSquadLabel(s){ s=String(s).trim().toLowerCase(); return s==="men's xv"?"Men's XV":s==="women's"?"Women's":s==="academy"?"Academy":s; }
+function _docRolLabel(r){ r=String(r).trim().toLowerCase(); return r==='coach'?'Coaches':r==='fisio'?'Fisios':r==='s&c'?'S&C':r; }
+function _nombreJug(usuario){
+  const j=(_indivJugadores||[]).find(x=>x.usuario===usuario);
+  return j?j.nombre:usuario;
 }
+function _docSetAmbito(a){
+  document.getElementById('doc-ambito').value=a;
+  document.getElementById('doc-squads-wrap').style.display=a==='squad'?'block':'none';
+  document.getElementById('doc-jugador-wrap').style.display=a==='jugador'?'block':'none';
+  document.getElementById('doc-staff-wrap').style.display=a==='staff'?'block':'none';
+  document.querySelectorAll('.doc-ambito-tab').forEach(t=>t.classList.remove('on'));
+  const tabs={'squad':0,'jugador':1,'staff':2};
+  const all=document.querySelectorAll('.doc-ambito-tab');
+  if(all[tabs[a]]) all[tabs[a]].classList.add('on');
+}
+async function editDoc(id){
+  const res=await api({ action:'getDocs', soloCoach:true });
+  const d=(res.docs||[]).find(x=>String(x.id)===String(id));
+  if(!d){ alert('No se encontró el documento'); return; }
+  _docEdit=d;
+  renderDocsManager();
+}
+function _docCancelEdit(){ _docEdit=null; renderDocsManager(); }
 async function crearDoc(){
   const ambito=document.getElementById('doc-ambito').value;
-  const usuario=ambito==='jugador'?document.getElementById('doc-jugador').value:'';
   const titulo=document.getElementById('doc-titulo').value.trim();
   const url=document.getElementById('doc-url').value.trim();
   const categoria=document.getElementById('doc-categoria').value.trim();
   if(!titulo){ alert('Ponle un título'); return; }
   if(!url){ alert('Pega el enlace al PDF'); return; }
-  if(ambito==='jugador' && !usuario){ alert('Selecciona el jugador'); return; }
-  const res=await api({ action:'saveDoc', ambito, squad:_docsSquad, usuario, titulo, url, categoria, creado_por:(state.user&&state.user.usuario)||'' });
-  if(res.ok){ renderDocsManager(); } else { alert('Error: '+(res.error||'')); }
+  let squad='', usuario='';
+  if(ambito==='squad'){
+    const sq=Array.from(document.querySelectorAll('.doc-squad-chk:checked')).map(c=>c.value);
+    if(!sq.length){ alert('Marca al menos un squad'); return; }
+    squad=sq.join(',');
+  } else if(ambito==='staff'){
+    const rs=Array.from(document.querySelectorAll('.doc-staff-chk:checked')).map(c=>c.value);
+    if(!rs.length){ alert('Marca al menos un rol de staff'); return; }
+    squad=rs.join(',');
+  } else if(ambito==='jugador'){
+    usuario=document.getElementById('doc-jugador').value;
+    if(!usuario){ alert('Selecciona el jugador'); return; }
+  }
+  const res=await api({ action:'saveDoc', id:(_docEdit&&_docEdit.id)||'', ambito, squad, usuario, titulo, url, categoria, creado_por:(state.user&&state.user.usuario)||'' });
+  if(res.ok){ _docEdit=null; renderDocsManager(); } else { alert('Error: '+(res.error||'')); }
 }
 async function delDoc(id){
   if(!confirm('¿Borrar este documento?')) return;
   await api({ action:'deleteDoc', id });
+  _docEdit=null;
   renderDocsManager();
 }
 
