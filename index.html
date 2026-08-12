@@ -4361,14 +4361,14 @@ function initNav() {
 
   if (state.isCoach) {
     if (state.rol === 'coach') {
-      // Coach de rugby: Readiness · Load (rpe diaria) · Reports
-      ['bn-readiness','bn-rpe','bn-reports'].forEach(id => {
+      // Coach de rugby: Readiness · Load (rpe diaria) · Reports · S&C Docs
+      ['bn-readiness','bn-rpe','bn-reports','bn-scdocs'].forEach(id => {
         const el = document.getElementById(id); if (el) el.style.display = '';
       });
       switchTab('readiness');
     } else if (state.rol === 'fisio') {
-      // Fisio: Readiness · Load (rpe diaria + cuadrante)
-      ['bn-readiness','bn-rpe'].forEach(id => {
+      // Fisio: Readiness · Load (rpe diaria + cuadrante) · S&C Docs
+      ['bn-readiness','bn-rpe','bn-scdocs'].forEach(id => {
         const el = document.getElementById(id); if (el) el.style.display = '';
       });
       switchTab('readiness');
