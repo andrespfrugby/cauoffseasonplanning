@@ -8701,13 +8701,16 @@ async function renderIndividuales(){
   if(!c) return;
   c.innerHTML='<div class="loader"><div class="spinner"></div></div>';
   const squad = state.coachSquadFilter || _plan.squad || "men's xv";
-  const [resJug, resEx] = await Promise.all([
+  const [resJug, resEx, resWk] = await Promise.all([
     api({ action:'getEquipo', semana: (typeof realSemanaIdx==='function'?realSemanaIdx():6) }),
-    api({ action:'getExtras', squad })
+    api({ action:'getExtras', squad }),
+    api({ action:'getWeeks', squad })
   ]);
   const jugadores = (resJug.equipo||[]).filter(j=>!j.esCoach);
   const extras = (resEx.extras||[]);
   _indivJugadores = jugadores;
+  // semanas del planner (cargar si no están en _plan.weeks)
+  if(resWk.ok && resWk.weeks) _plan.weeks = resWk.weeks;
   const semanas = (_plan.weeks||[]).map(w=>w.nombre);
 
   let extrasHTML = extras.length ? extras.map(e=>{
