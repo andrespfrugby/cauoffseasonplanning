@@ -2383,10 +2383,22 @@ function parseLoadTargets(loadObjetivo, nSets) {
 let state = {
   user:null, dia:1, semana:1, semanas:[],
   rpeSession:null, tiempoSesion:'', guardado:false,
-  isCoach:false, cards:{},
+  isCoach:false, rol:'', cards:{},
   coachEquipo: [], coachRpeChart: [], coachSquadFilter: '',
   squad: ''
 };
+
+// Detecta el rol de staff a partir de la columna posición del Sheet.
+// Devuelve 's&c', 'coach', 'fisio' o '' (jugador). Robusto a variantes de escritura.
+function _detectarRol(posicion){
+  const p = String(posicion||'').toLowerCase().trim();
+  // Cinco categorías en la columna posición del Sheet:
+  // player · s&c · coach · fisio  (cualquier otra cosa se trata como jugador)
+  if (p === 's&c' || p === 'sc' || p === 's y c' || p === 'strength' || p === 'preparador') return 's&c';
+  if (p === 'coach' || p === 'entrenador' || p === 'head coach' || p === 'headcoach') return 'coach';
+  if (p === 'fisio' || p === 'physio' || p === 'fisioterapeuta' || p === 'medico' || p === 'médico') return 'fisio';
+  return ''; // player o cualquier otro valor → jugador
+}
 
 const SESSION_KEY = 'cau_session';
 
@@ -2783,7 +2795,8 @@ function buildWeightChart(pesoData, W=260, H=52) {
     // Restaurar sesión sin volver a pedir login
     state.user       = saved;
     state.squad      = saved.squad || '';
-    state.isCoach    = (String(saved.posicion||'').toLowerCase() === 'coach');
+    state.rol        = _detectarRol(saved.posicion);
+    state.isCoach    = (state.rol !== ''); // s&c, coach y fisio son "staff" (no jugadores)
     document.getElementById('player-name').textContent     = saved.nombre;
     document.getElementById('avatar-initials').textContent =
       saved.nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -2834,7 +2847,8 @@ async function doLogin() {
   if (res.ok) {
     state.user  = res;
     state.squad = res.squad || '';
-    state.isCoach = (String(res.posicion||'').toLowerCase()==='coach');
+    state.rol   = _detectarRol(res.posicion);
+    state.isCoach = (state.rol !== '');
     sessionSave(res); // persist across reloads
     document.getElementById('player-name').textContent = res.nombre;
     document.getElementById('avatar-initials').textContent =
@@ -4339,14 +4353,27 @@ function initNav() {
   allNavIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
 
   if (state.isCoach) {
-    // Coach: Readiness · Load · Reports · Session · Planner · Settings (NO Squad)
-    ['bn-readiness','bn-rpe','bn-reports','bn-sesion-coach','bn-planner','bn-settings'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = '';
-    });
-    switchTab('readiness');
+    if (state.rol === 'coach') {
+      // Coach de rugby: Readiness · Load (rpe diaria) · Reports
+      ['bn-readiness','bn-rpe','bn-reports'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = '';
+      });
+      switchTab('readiness');
+    } else if (state.rol === 'fisio') {
+      // Fisio: Readiness · Load (rpe diaria + cuadrante)
+      ['bn-readiness','bn-rpe'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = '';
+      });
+      switchTab('readiness');
+    } else {
+      // S&C (gestor): TODO como el coach actual
+      ['bn-readiness','bn-rpe','bn-reports','bn-sesion-coach','bn-planner','bn-settings'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = '';
+      });
+      switchTab('readiness');
+    }
   } else {
-    // Player: Readiness · Session · Stats · Testing
+    // Player: Readiness · Session · Stats · S&C Docs
     ['bn-wellness','bn-fieldload','bn-sesion','bn-misemana','bn-scdocs'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
