@@ -8696,22 +8696,31 @@ function plannerSub(sub){
 // ============ INDIVIDUALES (extras por jugador) ============
 var _extraEdit = null;
 var _indivJugadores = [];
+var _indivSquad = '';
+function _indivSetSquad(sq){
+  _indivSquad = sq;
+  renderIndividuales();
+}
 async function renderIndividuales(){
   const c=document.getElementById('planner-content');
   if(!c) return;
   c.innerHTML='<div class="loader"><div class="spinner"></div></div>';
-  const squad = state.coachSquadFilter || _plan.squad || "men's xv";
-  const [resJug, resEx, resWk] = await Promise.all([
-    api({ action:'getEquipo', semana: (typeof realSemanaIdx==='function'?realSemanaIdx():6) }),
+  // squad seleccionado para individuales (por defecto el filtro del coach o men's xv)
+  if(!_indivSquad) _indivSquad = state.coachSquadFilter || "men's xv";
+  const squad = _indivSquad;
+  const [resJug, resEx, resSem] = await Promise.all([
+    api({ action:'getEquipo', semana: (typeof realSemanaIdx==='function'?realSemanaIdx():6), squad }),
     api({ action:'getExtras', squad }),
-    api({ action:'getWeeks', squad })
+    api({ action:'getSemanas', squad, isCoach:true })
   ]);
-  const jugadores = (resJug.equipo||[]).filter(j=>!j.esCoach);
+  // filtrar jugadores por squad (por si getEquipo no filtra) y quitar coaches
+  const jugadores = (resJug.equipo||[]).filter(j=>!j.esCoach && (!j.squad || String(j.squad).toLowerCase()===squad.toLowerCase()));
   const extras = (resEx.extras||[]);
   _indivJugadores = jugadores;
-  // semanas del planner (cargar si no están en _plan.weeks)
-  if(resWk.ok && resWk.weeks) _plan.weeks = resWk.weeks;
-  const semanas = (_plan.weeks||[]).map(w=>w.nombre);
+  const semanas = (resSem.ok && resSem.semanas) ? resSem.semanas : [];
+
+  const squadOpts = [["men's xv","Men's XV"],["women's","Women's"],["academy","Academy"]]
+    .map(([v,l])=>`<option value="${v}"${v===squad?' selected':''}>${l}</option>`).join('');
 
   let extrasHTML = extras.length ? extras.map(e=>{
     const nDias=(e.dias||[]).length;
@@ -8728,6 +8737,10 @@ async function renderIndividuales(){
   c.innerHTML=`
     <div class="indiv-new-box">
       <div class="indiv-new-title">Nuevo extra individual</div>
+      <label class="indiv-lbl">Squad</label>
+      <select id="indiv-squad" class="semana-select" style="width:100%;margin-bottom:10px" onchange="_indivSetSquad(this.value)">
+        ${squadOpts}
+      </select>
       <label class="indiv-lbl">Jugador</label>
       <select id="indiv-jugador" class="semana-select" style="width:100%;margin-bottom:10px">
         <option value="">— Selecciona jugador —</option>
