@@ -1628,6 +1628,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .rr-rtab.on{background:var(--surface2);color:var(--text);border-color:var(--border-strong)}
 .quad-daynav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 /* ── TESTING ── */
+.mol-per-btn{font-size:11px;font-weight:600;color:var(--muted);background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:6px 12px;cursor:pointer}
+.mol-per-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .test-hd{font-size:17px;font-weight:700;color:var(--text);margin-bottom:14px}
 .sub-tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--surface1);border-radius:10px;padding:4px}
 .sub-tab{flex:1;text-align:center;font-size:13px;font-weight:600;color:var(--muted);padding:9px;border-radius:7px;border:none;background:transparent;cursor:pointer;font-family:var(--font-body)}
@@ -4085,8 +4087,10 @@ async function renderWeekSummary(useCache) {
     rpeMedia    = rpes.length ? Math.round((rpes.reduce((s,v)=>s+v,0)/rpes.length)*10)/10 : null;
     const tiempos = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
     tiempoTotal = tiempos.length ? tiempos.reduce((s,v)=>s+v,0) : null;
-    // compliance for month = sessions / expected (≈20 sessions/month)
-    compliance  = Math.min(Math.round((totalDias / 20) * 100), 100);
+    // compliance mensual correcto: promedio de compliance semanales del mes (backend)
+    const rc = await api({ action:'getComplianceMes', usuario:state.user.usuario, squad:state.squad||'', mes:mon, anio:year });
+    compliance = (rc && rc.ok && typeof rc.compliance === 'number') ? rc.compliance
+                 : Math.min(Math.round((totalDias / 20) * 100), 100); // respaldo
     const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     periodLabel = monthNames[mon] + ' ' + year;
   }
@@ -8544,7 +8548,9 @@ async function renderMolestias() {
       <div style="font-size:32px;margin-bottom:8px">✅</div>
       <div style="font-size:14px;font-weight:600;margin-bottom:4px">Sin molestias reportadas</div>
       <div style="font-size:12px;color:var(--muted)">Ningún jugador ha reportado dolor ${fecha===hoyStr?'hoy':'ese día'}.</div>
-    </div>`;
+    </div>
+    <div id="mol-zonas-graf" style="margin-top:22px"></div>`;
+    renderMolestiasZonas(_molZonasPeriodo || 'mes');
     return;
   }
 
@@ -8573,7 +8579,59 @@ async function renderMolestias() {
           ${nota?`<div style="font-size:12px;color:var(--text-secondary);line-height:1.4;font-style:italic;text-align:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">"${nota}"</div>`:''}
         </div>`;
       }).join('')}
+    </div>
+    <div id="mol-zonas-graf" style="margin-top:22px"></div>`;
+  renderMolestiasZonas(_molZonasPeriodo || 'mes');
+}
+
+// ── Gráfico de zonas del equipo (barras por zona y severidad) ──
+var _molZonasPeriodo = 'mes';
+async function renderMolestiasZonas(periodo){
+  _molZonasPeriodo = periodo;
+  const cont = document.getElementById('mol-zonas-graf');
+  if(!cont) return;
+  const squad = state.coachSquadFilter || '';
+  cont.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="font-size:15px;font-weight:700;color:var(--text);flex:1">Zonas afectadas · equipo</div>
+      <div style="display:flex;gap:5px">
+        <button class="mol-per-btn${periodo==='mes'?' on':''}" onclick="renderMolestiasZonas('mes')">Último mes</button>
+        <button class="mol-per-btn${periodo==='temporada'?' on':''}" onclick="renderMolestiasZonas('temporada')">Temporada</button>
+      </div>
+    </div>
+    <div id="mol-zonas-body"><div class="loader"><div class="spinner"></div></div></div>`;
+  const res = await api({ action:'getMolestiasZonas', squad, periodo });
+  const body = document.getElementById('mol-zonas-body');
+  if(!body) return;
+  if(!res.ok || !res.zonas || !res.zonas.length){
+    body.innerHTML = '<div class="hist-empty" style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Sin molestias registradas en este periodo.</div>';
+    return;
+  }
+  const maxTotal = Math.max(...res.zonas.map(z=>z.total));
+  const barras = res.zonas.map(z=>{
+    const pLeve = z.total? (z.leve/z.total*100):0;
+    const pMod  = z.total? (z.moderado/z.total*100):0;
+    const pGrav = z.total? (z.grave/z.total*100):0;
+    const wPct = maxTotal? (z.total/maxTotal*100):0;
+    return `<div style="margin-bottom:13px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span style="color:var(--text);font-weight:500">${z.zona}</span>
+        <span style="color:var(--muted)">${z.total}</span>
+      </div>
+      <div style="width:${Math.max(wPct,8)}%;min-width:40px;display:flex;height:16px;border-radius:5px;overflow:hidden;background:var(--surface2)">
+        ${pLeve>0?`<div style="width:${pLeve}%;background:#ffd93f" title="Leve: ${z.leve}"></div>`:''}
+        ${pMod>0?`<div style="width:${pMod}%;background:#ff9d3f" title="Moderado: ${z.moderado}"></div>`:''}
+        ${pGrav>0?`<div style="width:${pGrav}%;background:#ff5050" title="Grave: ${z.grave}"></div>`:''}
+      </div>
     </div>`;
+  }).join('');
+  body.innerHTML = `${barras}
+    <div style="display:flex;gap:16px;justify-content:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)">
+      <span style="font-size:10px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#ffd93f;margin-right:4px"></span>Leve</span>
+      <span style="font-size:10px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#ff9d3f;margin-right:4px"></span>Moderado</span>
+      <span style="font-size:10px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#ff5050;margin-right:4px"></span>Grave</span>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px">${res.total} molestia${res.total!==1?'s':''} en total · ${periodo==='mes'?'últimos 30 días':'toda la temporada'}</div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════
