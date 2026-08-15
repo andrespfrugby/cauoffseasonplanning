@@ -5100,7 +5100,10 @@ async function renderReportsPanel() {
   if (sqMain && sqRep && !sqRep.value && sqMain.value) sqRep.value = sqMain.value;
 
   const semanas  = state.semanas || [];
-  const semOptions = semanas.map((s,i) => `<option value="${i+1}">${s}</option>`).join('');
+  const semOptions = semanas.map((s,i) => {
+    const realIdx = (state.semanaIndices && state.semanaIndices[i]) ? state.semanaIndices[i] : (i+1);
+    return `<option value="${realIdx}">${s}</option>`;
+  }).join('');
   const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const monOptions = monthNames.map((m,i) => `<option value="${i}">${m}</option>`).join('');
 
@@ -5120,14 +5123,17 @@ async function renderReportsPanel() {
       <div id="rep-meso-picker" style="display:none">
         <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Selecciona las semanas del mesociclo:</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">
-          ${semanas.map((s,i)=>`<label class="rep-meso-chip"><input type="checkbox" value="${i+1}" onchange="repLoadData()" style="display:none"><span>${s}</span></label>`).join('')}
+          ${semanas.map((s,i)=>{
+            const realIdx = (state.semanaIndices && state.semanaIndices[i]) ? state.semanaIndices[i] : (i+1);
+            return `<label class="rep-meso-chip"><input type="checkbox" value="${realIdx}" onchange="repLoadData()" style="display:none"><span>${s}</span></label>`;
+          }).join('')}
         </div>
       </div>
       <div id="rep-body"></div>
     </div>`;
 
   const semSel = document.getElementById('rep-sel-semana');
-  if (semSel) semSel.value = state.semana;
+  if (semSel) semSel.value = (typeof realSemanaIdx==='function' ? realSemanaIdx() : state.semana);
   // set current month
   const monSel = document.getElementById('rep-sel-mes');
   if (monSel) monSel.value = new Date().getMonth();
@@ -5186,7 +5192,15 @@ async function repLoadData() {
   let rows = [], kpis = {}, periodLabel = '';
 
   if (mode === 'semana') {
-    periodLabel = (state.semanas && state.semanas[semIdx-1]) || `Semana ${semIdx}`;
+    // nombre por índice real
+    let plabel;
+    if (state.semanaIndices && state.semanaIndices.length) {
+      const pos = state.semanaIndices.indexOf(semIdx);
+      plabel = (pos !== -1 && state.semanas[pos]) ? state.semanas[pos] : `Semana ${semIdx}`;
+    } else {
+      plabel = (state.semanas && state.semanas[semIdx-1]) || `Semana ${semIdx}`;
+    }
+    periodLabel = plabel;
     const semStr = String(semIdx);
 
     // Load historial for ALL players in parallel
@@ -6957,8 +6971,15 @@ async function loadPlayerEvoData(usuario, content) {
   ).join('');
 
   const rows = semKeys.map(sem => {
-    const semIdx  = parseInt(sem) - 1;
-    const semNom  = (state.semanas && state.semanas[semIdx]) || ('Semana ' + sem);
+    const semNum = parseInt(sem);
+    // Buscar el nombre por índice real (state.semanaIndices) para semanas del planner (1000+)
+    let semNom;
+    if (state.semanaIndices && state.semanaIndices.length) {
+      const pos = state.semanaIndices.indexOf(semNum);
+      semNom = (pos !== -1 && state.semanas[pos]) ? state.semanas[pos] : ('Semana ' + sem);
+    } else {
+      semNom = (state.semanas && state.semanas[semNum-1]) || ('Semana ' + sem);
+    }
     const isCurrent = sem === semanaActual;
     const diasData  = byWeek[sem];
 
