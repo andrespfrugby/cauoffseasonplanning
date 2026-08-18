@@ -2396,7 +2396,7 @@ function parseLoadTargets(loadObjetivo, nSets) {
 let state = {
   user:null, dia:1, semana:1, semanas:[],
   rpeSession:null, tiempoSesion:'', guardado:false,
-  isCoach:false, rol:'', cards:{},
+  isCoach:false, rol:'', squadFijo:'', cards:{},
   coachEquipo: [], coachRpeChart: [], coachSquadFilter: '',
   squad: ''
 };
@@ -2411,6 +2411,24 @@ function _detectarRol(posicion){
   if (p === 'coach' || p === 'entrenador' || p === 'head coach' || p === 'headcoach') return 'coach';
   if (p === 'fisio' || p === 'physio' || p === 'fisioterapeuta' || p === 'medico' || p === 'médico') return 'fisio';
   return ''; // player o cualquier otro valor → jugador
+}
+
+// Determina si un miembro del staff está restringido a un squad concreto.
+// squad del Sheet: 'men's xv'/'women's'/'academy' → solo ve ese; 'all' o vacío → ve todos.
+function _setSquadFijo(squad){
+  const s = String(squad||'').toLowerCase().trim();
+  if (!state.isCoach) { state.squadFijo = ''; return; } // los jugadores no usan esto
+  if (s === '' || s === 'all' || s === 'todos' || s === 'todas') {
+    state.squadFijo = ''; // ve todos
+  } else {
+    // normalizar a los valores canónicos
+    let sq = s;
+    if (s.indexOf('women')!==-1) sq = "women's";
+    else if (s.indexOf('academy')!==-1) sq = 'academy';
+    else if (s.indexOf('men')!==-1 || s.indexOf('xv')!==-1) sq = "men's xv";
+    state.squadFijo = sq;
+    state.coachSquadFilter = sq; // fijar de entrada
+  }
 }
 
 const SESSION_KEY = 'cau_session';
@@ -2810,6 +2828,7 @@ function buildWeightChart(pesoData, W=260, H=52) {
     state.squad      = saved.squad || '';
     state.rol        = _detectarRol(saved.posicion);
     state.isCoach    = (state.rol !== ''); // s&c, coach y fisio son "staff" (no jugadores)
+    _setSquadFijo(saved.squad);
     document.getElementById('player-name').textContent     = saved.nombre;
     document.getElementById('avatar-initials').textContent =
       saved.nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -2862,6 +2881,7 @@ async function doLogin() {
     state.squad = res.squad || '';
     state.rol   = _detectarRol(res.posicion);
     state.isCoach = (state.rol !== '');
+    _setSquadFijo(res.squad);
     sessionSave(res); // persist across reloads
     document.getElementById('player-name').textContent = res.nombre;
     document.getElementById('avatar-initials').textContent =
@@ -5895,10 +5915,19 @@ async function saveLoad(cardId, ejercicio) {
 // ── COACH SQUAD FILTER ────────────────────────────────────────
 // Sincroniza el squad seleccionado en TODOS los selectores + estado
 function _syncAllSquads(value) {
-  state.coachSquadFilter = value || '';
+  // Si el staff tiene un squad fijo asignado, forzar siempre ese squad
+  if (state.squadFijo) {
+    state.coachSquadFilter = state.squadFijo;
+  } else {
+    state.coachSquadFilter = value || '';
+  }
   ['coach-squad-filter','coach-squad-filter-rpe','coach-squad-filter-reports','coach-squad-filter-readiness'].forEach(id=>{
     const el = document.getElementById(id);
-    if (el && el.value !== state.coachSquadFilter) el.value = state.coachSquadFilter;
+    if (el) {
+      if (el.value !== state.coachSquadFilter) el.value = state.coachSquadFilter;
+      // si hay squad fijo, bloquear el selector para que no lo cambie
+      if (state.squadFijo) { el.disabled = true; el.style.opacity = '0.6'; el.style.pointerEvents = 'none'; }
+    }
   });
 }
 
