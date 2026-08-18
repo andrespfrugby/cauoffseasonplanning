@@ -4389,14 +4389,14 @@ function initNav() {
 
   if (state.isCoach) {
     if (state.rol === 'coach') {
-      // Coach de rugby: Readiness · Load (rpe diaria) · Reports · S&C Docs
-      ['bn-readiness','bn-rpe','bn-reports','bn-scdocs'].forEach(id => {
+      // Coach de rugby: Readiness · Load (rpe diaria) · Reports
+      ['bn-readiness','bn-rpe','bn-reports'].forEach(id => {
         const el = document.getElementById(id); if (el) el.style.display = '';
       });
       switchTab('readiness');
     } else if (state.rol === 'fisio') {
-      // Fisio: Readiness · Load (rpe diaria + cuadrante) · S&C Docs
-      ['bn-readiness','bn-rpe','bn-scdocs'].forEach(id => {
+      // Fisio: Readiness · Load (rpe diaria + cuadrante)
+      ['bn-readiness','bn-rpe'].forEach(id => {
         const el = document.getElementById(id); if (el) el.style.display = '';
       });
       switchTab('readiness');
@@ -5189,6 +5189,29 @@ async function _getHistCached(usuario){
   return r;
 }
 
+// Suma el tiempo tomando UN registro por día (semana+día), evita duplicados
+function _tiempoDiasUnicos(sesiones){
+  const porDia = {};
+  sesiones.forEach(h=>{
+    const k = String(h.semana).trim()+'|'+String(h.dia).trim();
+    const t = parseInt(h.tiempo_sesion);
+    if(!isNaN(t) && t>0 && porDia[k]===undefined) porDia[k]=t;
+  });
+  const vals = Object.values(porDia);
+  return vals.length ? vals.reduce((a,b)=>a+b,0) : null;
+}
+// Igual pero agrupando por fecha (para el modo mes)
+function _tiempoDiasUnicosFecha(sesiones){
+  const porDia = {};
+  sesiones.forEach(h=>{
+    const k = String(h.fecha).slice(0,10);
+    const t = parseInt(h.tiempo_sesion);
+    if(!isNaN(t) && t>0 && porDia[k]===undefined) porDia[k]=t;
+  });
+  const vals = Object.values(porDia);
+  return vals.length ? vals.reduce((a,b)=>a+b,0) : null;
+}
+
 async function repLoadData() {
   const body = document.getElementById('rep-body');
   if (!body) return;
@@ -5238,11 +5261,9 @@ async function repLoadData() {
       const sesiones = res.historial.filter(h => String(h.semana).trim() === semStr);
       const rpes = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
       const avgRpe = rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null;
-      const sesCount = sesiones.length;
-      const tiempos = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
-      const tiempo = tiempos.length ? tiempos.reduce((a,b)=>a+b,0) : null;
-      // compliance = sesiones / días programados reales de esa semana
-      // diasProgramados viene del backend getDiasActivos via getEquipo
+      // contar DÍAS distintos, no filas (evita duplicados del mismo día)
+      const sesCount = new Set(sesiones.map(h=>String(h.dia).trim())).size;
+      const tiempo = _tiempoDiasUnicos(sesiones);
       const diasProg = j.diasProgramados || 5;
       const comp = sesCount > 0 ? Math.min(Math.round((sesCount/diasProg)*100), 100) : 0;
       return { nombre:j.nombre, usuario:j.usuario, avgRpe, sesCount, comp, tiempo };
@@ -5268,9 +5289,9 @@ async function repLoadData() {
       const sesiones = res.historial.filter(h => semSet.has(String(h.semana).trim()));
       const rpes = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
       const avgRpe = rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null;
-      const sesCount = sesiones.length;
-      const tiempos = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
-      const tiempo = tiempos.length ? tiempos.reduce((a,b)=>a+b,0) : null;
+      // contar días distintos por semana+día (evita duplicados del mismo día)
+      const sesCount = new Set(sesiones.map(h=>String(h.semana).trim()+'|'+String(h.dia).trim())).size;
+      const tiempo = _tiempoDiasUnicos(sesiones);
       // adherencia: sesiones hechas / (días programados × nº semanas)
       const diasProg = (j.diasProgramados || 5) * checks.length;
       const comp = sesCount > 0 ? Math.min(Math.round((sesCount/diasProg)*100), 100) : 0;
@@ -5285,7 +5306,7 @@ async function repLoadData() {
       equipo.map(j => _getHistCached(j.usuario))
     );
 
-    rows = equipo.map((j, idx) => {
+    rows = await Promise.all(equipo.map(async (j, idx) => {
       const res = histResults[idx];
       if (!res.ok || !res.historial) return { nombre:j.nombre, usuario:j.usuario, avgRpe:null, sesCount:0, comp:0, tiempo:null };
       // Filter by month and year
@@ -5296,13 +5317,16 @@ async function repLoadData() {
       });
       const rpes = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
       const avgRpe = rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null;
-      const sesCount = sesiones.length;
-      const tiempos = sesiones.map(h=>parseInt(h.tiempo_sesion)).filter(v=>!isNaN(v)&&v>0);
-      const tiempo = tiempos.length ? tiempos.reduce((a,b)=>a+b,0) : null;
-      // Estimate sessions in month (~4 weeks * 5 days = 20 max)
-      const comp = sesCount > 0 ? Math.min(Math.round((sesCount/20)*100), 100) : 0;
+      // contar días distintos (fecha) — evita duplicados del mismo día
+      const sesCount = new Set(sesiones.map(h=>String(h.fecha).slice(0,10))).size;
+      const tiempo = _tiempoDiasUnicosFecha(sesiones);
+      // compliance mensual correcto: promedio de compliance semanales (backend)
+      const rc = await api({ action:'getComplianceMes', usuario:j.usuario, squad:j.squad||sqFilter||'', mes:monIdx, anio:year });
+      const comp = (rc && rc.ok && typeof rc.compliance==='number') ? rc.compliance
+                   : (sesCount>0 ? Math.min(Math.round((sesCount/20)*100),100) : 0);
       return { nombre:j.nombre, usuario:j.usuario, avgRpe, sesCount, comp, tiempo };
-    }).sort((a,b)=>b.comp-a.comp);
+    }));
+    rows.sort((a,b)=>b.comp-a.comp);
   }
 
   // Filter out players with zero activity for cleaner reports
