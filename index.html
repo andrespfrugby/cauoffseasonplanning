@@ -2079,7 +2079,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
             <span class="rr-rtab" id="rr-tab-30" onclick="rrSetRange(30)">Mes</span>
           </div>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Barra = RPE de la sesión · Línea = readiness del día siguiente. Ves cómo recuperan de cada día de carga.</div>
+
         <div id="coach-rr-content"><div class="loader"><div class="spinner"></div></div></div>
       </div>
 
@@ -6274,7 +6274,7 @@ function _rrChartSVG(serie){
     const cx=padL+step*i+step/2;
     if(d.rpe!=null){
       const h=Math.max(2, d.rpe/10*innerH);
-      bars+=`<rect x="${cx-bw/2}" y="${padT+innerH-h}" width="${bw}" height="${h}" rx="2" fill="${rpeCol(d.rpe)}" opacity=".55"><title>${d.fecha} · RPE ${d.rpe} (${d.nRpe})</title></rect>`;
+      bars+=`<rect x="${cx-bw/2}" y="${padT+innerH-h}" width="${bw}" height="${h}" rx="2" fill="${rpeCol(d.rpe)}" opacity=".55"><title>Carga ${d.rpeFecha?_fmtFechaCorta(d.rpeFecha):d.fecha} · RPE medio ${d.rpe} · ${d.nRpe} jugador${d.nRpe!==1?'es':''}</title></rect>`;
     }
     if(d.readiness!=null){
       const y=padT+innerH-(d.readiness/20*innerH);
