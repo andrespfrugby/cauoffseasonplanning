@@ -4192,6 +4192,8 @@ async function _informeProcesar(rows){
   const vals = raw.map(d=>d.valor);
   const prom = (vals.reduce((a,b)=>a+b,0)/vals.length);
   const dec = (test.unidad==='m/s')?2:1;
+  const sinCruzar = raw.filter(d=>!d.usuario);
+  const sinUser = sinCruzar.length;
 
   prev.innerHTML = `
     <div class="inf-ready">
