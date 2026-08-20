@@ -4154,6 +4154,12 @@ async function _informeProcesar(rows){
   }
   if(!raw.length){ prev.innerHTML='<div class="inf-error">Ningún jugador con dato válido en el Excel.</div>'; return; }
 
+  // cruzar con jugadores del squad (nombre completo "Apellido, Nombre" en col G)
+  const res = await api({ action:'getJugadoresInforme', squad:_informeSquad });
+  const jugadores = (res && res.jugadores) ? res.jugadores : [];
+  const norm = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/,/g,' ').replace(/\s+/g,' ').trim();
+  const infoByName = {};
+  jugadores.forEach(j=>{ if(j.nombreCompleto) infoByName[norm(j.nombreCompleto)] = { pos:j.rugbyposition||'', usuario:j.usuario }; });
 
   const matchInfo = nombre => {
     const n = norm(nombre);
