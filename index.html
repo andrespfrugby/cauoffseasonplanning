@@ -4125,7 +4125,10 @@ function _informeArchivo(ev){
       const wb = XLSX.read(data, {type:'array'});
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, {header:1});
-      _informeProcesar(rows);
+      _informeProcesar(rows).catch(function(err){
+        const p = document.getElementById('inf-preview');
+        if(p) p.innerHTML = '<div class="inf-error">Error al procesar: '+(err&&err.message?err.message:err)+'</div>';
+      });
     }catch(err){
       document.getElementById('inf-preview').innerHTML = '<div class="inf-error">No se pudo leer el Excel. Revisa el formato.</div>';
     }
