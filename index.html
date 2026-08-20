@@ -4050,6 +4050,7 @@ function _testRankSet(scope){
 
 // ══════════════ S&C DOCS (jugador) ══════════════
 // ══════════════ INFORME DE TESTING (s&c) ══════════════
+function _informeNorm(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/,/g,' ').replace(/\s+/g,' ').trim(); }
 var _informeSquad = "men's xv";
 var _informeCatalogo = [];
 var _informeTestSel = null;
@@ -4138,7 +4139,8 @@ function _informeArchivo(ev){
 
 async function _informeProcesar(rows){
   const prev = document.getElementById('inf-preview');
-  prev.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const dbg = m => { if(prev) prev.innerHTML = '<div class="inf-ready"><div class="inf-ready-s">'+m+'</div></div>'; };
+  dbg('Leyendo Excel...');
   if(!rows || rows.length < 2){ prev.innerHTML='<div class="inf-error">El Excel está vacío.</div>'; return; }
   // detectar columnas por cabecera
   const head = rows[0].map(h=>String(h||'').toLowerCase().trim());
@@ -4156,8 +4158,22 @@ async function _informeProcesar(rows){
     raw.push({ nombre:String(jug).trim(), valor:parseFloat(val) });
   }
   if(!raw.length){ prev.innerHTML='<div class="inf-error">Ningún jugador con dato válido en el Excel.</div>'; return; }
+  dbg('Excel leído ('+raw.length+' jugadores). Conectando con el servidor...');
 
-
+  // cruzar con jugadores del squad (nombre completo "Apellido, Nombre" en col G)
+  let jugadores = [];
+  try {
+    const res = await api({ action:'getJugadoresInforme', squad:_informeSquad });
+    if (res && res.jugadores) jugadores = res.jugadores;
+    else if (res && res.equipo) jugadores = res.equipo;
+    else { prev.innerHTML = '<div class="inf-error">El servidor respondió sin jugadores. ¿Desplegaste la versión nueva del Apps Script? Respuesta: '+JSON.stringify(res||{}).slice(0,150)+'</div>'; return; }
+  } catch(err) {
+    prev.innerHTML = '<div class="inf-error">Error conectando con el servidor: '+(err&&err.message?err.message:err)+'</div>';
+    return;
+  }
+  const norm = _informeNorm;
+  const infoByName = {};
+  jugadores.forEach(j=>{ const nc = j.nombreCompleto || j.nombre; if(nc) infoByName[norm(nc)] = { pos:(j.rugbyposition||j.pos||''), usuario:j.usuario }; });
 
   const matchInfo = nombre => {
     const n = norm(nombre);
