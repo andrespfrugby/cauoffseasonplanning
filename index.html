@@ -3585,6 +3585,17 @@ function renderSessionPanel() {
       </div>
     </div>
 
+    <div class="panel-section" id="otro-dia-section">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;line-height:1.4">¿Realizaste esta sesión otro día durante esta semana?</div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:9px 12px">
+        <span style="font-size:14px">📅</span>
+        <input type="date" id="fecha-sesion-input" value="${_hoyISO()}" max="${_hoyISO()}"
+          onchange="_onFechaSesionChange()"
+          style="flex:1;background:transparent;border:none;color:var(--text);font-size:13px;font-family:var(--font-body)">
+        <span id="fecha-sesion-tag" style="font-size:10px;color:var(--muted);font-family:var(--font-mono,monospace)">HOY</span>
+      </div>
+    </div>
+
     <button class="btn-save-session" id="btn-save-session"
             onclick="saveSession()" ${selVal!==null?'':'disabled'}>
       Guardar sesión
@@ -3613,6 +3624,17 @@ function selectRpeBar(val) {
   const s = document.getElementById('btn-save-session');
   if (s) s.disabled = false;
 }
+function _hoyISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function _onFechaSesionChange(){
+  const inp = document.getElementById('fecha-sesion-input');
+  const tag = document.getElementById('fecha-sesion-tag');
+  if(!inp) return;
+  state.fechaSesion = inp.value || '';
+  if(tag){
+    if(inp.value === _hoyISO()){ tag.textContent='HOY'; tag.style.color='var(--muted)'; }
+    else { tag.textContent='OTRO DÍA'; tag.style.color='var(--accent2)'; }
+  }
+}
 function numpadInput(key) {
   if (key==='del') state.tiempoSesion=state.tiempoSesion.slice(0,-1);
   else { if(state.tiempoSesion.length>=3) return; state.tiempoSesion+=key; }
@@ -3629,12 +3651,16 @@ async function saveSession() {
 
   const btn = document.getElementById('btn-save-session');
   if (btn) { btn.disabled=true; btn.textContent='Guardando...'; }
+  // fecha de la sesión: si el jugador eligió otro día, se envía; si no, el backend usa hoy
+  const fechaInp = document.getElementById('fecha-sesion-input');
+  const fechaSesion = (fechaInp && fechaInp.value && fechaInp.value !== _hoyISO()) ? fechaInp.value : '';
   const res = await api({
     action:'saveRegistro', usuario:state.user.usuario,
     semana:realSemanaIdx(), dia:state.dia,
     bloque:'SESION', ejercicio:'RPE_GLOBAL',
     carga_real:'', rpe:state.rpeSession, notas_jugador:'',
-    tiempo_sesion: state.tiempoSesion ? parseInt(state.tiempoSesion) : ''
+    tiempo_sesion: state.tiempoSesion ? parseInt(state.tiempoSesion) : '',
+    fecha_sesion: fechaSesion
   });
   if (res.ok) {
     _savingSession = false;
