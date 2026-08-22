@@ -1630,6 +1630,20 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 /* ── TESTING ── */
 .mol-per-btn{font-size:11px;font-weight:600;color:var(--muted);background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:6px 12px;cursor:pointer}
 .mol-per-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.mol-subtabs{display:flex;gap:6px;background:var(--surface2);padding:4px;border-radius:var(--r);margin-bottom:16px}
+.mol-subtab{flex:1;font-size:13px;font-weight:600;color:var(--muted);background:transparent;border:none;border-radius:calc(var(--r) - 4px);padding:9px;cursor:pointer}
+.mol-subtab.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.mol-cal{overflow-x:auto}
+.mol-cal-row{display:grid;grid-template-columns:82px repeat(auto-fit,minmax(0,1fr));gap:4px;align-items:center;margin-bottom:4px}
+.mol-cal-head{margin-bottom:6px}
+.mol-cal-name{font-size:11px;color:var(--text);text-align:right;padding-right:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mol-cal-daylbl{font-size:8px;color:var(--muted);text-align:center;line-height:1.3;font-family:var(--font-mono,monospace)}
+.mol-cal-cell{aspect-ratio:1;border-radius:4px;cursor:pointer;min-height:26px;transition:transform .1s}
+.mol-cal-cell:active{transform:scale(.9)}
+.mol-cal-empty{background:var(--surface2);cursor:default;opacity:.5}
+.mol-cal-detail{grid-column:1/-1}
+.mol-det-box{background:var(--surface);border-radius:10px;padding:12px;margin:2px 0 8px}
+.mol-det-zona{display:flex;align-items:center;gap:8px;padding:4px 0}
 .mol-rango-box{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
 .mol-rango-lbl{font-size:11px;color:var(--muted)}
 .mol-rango-sep{font-size:11px;color:var(--muted)}
@@ -8937,8 +8951,24 @@ function _rpe7dPromedio(j, fechaRef){
   return rpes.reduce((s,v)=>s+v,0)/rpes.length;
 }
 
+var _molSubtab = 'diario';
 async function renderMolestias() {
   const c = document.getElementById('molestias-content');
+  if (!c) return;
+  // envoltorio con sub-pestañas Diario / Semanal
+  c.innerHTML = `
+    <div class="mol-subtabs">
+      <button class="mol-subtab${_molSubtab==='diario'?' on':''}" onclick="_molSetSub('diario')">Diario</button>
+      <button class="mol-subtab${_molSubtab==='semanal'?' on':''}" onclick="_molSetSub('semanal')">Semanal</button>
+    </div>
+    <div id="mol-sub-content"></div>`;
+  if (_molSubtab === 'semanal') renderMolestiasSemana();
+  else renderMolestiasDiario();
+}
+function _molSetSub(sub){ _molSubtab = sub; renderMolestias(); }
+
+async function renderMolestiasDiario() {
+  const c = document.getElementById('mol-sub-content');
   if (!c) return;
   const hoyStr = new Date().toISOString().slice(0,10);
   const picker = document.getElementById('readiness-date-picker');
@@ -8955,9 +8985,7 @@ async function renderMolestias() {
       <div style="font-size:32px;margin-bottom:8px">✅</div>
       <div style="font-size:14px;font-weight:600;margin-bottom:4px">Sin molestias reportadas</div>
       <div style="font-size:12px;color:var(--muted)">Ningún jugador ha reportado dolor ${fecha===hoyStr?'hoy':'ese día'}.</div>
-    </div>
-    <div id="mol-zonas-graf" style="margin-top:22px"></div>`;
-    renderMolestiasZonas(_molZonasPeriodo || 'mes');
+    </div>`;
     return;
   }
 
@@ -8986,14 +9014,111 @@ async function renderMolestias() {
           ${nota?`<div style="font-size:12px;color:var(--text-secondary);line-height:1.4;font-style:italic;text-align:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">"${nota}"</div>`:''}
         </div>`;
       }).join('')}
-    </div>
-    <div id="mol-zonas-graf" style="margin-top:22px"></div>`;
-  renderMolestiasZonas(_molZonasPeriodo || 'mes');
+    </div>`;
 }
 
-// ── Gráfico de zonas del equipo (barras por zona y severidad) ──
-var _molZonasPeriodo = 'mes';
-var _molDesde = '', _molHasta = '';
+// ── Semanal: calendario de dolor por jugador ──
+var _molSemDias = 7;      // últimos N días
+var _molSemDesde = '', _molSemHasta = '';
+var _molSemAbierto = null; // "usuario|fecha" del detalle abierto
+async function renderMolestiasSemana(){
+  const c = document.getElementById('mol-sub-content');
+  if(!c) return;
+  const squad = state.coachSquadFilter || '';
+  c.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <div style="font-size:15px;font-weight:700;color:var(--text);flex:1;min-width:120px">Dolor · histórico</div>
+      <div style="display:flex;gap:5px">
+        <button class="mol-per-btn${_molSemDias===7&&!_molSemDesde?' on':''}" onclick="_molSemRango(7)">7 días</button>
+        <button class="mol-per-btn${_molSemDias===14&&!_molSemDesde?' on':''}" onclick="_molSemRango(14)">14 días</button>
+      </div>
+    </div>
+    <div class="mol-rango-box">
+      <span class="mol-rango-lbl">Rango:</span>
+      <input type="date" id="mol-sem-desde" class="mol-date" value="${_molSemDesde}" onchange="_molSemAplicarRango()">
+      <span class="mol-rango-sep">→</span>
+      <input type="date" id="mol-sem-hasta" class="mol-date" value="${_molSemHasta}" onchange="_molSemAplicarRango()">
+    </div>
+    <div id="mol-sem-body"><div class="loader"><div class="spinner"></div></div></div>`;
+
+  const payload = { action:'getMolestiasSemana', squad };
+  if(_molSemDesde || _molSemHasta){ payload.desde=_molSemDesde; payload.hasta=_molSemHasta; }
+  else payload.dias = _molSemDias;
+  const res = await api(payload);
+  const body = document.getElementById('mol-sem-body');
+  if(!body) return;
+  if(!res.ok || !res.jugadores || !res.jugadores.length){
+    body.innerHTML = '<div class="hist-empty" style="text-align:center;padding:24px;color:var(--muted);font-size:12px">Sin molestias registradas en este periodo.</div>';
+    return;
+  }
+  const fechas = res.fechas || [];
+  const colSev = s => s==='alta'?'#ff5050': s==='media'?'#ff9d3f': s==='leve'?'#ffd93f':'var(--surface2)';
+  const fechaCorta = f => { const p=f.split('-'); return p[2]; };
+  const diaSemana = f => ['D','L','M','X','J','V','S'][new Date(f+'T00:00').getDay()];
+
+  // cabecera de días
+  let head = '<div class="mol-cal-row mol-cal-head"><span class="mol-cal-name"></span>';
+  fechas.forEach(f=>{ head += `<span class="mol-cal-daylbl">${diaSemana(f)}<br>${fechaCorta(f)}</span>`; });
+  head += '</div>';
+
+  // filas de jugadores
+  let filas = '';
+  res.jugadores.forEach(j=>{
+    let celdas = `<span class="mol-cal-name">${j.nombre}</span>`;
+    fechas.forEach(f=>{
+      const d = j.dias[f];
+      if(d){
+        const key = j.usuario+'|'+f;
+        celdas += `<span class="mol-cal-cell" style="background:${colSev(d.sev)}" onclick="_molSemToggle('${key}')" title="${fechaCorta(f)}"></span>`;
+      } else {
+        celdas += '<span class="mol-cal-cell mol-cal-empty"></span>';
+      }
+    });
+    filas += `<div class="mol-cal-row">${celdas}</div>`;
+    // panel detalle (si abierto para este jugador)
+    filas += `<div id="mol-det-${j.usuario}" class="mol-cal-detail"></div>`;
+  });
+
+  body.innerHTML = `<div class="mol-cal">${head}${filas}</div>
+    <div style="display:flex;gap:14px;justify-content:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)">
+      <span style="font-size:10px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#ffd93f;margin-right:4px"></span>Leve</span>
+      <span style="font-size:10px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#ff9d3f;margin-right:4px"></span>Media</span>
+      <span style="font-size:10px;color:var(--muted)"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#ff5050;margin-right:4px"></span>Alta</span>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px">Toca un cuadro con color para ver las zonas</div>`;
+  _molSemDataCache = res.jugadores;
+}
+var _molSemDataCache = [];
+function _molSemToggle(key){
+  const [usuario, fecha] = key.split('|');
+  const cont = document.getElementById('mol-det-'+usuario);
+  if(!cont) return;
+  // si ya está abierto en esta fecha, cerrar
+  if(_molSemAbierto === key){ cont.innerHTML=''; _molSemAbierto=null; return; }
+  _molSemAbierto = key;
+  const j = _molSemDataCache.find(x=>x.usuario===usuario);
+  if(!j || !j.dias[fecha]){ cont.innerHTML=''; return; }
+  const d = j.dias[fecha];
+  const colSev = s => s==='alta'?'#ff5050': s==='media'?'#ff9d3f':'#ffd93f';
+  const nomSev = s => s==='alta'?'Alta': s==='media'?'Media':'Leve';
+  const fechaTxt = (()=>{ const p=fecha.split('-'); return p[2]+'/'+p[1]; })();
+  const zonasH = d.zonas.map(z=>`<div class="mol-det-zona">
+    <span style="width:9px;height:9px;border-radius:2px;background:${colSev(z.intensidad)}"></span>
+    <span style="flex:1;font-size:12px;color:var(--text)">${z.label}</span>
+    <span style="font-size:10px;color:${colSev(z.intensidad)};font-weight:600">${nomSev(z.intensidad)}</span>
+  </div>`).join('');
+  cont.innerHTML = `<div class="mol-det-box" style="border-left:3px solid ${colSev(d.sev)}">
+    <div style="font-size:10px;color:var(--muted);font-family:var(--font-mono,monospace);margin-bottom:8px">${j.nombre.toUpperCase()} · ${fechaTxt} · ${d.zonas.length} zona${d.zonas.length>1?'s':''}</div>
+    ${zonasH}
+    ${d.nota?`<div style="font-size:11px;color:var(--text-secondary);font-style:italic;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">"${d.nota}"</div>`:''}
+  </div>`;
+}
+function _molSemRango(dias){ _molSemDias=dias; _molSemDesde=''; _molSemHasta=''; _molSemAbierto=null; renderMolestiasSemana(); }
+function _molSemAplicarRango(){
+  const dd=document.getElementById('mol-sem-desde'), hh=document.getElementById('mol-sem-hasta');
+  _molSemDesde = dd?dd.value:''; _molSemHasta = hh?hh.value:'';
+  if(_molSemDesde || _molSemHasta){ _molSemAbierto=null; renderMolestiasSemana(); }
+}
 async function renderMolestiasZonas(periodo){
   _molZonasPeriodo = periodo;
   if(periodo!=='rango'){ _molDesde=''; _molHasta=''; }
