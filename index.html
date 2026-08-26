@@ -3491,7 +3491,35 @@ function renderSession(ejercicios, nombreSemana, sessionNotes, dayTitle) {
       </div>
     </div>`;
 
+  // ── Notas: toast con animal de la semana ─────────────────────
+  const noteBg     = dt ? dt.bg     : 'rgba(232,20,42,.06)';
+  const noteBorder = dt ? dt.border : 'rgba(232,20,42,.2)';
+  const notesHtml  = sessionNotes ? `
+    <div style="background:${noteBg};border:1px solid ${noteBorder};border-radius:9px;padding:9px 12px;display:flex;gap:8px;align-items:center;margin-bottom:10px">
+      <span style="font-size:20px;line-height:1;flex-shrink:0">${notesAnimal}</span>
+      <span style="font-size:11px;color:var(--muted);line-height:1.5;white-space:pre-line">${sessionNotes}</span>
+    </div>` : '';
 
+  // ── Botón "Nota del día" para staff (coach/s&c) ──
+  const notaBtnHtml = state.isCoach ? `
+    <div style="margin-bottom:10px">
+      <button onclick="_abrirNotaDia()" style="width:100%;background:var(--surface2);border:1px dashed var(--border2);border-radius:9px;padding:9px 12px;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+        📝 <span id="nota-dia-btn-txt">${sessionNotes&&sessionNotes.trim()?'Editar nota del día':'Añadir nota del día'}</span>
+      </button>
+    </div>` : '';
+
+  container.innerHTML = `
+    ${headerHtml}
+    ${notaBtnHtml}
+    ${notesHtml}
+    ${prep.length ? `<div class="phase-header" style="color:rgba(160,200,255,.7);border-bottom:0">🧱 Prep</div>${prep.map(renderCard).join('')}` : ''}
+    <div class="phase-header" style="margin-top:${prep.length?'1.25rem':'0'}">💥 Main Block</div>
+    ${renderMainWithBlocks(main)}
+    ${renderSessionPanel()}`;
+}
+
+// Renderiza los ejercicios main insertando un título de bloque cuando cambia de bloque
+function renderMainWithBlocks(main){
   let html='', lastLetra=null;
   main.forEach(e=>{
     const letra = blockLetter(e.bloque);
@@ -3677,7 +3705,22 @@ async function _guardarNotaDia(nota){
   const semana = realSemanaIdx();
   const dia = state.dia;
   _cerrarNotaDia();
-
+  try{
+    await api({
+      action:'saveNotaDia', squad, semana, dia,
+      nota: (nota||'').trim(),
+      creado_por: (state.user && state.user.usuario) || ''
+    });
+    _notaDiaActual = (nota||'').trim();
+    // invalidar caché de este día para que el banner refleje la nota nueva al instante
+    try{ localStorage.removeItem(cacheKey(semana, dia, squad)); }catch(e){}
+    // recargar el banner de la sesión
+    if (typeof loadRutina === 'function') loadRutina();
+  }catch(e){
+    alert('No se pudo guardar la nota. Inténtalo de nuevo.');
+  }
+}
+async function saveSession(){
   // Double-save guard
   if (_savingSession) return;
   _savingSession = true;
@@ -5111,6 +5154,24 @@ function ccMesShift(delta){
 }
 
 function _ccZonaAcwr(r){ return r==null?'#888' : r<0.8?'#4a90c2' : r<=1.3?'#00e5a0' : r<=1.5?'#ffc04d' : '#ff7070'; }
+// Umbrales de carga diaria por tipo de sesión (percentiles reales del equipo).
+// Gym y campo son estímulos distintos: cada uno se compara consigo mismo.
+//   Gym   (n=296): verde <360 · ámbar 360–520 · rojo >520
+//   Campo (n=14) : verde <500 · ámbar 500–720 · rojo >720
+//   Total (mezcla): verde <360 · ámbar 360–525 · rojo >525
+// tipo puede venir por celda (info.tipo: 'gym'|'entreno'|'campo'|'partido');
+// si no se pasa, se usa el modo activo del calendario (_ccModo).
+function _ccUmbral(tipo){
+  var t = tipo || _ccModo;
+  if (t==='campo' || t==='entreno' || t==='partido') return {lo:500, hi:720};
+  if (t==='gym') return {lo:360, hi:520};
+  return {lo:360, hi:525}; // total
+}
+function _ccZonaDia(v, tipo){
+  if (v==null) return '#888';
+  var u = _ccUmbral(tipo);
+  return v < u.lo ? '#00e5a0' : v <= u.hi ? '#ffc04d' : '#ff7070';
+}
 function _ccZonaLabel(z){ return z==='riesgo'?'riesgo' : z==='elevado'?'elevado' : z==='optimo'?'óptimo' : z==='subcarga'?'subcarga' : '—'; }
 var _MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -5202,7 +5263,7 @@ async function renderControlCargas() {
       const esFut = fecha > hoyStr;
       return `<div class="cc-cell cc-off"><span class="cc-dn">${d}</span></div>`;
     }
-    const col = _ccZonaDia(info.valor);
+    const col = _ccZonaDia(info.valor, info.tipo);
     const tLabel = info.tipo==='partido'?'P':'E';
     return `<div class="cc-cell" style="--cc:${col}"><span class="cc-dn">${d}</span><span class="cc-dt">${tLabel}</span><span class="cc-dv">${info.valor}</span></div>`;
   }
@@ -5242,10 +5303,10 @@ async function renderControlCargas() {
     }).join('')}
 
     <div class="cc-legend">
-      <span><i style="background:#00e5a0"></i>Baja &lt;360</span>
-      <span><i style="background:#ffc04d"></i>Media 360–525</span>
-      <span><i style="background:#ff7070"></i>Alta &gt;525</span>
-      <span style="margin-left:auto;color:var(--muted)">E entreno · P partido · media/jugador</span>
+      <span><i style="background:#00e5a0"></i>Baja &lt;${_ccUmbral().lo}</span>
+      <span><i style="background:#ffc04d"></i>Media ${_ccUmbral().lo}–${_ccUmbral().hi}</span>
+      <span><i style="background:#ff7070"></i>Alta &gt;${_ccUmbral().hi}</span>
+      <span style="margin-left:auto;color:var(--muted)">E entreno · P partido · ${_ccModo==='gym'?'umbral gym':_ccModo==='campo'?'umbral campo':'gym y campo con su propio umbral'}</span>
     </div>
 
     <!-- ACWR total -->
