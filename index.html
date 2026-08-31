@@ -1197,9 +1197,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
    dentro de body.staff-desktop + min-width:900px. */
 @media (min-width:900px){
   body.staff-desktop .content{
-    max-width:1100px;               /* tope cómodo: los datos NO se estiran a lo bruto */
+    max-width:none;                 /* usa todo el ancho: sin franja estrecha ni hueco vacío */
     margin:0;
-    padding:1.5rem 2rem 2rem calc(232px + 2rem); /* deja hueco a la barra lateral */
+    padding:1.5rem 2.5rem 2rem calc(232px + 2.5rem); /* deja hueco a la barra lateral */
+    font-size:16px;                 /* base algo mayor que en móvil: se ve más grande */
   }
   /* La barra inferior flotante se convierte en barra lateral vertical fija */
   body.staff-desktop .bottom-nav{
@@ -1243,6 +1244,16 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   }
   /* La topbar se extiende por encima de la barra lateral */
   body.staff-desktop .topbar{ padding-left:calc(216px + 1.25rem); }
+
+  /* ── Legibilidad en escritorio (solo tamaños/espaciado, NO colores ni estructura) ── */
+  /* Readiness: KPIs y tabla un poco más grandes y aireados al tener ancho de sobra */
+  body.staff-desktop .kpi-card{ padding:16px 18px; }
+  body.staff-desktop .kpi-num{ font-size:34px; }
+  body.staff-desktop .kpi-lbl{ font-size:11px; }
+  body.staff-desktop #readiness-content table{ min-width:0; }        /* ya no necesita scroll: cabe entero */
+  body.staff-desktop #readiness-content thead th{ font-size:11px; padding:11px 10px; }
+  body.staff-desktop #readiness-content tbody td{ padding:9px 8px; }
+  body.staff-desktop #readiness-content tbody td div[style*="font-size:12px"]{ font-size:13px; }
 }
 
 /* ── PRINT / PDF ── */
