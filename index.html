@@ -1238,22 +1238,65 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   body.staff-desktop .bottom-nav::before{
     content:"MENÚ";
     display:block;
-    font-size:10px; letter-spacing:.12em;
-    color:rgba(255,255,255,.28);
+    font-size:10px; letter-spacing:.12em; font-weight:700;
+    color:rgba(255,255,255,.5);
     padding:2px 14px 8px;
   }
+  /* Contraste del menú lateral: en móvil el nav va al 28% de opacidad, que en
+     la barra lateral resulta ilegible. Aquí se sube (solo en escritorio staff). */
+  body.staff-desktop .bottom-nav .bn-icon{ color:rgba(255,255,255,.62); }
+  body.staff-desktop .bottom-nav .bn-lbl { color:rgba(255,255,255,.80); font-weight:500; }
+  body.staff-desktop .bottom-nav .bn-item:hover{ background:rgba(255,255,255,.05); }
+  body.staff-desktop .bottom-nav .bn-item:hover .bn-icon,
+  body.staff-desktop .bottom-nav .bn-item:hover .bn-lbl{ color:#fff; }
+  body.staff-desktop .bottom-nav .bn-item.active .bn-icon,
+  body.staff-desktop .bottom-nav .bn-item.active .bn-lbl{ color:#ff4757; }
+  body.light-mode.staff-desktop .bottom-nav .bn-icon{ color:rgba(0,0,0,.55); }
+  body.light-mode.staff-desktop .bottom-nav .bn-lbl { color:rgba(0,0,0,.75); }
+  body.light-mode.staff-desktop .bottom-nav::before { color:rgba(0,0,0,.45); }
+  body.light-mode.staff-desktop .bottom-nav .bn-item:hover .bn-icon,
+  body.light-mode.staff-desktop .bottom-nav .bn-item:hover .bn-lbl{ color:#111; }
+
   /* La topbar se extiende por encima de la barra lateral */
   body.staff-desktop .topbar{ padding-left:calc(216px + 1.25rem); }
 
   /* ── Legibilidad en escritorio (solo tamaños/espaciado, NO colores ni estructura) ── */
-  /* Readiness: KPIs y tabla un poco más grandes y aireados al tener ancho de sobra */
+  /* KPIs con algo más de aire */
   body.staff-desktop .kpi-card{ padding:16px 18px; }
   body.staff-desktop .kpi-num{ font-size:34px; }
   body.staff-desktop .kpi-lbl{ font-size:11px; }
-  body.staff-desktop #readiness-content table{ min-width:0; }        /* ya no necesita scroll: cabe entero */
-  body.staff-desktop #readiness-content thead th{ font-size:11px; padding:11px 10px; }
-  body.staff-desktop #readiness-content tbody td{ padding:9px 8px; }
-  body.staff-desktop #readiness-content tbody td div[style*="font-size:12px"]{ font-size:13px; }
+
+  /* Readiness: la tabla dejaba de tener min-width y se estiraba a todo el ancho,
+     con celdas enormes y letra pequeña. Se acota el contenedor y se fijan anchos
+     de columna para que las celdas queden compactas y quepa tipografía mayor. */
+  body.staff-desktop #readiness-content > div[style*="overflow-x"]{
+    max-width:1180px; margin:0 auto;
+  }
+  body.staff-desktop #readiness-content table{
+    min-width:0; width:100%; table-layout:fixed;
+  }
+  body.staff-desktop #readiness-content th:first-child,
+  body.staff-desktop #readiness-content td:first-child{ width:250px; }
+  body.staff-desktop #readiness-content th:nth-child(2),
+  body.staff-desktop #readiness-content td:nth-child(2){ width:110px; }
+  body.staff-desktop #readiness-content thead th{ font-size:11px; padding:11px 8px; }
+  body.staff-desktop #readiness-content tbody td{ padding:10px 6px; }
+  /* nombre del jugador */
+  body.staff-desktop #readiness-content tbody td:first-child div[style*="font-size:12px"]{
+    font-size:15px; font-weight:600; letter-spacing:.01em;
+  }
+  /* avatar */
+  body.staff-desktop #readiness-content tbody td:first-child div[style*="border-radius:50%"]{
+    width:32px; height:32px; font-size:11px;
+  }
+  /* chips de métrica (ganas, dolor, fatiga, sueño, horas) */
+  body.staff-desktop #readiness-content tbody td > div[style*="border-radius:5px"]{
+    font-size:15px; padding:7px 8px;
+  }
+  /* score y columnas de texto (horas / peso) */
+  body.staff-desktop #readiness-content tbody td div[style*="font-size:16px"]{ font-size:19px; }
+  body.staff-desktop #readiness-content tbody td[style*="font-size:12px"]{ font-size:14px; }
+  body.staff-desktop #readiness-content tbody tr:last-child td{ font-size:15px; }
 }
 
 /* ── PRINT / PDF ── */
