@@ -1336,11 +1336,13 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   body.staff-desktop #control-cargas-content .cc-jrow{ max-width:none; margin:0; }
 
   /* Calendario del planner: en escritorio la letra de móvil no se lee */
-  body.staff-desktop #tab-coach-planner .cal-cell{ min-height:104px !important; padding:9px !important; }
-  body.staff-desktop #tab-coach-planner .cal-dnum{ font-size:13px !important; margin-bottom:5px !important; }
-  body.staff-desktop #tab-coach-planner .cal-linea{ font-size:12px !important; line-height:1.5 !important; }
-  body.staff-desktop #tab-coach-planner .cal-dow{ font-size:12px !important; }
-  body.staff-desktop #tab-coach-planner .cal-mas{ font-size:20px !important; }
+  body.staff-desktop .cal-cell{ min-height:118px; padding:10px; }
+  body.staff-desktop .cal-vacio{ min-height:118px; }
+  body.staff-desktop .cal-dnum{ font-size:15px; margin-bottom:7px; }
+  body.staff-desktop .cal-chip{ font-size:13px; padding:6px 9px; margin-bottom:4px; }
+  body.staff-desktop .cal-chip-n{ font-size:11px; }
+  body.staff-desktop .cal-dow{ font-size:13px; }
+  body.staff-desktop .cal-mas{ font-size:22px; margin-top:22px; }
 
   /* Panel lateral de prescripción: tamaños de escritorio */
   body.staff-desktop #picker-modal .fields-box{ font-size:14px; }
@@ -1619,6 +1621,23 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .ex-card.done .exn-nota,
 .ex-card.done .exn-carga,
 .ex-card.done .exn-patron{display:none !important}
+
+/* ── Calendario del planner ── */
+.cal-cell{min-height:82px;background:var(--surface);border:1px solid var(--border2);
+  border-radius:9px;padding:7px;cursor:pointer;transition:border-color .12s}
+.cal-cell:hover{border-color:var(--border-strong)}
+.cal-vacio{background:none;border:none;cursor:default;min-height:82px}
+.cal-libre{border:1px dashed var(--border)}
+.cal-hoy{border:1.5px solid var(--accent);background:rgba(232,20,42,.04)}
+.cal-dnum{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.cal-hoy .cal-dnum{color:var(--accent)}
+.cal-chip{display:flex;align-items:center;gap:5px;border-radius:5px;padding:4px 7px;
+  margin-bottom:3px;font-size:11px;font-weight:600;line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-chip-n{margin-left:auto;font-size:10px;font-weight:500;opacity:.75;flex-shrink:0}
+.cal-mas{text-align:center;font-size:17px;color:rgba(255,255,255,.13);margin-top:14px;line-height:1}
+body.light-mode .cal-mas{color:rgba(0,0,0,.13)}
+.cal-dow{font-size:11px;color:var(--muted);text-align:center;font-weight:600}
 
 /* ── PRINT / PDF ── */
 @media print {
@@ -10350,7 +10369,8 @@ var _plan = {
   editing:null,
   week:null,          // semana en edicion
   weeks:[],
-  picker:null         // {dayIdx, blockIdx} destino del selector
+  picker:null,        // {dayIdx, blockIdx} destino del selector
+  inlineDia:null      // índice del día que se edita desde el calendario
 };
 
 var PLAN_CATS = [
@@ -10463,24 +10483,29 @@ async function renderCalendarioCoach(){
 
   const hoyStr = _agISO(hoy);
   const celdaHTML = d => {
-    if (d===null) return '<div class="cal-cell" style="min-height:74px;border:none;background:none"></div>';
+    if (d===null) return '<div class="cal-cell cal-vacio"></div>';
     const f = `${yy}-${String(mm).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const info = _cal.data.dias[f] || { gym:[], eventos:[] };
     const vacio = !info.gym.length && !info.eventos.length;
-    let lineas = '';
+    let chips = '';
     info.gym.forEach(g=>{
       const col = _agColorTipo(g.titulo);
-      lineas += `<div class="cal-linea" style="font-size:9px;color:${col.txt};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35">● ${g.titulo||'Gym'}</div>`;
+      chips += `<div class="cal-chip" style="background:${col.bg};color:${col.txt};border-left:3px solid ${col.txt}">
+        ${g.titulo || 'Gym'}<span class="cal-chip-n">${g.nEj}</span></div>`;
     });
     info.eventos.forEach(e=>{
-      const col = e.tipo==='partido' ? '#ff7070' : '#ffa040';
-      const et  = e.tipo==='partido' ? (e.rival?'vs '+e.rival:'Partido') : (e.titulo||'Campo');
-      lineas += `<div class="cal-linea" style="font-size:9px;color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35">● ${et}</div>`;
+      const esP = e.tipo==='partido';
+      const c   = esP ? '#ff7070' : '#ffa040';
+      const bg  = esP ? 'rgba(232,20,42,.16)' : 'rgba(255,160,64,.16)';
+      const et  = esP ? (e.rival?'vs '+e.rival:'Partido') : (e.titulo||'Campo');
+      const hh  = /^\d{1,2}:\d{2}$/.test(String(e.hora||'')) ? e.hora : '';
+      chips += `<div class="cal-chip" style="background:${bg};color:${c};border-left:3px solid ${c}">
+        ${et}${hh?`<span class="cal-chip-n">${hh}</span>`:''}</div>`;
     });
-    const borde = f===hoyStr ? '1.5px solid rgba(232,20,42,.5)' : (vacio?'1px dashed var(--border)':'1px solid var(--border2)');
-    return `<div class="cal-cell" onclick="calAbrirDia('${f}')" style="min-height:74px;background:var(--surface);border:${borde};border-radius:8px;padding:6px;cursor:pointer">
-      <div class="cal-dnum" style="font-size:9px;color:${f===hoyStr?'var(--accent)':'var(--muted)'};margin-bottom:3px">${d}</div>
-      ${lineas || '<div class="cal-mas" style="text-align:center;font-size:14px;color:rgba(255,255,255,.14);margin-top:12px">+</div>'}
+    const cls = 'cal-cell' + (f===hoyStr?' cal-hoy':'') + (vacio?' cal-libre':'');
+    return `<div class="${cls}" onclick="calAbrirDia('${f}')">
+      <div class="cal-dnum">${d}</div>
+      ${chips || '<div class="cal-mas">+</div>'}
     </div>`;
   };
 
@@ -10498,7 +10523,7 @@ async function renderCalendarioCoach(){
       <span style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">${squadBtns}</span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px">
-      ${['L','M','X','J','V','S','D'].map(x=>`<div class="cal-dow" style="font-size:10px;color:var(--muted);text-align:center">${x}</div>`).join('')}
+      ${['L','M','X','J','V','S','D'].map(x=>`<div class="cal-dow">${x}</div>`).join('')}
     </div>
     ${filas}
     <div style="font-size:10px;color:var(--muted);margin-top:10px">Pincha un día para añadir una sesión de gym, un entreno de campo o un partido.</div>
@@ -10511,6 +10536,8 @@ async function calAbrirDia(fecha){
   _cal.paso   = 'menu';
   _cal.tipo   = 'campo';
   _cal.dows   = [];
+  _cal.editGym = null;
+  _plan.inlineDia = null;
   const ov = document.createElement('div');
   ov.className = 'picker-backdrop';
   ov.id = 'cal-modal';
@@ -10520,7 +10547,10 @@ async function calAbrirDia(fecha){
   calPintarPaso();
 }
 
-function calCerrar(){ const m=document.getElementById('cal-modal'); if(m) m.remove(); }
+function calCerrar(){
+  const m=document.getElementById('cal-modal'); if(m) m.remove();
+  _cal.editGym = null; _plan.inlineDia = null;
+}
 
 function calPaso(p){ _cal.paso = p; calPintarPaso(); }
 
@@ -10537,12 +10567,16 @@ function calPintarPaso(){
 
   const info = (_cal.data && _cal.data.dias[fecha]) || { gym:[], eventos:[] };
   let existentes = '';
-  info.gym.forEach(g=>{
-    existentes += `<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:5px">
-      <span style="font-size:13px;color:var(--text);flex:1">🏋️ ${g.titulo||'Gym'} · ${g.nEj} ej.</span>
-      <span style="font-size:11px;color:var(--muted)">${g.semanaNombre||''}</span>
-      <span style="font-size:12px;color:var(--muted);cursor:pointer" title="Editar sesión" onclick="calEditarGym('${g.weekId||''}')">&#9998;</span>
-      <span style="font-size:13px;color:#ff7070;cursor:pointer" title="Quitar del calendario" onclick="calBorrarGym('${g.weekId||''}',${g.dia})">🗑</span>
+  info.gym.forEach((g,gi)=>{
+    const abierto = _cal.editGym === gi;
+    existentes += `<div style="background:var(--surface2);border-radius:8px;margin-bottom:5px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer" onclick="calToggleGym(${gi},'${g.weekId||''}',${g.dia})">
+        <span style="font-size:13px;color:var(--text);flex:1">🏋️ ${g.titulo||'Gym'} · ${g.nEj} ej.</span>
+        <span style="font-size:12px;color:var(--muted)">${abierto?'⌃':'⌄'}</span>
+        <span style="font-size:12px;color:var(--accent2);cursor:pointer" title="Repetir en próximas semanas" onclick="event.stopPropagation();calRepetirSesion('${g.weekId||''}',${g.dia})">⧉</span>
+        <span style="font-size:13px;color:#ff7070;cursor:pointer" title="Quitar del calendario" onclick="event.stopPropagation();calBorrarGym('${g.weekId||''}',${g.dia})">🗑</span>
+      </div>
+      ${abierto?'<div id="cal-dia-editor" style="padding:0 8px 10px"><div class="loader"><div class="spinner"></div></div></div>':''}
     </div>`;
   });
   info.eventos.forEach(e=>{
@@ -10596,6 +10630,7 @@ function calPintarPaso(){
          <div style="flex:1"><label class="indiv-lbl">Hora</label><input id="cal-hora" type="time" class="pe-addinput"></div>
          <div style="flex:1"><label class="indiv-lbl">Duración (min)</label><input id="cal-dur" type="number" class="pe-addinput" placeholder="90"></div>
        </div>
+       ${_calRepetirHTML()}
        <button class="pe-save" style="margin-top:0" onclick="calGuardarEvento('campo')">Añadir entreno de campo</button>`;
     if (_cal.intensidad) calSetIntensidad(_cal.intensidad);
     return;
@@ -10611,6 +10646,7 @@ function calPintarPaso(){
          <div style="flex:1"><label class="indiv-lbl">Hora del partido</label><input id="cal-hora" type="time" class="pe-addinput"></div>
          <div style="flex:1"><label class="indiv-lbl">Duración (min)</label><input id="cal-dur" type="number" class="pe-addinput" placeholder="80"></div>
        </div>
+       ${_calRepetirHTML()}
        <button class="pe-save" style="margin-top:0;background:#ff7070" onclick="calGuardarEvento('partido')">Añadir partido</button>`;
     return;
   }
@@ -10698,9 +10734,21 @@ async function calGuardarEvento(tipo){
     payload.titulo     = g('cal-titulo') || 'Entreno de campo';
     payload.intensidad = _cal.intensidad || '';
   }
+  const repOn = (document.getElementById('cal-rep-on')||{}).checked;
+  const repN  = parseInt((document.getElementById('cal-rep-n')||{}).value) || 0;
+
   const res = await api(payload);
-  if (res && res.ok){ _cal.intensidad=null; calCerrar(); renderCalendarioCoach(); }
-  else alert('No se pudo guardar: '+((res&&res.error)||''));
+  if (!res || !res.ok){ alert('No se pudo guardar: '+((res&&res.error)||'')); return; }
+
+  // Repetir el mismo evento las siguientes semanas, misma fecha y hora
+  if (repOn && repN > 0){
+    const base = new Date(_cal.diaSel+'T12:00:00');
+    for (let k=1; k<=repN; k++){
+      const d = new Date(base.getTime() + k*7*86400000);
+      await api(Object.assign({}, payload, { fecha:_agISO(d) }));
+    }
+  }
+  _cal.intensidad=null; calCerrar(); renderCalendarioCoach();
 }
 
 // Crea una semana de un solo día en esta fecha y abre el editor
@@ -10723,6 +10771,101 @@ async function calCrearSesionGym(){
 // semana, el backend borra la semana entera.
 // Borra de una vez todo lo del día: sesiones de gym y eventos.
 // Una sola confirmación en lugar de ir uno por uno.
+// Bloque de repetición reutilizado por campo y partido
+function _calRepetirHTML(){
+  return `<label style="display:flex;align-items:center;gap:9px;background:var(--surface2);
+      border:1px solid var(--border2);border-radius:8px;padding:10px 12px;margin-bottom:12px;cursor:pointer">
+      <input type="checkbox" id="cal-rep-on" onchange="calRepToggle(this.checked)" style="width:16px;height:16px;accent-color:var(--accent2)">
+      <span style="flex:1;font-size:12px;color:var(--text)">Repetir cada semana, este mismo día</span>
+    </label>
+    <div id="cal-rep-box" style="display:none;margin:-6px 0 12px">
+      <label class="indiv-lbl">Durante cuántas semanas más</label>
+      <input id="cal-rep-n" type="number" class="pe-addinput" value="8" min="1" max="52">
+      <div style="font-size:10px;color:var(--muted);margin-top:5px">Se crearán copias en la misma fecha de cada semana siguiente.</div>
+    </div>`;
+}
+function calRepToggle(on){
+  const b = document.getElementById('cal-rep-box');
+  if (b) b.style.display = on ? 'block' : 'none';
+}
+
+// Despliega el editor de la sesión dentro del propio panel del día
+async function calToggleGym(gi, weekId, dia){
+  if (_cal.editGym === gi){ _cal.editGym = null; _plan.inlineDia = null; calPintarPaso(); return; }
+  _cal.editGym = gi;
+  calPintarPaso();
+  if (!weekId){
+    const c = document.getElementById('cal-dia-editor');
+    if (c) c.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px">Esta sesión viene de una hoja antigua y no se puede editar aquí.</div>';
+    return;
+  }
+  await ensurePlannerData();
+  const wk = await api({ action:'getWeeks' });
+  const w = (wk.ok && wk.weeks) ? wk.weeks.find(x=>String(x.id)===String(weekId)) : null;
+  if (!w){ const c=document.getElementById('cal-dia-editor'); if(c) c.innerHTML='<div style="font-size:12px;color:#ff7070;padding:8px">No se encontró la sesión.</div>'; return; }
+  _plan.week = JSON.parse(JSON.stringify(w));
+  if (!_plan.week.data) _plan.week.data = { dias:[] };
+  _plan.inlineDia = parseInt(dia) - 1;
+  const d = _plan.week.data.dias[_plan.inlineDia];
+  if (d) d._open = true;
+  renderInlineDia();
+}
+
+// Pinta solo el día que se está editando, dentro del panel del calendario.
+// Reutiliza renderDayCard, así que todos los botones (añadir bloque,
+// elegir ejercicio, prescripción) funcionan igual que en el editor de semana.
+function renderInlineDia(){
+  const c = document.getElementById('cal-dia-editor');
+  if (!c || _plan.inlineDia == null) return;
+  const d = _plan.week.data.dias[_plan.inlineDia];
+  if (!d){ c.innerHTML = ''; return; }
+  c.innerHTML = renderDayCard(d, _plan.inlineDia) +
+    `<div id="cal-dia-guardar" style="display:flex;gap:7px;margin-top:8px">
+       <button class="pw-publish" style="flex:1" onclick="calGuardarDia()">Guardar sesión</button>
+     </div>
+     <div id="cal-dia-estado" style="font-size:10px;color:var(--muted);text-align:center;margin-top:6px"></div>`;
+}
+
+async function calGuardarDia(){
+  const est = document.getElementById('cal-dia-estado');
+  const btn = document.querySelector('#cal-dia-guardar .pw-publish');
+  if (btn){ btn.disabled = true; btn.textContent = 'Guardando...'; }
+  const w = _plan.week;
+  const clean = JSON.parse(JSON.stringify(w.data));
+  (clean.dias||[]).forEach(x=>{ delete x._open; });
+  const res = await api({ action:'saveWeek', id:w.id, nombre:w.nombre, squad:w.squad,
+    fecha_inicio:w.fecha_inicio, fecha_fin:w.fecha_fin, data:clean,
+    visible: w.visible===true, creado_por:(state.user&&state.user.usuario)||'' });
+  if (res && res.ok){
+    if (est){ est.textContent = '✓ Guardado'; est.style.color = 'var(--accent2)'; }
+    if (btn){ btn.disabled = false; btn.textContent = 'Guardar sesión'; }
+    // refrescar el calendario de fondo sin cerrar el panel
+    const squad=_cal.squad, mes=_cal.mes;
+    const [yy,mm]=mes.split('-').map(Number);
+    const desde=_agISO(new Date(yy,mm-1,1)), hasta=_agISO(new Date(yy,mm,0));
+    const ag = await api({ action:'getAgenda', squad, desde, hasta });
+    if (ag && ag.ok) _cal.data = ag;
+  } else {
+    if (btn){ btn.disabled = false; btn.textContent = 'Guardar sesión'; }
+    alert('No se pudo guardar: '+((res&&res.error)||''));
+  }
+}
+
+// Repetir esta sesión el mismo día de la semana durante N semanas
+async function calRepetirSesion(weekId, dia){
+  if (!weekId){ alert('Esta sesión no se puede repetir desde aquí.'); return; }
+  const n = prompt('¿En cuántas semanas siguientes quieres repetir esta sesión?\n(se creará una copia editable en cada una)', '4');
+  if (n===null) return;
+  const num = parseInt(n);
+  if (!num || num<1){ alert('Pon un número de semanas'); return; }
+  const res = await api({ action:'repetirSesion', weekId, dia, squad:_cal.squad, semanas:num });
+  if (res && res.ok){
+    calCerrar();
+    alert('Sesión repetida en '+res.creadas+' semana'+(res.creadas!==1?'s':'')+'.');
+    renderCalendarioCoach();
+  } else alert('No se pudo repetir: '+((res&&res.error)||''));
+}
+
 async function calVaciarDia(){
   const f = _cal.diaSel;
   const info = (_cal.data && _cal.data.dias[f]) || { gym:[], eventos:[] };
@@ -11271,6 +11414,9 @@ function editWeek(id){
   renderWeekEditor();
 }
 function renderWeekEditor(){
+  // Si se está editando un día suelto desde el calendario, se repinta
+  // solo ese día dentro del panel, no toda la pantalla del planner.
+  if (_plan.inlineDia != null && document.getElementById('cal-dia-editor')) { renderInlineDia(); return; }
   autosaveLocal(); // guarda borrador local en cada re-render (cada edición)
   scheduleAutosaveServer(); // programa guardado en servidor
   const w=_plan.week;
