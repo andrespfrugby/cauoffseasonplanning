@@ -1496,6 +1496,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   body.staff-desktop #picker-modal .fields-box{
     pointer-events:auto;
     max-width:440px !important;
+    max-height:none;
     height:100%;
     min-height:100%;
     overflow-y:auto;
@@ -1507,6 +1508,25 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   /* El panel de prescripción debe quedar por encima del panel del día
      del calendario, que se añade al final del body. */
   body.staff-desktop #picker-modal .picker-backdrop{ z-index:2600; }
+
+  /* Selector de ejercicios: con el escalado, 85vh deja de coincidir con
+     el alto real y la cabecera (el buscador) se sale por arriba. Se mide
+     en % del fondo, que sí es exactamente la ventana. */
+  body.staff-desktop #picker-modal .picker-backdrop:has(.picker-box){
+    align-items:center; padding:16px;
+  }
+  body.staff-desktop #picker-modal .picker-box{
+    max-height:88%; max-width:720px;
+  }
+  body.staff-desktop #picker-modal .picker-top{ padding:14px 16px; }
+  body.staff-desktop #picker-modal .picker-top input{ font-size:16px; }
+  body.staff-desktop #picker-modal .picker-filters{ width:200px; }
+  body.staff-desktop #picker-modal .enm{ font-size:15px; }
+  body.staff-desktop #picker-modal .ety{ font-size:12px; }
+  body.staff-desktop #picker-modal .fo{ font-size:13px; padding:8px 12px; }
+  body.staff-desktop #picker-modal .fh{ font-size:10px; padding:10px 12px 5px; }
+  body.staff-desktop #picker-modal .eth{ width:56px; height:40px; }
+  body.staff-desktop #picker-modal .ex-add{ width:34px; height:34px; font-size:20px; }
   body.staff-desktop #picker-modal .fields-box .pe-inp input{ font-size:20px; }
 
   /* ── Centrado ──────────────────────────────────────────────
@@ -1653,10 +1673,11 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .cal-chip-n{margin-left:auto;font-size:10px;font-weight:500;opacity:.75;flex-shrink:0}
 .cal-mas{text-align:center;font-size:17px;color:rgba(255,255,255,.13);margin-top:14px;line-height:1}
 body.light-mode .cal-mas{color:rgba(0,0,0,.13)}
-.cal-dow{font-size:11px;color:var(--muted);text-align:center;font-weight:600}
+.cal-dow{font-size:11px;color:var(--muted);text-align:center;font-weight:600;padding-bottom:2px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
 /* Al editar una sesión dentro del panel del día hace falta más ancho:
    dentro caben bloques, superseries y filas de ejercicio. */
-#cal-modal .fields-box{max-width:440px}
+#cal-modal .fields-box{max-width:440px;max-height:88%;overflow-y:auto}
 #cal-modal.ancho .fields-box{max-width:min(760px,94vw)}
 #cal-dia-editor .day-card{margin-bottom:0}
 #cal-dia-editor .brow{padding:8px 9px}
@@ -1679,13 +1700,14 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
    lateral— manteniendo las proporciones. El jugador y el móvil no se
    tocan: todo cuelga de body.staff-desktop. */
 @media (min-width:1500px){
-  body.staff-desktop{ zoom:1.15; }
+  body.staff-desktop{ zoom:1.12; }
+  body.staff-desktop #screen-app{ overflow-x:hidden; }
 }
 @media (min-width:1800px){
-  body.staff-desktop{ zoom:1.28; }
+  body.staff-desktop{ zoom:1.22; }
 }
 @media (min-width:2300px){
-  body.staff-desktop{ zoom:1.45; }
+  body.staff-desktop{ zoom:1.35; }
 }
 
 /* ── PRINT / PDF ── */
@@ -10571,10 +10593,10 @@ async function renderCalendarioCoach(){
   };
 
   const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  let filas = '';
-  for (let i=0;i<celdas.length;i+=7){
-    filas += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px">${celdas.slice(i,i+7).map(celdaHTML).join('')}</div>`;
-  }
+  // Cabeceras y celdas en la MISMA rejilla: si van en dos contenedores
+  // distintos, cualquier diferencia de ancho las descuadra.
+  const cabeceras = ['L','M','X','J','V','S','D'].map(x=>`<div class="cal-dow">${x}</div>`).join('');
+  const cuerpo    = celdas.map(celdaHTML).join('');
 
   c.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
@@ -10583,10 +10605,7 @@ async function renderCalendarioCoach(){
       <button class="quad-navbtn" onclick="calMes(1)">&#8250;</button>
       <span style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">${squadBtns}</span>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px">
-      ${['L','M','X','J','V','S','D'].map(x=>`<div class="cal-dow">${x}</div>`).join('')}
-    </div>
-    ${filas}
+    <div class="cal-grid">${cabeceras}${cuerpo}</div>
     <div style="font-size:10px;color:var(--muted);margin-top:10px">Pincha un día para añadir una sesión de gym, un entreno de campo o un partido.</div>
     <div id="cal-panel"></div>`;
 }
