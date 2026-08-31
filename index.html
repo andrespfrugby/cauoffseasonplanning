@@ -1345,22 +1345,34 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   body.staff-desktop .cal-mas{ font-size:22px; margin-top:22px; }
 
   /* Panel lateral de prescripción: tamaños de escritorio */
-  body.staff-desktop #picker-modal .fields-box{ font-size:14px; }
+  body.staff-desktop #picker-modal .fields-box{ font-size:15px; }
+  body.staff-desktop #picker-modal .fields-box .fields-hd span:nth-child(2){ font-size:19px; }
   body.staff-desktop #picker-modal .fields-box .pe-mini,
   body.staff-desktop #picker-modal .fields-box .pe-modo-lbl,
   body.staff-desktop #picker-modal .fields-box .pe-serie-hdr,
-  body.staff-desktop #picker-modal .fields-box .pe-nota-lbl{ font-size:12px; }
-  body.staff-desktop #picker-modal .fields-box .pe-sn{ font-size:15px; width:32px; }
-  body.staff-desktop #picker-modal .fields-box .pe-inp{ padding:12px 13px; }
-  body.staff-desktop #picker-modal .fields-box .pe-inp input{ font-size:20px; }
+  body.staff-desktop #picker-modal .fields-box .pe-nota-lbl,
+  body.staff-desktop #picker-modal .fields-box .pe-addlbl{ font-size:13px; }
+  body.staff-desktop #picker-modal .fields-box .pe-mini input{ font-size:19px; padding:11px 13px; }
+  body.staff-desktop #picker-modal .fields-box .pe-sn{ font-size:16px; width:34px; }
+  body.staff-desktop #picker-modal .fields-box .pe-inp{ padding:13px 14px; }
   body.staff-desktop #picker-modal .fields-box .pe-u,
-  body.staff-desktop #picker-modal .fields-box .pe-x{ font-size:14px; }
-  body.staff-desktop #picker-modal .fields-box .lc{ font-size:14px; padding:11px 0; }
-  body.staff-desktop #picker-modal .fields-box .ru{ font-size:13px; padding:7px 13px; }
-  body.staff-desktop #picker-modal .fields-box .pe-nota{ font-size:15px; min-height:70px; }
+  body.staff-desktop #picker-modal .fields-box .pe-x{ font-size:15px; }
+  body.staff-desktop #picker-modal .fields-box .lc{ font-size:15px; padding:12px 0; }
+  body.staff-desktop #picker-modal .fields-box .ru{ font-size:14px; padding:8px 15px; }
+  body.staff-desktop #picker-modal .fields-box .pe-nota{ font-size:16px; min-height:80px; padding:12px 14px; }
   body.staff-desktop #picker-modal .fields-box .pe-add,
-  body.staff-desktop #picker-modal .fields-box .pe-eq{ font-size:13px; padding:9px 16px; }
-  body.staff-desktop #picker-modal .fields-box .pe-save{ font-size:15px; padding:14px; }
+  body.staff-desktop #picker-modal .fields-box .pe-eq{ font-size:14px; padding:10px 18px; }
+  body.staff-desktop #picker-modal .fields-box .pe-save{ font-size:16px; padding:16px; }
+  body.staff-desktop #picker-modal .fields-box .pe-rango-row input{ font-size:19px; width:78px; padding:11px 13px; }
+  body.staff-desktop #picker-modal .fields-box .pe-setsrango-tog,
+  body.staff-desktop #picker-modal .fields-box .pe-rango-tog{ font-size:14px; }
+  body.staff-desktop #picker-modal .fields-box .pb-prev-ttl{ font-size:11px; }
+  body.staff-desktop #picker-modal .fields-box .pb-prev-val{ font-size:15px; }
+  body.staff-desktop #picker-modal .fields-box .pb-cmplbl,
+  body.staff-desktop #picker-modal .fields-box .pb-cmpval{ font-size:15px; }
+  body.staff-desktop #picker-modal .fields-box .pb-cmp-empty,
+  body.staff-desktop #picker-modal .fields-box .pb-cmp-load{ font-size:13px; }
+  body.staff-desktop #picker-modal .fields-box .pe-vid{ font-size:14px; }
 
   /* KPIs de Carga diaria / Tendencia: eran cajitas de móvil */
   body.staff-desktop .cd-kpi{ padding:14px 10px; }
@@ -1483,15 +1495,18 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   }
   body.staff-desktop #picker-modal .fields-box{
     pointer-events:auto;
-    max-width:400px !important;
+    max-width:440px !important;
     height:100vh;
     overflow-y:auto;
     border-radius:0;
     border-left:1px solid var(--border2);
     box-shadow:-12px 0 40px rgba(0,0,0,.5);
-    padding:20px !important;
+    padding:24px !important;
   }
-  body.staff-desktop #picker-modal .fields-box .pe-inp input{ font-size:18px; }
+  /* El panel de prescripción debe quedar por encima del panel del día
+     del calendario, que se añade al final del body. */
+  body.staff-desktop #picker-modal .picker-backdrop{ z-index:2600; }
+  body.staff-desktop #picker-modal .fields-box .pe-inp input{ font-size:20px; }
 
   /* ── Centrado ──────────────────────────────────────────────
      Todo lo que lleva un ancho máximo (para no deformarse) se quedaba
