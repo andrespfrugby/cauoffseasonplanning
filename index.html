@@ -1638,6 +1638,23 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .cal-mas{text-align:center;font-size:17px;color:rgba(255,255,255,.13);margin-top:14px;line-height:1}
 body.light-mode .cal-mas{color:rgba(0,0,0,.13)}
 .cal-dow{font-size:11px;color:var(--muted);text-align:center;font-weight:600}
+/* Al editar una sesión dentro del panel del día hace falta más ancho:
+   dentro caben bloques, superseries y filas de ejercicio. */
+#cal-modal .fields-box{max-width:440px}
+#cal-modal.ancho .fields-box{max-width:min(760px,94vw)}
+#cal-dia-editor .day-card{margin-bottom:0}
+#cal-dia-editor .brow{padding:8px 9px}
+#cal-dia-editor .bnm{font-size:13px}
+#cal-dia-editor .blk-name{font-size:13px}
+#cal-dia-editor .bth{display:none}
+/* El día ya tiene su propia cabecera en el panel */
+#cal-dia-editor .day-hd{display:none}
+
+/* Píldora del día del jugador: color si hay algo programado */
+.ag-day.con{background:rgba(255,255,255,.045);border-color:var(--border-strong)}
+body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
+.ag-day.con .ag-dnum{color:var(--text)}
+.ag-dot{width:6px;height:6px}
 
 /* ── PRINT / PDF ── */
 @media print {
@@ -5263,13 +5280,21 @@ async function renderAgenda(){
     const f = _agISO(d);
     const info = _ag.data.dias[f] || { gym:[], eventos:[] };
     const hecho = _ag.data.hecho[f] || {};
+    // Un punto por actividad, con el color de su tipo (gym según
+    // intensidad del día, campo naranja, partido rojo). Si ya está
+    // registrada, el punto se marca en verde.
     const dots = [];
-    info.gym.forEach(()=> dots.push(hecho.gym ? '#00e5a0' : (f<hoyStr?'#ff5050':'rgba(255,255,255,.25)')));
-    info.eventos.forEach(e=>{
-      const ok = e.tipo==='partido' ? hecho.partido : hecho.campo;
-      dots.push(ok ? '#00e5a0' : (f<hoyStr?'#ff5050':'rgba(255,255,255,.25)'));
+    info.gym.forEach(g=>{
+      const col = _agColorTipo(g.titulo);
+      dots.push(hecho.gym ? '#00e5a0' : (col.txt==='var(--muted)' ? '#5fb3f5' : col.txt));
     });
-    strip += `<div class="ag-day${f===_ag.sel?' sel':''}${f===hoyStr?' hoy':''}" data-f="${f}" onclick="agSelDia('${f}')">
+    info.eventos.forEach(e=>{
+      const esP = e.tipo==='partido';
+      const ok  = esP ? hecho.partido : hecho.campo;
+      dots.push(ok ? '#00e5a0' : (esP ? '#ff7070' : '#ffa040'));
+    });
+    const conAlgo = dots.length ? ' con' : '';
+    strip += `<div class="ag-day${f===_ag.sel?' sel':''}${f===hoyStr?' hoy':''}${conAlgo}" data-f="${f}" onclick="agSelDia('${f}')">
       <div class="ag-dlbl">${DL[i]}</div>
       <div class="ag-dnum">${d.getDate()}</div>
       <div class="ag-dots">${dots.map(c=>`<span class="ag-dot" style="background:${c}"></span>`).join('')}</div>
@@ -5325,7 +5350,7 @@ function renderAgendaDia(){
           <span class="ag-chip">${g.nBloques} bloques</span>
           ${hecho.gym?'<span class="ag-chip" style="background:rgba(0,229,160,.12);color:#00e5a0">registrada</span>':''}
         </div>
-        <div class="ag-btn" onclick="agToggleSesion('gym${idx}',${g.semanaIdx},${g.dia})">
+        <div class="ag-btn" onclick="agToggleSesion('gym${idx}','${g.weekId||''}',${g.semanaIdx},${g.dia})">
           ${abierta?'Cerrar sesión ⌃':'Abrir sesión ⌄'}
         </div>
       </div>
@@ -5370,7 +5395,7 @@ function _agColorTipo(titulo){
 }
 
 // Despliega la sesión dentro de su tarjeta (o la pliega si ya estaba abierta)
-async function agToggleSesion(key, semanaIdx, dia){
+async function agToggleSesion(key, weekId, semanaIdx, dia){
   if (_ag.abierta === key) { _ag.abierta = null; renderAgendaDia(); return; }
   _ag.abierta = key;
   state.semana = semanaIdx;
@@ -5379,7 +5404,11 @@ async function agToggleSesion(key, semanaIdx, dia){
   renderAgendaDia();
   const cont = document.getElementById('ag-sesion-cont');
   if (!cont) return;
-  const res = await api({ action:'getRutina', semana:semanaIdx, dia:dia, squad: state.squad||'' });
+  // Por id: los índices de la lista de semanas cambian según el filtro
+  // de visibles, y eso hacía que se abriera una sesión distinta.
+  const res = weekId
+    ? await api({ action:'getRutinaDia', weekId:weekId, dia:dia, squad: state.squad||'' })
+    : await api({ action:'getRutina', semana:semanaIdx, dia:dia, squad: state.squad||'' });
   if (!res.ok || !res.ejercicios || !res.ejercicios.length) {
     cont.innerHTML = '<div class="ag-empty">No hay ejercicios en esta sesión.</div>';
     return;
@@ -10537,6 +10566,8 @@ async function calAbrirDia(fecha){
   _cal.tipo   = 'campo';
   _cal.dows   = [];
   _cal.editGym = null;
+  _cal.edit = null;
+  _cal.guardando = false;
   _plan.inlineDia = null;
   const ov = document.createElement('div');
   ov.className = 'picker-backdrop';
@@ -10552,7 +10583,7 @@ function calCerrar(){
   _cal.editGym = null; _plan.inlineDia = null;
 }
 
-function calPaso(p){ _cal.paso = p; calPintarPaso(); }
+function calPaso(p){ _cal.paso = p; if (p==='menu') { _cal.edit = null; _cal.intensidad = null; } calPintarPaso(); }
 
 // Pinta el contenido del panel según el paso: primero el menú general,
 // luego el formulario concreto de lo que se haya elegido.
@@ -10581,9 +10612,11 @@ function calPintarPaso(){
   });
   info.eventos.forEach(e=>{
     const et = e.tipo==='partido' ? ('🏉 '+(e.rival?'vs '+e.rival:'Partido')) : ('🏃 '+(e.titulo||'Campo'));
-    const meta = [e.hora, e.duracion?e.duracion+' min':'', e.intensidad].filter(Boolean).join(' · ');
+    const hh = /^\d{1,2}:\d{2}$/.test(String(e.hora||'')) ? e.hora : '';
+    const meta = [hh, e.duracion?e.duracion+' min':'', e.intensidad].filter(Boolean).join(' · ');
     existentes += `<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:5px">
       <span style="font-size:13px;color:var(--text);flex:1">${et}${meta?' · '+meta:''}</span>
+      <span style="font-size:13px;color:var(--muted);cursor:pointer" title="Editar" onclick="calEditarEvento('${e.id}')">&#9998;</span>
       <span style="font-size:13px;color:#ff7070;cursor:pointer" title="Quitar del calendario" onclick="calBorrarEvento('${e.id}')">🗑</span>
     </div>`;
   });
@@ -10621,17 +10654,17 @@ function calPintarPaso(){
     box.innerHTML = volver + cab +
       `<div style="font-size:15px;font-weight:600;margin-bottom:12px">🏃 Entreno de campo</div>
        <label class="indiv-lbl">Título</label>
-       <input id="cal-titulo" class="pe-addinput" placeholder="Ej. Entreno táctico" style="margin-bottom:12px">
+       <input id="cal-titulo" class="pe-addinput" placeholder="Ej. Entreno táctico" value="${(_cal.edit&&_cal.edit.titulo)||''}" style="margin-bottom:12px">
        <label class="indiv-lbl">Intensidad</label>
        <div style="display:flex;gap:5px;margin-bottom:12px">
          ${INT.map(([v,l,c])=>`<span id="cal-int-${v}" onclick="calSetIntensidad('${v}')" style="flex:1;text-align:center;padding:9px 2px;border-radius:8px;cursor:pointer;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-size:11px" data-col="${c}">${l}</span>`).join('')}
        </div>
        <div style="display:flex;gap:8px;margin-bottom:14px">
-         <div style="flex:1"><label class="indiv-lbl">Hora</label><input id="cal-hora" type="time" class="pe-addinput"></div>
-         <div style="flex:1"><label class="indiv-lbl">Duración (min)</label><input id="cal-dur" type="number" class="pe-addinput" placeholder="90"></div>
+         <div style="flex:1"><label class="indiv-lbl">Hora</label><input id="cal-hora" type="time" class="pe-addinput" value="${(_cal.edit&&_cal.edit.hora)||''}"></div>
+         <div style="flex:1"><label class="indiv-lbl">Duración (min)</label><input id="cal-dur" type="number" class="pe-addinput" placeholder="90" value="${(_cal.edit&&_cal.edit.duracion)||''}"></div>
        </div>
-       ${_calRepetirHTML()}
-       <button class="pe-save" style="margin-top:0" onclick="calGuardarEvento('campo')">Añadir entreno de campo</button>`;
+       ${_cal.edit?'':_calRepetirHTML()}
+       <button class="pe-save" style="margin-top:0" onclick="calGuardarEvento('campo')">${_cal.edit?'Guardar cambios':'Añadir entreno de campo'}</button>`;
     if (_cal.intensidad) calSetIntensidad(_cal.intensidad);
     return;
   }
@@ -10641,13 +10674,13 @@ function calPintarPaso(){
     box.innerHTML = volver + cab +
       `<div style="font-size:15px;font-weight:600;margin-bottom:12px">🏉 Partido</div>
        <label class="indiv-lbl">Rival</label>
-       <input id="cal-rival" class="pe-addinput" placeholder="Ej. Les Abelles" style="margin-bottom:12px">
+       <input id="cal-rival" class="pe-addinput" placeholder="Ej. Les Abelles" value="${(_cal.edit&&_cal.edit.rival)||''}" style="margin-bottom:12px">
        <div style="display:flex;gap:8px;margin-bottom:14px">
-         <div style="flex:1"><label class="indiv-lbl">Hora del partido</label><input id="cal-hora" type="time" class="pe-addinput"></div>
-         <div style="flex:1"><label class="indiv-lbl">Duración (min)</label><input id="cal-dur" type="number" class="pe-addinput" placeholder="80"></div>
+         <div style="flex:1"><label class="indiv-lbl">Hora del partido</label><input id="cal-hora" type="time" class="pe-addinput" value="${(_cal.edit&&_cal.edit.hora)||''}"></div>
+         <div style="flex:1"><label class="indiv-lbl">Duración (min)</label><input id="cal-dur" type="number" class="pe-addinput" placeholder="80" value="${(_cal.edit&&_cal.edit.duracion)||''}"></div>
        </div>
-       ${_calRepetirHTML()}
-       <button class="pe-save" style="margin-top:0;background:#ff7070" onclick="calGuardarEvento('partido')">Añadir partido</button>`;
+       ${_cal.edit?'':_calRepetirHTML()}
+       <button class="pe-save" style="margin-top:0;background:#ff7070" onclick="calGuardarEvento('partido')">${_cal.edit?'Guardar cambios':'Añadir partido'}</button>`;
     return;
   }
 
@@ -10723,8 +10756,12 @@ function calToggleDow(v){
 }
 
 async function calGuardarEvento(tipo){
+  if (_cal.guardando) return;      // evita duplicados por doble toque
+  _cal.guardando = true;
+  const btn = document.querySelector('#cal-box .pe-save');
+  if (btn){ btn.disabled = true; btn.textContent = 'Guardando...'; }
   const g = id => (document.getElementById(id)||{}).value || '';
-  const payload = { action:'saveEvento', squad:_cal.squad, fecha:_cal.diaSel, tipo:tipo,
+  const payload = { action:'saveEvento', id:(_cal.edit&&_cal.edit.id)||'', squad:_cal.squad, fecha:_cal.diaSel, tipo:tipo,
     hora:g('cal-hora'), duracion:g('cal-dur'),
     creado_por:(state.user&&state.user.usuario)||'' };
   if (tipo==='partido'){
@@ -10738,7 +10775,12 @@ async function calGuardarEvento(tipo){
   const repN  = parseInt((document.getElementById('cal-rep-n')||{}).value) || 0;
 
   const res = await api(payload);
-  if (!res || !res.ok){ alert('No se pudo guardar: '+((res&&res.error)||'')); return; }
+  if (!res || !res.ok){
+    _cal.guardando = false;
+    if (btn){ btn.disabled = false; btn.textContent = 'Guardar'; }
+    alert('No se pudo guardar: '+((res&&res.error)||''));
+    return;
+  }
 
   // Repetir el mismo evento las siguientes semanas, misma fecha y hora
   if (repOn && repN > 0){
@@ -10748,18 +10790,28 @@ async function calGuardarEvento(tipo){
       await api(Object.assign({}, payload, { fecha:_agISO(d) }));
     }
   }
-  _cal.intensidad=null; calCerrar(); renderCalendarioCoach();
+  _cal.intensidad=null; _cal.guardando=false; calCerrar(); renderCalendarioCoach();
 }
 
 // Crea una semana de un solo día en esta fecha y abre el editor
 async function calCrearSesionGym(){
+  if (_cal.guardando) return;
+  _cal.guardando = true;
+  const btn = document.querySelector('#cal-box .pe-save');
+  if (btn){ btn.disabled = true; btn.textContent = 'Creando...'; }
   const titulo = (document.getElementById('cal-gym-titulo')||{}).value || '';
   const f = _cal.diaSel;
   const res = await api({ action:'saveWeek', id:'', nombre: (titulo||'Sesión')+' · '+f,
     squad:_cal.squad, fecha_inicio:f, fecha_fin:f,
     data:{ dias:[{ titulo:titulo, fecha:f, bloques:[] }] },
     visible:true, creado_por:(state.user&&state.user.usuario)||'' });
-  if (!res || !res.ok){ alert('No se pudo crear: '+((res&&res.error)||'')); return; }
+  if (!res || !res.ok){
+    _cal.guardando = false;
+    if (btn){ btn.disabled = false; btn.textContent = 'Crear y abrir editor'; }
+    alert('No se pudo crear: '+((res&&res.error)||''));
+    return;
+  }
+  _cal.guardando = false;
   calCerrar();
   _plan.week = { id:res.id, nombre:(titulo||'Sesión')+' · '+f, squad:_cal.squad, visible:true,
     fecha_inicio:f, fecha_fin:f, data:{ dias:[{ titulo:titulo, fecha:f, bloques:[], _open:true }] } };
@@ -10791,8 +10843,14 @@ function calRepToggle(on){
 
 // Despliega el editor de la sesión dentro del propio panel del día
 async function calToggleGym(gi, weekId, dia){
-  if (_cal.editGym === gi){ _cal.editGym = null; _plan.inlineDia = null; calPintarPaso(); return; }
+  const modal = document.getElementById('cal-modal');
+  if (_cal.editGym === gi){
+    _cal.editGym = null; _plan.inlineDia = null;
+    if (modal) modal.classList.remove('ancho');
+    calPintarPaso(); return;
+  }
   _cal.editGym = gi;
+  if (modal) modal.classList.add('ancho');
   calPintarPaso();
   if (!weekId){
     const c = document.getElementById('cal-dia-editor');
@@ -10898,6 +10956,17 @@ async function calEditarGym(weekId){
   renderWeekEditor();
 }
 
+// Abre el formulario del evento con sus datos ya rellenos
+function calEditarEvento(id){
+  const info = (_cal.data && _cal.data.dias[_cal.diaSel]) || { eventos:[] };
+  const e = (info.eventos||[]).find(x=>String(x.id)===String(id));
+  if (!e) return;
+  _cal.edit = e;
+  _cal.intensidad = e.intensidad || null;
+  _cal.paso = e.tipo==='partido' ? 'partido' : 'campo';
+  calPintarPaso();
+}
+
 async function calBorrarEvento(id){
   if (!confirm('¿Borrar este evento?')) return;
   await api({ action:'deleteEvento', id });
@@ -10905,6 +10974,7 @@ async function calBorrarEvento(id){
 }
 
 async function calAplicarPrograma(){
+  if (_cal.guardando) return;
   const id = (document.getElementById('cal-programa')||{}).value || '';
   if (!id){ alert('Elige un programa'); return; }
   if (!_cal.dows || !_cal.dows.length){ alert('Marca al menos un día de la semana'); return; }
@@ -10919,13 +10989,20 @@ async function calAplicarPrograma(){
   }
   fechas.sort();
 
+  _cal.guardando = true;
+  const btnP = document.querySelector('#cal-box .pe-save');
+  if (btnP){ btnP.disabled = true; btnP.textContent = 'Aplicando...'; }
   const res = await api({ action:'aplicarPrograma', idPlantilla:id, squad:_cal.squad,
     fechas, creado_por:(state.user&&state.user.usuario)||'' });
+  _cal.guardando = false;
   if (res && res.ok){
     calCerrar();
     alert('Programa aplicado a '+res.dias+' días.');
     renderCalendarioCoach();
-  } else alert('No se pudo aplicar: '+((res&&res.error)||''));
+  } else {
+    if (btnP){ btnP.disabled = false; btnP.textContent = 'Aplicar desde este día'; }
+    alert('No se pudo aplicar: '+((res&&res.error)||''));
+  }
 }
 
 
