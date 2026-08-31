@@ -1322,9 +1322,43 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 
   /* Tendencia: es una serie temporal, así que sí gana con el ancho — pero solo
      a lo largo. Alto fijo para que no se estire en vertical como Carga diaria. */
-  body.staff-desktop #tendencia-content .cd-svg-wrap{ max-width:none; }
-  body.staff-desktop #tendencia-content .cd-svg-wrap svg{ height:280px !important; }
+  body.staff-desktop #tendencia-content .cd-svg-wrap{ max-width:1020px; }
+  body.staff-desktop #tendencia-content .cd-svg-wrap svg{ height:auto !important; }
   body.staff-desktop #tendencia-content .cd-kpis{ max-width:560px; }
+
+  /* ACWR: las fichas de jugador en rejilla, no una debajo de otra */
+  body.staff-desktop #control-cargas-content > div[style*="flex-direction:column"]{
+    display:grid !important;
+    grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
+    gap:8px;
+    max-width:none;
+  }
+  body.staff-desktop #control-cargas-content .cc-jrow{ max-width:none; margin:0; }
+
+  /* Calendario del planner: en escritorio la letra de móvil no se lee */
+  body.staff-desktop #tab-coach-planner .cal-cell{ min-height:104px !important; padding:9px !important; }
+  body.staff-desktop #tab-coach-planner .cal-dnum{ font-size:13px !important; margin-bottom:5px !important; }
+  body.staff-desktop #tab-coach-planner .cal-linea{ font-size:12px !important; line-height:1.5 !important; }
+  body.staff-desktop #tab-coach-planner .cal-dow{ font-size:12px !important; }
+  body.staff-desktop #tab-coach-planner .cal-mas{ font-size:20px !important; }
+
+  /* Panel lateral de prescripción: tamaños de escritorio */
+  body.staff-desktop #picker-modal .fields-box{ font-size:14px; }
+  body.staff-desktop #picker-modal .fields-box .pe-mini,
+  body.staff-desktop #picker-modal .fields-box .pe-modo-lbl,
+  body.staff-desktop #picker-modal .fields-box .pe-serie-hdr,
+  body.staff-desktop #picker-modal .fields-box .pe-nota-lbl{ font-size:12px; }
+  body.staff-desktop #picker-modal .fields-box .pe-sn{ font-size:15px; width:32px; }
+  body.staff-desktop #picker-modal .fields-box .pe-inp{ padding:12px 13px; }
+  body.staff-desktop #picker-modal .fields-box .pe-inp input{ font-size:20px; }
+  body.staff-desktop #picker-modal .fields-box .pe-u,
+  body.staff-desktop #picker-modal .fields-box .pe-x{ font-size:14px; }
+  body.staff-desktop #picker-modal .fields-box .lc{ font-size:14px; padding:11px 0; }
+  body.staff-desktop #picker-modal .fields-box .ru{ font-size:13px; padding:7px 13px; }
+  body.staff-desktop #picker-modal .fields-box .pe-nota{ font-size:15px; min-height:70px; }
+  body.staff-desktop #picker-modal .fields-box .pe-add,
+  body.staff-desktop #picker-modal .fields-box .pe-eq{ font-size:13px; padding:9px 16px; }
+  body.staff-desktop #picker-modal .fields-box .pe-save{ font-size:15px; padding:14px; }
 
   /* KPIs de Carga diaria / Tendencia: eran cajitas de móvil */
   body.staff-desktop .cd-kpi{ padding:14px 10px; }
@@ -1551,6 +1585,40 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 .rc-save{background:rgba(0,229,160,.13);border:1px solid rgba(0,229,160,.4);border-radius:8px;padding:12px;
   text-align:center;font-size:14px;color:var(--accent2);font-weight:600;cursor:pointer;margin-top:10px;
   font-family:var(--font-body);width:100%}
+
+/* ── Tarjeta de ejercicio del jugador (formato nuevo) ── */
+.exn-card{padding:0 0 11px}
+.exn-head{display:flex;align-items:center;gap:7px;padding:11px 12px 6px}
+.exn-blk{width:auto;height:22px;min-width:28px;padding:0 7px;border-radius:5px;font-size:9px}
+.exn-name{font-size:14px;font-weight:600;color:var(--text);flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exn-ic{width:27px;height:27px;border-radius:7px;background:var(--surface2);color:var(--muted);
+  display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;flex-shrink:0}
+.exn-ic:hover{color:var(--text)}
+.exn-ic-vid{background:rgba(232,20,42,.14);color:#ff5c6e;font-size:10px}
+.exn-tick{width:27px;height:27px;margin-left:0}
+.exn-patron{font-size:10px;color:var(--muted);padding:0 12px 4px;text-transform:capitalize}
+.exn-presc{display:flex;align-items:baseline;gap:5px;padding:2px 12px 9px;flex-wrap:wrap}
+.exn-big{font-size:25px;font-weight:600;color:var(--text);line-height:1}
+.exn-x{font-size:13px;color:var(--muted)}
+.exn-load{font-size:21px;font-weight:600;color:var(--accent2);line-height:1}
+.exn-meta{margin-left:auto;font-size:10px;color:var(--muted)}
+.exn-nota{display:flex;gap:8px;background:rgba(55,138,221,.08);border-radius:7px;
+  padding:8px 10px;margin:0 12px 9px}
+.exn-nota-ic{font-size:11px;color:#5fb3f5;line-height:1.3;flex-shrink:0}
+.exn-nota-txt{font-size:11px;color:#7ec8ff;line-height:1.45}
+.exn-carga{margin:0 12px;background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.4);
+  border-radius:8px;padding:10px;text-align:center;font-size:13px;color:var(--accent2);
+  font-weight:600;cursor:pointer;user-select:none}
+.exn-carga:active{transform:scale(.98)}
+.exn-menu{margin:9px 12px 0;background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:4px}
+.exn-menu-op{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;
+  font-size:13px;color:var(--text);cursor:pointer}
+.exn-menu-op:hover{background:var(--surface)}
+.ex-card.done .exn-presc,
+.ex-card.done .exn-nota,
+.ex-card.done .exn-carga,
+.ex-card.done .exn-patron{display:none !important}
 
 /* ── PRINT / PDF ── */
 @media print {
@@ -2418,7 +2486,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 
       <div class="load-subnav">
         <button class="load-subtab active" id="lst-diaria" onclick="loadSub('diaria')">Carga diaria</button>
-        <button class="load-subtab" id="lst-tendencia" onclick="loadSub('tendencia')">Tendencia</button>
+        <button class="load-subtab" id="lst-tendencia" onclick="loadSub('tendencia')">Carga semanal</button>
         <button class="load-subtab" id="lst-control" onclick="loadSub('control')">Control de cargas</button>
       </div>
 
@@ -3658,85 +3726,85 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeVideoModal()
 function renderCard(e) {
   const letra   = blockLetter(e.bloque);
   const letraOk = ['A','B','C','D','E'].includes(letra) ? letra : 'X';
-  const isPrep  = e.fase === 'prep';
-  const patronHtml = e.patron ? `<div class="ex-patron">${e.patron.replace(/_/g,' ')}</div>` : '';
-  const prescItems = [
-    e.contraccion   ? `${e.contraccion}` : null,
-    e.sets          ? `${e.sets} sets` : null,
-    e.reps          ? e.reps : null,
-    e.tempo         ? e.tempo : null,
-    e.load_objetivo ? e.load_objetivo : null,
-  ].filter(Boolean);
-  const prescHtml = prescItems.length ? `
-    <div class="ex-prescription presc-${letraOk}">
-      ${prescItems.map(label => `<span class="presc-chip">${label}</span>`).join('')}
-    </div>` : '';
-  const notasStrip = e.notas ? `
-  <div class="ex-notes-strip ex-notes-${letraOk}">
-    <div class="ex-notes-icon-wrap">ℹ</div>
-    <span class="ex-notes-text">${e.notas}</span>
-  </div>` : '';
+  const cardId  = (e.bloque+'_'+e.ejercicio).replace(/\W/g,'_');
   const nombreEsc = e.ejercicio.replace(/'/g,"\\'");
   const videoEsc  = (e.video||'').replace(/'/g,"\\'");
   const hasVideo  = !!(e.video && e.video.startsWith('http'));
-  const cardId    = (e.bloque+'_'+e.ejercicio).replace(/\W/g,'_');
-  const hasLoadBtn = /(%|RPE|RIR)/i.test(e.load_objetivo||'');
+  const hasLoadBtn = /(%|RPE|RIR|BW)/i.test(e.load_objetivo||'') || !!e.reps;
 
-  // Escapar load_objetivo para el atributo onclick (entre comillas simples)
   const loadObjEsc = (e.load_objetivo||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-
   const repsEsc    = (e.reps||'').replace(/'/g,"\\'");
   const setsEsc    = String(e.sets||'').replace(/'/g,"\\'");
 
-  const actionsHtml = `
-    <div class="ex-card-actions-wrap">
-    <div style="display:flex;flex-direction:column;gap:4px;padding:0 13px 10px">
-      <div style="display:flex;gap:4px">
-        <button type="button" class="btn-action btn-action-hist" style="flex:1" title="Historial de carga"
-                onclick="toggleCardPanel('hist','${cardId}','${nombreEsc}','${loadObjEsc}','${repsEsc}','${setsEsc}')">
-          <span class="btn-action-icon">⟳</span><span>Historial</span>
-        </button>
-        <button type="button" class="btn-action btn-action-video ${hasVideo?'':'no-url'}" style="flex:1"
-                onclick="openVideoModal('${nombreEsc}','${videoEsc}')"
-                title="${hasVideo?'Ver vídeo':'Sin vídeo aún'}">
-          <span class="btn-action-icon">▶</span><span>Vídeo</span>
-        </button>
-      </div>
-      <div style="display:flex;gap:4px">
-        ${hasLoadBtn ? `<button type="button" class="btn-action" style="flex:1;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.3);color:var(--accent2)" title="Registrar carga"
-                onclick="toggleCardPanel('load','${cardId}','${nombreEsc}','${loadObjEsc}','${repsEsc}','${setsEsc}')">
-          <span class="btn-action-icon">＋</span><span>Carga</span>
-        </button>` : ''}
-        <button type="button" class="btn-action btn-action-hist" style="flex:1" title="Timer descanso"
-                onclick="toggleTimerPanel('${cardId}')">
-          <span class="btn-action-icon">⏱</span><span>Descanso</span>
-        </button>
-      </div>
-      <button type="button" class="btn-action btn-action-hist" style="width:100%" title="Metrónomo"
-              onclick="toggleMetronomePanel('${cardId}')">
-        <span class="btn-action-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L7 20h10L12 2z"/><line x1="12" y1="2" x2="17" y2="12"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span><span>Metrónomo</span>
-      </button>
-    </div>
-    </div>`;
+  // ── Titular de la prescripción: 4 × 8-10 @ 75% ──
+  const sets = String(e.sets||'').trim();
+  const reps = String(e.reps||'').trim();
+  const carga = String(e.load_objetivo||'').trim();
+  // Si la carga trae un valor por serie (75%80%85%) se resume como rango
+  let cargaTxt = carga;
+  const pcts = carga.match(/\d+\.?\d*%/g);
+  if (pcts && pcts.length > 1) {
+    const uniq = pcts.filter((v,i,a)=>a.indexOf(v)===i);
+    cargaTxt = uniq.length===1 ? uniq[0] : pcts[0].replace('%','')+'-'+pcts[pcts.length-1];
+  }
+  let titular = '';
+  if (sets) titular += `<span class="exn-big">${sets}</span>`;
+  if (sets && reps) titular += `<span class="exn-x">×</span>`;
+  if (reps) titular += `<span class="exn-big">${reps}</span>`;
+  if (cargaTxt) titular += `<span class="exn-x">@</span><span class="exn-load">${cargaTxt}</span>`;
+  const metaDer = [e.tempo, e.contraccion].filter(Boolean).join(' · ');
+
+  const patronHtml = e.patron ? `<div class="exn-patron">${e.patron.replace(/_/g,' ')}</div>` : '';
+
+  const notaHtml = e.notas ? `
+    <div class="exn-nota">
+      <span class="exn-nota-ic">ℹ</span>
+      <span class="exn-nota-txt">${e.notas}</span>
+    </div>` : '';
+
+  const videoBtn = hasVideo
+    ? `<span class="exn-ic exn-ic-vid" title="Ver vídeo" onclick="openVideoModal('${nombreEsc}','${videoEsc}')">▶</span>`
+    : '';
+
   return `
-  <div class="ex-card accent-${letraOk}${isPrep?' prep-card':''}" id="card-${cardId}">
-    <div class="ex-header">
-      <div class="block-id block-${letraOk}">${e.bloque}</div>
-      <div class="ex-info">
-        <div class="ex-name">${e.ejercicio}</div>
-        ${patronHtml}
-      </div>
-      <div class="ex-tick-btn" id="tick-${cardId}" onclick="toggleTick('${cardId}')" title="Marcar como completado">✓</div>
+  <div class="ex-card accent-${letraOk} exn-card" id="card-${cardId}">
+    <div class="exn-head">
+      <span class="block-id block-${letraOk} exn-blk">${e.bloque}</span>
+      <span class="exn-name">${e.ejercicio}</span>
+      ${videoBtn}
+      <span class="exn-ic" title="Más opciones" onclick="exnMenu('${cardId}','${nombreEsc}','${loadObjEsc}','${repsEsc}','${setsEsc}')">⋯</span>
+      <span class="ex-tick-btn exn-tick" id="tick-${cardId}" onclick="toggleTick('${cardId}')" title="Marcar como completado">✓</span>
     </div>
-    <div class="ex-done-meta" id="donemeta-${cardId}">${[e.sets?e.sets+' sets':'', e.reps||''].filter(Boolean).join(' · ')} ✓</div>
-    ${prescHtml}
-    ${actionsHtml}
-    ${notasStrip}
+    ${patronHtml}
+    ${titular ? `<div class="exn-presc">${titular}${metaDer?`<span class="exn-meta">${metaDer}</span>`:''}</div>` : ''}
+    ${notaHtml}
+    ${hasLoadBtn ? `<div class="exn-carga" onclick="toggleCardPanel('load','${cardId}','${nombreEsc}','${loadObjEsc}','${repsEsc}','${setsEsc}')">+ Carga</div>` : ''}
+    <div class="ex-done-meta" id="donemeta-${cardId}">${[sets?sets+' sets':'', reps].filter(Boolean).join(' · ')} ✓</div>
+    <div id="panel-menu-${cardId}" class="exn-menu hidden"></div>
     <div id="panel-hist-${cardId}" class="card-panel hidden"></div>
     <div id="panel-load-${cardId}" class="card-panel hidden"></div>
     <div id="panel-timer-${cardId}" class="hidden">${renderTimerStrip(cardId)}</div>
     <div id="panel-metro-${cardId}" class="hidden">${renderMetronomeStrip(cardId)}</div>
   </div>`;
+}
+
+// Menú "⋯" del ejercicio: lo que se usa poco (historial, descanso,
+// metrónomo). Los botones que se tocan mil veces quedan en la tarjeta.
+function exnMenu(cardId, nombre, loadObj, reps, sets){
+  const el = document.getElementById('panel-menu-'+cardId);
+  if (!el) return;
+  if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  el.innerHTML = `
+    <div class="exn-menu-op" onclick="toggleCardPanel('hist','${cardId}','${nombre}','${loadObj}','${reps}','${sets}')">
+      <span style="color:var(--accent2)">↺</span> Historial de cargas
+    </div>
+    <div class="exn-menu-op" onclick="toggleTimerPanel('${cardId}')">
+      <span style="color:#ffc04d">⏱</span> Descanso
+    </div>
+    <div class="exn-menu-op" onclick="toggleMetronomePanel('${cardId}')">
+      <span style="color:#a99ff5">♪</span> Metrónomo
+    </div>`;
 }
 
 // ── RENDER SESSION ────────────────────────────────────────────
@@ -7242,7 +7310,7 @@ async function renderTendencia(){
     return `<span onclick="tendSetContenido('${v}')" style="font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;background:${on?'rgba(232,20,42,.12)':'var(--surface2)'};color:${on?'var(--accent)':'var(--muted)'};border:1px solid ${on?'rgba(232,20,42,.35)':'var(--border2)'}">${l}</span>`;
   }).join('');
 
-  const rangos = [[7,'7 días'],[14,'14 días'],[30,'Mes']].map(([v,l])=>{
+  const rangos = [[7,'Esta semana'],[14,'14 días'],[30,'Mes']].map(([v,l])=>{
     const on = _tend.rango===v;
     return `<span onclick="tendSetRango(${v})" style="font-size:11px;padding:5px 11px;border-radius:7px;cursor:pointer;background:${on?'var(--surface2)':'transparent'};color:${on?'var(--text)':'var(--muted)'};border:1px solid var(--border2)">${l}</span>`;
   }).join('');
@@ -7326,7 +7394,7 @@ function _tendBarrasRPE(pts, porSemana){
     }
   });
 
-  return `<div class="cd-svg-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;height:auto">
+  return `<div class="cd-svg-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;height:auto">
     ${bandas}${grid}
     <line x1="${padL}" y1="${padT+plotH}" x2="${W-8}" y2="${padT+plotH}" stroke="var(--border2)"/>
     ${barras}${etiquetas}
@@ -7361,7 +7429,7 @@ function _tendLineaUA(pts){
     if (!saltar) etiquetas += `<text x="${c.x.toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="10" fill="var(--muted)">${c.e}</text>`;
   });
 
-  return `<div class="cd-svg-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;height:auto">
+  return `<div class="cd-svg-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;height:auto">
     ${grid}
     <line x1="${padL}" y1="${base}" x2="${W-8}" y2="${base}" stroke="var(--border2)"/>
     ${area}${linea}${dots}${vals}${etiquetas}
@@ -10300,23 +10368,24 @@ async function renderCalendarioCoach(){
 
   const hoyStr = _agISO(hoy);
   const celdaHTML = d => {
-    if (d===null) return '<div style="min-height:74px"></div>';
+    if (d===null) return '<div class="cal-cell" style="min-height:74px;border:none;background:none"></div>';
     const f = `${yy}-${String(mm).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const info = _cal.data.dias[f] || { gym:[], eventos:[] };
     const vacio = !info.gym.length && !info.eventos.length;
     let lineas = '';
     info.gym.forEach(g=>{
       const col = _agColorTipo(g.titulo);
-      lineas += `<div style="font-size:9px;color:${col.txt};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35">● ${g.titulo||'Gym'}</div>`;
+      lineas += `<div class="cal-linea" style="font-size:9px;color:${col.txt};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35">● ${g.titulo||'Gym'}</div>`;
     });
     info.eventos.forEach(e=>{
       const col = e.tipo==='partido' ? '#ff7070' : '#ffa040';
-      lineas += `<div style="font-size:9px;color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35">● ${e.titulo||(e.tipo==='partido'?'Partido':'Campo')}</div>`;
+      const et  = e.tipo==='partido' ? (e.rival?'vs '+e.rival:'Partido') : (e.titulo||'Campo');
+      lineas += `<div class="cal-linea" style="font-size:9px;color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35">● ${et}</div>`;
     });
     const borde = f===hoyStr ? '1.5px solid rgba(232,20,42,.5)' : (vacio?'1px dashed var(--border)':'1px solid var(--border2)');
-    return `<div onclick="calAbrirDia('${f}')" style="min-height:74px;background:var(--surface);border:${borde};border-radius:8px;padding:6px;cursor:pointer">
-      <div style="font-size:9px;color:${f===hoyStr?'var(--accent)':'var(--muted)'};margin-bottom:3px">${d}</div>
-      ${lineas || '<div style="text-align:center;font-size:14px;color:rgba(255,255,255,.14);margin-top:12px">+</div>'}
+    return `<div class="cal-cell" onclick="calAbrirDia('${f}')" style="min-height:74px;background:var(--surface);border:${borde};border-radius:8px;padding:6px;cursor:pointer">
+      <div class="cal-dnum" style="font-size:9px;color:${f===hoyStr?'var(--accent)':'var(--muted)'};margin-bottom:3px">${d}</div>
+      ${lineas || '<div class="cal-mas" style="text-align:center;font-size:14px;color:rgba(255,255,255,.14);margin-top:12px">+</div>'}
     </div>`;
   };
 
@@ -10334,7 +10403,7 @@ async function renderCalendarioCoach(){
       <span style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">${squadBtns}</span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px">
-      ${['L','M','X','J','V','S','D'].map(x=>`<div style="font-size:10px;color:var(--muted);text-align:center">${x}</div>`).join('')}
+      ${['L','M','X','J','V','S','D'].map(x=>`<div class="cal-dow" style="font-size:10px;color:var(--muted);text-align:center">${x}</div>`).join('')}
     </div>
     ${filas}
     <div style="font-size:10px;color:var(--muted);margin-top:10px">Pincha un día para añadir una sesión de gym, un entreno de campo o un partido.</div>
@@ -10344,88 +10413,168 @@ async function renderCalendarioCoach(){
 // ── Panel al pinchar un día ──
 async function calAbrirDia(fecha){
   _cal.diaSel = fecha;
-  const info = (_cal.data && _cal.data.dias[fecha]) || { gym:[], eventos:[] };
-  const d = new Date(fecha+'T12:00:00');
-  const dd = d.getDate()+'/'+(d.getMonth()+1);
-
-  let existentes = '';
-  info.gym.forEach(g=>{
-    existentes += `<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:8px;padding:9px 11px;margin-bottom:5px">
-      <span style="font-size:12px;color:var(--text);flex:1">🏋️ ${g.titulo||'Gym'} · ${g.nEj} ej.</span>
-      <span style="font-size:10px;color:var(--muted)">${g.semanaNombre||''}</span>
-    </div>`;
-  });
-  info.eventos.forEach(e=>{
-    existentes += `<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:8px;padding:9px 11px;margin-bottom:5px">
-      <span style="font-size:12px;color:var(--text);flex:1">${e.tipo==='partido'?'🏉':'🏃'} ${e.titulo||e.tipo}${e.hora?' · '+e.hora:''}</span>
-      <span style="font-size:11px;color:#ff7070;cursor:pointer" onclick="calBorrarEvento('${e.id}')">🗑</span>
-    </div>`;
-  });
-
+  _cal.paso   = 'menu';
+  _cal.tipo   = 'campo';
+  _cal.dows   = [];
   const ov = document.createElement('div');
   ov.className = 'picker-backdrop';
   ov.id = 'cal-modal';
-  ov.innerHTML = `
-    <div class="fields-box" onclick="event.stopPropagation()">
-      <div style="font-size:16px;font-weight:700;margin-bottom:3px">${dd} · ${_cal.squad}</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Qué hay programado y qué añadir</div>
-      ${existentes || '<div style="font-size:12px;color:var(--muted);font-style:italic;margin-bottom:10px">Nada programado todavía.</div>'}
-
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 7px">Añadir evento</div>
-      <div style="display:flex;gap:6px;margin-bottom:9px">
-        <span id="cal-tipo-campo" onclick="calSetTipo('campo')" style="flex:1;text-align:center;padding:9px;border-radius:8px;cursor:pointer;background:rgba(255,160,64,.12);border:1px solid rgba(255,160,64,.4);color:#ffa040;font-size:12px;font-weight:600">Entreno de campo</span>
-        <span id="cal-tipo-partido" onclick="calSetTipo('partido')" style="flex:1;text-align:center;padding:9px;border-radius:8px;cursor:pointer;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-size:12px">Partido</span>
-      </div>
-      <input id="cal-titulo" class="pe-addinput" placeholder="Título (ej. Entreno táctico)" style="margin-bottom:6px">
-      <div style="display:flex;gap:6px;margin-bottom:10px">
-        <input id="cal-hora" type="time" class="pe-addinput" style="flex:1">
-        <input id="cal-dur" type="number" class="pe-addinput" placeholder="min" style="flex:1">
-      </div>
-      <button class="pe-save" style="margin-top:0" onclick="calGuardarEvento()">Añadir evento</button>
-
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:18px 0 7px">Aplicar programa creado</div>
-      <select id="cal-programa" class="semana-select" style="width:100%;margin-bottom:8px">
-        <option value="">— Cargando programas —</option>
-      </select>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Días de la semana donde repartirlo, en orden:</div>
-      <div id="cal-dows" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px"></div>
-      <button class="pe-save" style="margin-top:0;background:var(--accent)" onclick="calAplicarPrograma()">Aplicar programa desde este día</button>
-
-      <button class="doc-cancel-btn" onclick="calCerrar()">Cerrar</button>
-    </div>`;
+  ov.innerHTML = '<div class="fields-box" id="cal-box" onclick="event.stopPropagation()"></div>';
   ov.addEventListener('click', e=>{ if(e.target===ov) calCerrar(); });
   document.body.appendChild(ov);
+  calPintarPaso();
+}
 
-  _cal.tipo = 'campo';
-  _cal.dows = [];
-  const DOWS = [['1','L'],['2','M'],['3','X'],['4','J'],['5','V'],['6','S'],['0','D']];
-  document.getElementById('cal-dows').innerHTML = DOWS.map(([v,l])=>
-    `<span id="cal-dow-${v}" onclick="calToggleDow('${v}')" style="width:34px;text-align:center;padding:7px 0;border-radius:7px;cursor:pointer;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-size:12px">${l}</span>`
-  ).join('');
+function calCerrar(){ const m=document.getElementById('cal-modal'); if(m) m.remove(); }
 
-  // cargar programas disponibles
-  const wk = await api({ action:'getWeeks' });
-  const sel = document.getElementById('cal-programa');
-  if (sel) {
-    const ws = (wk.ok && wk.weeks) ? wk.weeks : [];
-    sel.innerHTML = '<option value="">— Elige un programa —</option>' +
-      ws.map(w=>{
-        const nd = ((w.data&&w.data.dias)||[]).length;
-        return `<option value="${w.id}">${w.nombre} (${nd} días · ${w.squad})</option>`;
-      }).join('');
+function calPaso(p){ _cal.paso = p; calPintarPaso(); }
+
+// Pinta el contenido del panel según el paso: primero el menú general,
+// luego el formulario concreto de lo que se haya elegido.
+function calPintarPaso(){
+  const box = document.getElementById('cal-box');
+  if (!box) return;
+  const fecha = _cal.diaSel;
+  const d  = new Date(fecha+'T12:00:00');
+  const DL = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const cab = `<div style="font-size:17px;font-weight:700;margin-bottom:2px">${DL[d.getDay()].charAt(0).toUpperCase()+DL[d.getDay()].slice(1)} ${d.getDate()}/${d.getMonth()+1}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">${_cal.squad}</div>`;
+
+  const info = (_cal.data && _cal.data.dias[fecha]) || { gym:[], eventos:[] };
+  let existentes = '';
+  info.gym.forEach(g=>{
+    existentes += `<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:5px">
+      <span style="font-size:13px;color:var(--text);flex:1">🏋️ ${g.titulo||'Gym'} · ${g.nEj} ej.</span>
+      <span style="font-size:11px;color:var(--muted)">${g.semanaNombre||''}</span>
+      <span style="font-size:12px;color:var(--muted);cursor:pointer" title="Editar sesión" onclick="calEditarGym('${g.weekId||''}')">&#9998;</span>
+      <span style="font-size:13px;color:#ff7070;cursor:pointer" title="Quitar del calendario" onclick="calBorrarGym('${g.weekId||''}',${g.dia})">🗑</span>
+    </div>`;
+  });
+  info.eventos.forEach(e=>{
+    const et = e.tipo==='partido' ? ('🏉 '+(e.rival?'vs '+e.rival:'Partido')) : ('🏃 '+(e.titulo||'Campo'));
+    const meta = [e.hora, e.duracion?e.duracion+' min':'', e.intensidad].filter(Boolean).join(' · ');
+    existentes += `<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:5px">
+      <span style="font-size:13px;color:var(--text);flex:1">${et}${meta?' · '+meta:''}</span>
+      <span style="font-size:13px;color:#ff7070;cursor:pointer" onclick="calBorrarEvento('${e.id}')">🗑</span>
+    </div>`;
+  });
+
+  // ── PASO 1: menú general ──
+  if (_cal.paso === 'menu') {
+    const op = (icono,titulo,sub,accion,color) =>
+      `<div onclick="${accion}" style="display:flex;align-items:center;gap:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:13px 14px;margin-bottom:7px;cursor:pointer">
+        <span style="font-size:19px;width:26px;text-align:center">${icono}</span>
+        <span style="flex:1;min-width:0">
+          <span style="display:block;font-size:14px;color:var(--text);font-weight:600">${titulo}</span>
+          <span style="display:block;font-size:11px;color:var(--muted);margin-top:2px">${sub}</span>
+        </span>
+        <span style="font-size:15px;color:${color}">›</span>
+      </div>`;
+    box.innerHTML = cab +
+      (existentes ? `<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Ya programado</div>${existentes}<div style="height:12px"></div>` : '') +
+      `<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Añadir</div>` +
+      op('🏋️','Sesión de gym','Crear una sesión nueva desde cero',"calPaso('gym')",'var(--accent2)') +
+      op('📋','Programa de entrenamiento','Aplicar un programa ya creado',"calPaso('programa')",'var(--accent2)') +
+      op('🏃','Entreno de campo','Título, intensidad y duración',"calPaso('campo')",'#ffa040') +
+      op('🏉','Partido','Rival, hora y duración',"calPaso('partido')",'#ff7070') +
+      `<button class="doc-cancel-btn" onclick="calCerrar()">Cerrar</button>`;
+    return;
+  }
+
+  const volver = `<button class="pback" onclick="calPaso('menu')" style="margin-bottom:10px">&#8249; volver</button>`;
+
+  // ── PASO 2a: entreno de campo ──
+  if (_cal.paso === 'campo') {
+    const INT = [['activacion','Activación','#7bb8ff'],['baja','Baja','#00e5a0'],['moderada','Moderada','#ffa040'],['alta','Alta','#ff7070']];
+    box.innerHTML = volver + cab +
+      `<div style="font-size:15px;font-weight:600;margin-bottom:12px">🏃 Entreno de campo</div>
+       <label class="indiv-lbl">Título</label>
+       <input id="cal-titulo" class="pe-addinput" placeholder="Ej. Entreno táctico" style="margin-bottom:12px">
+       <label class="indiv-lbl">Intensidad</label>
+       <div style="display:flex;gap:5px;margin-bottom:12px">
+         ${INT.map(([v,l,c])=>`<span id="cal-int-${v}" onclick="calSetIntensidad('${v}')" style="flex:1;text-align:center;padding:9px 2px;border-radius:8px;cursor:pointer;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-size:11px" data-col="${c}">${l}</span>`).join('')}
+       </div>
+       <div style="display:flex;gap:8px;margin-bottom:14px">
+         <div style="flex:1"><label class="indiv-lbl">Hora</label><input id="cal-hora" type="time" class="pe-addinput"></div>
+         <div style="flex:1"><label class="indiv-lbl">Duración (min)</label><input id="cal-dur" type="number" class="pe-addinput" placeholder="90"></div>
+       </div>
+       <button class="pe-save" style="margin-top:0" onclick="calGuardarEvento('campo')">Añadir entreno de campo</button>`;
+    if (_cal.intensidad) calSetIntensidad(_cal.intensidad);
+    return;
+  }
+
+  // ── PASO 2b: partido ──
+  if (_cal.paso === 'partido') {
+    box.innerHTML = volver + cab +
+      `<div style="font-size:15px;font-weight:600;margin-bottom:12px">🏉 Partido</div>
+       <label class="indiv-lbl">Rival</label>
+       <input id="cal-rival" class="pe-addinput" placeholder="Ej. Les Abelles" style="margin-bottom:12px">
+       <div style="display:flex;gap:8px;margin-bottom:14px">
+         <div style="flex:1"><label class="indiv-lbl">Hora del partido</label><input id="cal-hora" type="time" class="pe-addinput"></div>
+         <div style="flex:1"><label class="indiv-lbl">Duración (min)</label><input id="cal-dur" type="number" class="pe-addinput" placeholder="80"></div>
+       </div>
+       <button class="pe-save" style="margin-top:0;background:#ff7070" onclick="calGuardarEvento('partido')">Añadir partido</button>`;
+    return;
+  }
+
+  // ── PASO 2c: aplicar programa creado ──
+  if (_cal.paso === 'programa') {
+    const DOWS = [['1','L'],['2','M'],['3','X'],['4','J'],['5','V'],['6','S'],['0','D']];
+    box.innerHTML = volver + cab +
+      `<div style="font-size:15px;font-weight:600;margin-bottom:12px">📋 Aplicar programa</div>
+       <label class="indiv-lbl">Programa</label>
+       <select id="cal-programa" class="semana-select" style="width:100%;margin-bottom:12px">
+         <option value="">— Cargando —</option>
+       </select>
+       <label class="indiv-lbl">Días de la semana, en orden</label>
+       <div style="font-size:11px;color:var(--muted);margin:2px 0 7px">El día 1 del programa cae en el primer día marcado, el 2 en el siguiente, y así.</div>
+       <div id="cal-dows" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px">
+         ${DOWS.map(([v,l])=>`<span id="cal-dow-${v}" onclick="calToggleDow('${v}')" style="width:38px;text-align:center;padding:9px 0;border-radius:8px;cursor:pointer;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-size:13px">${l}</span>`).join('')}
+       </div>
+       <button class="pe-save" style="margin-top:0" onclick="calAplicarPrograma()">Aplicar desde este día</button>`;
+    api({ action:'getWeeks' }).then(wk=>{
+      const sel = document.getElementById('cal-programa');
+      if (!sel) return;
+      const ws = (wk.ok && wk.weeks) ? wk.weeks : [];
+      sel.innerHTML = '<option value="">— Elige un programa —</option>' +
+        ws.map(w=>{
+          const nd = ((w.data&&w.data.dias)||[]).length;
+          return `<option value="${w.id}">${w.nombre} (${nd} días · ${w.squad})</option>`;
+        }).join('');
+    });
+    (_cal.dows||[]).forEach(v=>{
+      const el=document.getElementById('cal-dow-'+v);
+      if(el){ el.style.background='rgba(0,229,160,.12)'; el.style.borderColor='rgba(0,229,160,.4)'; el.style.color='var(--accent2)'; }
+    });
+    return;
+  }
+
+  // ── PASO 2d: crear sesión de gym ──
+  if (_cal.paso === 'gym') {
+    box.innerHTML = volver + cab +
+      `<div style="font-size:15px;font-weight:600;margin-bottom:6px">🏋️ Sesión de gym</div>
+       <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px">
+         Se creará una semana nueva con un solo día en esta fecha y se abrirá el editor
+         para que añadas bloques y ejercicios.
+       </div>
+       <label class="indiv-lbl">Título del día</label>
+       <input id="cal-gym-titulo" class="pe-addinput" placeholder="Ej. High Day SQ/PULL" style="margin-bottom:14px">
+       <button class="pe-save" style="margin-top:0" onclick="calCrearSesionGym()">Crear y abrir editor</button>`;
+    return;
   }
 }
 
-function calSetTipo(t){
-  _cal.tipo = t;
-  const c = document.getElementById('cal-tipo-campo'), p = document.getElementById('cal-tipo-partido');
-  if (c && p){
-    const on = (el,col)=>{ el.style.background=col.bg; el.style.borderColor=col.bd; el.style.color=col.tx; el.style.fontWeight='600'; };
-    const off = el=>{ el.style.background='var(--surface2)'; el.style.borderColor='var(--border2)'; el.style.color='var(--muted)'; el.style.fontWeight='400'; };
-    if (t==='campo'){ on(c,{bg:'rgba(255,160,64,.12)',bd:'rgba(255,160,64,.4)',tx:'#ffa040'}); off(p); }
-    else            { on(p,{bg:'rgba(232,20,42,.12)',bd:'rgba(232,20,42,.4)',tx:'#ff7070'}); off(c); }
-  }
+function calSetIntensidad(v){
+  _cal.intensidad = v;
+  ['activacion','baja','moderada','alta'].forEach(k=>{
+    const el = document.getElementById('cal-int-'+k);
+    if (!el) return;
+    const col = el.dataset.col;
+    if (k===v){ el.style.background=col+'22'; el.style.borderColor=col+'66'; el.style.color=col; el.style.fontWeight='600'; }
+    else { el.style.background='var(--surface2)'; el.style.borderColor='var(--border2)'; el.style.color='var(--muted)'; el.style.fontWeight='400'; }
+  });
 }
+
 function calToggleDow(v){
   if (!_cal.dows) _cal.dows = [];
   const i = _cal.dows.indexOf(v);
@@ -10438,17 +10587,61 @@ function calToggleDow(v){
     el.style.color = on?'var(--accent2)':'var(--muted)';
   }
 }
-function calCerrar(){ const m=document.getElementById('cal-modal'); if(m) m.remove(); }
 
-async function calGuardarEvento(){
-  const titulo = (document.getElementById('cal-titulo')||{}).value || '';
-  const hora   = (document.getElementById('cal-hora')||{}).value || '';
-  const dur    = (document.getElementById('cal-dur')||{}).value || '';
-  const res = await api({ action:'saveEvento', squad:_cal.squad, fecha:_cal.diaSel,
-    tipo:_cal.tipo||'campo', titulo, hora, duracion:dur,
-    creado_por:(state.user&&state.user.usuario)||'' });
-  if (res && res.ok){ calCerrar(); renderCalendarioCoach(); }
+async function calGuardarEvento(tipo){
+  const g = id => (document.getElementById(id)||{}).value || '';
+  const payload = { action:'saveEvento', squad:_cal.squad, fecha:_cal.diaSel, tipo:tipo,
+    hora:g('cal-hora'), duracion:g('cal-dur'),
+    creado_por:(state.user&&state.user.usuario)||'' };
+  if (tipo==='partido'){
+    payload.rival  = g('cal-rival');
+    payload.titulo = payload.rival ? ('vs '+payload.rival) : 'Partido';
+  } else {
+    payload.titulo     = g('cal-titulo') || 'Entreno de campo';
+    payload.intensidad = _cal.intensidad || '';
+  }
+  const res = await api(payload);
+  if (res && res.ok){ _cal.intensidad=null; calCerrar(); renderCalendarioCoach(); }
   else alert('No se pudo guardar: '+((res&&res.error)||''));
+}
+
+// Crea una semana de un solo día en esta fecha y abre el editor
+async function calCrearSesionGym(){
+  const titulo = (document.getElementById('cal-gym-titulo')||{}).value || '';
+  const f = _cal.diaSel;
+  const res = await api({ action:'saveWeek', id:'', nombre: (titulo||'Sesión')+' · '+f,
+    squad:_cal.squad, fecha_inicio:f, fecha_fin:f,
+    data:{ dias:[{ titulo:titulo, fecha:f, bloques:[] }] },
+    visible:true, creado_por:(state.user&&state.user.usuario)||'' });
+  if (!res || !res.ok){ alert('No se pudo crear: '+((res&&res.error)||'')); return; }
+  calCerrar();
+  _plan.week = { id:res.id, nombre:(titulo||'Sesión')+' · '+f, squad:_cal.squad, visible:true,
+    fecha_inicio:f, fecha_fin:f, data:{ dias:[{ titulo:titulo, fecha:f, bloques:[], _open:true }] } };
+  plannerSub('weeks');
+  renderWeekEditor();
+}
+
+// Quita una sesión de gym de este día. Si era el único día de su
+// semana, el backend borra la semana entera.
+async function calBorrarGym(weekId, dia){
+  if (!weekId){ alert('Esta sesión viene de una hoja antigua y no se puede quitar desde aquí.'); return; }
+  if (!confirm('¿Quitar esta sesión de gym del calendario?')) return;
+  const res = await api({ action:'borrarDiaSemana', weekId, dia });
+  if (res && res.ok){ calCerrar(); renderCalendarioCoach(); }
+  else alert('No se pudo quitar: '+((res&&res.error)||''));
+}
+
+// Abre el editor de la semana a la que pertenece esta sesión
+async function calEditarGym(weekId){
+  if (!weekId) return;
+  const wk = await api({ action:'getWeeks' });
+  const w = (wk.ok && wk.weeks) ? wk.weeks.find(x=>String(x.id)===String(weekId)) : null;
+  if (!w){ alert('No se encontró la semana'); return; }
+  calCerrar();
+  _plan.week = JSON.parse(JSON.stringify(w));
+  if (!_plan.week.data) _plan.week.data = { dias:[] };
+  plannerSub('weeks');
+  renderWeekEditor();
 }
 
 async function calBorrarEvento(id){
@@ -10457,8 +10650,6 @@ async function calBorrarEvento(id){
   calCerrar(); renderCalendarioCoach();
 }
 
-// Reparte los días del programa en las fechas que corresponden a los
-// días de la semana marcados, empezando por el día pinchado.
 async function calAplicarPrograma(){
   const id = (document.getElementById('cal-programa')||{}).value || '';
   if (!id){ alert('Elige un programa'); return; }
