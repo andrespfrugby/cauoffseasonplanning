@@ -1299,6 +1299,36 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   body.staff-desktop #readiness-content tbody td[style*="font-size:12px"]{ font-size:16px !important; }
   /* fila PROMEDIO */
   body.staff-desktop #readiness-content tbody tr:last-child td[style*="font-size:13px"]{ font-size:17px !important; }
+
+  /* Dolor muscular · histórico: las celdas son aspect-ratio:1 sobre una rejilla
+     elástica, así que a 1700px salían cuadrados gigantes. Se limita el ancho de
+     cada celda y se alinea a la izquierda; el nombre del jugador se agranda. */
+  body.staff-desktop .mol-cal-row{
+    grid-template-columns:150px repeat(auto-fit,minmax(0,44px));
+    justify-content:start;
+    gap:5px;
+  }
+  body.staff-desktop .mol-cal-cell{ min-height:0; }
+  body.staff-desktop .mol-cal-name{
+    font-size:15px; font-weight:600; padding-right:10px;
+  }
+  body.staff-desktop .mol-cal-daylbl{ font-size:10px; }
+  body.staff-desktop .mol-cal-detail{ grid-column:1/-1; }
+
+  /* Carga diaria: los SVG usan preserveAspectRatio="none" con height:auto, así que
+     a ancho completo el alto se dispara (viewBox 340x132 → ~660px). Se acota el
+     ancho del lienzo y se fija el alto para que la gráfica mantenga proporción. */
+  body.staff-desktop .cd-svg-wrap{ max-width:820px; }
+  body.staff-desktop .cd-svg-wrap svg{ height:210px !important; }
+  body.staff-desktop .cd-names{ max-width:820px; }
+  body.staff-desktop .cd-kpis{ max-width:820px; }
+  body.staff-desktop .cd-chart-title{ font-size:13px; margin-top:14px; }
+
+  /* Tendencia: es una serie temporal, así que sí gana con el ancho — pero solo
+     a lo largo. Alto fijo para que no se estire en vertical como Carga diaria. */
+  body.staff-desktop #tendencia-content .cd-svg-wrap{ max-width:none; }
+  body.staff-desktop #tendencia-content .cd-svg-wrap svg{ height:280px !important; }
+  body.staff-desktop #tendencia-content .cd-kpis{ max-width:560px; }
 }
 
 /* ── PRINT / PDF ── */
@@ -2167,7 +2197,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 
       <div class="load-subnav">
         <button class="load-subtab active" id="lst-diaria" onclick="loadSub('diaria')">Carga diaria</button>
-        <button class="load-subtab" id="lst-analisis" onclick="loadSub('analisis')">Análisis RPE</button>
+        <button class="load-subtab" id="lst-tendencia" onclick="loadSub('tendencia')">Tendencia</button>
         <button class="load-subtab" id="lst-control" onclick="loadSub('control')">Control de cargas</button>
       </div>
 
@@ -2176,85 +2206,31 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         <div id="carga-diaria-content"><div class="loader"><div class="spinner"></div></div></div>
       </div>
 
-      <!-- ── SUB-VISTA: Análisis RPE (contenido original) ── -->
-      <div id="load-view-analisis" style="display:none">
-      <!-- ── SECCIÓN 1: RPE ── -->
-      <div class="rpe-section-header">🍬 RPE</div>
-
-      <div id="rpe-rango-filtro" style="display:none;margin-bottom:14px">
-        <div style="position:relative;max-width:360px">
-          <div id="rpe-bloques-toggle" onclick="rpeToggleBloquesDropdown()" style="background:var(--surface1);border:1px solid var(--border2);border-radius:9px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
-            <span id="rpe-bloques-label" style="font-size:12px;color:var(--text)">Todos los bloques</span>
-            <span style="font-size:10px;color:var(--muted)">▾</span>
-          </div>
-          <div id="rpe-bloques-list" style="display:none;background:var(--surface);border:1px solid var(--border2);border-radius:9px;margin-top:4px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.4);max-height:280px;overflow-y:auto;position:absolute;left:0;right:0;z-index:200"></div>
-        </div>
+      <!-- ── SUB-VISTA: Tendencia (RPE en barras + UA en línea, por día) ── -->
+      <div id="load-view-tendencia" style="display:none">
+        <div id="tendencia-content"><div class="loader"><div class="spinner"></div></div></div>
       </div>
+
+      <!-- ── Elementos ocultos que siguen usando funciones antiguas ── -->
+      <div id="load-view-analisis" style="display:none">
+      <div id="rpe-rango-filtro" style="display:none"></div>
       <div class="coach-chart-box" id="coach-rpe-chart" style="display:none">
-        <div class="chart-section-title">RPE medio por sesión</div>
         <div class="rpe-weeks-wrap" id="coach-rpe-weeks"></div>
       </div>
       <div class="coach-chart-box" id="coach-player-evo-chart" style="display:none">
-        <div class="chart-section-title">Evolución carga jugador</div>
-        <div class="player-select-wrap">
-          <select class="player-select" id="coach-player-select" onchange="renderPlayerEvo()">
-            <option value="">— Selecciona un jugador —</option>
-          </select>
-        </div>
-        <div id="coach-player-evo-content">
-          <div class="pevo-empty">Selecciona un jugador para ver su evolución.</div>
-        </div>
+        <select class="player-select" id="coach-player-select" onchange="renderPlayerEvo()"></select>
+        <div id="coach-player-evo-content"></div>
       </div>
-
-      <!-- ── Carga vs. recuperación (gráfica promedio + cuadrante) ── -->
-      <div class="rpe-section-header">🔋 Carga vs. Recuperación</div>
-
-      <div class="coach-chart-box" id="coach-rr-chart">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <div class="chart-section-title" style="margin:0">Carga vs. recuperación del equipo</div>
-          <div class="rr-range-tabs">
-            <span class="rr-rtab on" id="rr-tab-7" onclick="rrSetRange(7)">7 días</span>
-            <span class="rr-rtab" id="rr-tab-30" onclick="rrSetRange(30)">Mes</span>
-          </div>
-        </div>
-
-        <div id="coach-rr-content"><div class="loader"><div class="spinner"></div></div></div>
-      </div>
-
-      <div class="coach-chart-box" id="coach-quad-chart">
-        <div class="chart-section-title">Cuadrante de recuperación</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">RPE de la última sesión × readiness del día. Arriba-derecha = recupera bien.</div>
-        <div class="quad-daynav">
-          <button class="quad-navbtn" onclick="quadNavDia(-1)" title="Día anterior">&#8249;</button>
-          <span id="quad-fecha-label" class="quad-fecha">hoy</span>
-          <button class="quad-navbtn" onclick="quadNavDia(1)" title="Día siguiente">&#8250;</button>
-          <button class="quad-hoybtn" onclick="quadNavHoy()">hoy</button>
-        </div>
-        <div id="coach-quad-content"><div class="loader"><div class="spinner"></div></div></div>
-      </div>
-
-      <!-- ── SECCIÓN 2: CARGA DEL EQUIPO (movida a Control de cargas) ── -->
-      <div style="display:none">
-      <div class="rpe-section-header">📈 Carga del Equipo</div>
+      <div id="rpe-bloques-list" style="display:none"></div>
+      <div id="rpe-bloques-label" style="display:none"></div>
       <div class="coach-chart-box" id="coach-load-trend-chart" style="display:none">
-        <div class="chart-section-title">Tendencia carga equipo — UA/semana</div>
-        <div id="coach-load-trend-content"><div class="loader"><div class="spinner"></div></div></div>
+        <div id="coach-load-trend-content"></div>
       </div>
-      </div>
-
-      <!-- ── SECCIÓN 3: LOAD MANAGEMENT (ACWR viejo movido a Control de cargas) ── -->
-      <div style="display:none">
-      <div class="rpe-section-header">⚖️ Load Management</div>
       <div class="coach-chart-box" id="coach-acwr-chart" style="display:none">
-        <div class="chart-section-title">Ratio Aguda:Crónica — EWMA (mín. 21 días)</div>
-        <div id="coach-acwr-content"><div class="loader"><div class="spinner"></div></div></div>
+        <div id="coach-acwr-content"></div>
       </div>
-      </div>
-      <div style="display:none">
       <div class="coach-chart-box" id="coach-daily-load-chart" style="display:none">
-        <div class="chart-section-title">Carga diaria equipo — esta semana (UA)</div>
-        <div id="coach-daily-load-content"><div class="loader"><div class="spinner"></div></div></div>
-      </div>
+        <div id="coach-daily-load-content"></div>
       </div>
       </div><!-- /load-view-analisis -->
 
@@ -2348,10 +2324,37 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
       </div>
       <div class="load-subnav">
         <button class="load-subtab active" id="rst-wellness" onclick="readinessSub('wellness')">Wellness</button>
+        <button class="load-subtab" id="rst-recup" onclick="readinessSub('recup')">Recuperación</button>
         <button class="load-subtab" id="rst-dolor" onclick="readinessSub('dolor')">Dolor muscular</button>
         <button class="load-subtab" id="rst-alertas" onclick="readinessSub('alertas')">⚠ Alertas <span id="rst-alertas-badge" class="rst-badge" style="display:none"></span></button>
       </div>
       <div id="readiness-content"><div class="loader"><div class="spinner"></div></div></div>
+
+      <!-- ── SUB-VISTA: Recuperación (carga vs. readiness + cuadrante) ── -->
+      <div id="recuperacion-content" style="display:none">
+        <div class="coach-chart-box" id="coach-rr-chart">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <div class="chart-section-title" style="margin:0">Carga vs. recuperación del equipo</div>
+            <div class="rr-range-tabs">
+              <span class="rr-rtab on" id="rr-tab-7" onclick="rrSetRange(7)">7 días</span>
+              <span class="rr-rtab" id="rr-tab-30" onclick="rrSetRange(30)">Mes</span>
+            </div>
+          </div>
+          <div id="coach-rr-content"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+
+        <div class="coach-chart-box" id="coach-quad-chart">
+          <div class="chart-section-title">Cuadrante de recuperación</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px">RPE de la última sesión × readiness del día. Arriba-derecha = recupera bien.</div>
+          <div class="quad-daynav">
+            <button class="quad-navbtn" onclick="quadNavDia(-1)" title="Día anterior">&#8249;</button>
+            <span id="quad-fecha-label" class="quad-fecha">hoy</span>
+            <button class="quad-navbtn" onclick="quadNavDia(1)" title="Día siguiente">&#8250;</button>
+            <button class="quad-hoybtn" onclick="quadNavHoy()">hoy</button>
+          </div>
+          <div id="coach-quad-content"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+      </div>
       <div id="molestias-content" style="display:none"></div>
       <div id="alertas-content" style="display:none"></div>
     </div>
@@ -5007,19 +5010,20 @@ function onCoachSquadChangeRpe() {
   if (_loadSub === 'control') renderControlCargas();
 }
 
-// ── SUB-NAV de Load: Carga diaria / Análisis RPE ──
+// ── SUB-NAV de Load: Carga diaria / Tendencia / Control de cargas ──
 var _loadSub = 'diaria';
 var _cdFecha = null;
 function loadSub(sub) {
   _loadSub = sub;
-  ['diaria','analisis','control'].forEach(s => {
+  ['diaria','tendencia','control'].forEach(s => {
     const btn = document.getElementById('lst-'+s);
     if (btn) btn.classList.toggle('active', s===sub);
     const view = document.getElementById('load-view-'+s);
     if (view) view.style.display = (s===sub) ? '' : 'none';
   });
-  if (sub === 'diaria') renderCargaDiaria();
-  if (sub === 'control') renderControlCargas();
+  if (sub === 'diaria')    renderCargaDiaria();
+  if (sub === 'tendencia') renderTendencia();
+  if (sub === 'control')   renderControlCargas();
 }
 
 // Tooltip de los puntos de UA (hover en PC, toque en móvil)
@@ -6735,8 +6739,165 @@ async function loadCoachPanel(useCache) {
 
   renderPlayerSelector(equipoFiltrado);
   renderAcwr(equipoFiltrado);
-  cargarRpeReadinessSerie();
-  // renderDailyLoad y renderLoadTrend movidas/eliminadas del Análisis RPE
+  // La gráfica carga-vs-recuperación y el cuadrante viven ahora en Readiness → Recuperación
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TENDENCIA — RPE en barras + UA en línea, por día
+//  Barras para el RPE (valor puntual de una sesión: el día sin
+//  entrenar simplemente no tiene barra) y línea para la UA
+//  (carga que se acumula: el descanso cae a 0 y se ve el valle).
+// ═══════════════════════════════════════════════════════════════
+var _tend = { contenido:'todo', rango:7, offset:0 };
+
+function tendSetContenido(c){ _tend.contenido = c; _tend.offset = 0; renderTendencia(); }
+function tendSetRango(n){ _tend.rango = n; _tend.offset = 0; renderTendencia(); }
+function tendNav(dir){ _tend.offset += dir; if (_tend.offset > 0) _tend.offset = 0; renderTendencia(); }
+function tendHoy(){ _tend.offset = 0; renderTendencia(); }
+
+function _tendRpeCol(v){ return v==null?'#7a8494' : v>=8?'#ff7070' : v>=5?'#ffc04d' : '#00e5a0'; }
+function _tendFechaCorta(f){ return f ? f.slice(8,10)+'/'+f.slice(5,7) : ''; }
+
+async function renderTendencia(){
+  const c = document.getElementById('tendencia-content');
+  if (!c) return;
+  c.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  const squad = state.coachSquadFilter || '';
+  const res = await api({ action:'getTendencia', squad,
+    contenido:_tend.contenido, rango:_tend.rango, offset:_tend.offset });
+  if (!res || !res.ok) { c.innerHTML = '<div class="cd-empty">Error cargando la tendencia.</div>'; return; }
+
+  const pts = res.puntos || [];
+  const chips = [['todo','Todo'],['gym','Gym'],['campo','Campo']].map(([v,l])=>{
+    const on = _tend.contenido===v;
+    return `<span onclick="tendSetContenido('${v}')" style="font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;background:${on?'rgba(232,20,42,.12)':'var(--surface2)'};color:${on?'var(--accent)':'var(--muted)'};border:1px solid ${on?'rgba(232,20,42,.35)':'var(--border2)'}">${l}</span>`;
+  }).join('');
+
+  const rangos = [[7,'7 días'],[14,'14 días'],[30,'Mes']].map(([v,l])=>{
+    const on = _tend.rango===v;
+    return `<span onclick="tendSetRango(${v})" style="font-size:11px;padding:5px 11px;border-radius:7px;cursor:pointer;background:${on?'var(--surface2)':'transparent'};color:${on?'var(--text)':'var(--muted)'};border:1px solid var(--border2)">${l}</span>`;
+  }).join('');
+
+  const rangoTxt = _tendFechaCorta(res.desde) + ' – ' + _tendFechaCorta(res.hasta);
+  const r = res.resumen || {};
+
+  const header = `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      ${chips}
+      <span style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="quad-navbtn" onclick="tendNav(-1)" title="Periodo anterior">&#8249;</button>
+        <span style="font-size:12px;color:var(--text);min-width:104px;text-align:center">${rangoTxt}</span>
+        <button class="quad-navbtn" onclick="tendNav(1)" title="Periodo siguiente"${_tend.offset>=0?' style="opacity:.35"':''}>&#8250;</button>
+        <button class="quad-hoybtn" onclick="tendHoy()">hoy</button>
+        <span style="display:flex;gap:4px;margin-left:4px">${rangos}</span>
+      </span>
+    </div>
+    <div class="cd-kpis">
+      <div class="cd-kpi" style="border-top-color:${_tendRpeCol(r.rpeMedio)}">
+        <div class="cd-kpi-num" style="color:${_tendRpeCol(r.rpeMedio)}">${r.rpeMedio!=null?r.rpeMedio:'—'}</div>
+        <div class="cd-kpi-lbl">RPE medio</div>
+      </div>
+      <div class="cd-kpi" style="border-top-color:#a855f7">
+        <div class="cd-kpi-num" style="color:#c98bff">${r.uaMedia!=null?r.uaMedia:'—'}</div>
+        <div class="cd-kpi-lbl">UA media</div>
+      </div>
+      <div class="cd-kpi" style="border-top-color:var(--border-strong)">
+        <div class="cd-kpi-num" style="color:var(--text)">${r.diasConSesion||0}</div>
+        <div class="cd-kpi-lbl">${res.porSemana?'Semanas':'Días'} con sesión</div>
+      </div>
+    </div>`;
+
+  if (!pts.length || !pts.some(p=>p.rpe!=null)) {
+    c.innerHTML = header + '<div class="cd-empty">Sin registros en este periodo.</div>';
+    return;
+  }
+
+  const unidad = res.porSemana ? 'semana' : 'día';
+  c.innerHTML = header +
+    `<div class="cd-chart-title">RPE promedio por ${unidad}</div>
+     <div style="font-size:10px;color:var(--muted);margin:-3px 0 6px">media de la sesión · sin barra = sin sesión</div>
+     ${_tendBarrasRPE(pts, res.porSemana)}
+     <div class="cd-chart-title" style="margin-top:16px">UA promedio por ${unidad}</div>
+     <div style="font-size:10px;color:var(--muted);margin:-3px 0 6px">RPE × min · media por jugador activo</div>
+     ${_tendLineaUA(pts)}`;
+}
+
+function _tendBarrasRPE(pts, porSemana){
+  const W=640, H=190, padL=42, padT=16, padB=38;
+  const plotH = H-padT-padB, plotW = W-padL-8;
+  const n = pts.length;
+  const yFor = v => padT + plotH - (v/10)*plotH;
+  const slot = plotW/n;
+  const bw = Math.max(6, Math.min(46, slot*0.62));
+
+  const bandas = `
+    <rect x="${padL}" y="${yFor(10)}" width="${plotW}" height="${yFor(8)-yFor(10)}" fill="#ff7070" opacity=".06"/>
+    <rect x="${padL}" y="${yFor(8)}" width="${plotW}" height="${yFor(5)-yFor(8)}" fill="#ffc04d" opacity=".06"/>
+    <rect x="${padL}" y="${yFor(5)}" width="${plotW}" height="${yFor(0)-yFor(5)}" fill="#00e5a0" opacity=".06"/>`;
+  const grid = [0,5,8,10].map(v=>
+    `<line x1="${padL}" y1="${yFor(v)}" x2="${W-8}" y2="${yFor(v)}" stroke="var(--border)" stroke-width=".5"/>
+     <text x="${padL-6}" y="${yFor(v)+3}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text>`).join('');
+
+  let barras='', etiquetas='';
+  pts.forEach((p,i)=>{
+    const cx = padL + slot*i + slot/2;
+    if (p.rpe!=null){
+      const y = yFor(p.rpe);
+      const col = _tendRpeCol(p.rpe);
+      barras += `<rect x="${(cx-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+plotH-y).toFixed(1)}" rx="3" fill="${col}" opacity=".75"><title>${p.etiqueta} · RPE ${p.rpe} · ${p.nSesiones} sesion${p.nSesiones!==1?'es':''}</title></rect>`;
+      barras += `<text x="${cx.toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="600" fill="${col}">${p.rpe}</text>`;
+    } else {
+      barras += `<text x="${cx.toFixed(1)}" y="${(padT+plotH-6).toFixed(1)}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.22)">descanso</text>`;
+    }
+    const saltar = n>10 && (i % Math.ceil(n/10) !== 0) && i!==n-1;
+    if (!saltar) etiquetas += `<text x="${cx.toFixed(1)}" y="${H-20}" text-anchor="middle" font-size="10" fill="var(--muted)">${p.etiqueta}</text>`;
+    if (!saltar && p.rpe!=null){
+      const sub = porSemana ? p.nSesiones+' ses' : (p.nJug? p.nJug+' jug' : '');
+      if (sub) etiquetas += `<text x="${cx.toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.26)">${sub}</text>`;
+    }
+  });
+
+  return `<div class="cd-svg-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;height:auto">
+    ${bandas}${grid}
+    <line x1="${padL}" y1="${padT+plotH}" x2="${W-8}" y2="${padT+plotH}" stroke="var(--border2)"/>
+    ${barras}${etiquetas}
+  </svg></div>`;
+}
+
+function _tendLineaUA(pts){
+  const W=640, H=176, padL=46, padT=20, padB=30;
+  const plotH = H-padT-padB, plotW = W-padL-8;
+  const n = pts.length;
+  const maxUA = Math.max(...pts.map(p=>p.ua||0), 1);
+  const techo = Math.max(100, Math.ceil(maxUA/100)*100);
+  const yFor = v => padT + plotH - (v/techo)*plotH;
+  const slot = plotW/n;
+  const cxFor = i => padL + slot*i + slot/2;
+
+  const grid = [0, Math.round(techo/2), techo].map(v=>
+    `<line x1="${padL}" y1="${yFor(v)}" x2="${W-8}" y2="${yFor(v)}" stroke="var(--border)" stroke-width=".5"/>
+     <text x="${padL-6}" y="${yFor(v)+3}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text>`).join('');
+
+  const coords = pts.map((p,i)=>({ x:cxFor(i), y:yFor(p.ua||0), v:p.ua||0, e:p.etiqueta, off:p.rpe==null }));
+  const poly = coords.map(c=>`${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
+  const base = padT+plotH;
+  const area = `<polygon points="${coords[0].x.toFixed(1)},${base} ${poly} ${coords[coords.length-1].x.toFixed(1)},${base}" fill="#a855f7" opacity=".15"/>`;
+  const linea = coords.length>1 ? `<polyline points="${poly}" fill="none" stroke="#a855f7" stroke-width="2.5" stroke-linejoin="round"/>` : '';
+
+  let dots='', vals='', etiquetas='';
+  coords.forEach((c,i)=>{
+    dots += `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${c.off?4:4.5}" fill="${c.off?'#4a4a54':'#a855f7'}"><title>${c.e} · ${c.v} UA</title></circle>`;
+    if (!c.off && (n<=14)) vals += `<text x="${c.x.toFixed(1)}" y="${(c.y-9).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" fill="#c98bff">${c.v}</text>`;
+    const saltar = n>10 && (i % Math.ceil(n/10) !== 0) && i!==n-1;
+    if (!saltar) etiquetas += `<text x="${c.x.toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="10" fill="var(--muted)">${c.e}</text>`;
+  });
+
+  return `<div class="cd-svg-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;height:auto">
+    ${grid}
+    <line x1="${padL}" y1="${base}" x2="${W-8}" y2="${base}" stroke="var(--border2)"/>
+    ${area}${linea}${dots}${vals}${etiquetas}
+  </svg></div>`;
 }
 
 // ── Gráfica promedio (RPE barras + readiness línea) + cuadrante ──
@@ -8951,26 +9112,35 @@ function pmSwitchTab(t) {
 function onCoachSquadChangeReadiness() {
   const sel = document.getElementById('coach-squad-filter-readiness');
   _syncAllSquads(sel ? sel.value : '');
-  if (_readinessSub === 'dolor') renderMolestias(); else renderReadinessDashboard();
+  if (_readinessSub === 'dolor') renderMolestias();
+  else if (_readinessSub === 'recup') cargarRpeReadinessSerie();
+  else if (_readinessSub === 'alertas') renderAlertas();
+  else renderReadinessDashboard();
 }
 
 function onReadinessDateChange() {
-  if (_readinessSub === 'dolor') renderMolestias(); else renderReadinessDashboard();
+  if (_readinessSub === 'dolor') renderMolestias();
+  else if (_readinessSub === 'recup') { _quadFecha = null; cargarRpeReadinessSerie(); }
+  else if (_readinessSub === 'alertas') renderAlertas();
+  else renderReadinessDashboard();
 }
 
-// ── SUB-NAV Readiness: Wellness / Dolor muscular ──
+// ── SUB-NAV Readiness: Wellness / Recuperación / Dolor muscular / Alertas ──
 var _readinessSub = 'wellness';
 function readinessSub(sub) {
   _readinessSub = sub;
-  ['wellness','dolor','alertas'].forEach(s=>{
+  ['wellness','recup','dolor','alertas'].forEach(s=>{
     const btn=document.getElementById('rst-'+s);
     if(btn) btn.classList.toggle('active', s===sub);
   });
-  document.getElementById('readiness-content').style.display  = sub==='wellness'?'':'none';
+  document.getElementById('readiness-content').style.display     = sub==='wellness'?'':'none';
+  const rec = document.getElementById('recuperacion-content');
+  if (rec) rec.style.display = sub==='recup'?'':'none';
   document.getElementById('molestias-content').style.display = sub==='dolor'?'':'none';
-  document.getElementById('alertas-content').style.display = sub==='alertas'?'':'none';
+  document.getElementById('alertas-content').style.display   = sub==='alertas'?'':'none';
   if (sub==='dolor') renderMolestias();
   else if (sub==='alertas') renderAlertas();
+  else if (sub==='recup') cargarRpeReadinessSerie();
 }
 
 // Silueta en pequeño coloreada (coach) — recibe lista de zonas marcadas
