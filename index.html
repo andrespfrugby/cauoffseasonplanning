@@ -1192,6 +1192,59 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 /* Padding extra al fondo del contenido para que el nav no tape */
 .content { padding-bottom:100px; }
 
+/* ══ MODO ESCRITORIO HORIZONTAL — solo STAFF (s&c/coach/fisio) y pantalla ancha ══
+   El jugador y el móvil/tablet vertical NO se ven afectados: todo esto vive
+   dentro de body.staff-desktop + min-width:900px. */
+@media (min-width:900px){
+  body.staff-desktop .content{
+    max-width:1100px;               /* tope cómodo: los datos NO se estiran a lo bruto */
+    margin:0;
+    padding:1.5rem 2rem 2rem calc(232px + 2rem); /* deja hueco a la barra lateral */
+  }
+  /* La barra inferior flotante se convierte en barra lateral vertical fija */
+  body.staff-desktop .bottom-nav{
+    position:fixed;
+    left:0; top:0; bottom:0;
+    transform:none;
+    width:216px; max-width:216px;
+    height:100vh;
+    flex-direction:column;
+    align-items:stretch;
+    justify-content:flex-start;
+    gap:4px;
+    padding:16px 12px;
+    border:0; border-right:1px solid var(--border);
+    border-radius:0;
+    background:rgba(10,12,16,.98);
+    box-shadow:none;
+    overflow-y:auto;
+    z-index:80;
+  }
+  /* Cada item pasa de columna (icono arriba) a fila (icono + texto al lado) */
+  body.staff-desktop .bottom-nav .bn-item{
+    flex:0 0 auto;
+    flex-direction:row;
+    align-items:center;
+    justify-content:flex-start;
+    gap:12px;
+    padding:11px 14px;
+    border-radius:10px;
+  }
+  body.staff-desktop .bottom-nav .bn-icon{ font-size:20px; }
+  body.staff-desktop .bottom-nav .bn-icon svg{ width:20px; height:20px; }
+  body.staff-desktop .bottom-nav .bn-lbl{ font-size:14px; }
+  /* Un poco de aire arriba de la barra lateral para no chocar con la topbar */
+  body.staff-desktop .bottom-nav::before{
+    content:"MENÚ";
+    display:block;
+    font-size:10px; letter-spacing:.12em;
+    color:rgba(255,255,255,.28);
+    padding:2px 14px 8px;
+  }
+  /* La topbar se extiende por encima de la barra lateral */
+  body.staff-desktop .topbar{ padding-left:calc(216px + 1.25rem); }
+}
+
 /* ── PRINT / PDF ── */
 @media print {
   * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -4785,6 +4838,10 @@ const PLAYER_TABS = ['sesion','misemana'];
 const COACH_TABS  = ['jugadores','rpe','reports','sesion'];
 
 function initNav() {
+  // Modo escritorio horizontal para STAFF (s&c, coach, fisio). El jugador siempre vertical.
+  // La transformación real la hace el CSS en @media (min-width:900px) sobre body.staff-desktop.
+  document.body.classList.toggle('staff-desktop', !!state.isCoach);
+
   // All nav items — hide all first
   const allNavIds = ['bn-sesion','bn-misemana','bn-scdocs','bn-fieldload','bn-wellness','bn-readiness','bn-jugadores','bn-rpe','bn-reports','bn-sesion-coach','bn-planner','bn-settings','bn-informe'];
   allNavIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
@@ -9412,6 +9469,7 @@ function logout() {
   document.getElementById('screen-login').style.display='flex';
   // tabs hidden via initNav() on next login
   document.getElementById('coach-topbar-badge').classList.add('hidden');
+  document.body.classList.remove('staff-desktop');
   document.getElementById('input-user').value='';
   document.getElementById('input-pass').value='';
   const btn = document.getElementById('btn-login');
