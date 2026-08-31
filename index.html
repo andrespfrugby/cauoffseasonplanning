@@ -1417,7 +1417,140 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   body.staff-desktop .pw-box{ max-width:900px; }
   body.staff-desktop #tab-coach-planner .pw-new{ max-width:340px; }
   body.staff-desktop .wk-days{ column-count:2; column-gap:18px; }
+
+  /* ── Planner · adelgazar las filas de ejercicio ──────────────
+     Cada fila arrastraba manija, miniatura de vídeo y aspa siempre
+     visibles, lo que inflaba la altura de cada columna. En escritorio
+     la miniatura se va (el nombre ya identifica el ejercicio) y la
+     manija y el aspa aparecen al pasar el ratón. */
+  body.staff-desktop #pw-days .bth{ display:none; }
+  body.staff-desktop #pw-days .brow-handle,
+  body.staff-desktop #pw-days .brow-del{ opacity:0; transition:opacity .12s; }
+  body.staff-desktop #pw-days .brow:hover .brow-handle,
+  body.staff-desktop #pw-days .brow:hover .brow-del{ opacity:1; }
+  body.staff-desktop #pw-days .brow{ padding:7px 8px; }
+  /* el "+ añadir a superserie" pasa de barra a línea discreta */
+  body.staff-desktop #pw-days .ss-add{ padding:4px; font-size:9px; opacity:.6; }
+  body.staff-desktop #pw-days .ss-add:hover{ opacity:1; }
+  body.staff-desktop #pw-days .superblk{ padding:7px; }
+
+  /* ── Planner · panel lateral de prescripción ─────────────────
+     En móvil sigue siendo un modal centrado. En escritorio se ancla a
+     la derecha y el fondo deja de bloquear, para poder seguir viendo
+     la semana mientras se ajustan las series. Se cierra con la ✕. */
+  body.staff-desktop #picker-modal .picker-backdrop:has(.fields-box){
+    background:transparent;
+    justify-content:flex-end;
+    align-items:stretch;
+    padding:0;
+    pointer-events:none;
+  }
+  body.staff-desktop #picker-modal .fields-box{
+    pointer-events:auto;
+    max-width:400px !important;
+    height:100vh;
+    overflow-y:auto;
+    border-radius:0;
+    border-left:1px solid var(--border2);
+    box-shadow:-12px 0 40px rgba(0,0,0,.5);
+    padding:20px !important;
+  }
+  body.staff-desktop #picker-modal .fields-box .pe-inp input{ font-size:18px; }
+
+  /* ── Centrado ──────────────────────────────────────────────
+     Todo lo que lleva un ancho máximo (para no deformarse) se quedaba
+     pegado a la izquierda con el hueco a la derecha. Se centra. */
+  body.staff-desktop .cd-svg-wrap,
+  body.staff-desktop .cd-names,
+  body.staff-desktop .cd-kpis,
+  body.staff-desktop #carga-diaria-content .cd-empty,
+  body.staff-desktop #tendencia-content .cd-kpis,
+  body.staff-desktop #coach-quad-content .quad-wrap,
+  body.staff-desktop #control-cargas-content .cc-svg-wrap,
+  body.staff-desktop #control-cargas-content .cc-kpis,
+  body.staff-desktop #control-cargas-content .cc-zonebar,
+  body.staff-desktop #control-cargas-content .cc-zonelbl,
+  body.staff-desktop #control-cargas-content .cc-jrow,
+  body.staff-desktop .pw-box{
+    margin-left:auto; margin-right:auto;
+  }
+  body.staff-desktop #coach-rr-content{ display:flex; justify-content:center; }
+  body.staff-desktop .mol-cal{ display:flex; flex-direction:column; align-items:center; }
+  body.staff-desktop .mol-cal-row{ justify-content:center; }
+  /* los títulos de cada gráfica se alinean con su lienzo centrado */
+  body.staff-desktop #carga-diaria-content .cd-chart-title,
+  body.staff-desktop #tendencia-content .cd-chart-title,
+  body.staff-desktop #carga-diaria-content .cd-chart-title + div,
+  body.staff-desktop #tendencia-content .cd-chart-title + div{
+    max-width:820px; margin-left:auto; margin-right:auto;
+  }
+  body.staff-desktop #tendencia-content .cd-chart-title,
+  body.staff-desktop #tendencia-content .cd-chart-title + div{ max-width:none; }
+
+  /* ── Títulos algo mayores ── */
+  body.staff-desktop .coach-title{ font-size:32px; }
+  body.staff-desktop .coach-sem-label{ font-size:12px; }
+  body.staff-desktop .load-subtab{ font-size:14px; padding:11px; }
+  body.staff-desktop .sub-tab{ font-size:14px; }
+  body.staff-desktop .chart-section-title{ font-size:12px; }
+  body.staff-desktop .cd-chart-title{ font-size:14px; }
+  body.staff-desktop .plan-tab{ font-size:14px; padding:11px; }
 }
+
+/* ══ AGENDA DEL JUGADOR — semana por fechas ══════════════════ */
+.ag-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.ag-mes{font-size:17px;font-weight:600;color:var(--text)}
+.ag-rango{font-size:11px;color:var(--muted)}
+.ag-nav{width:30px;height:30px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);
+  color:var(--text);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ag-nav:hover{border-color:var(--accent)}
+.ag-hoy{font-size:11px;padding:6px 12px;border-radius:8px;border:1px solid var(--border2);
+  background:transparent;color:var(--muted);cursor:pointer;font-family:var(--font-body)}
+.ag-strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none}
+.ag-strip::-webkit-scrollbar{display:none}
+.ag-day{min-width:54px;flex:1;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);
+  border-radius:10px;padding:8px 4px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
+.ag-day:hover{border-color:var(--border-strong)}
+.ag-day.sel{background:rgba(232,20,42,.09);border:1.5px solid var(--accent)}
+.ag-day.hoy .ag-dnum{color:var(--accent)}
+.ag-dlbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.ag-day.sel .ag-dlbl{color:var(--accent)}
+.ag-dnum{font-size:17px;font-weight:600;color:var(--text);margin:3px 0;line-height:1}
+.ag-day.sel .ag-dnum{color:var(--accent)}
+.ag-dots{display:flex;gap:2px;justify-content:center;min-height:5px}
+.ag-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.ag-fecha-lbl{font-size:11px;color:var(--muted);margin-bottom:8px}
+.ag-card{background:var(--surface);border-radius:11px;overflow:hidden;margin-bottom:8px;border:1px solid var(--border)}
+.ag-card-hd{padding:6px 12px;font-size:9px;letter-spacing:.07em;font-weight:600}
+.ag-card-body{padding:11px 12px}
+.ag-card-tit{font-size:14px;color:var(--text);font-weight:600;margin-bottom:7px}
+.ag-chips{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.ag-chip{font-size:9px;padding:3px 8px;border-radius:5px;background:var(--surface2);color:var(--muted)}
+.ag-btn{border-radius:7px;padding:9px;text-align:center;font-size:12px;cursor:pointer;
+  font-family:var(--font-body);font-weight:600;border:1px solid var(--border2);background:var(--surface2);color:var(--text)}
+.ag-btn-campo{background:rgba(255,160,64,.11);border-color:rgba(255,160,64,.35);color:#ffa040}
+.ag-btn-done{background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--accent2)}
+.ag-empty{text-align:center;padding:30px 16px;color:var(--muted);font-size:13px}
+.ag-nota{background:rgba(232,20,42,.06);border-left:2px solid var(--accent);border-radius:0 7px 7px 0;
+  padding:9px 11px;display:flex;gap:8px;margin:0 10px 10px}
+.ag-nota-txt{font-size:11px;color:var(--muted);line-height:1.5;white-space:pre-line}
+
+/* ── Registro de carga: tabla reps + kg ── */
+.rc-grid{display:grid;grid-template-columns:16px 1fr 1fr;gap:7px;align-items:center;margin-bottom:5px}
+.rc-hd{font-size:8px;color:var(--muted);text-align:center;letter-spacing:.06em}
+.rc-n{font-size:10px;color:var(--muted)}
+.rc-n.on{color:var(--accent2)}
+.rc-cell{background:var(--surface2);border:1px solid rgba(255,255,255,.09);border-radius:7px;padding:9px;
+  text-align:center;font-size:16px;font-weight:600;color:rgba(255,255,255,.18);cursor:pointer;transition:all .12s}
+.rc-cell.val{background:rgba(0,229,160,.07);border-color:rgba(0,229,160,.25);color:var(--accent2)}
+.rc-cell.act{background:var(--surface2);border:2px solid var(--accent2);color:var(--accent2)}
+.rc-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:11px}
+.rc-key{text-align:center;font-size:17px;padding:12px 0;border-radius:8px;background:var(--surface2);
+  color:var(--text);cursor:pointer;user-select:none;font-family:var(--font-body)}
+.rc-key:active{transform:scale(.94)}
+.rc-save{background:rgba(0,229,160,.13);border:1px solid rgba(0,229,160,.4);border-radius:8px;padding:12px;
+  text-align:center;font-size:14px;color:var(--accent2);font-weight:600;cursor:pointer;margin-top:10px;
+  font-family:var(--font-body);width:100%}
 
 /* ── PRINT / PDF ── */
 @media print {
@@ -2350,6 +2483,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 
     <!-- ══ SESIÓN (jugadores + coach) ══ -->
     <div id="tab-sesion" class="tab-section" style="display:none">
+      <!-- Agenda por fechas (jugador). El coach sigue usando el selector de semana. -->
+      <div id="agenda-wrap" style="display:none"></div>
       <div class="week-dropdown" id="week-dropdown-btn">
         <div class="week-dd-badge" id="week-dd-badge">WK</div>
         <div class="week-dd-info">
@@ -2494,7 +2629,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
         <span class="coach-badge">Coach</span>
       </div>
       <div class="plan-tabs">
-        <button class="plan-tab active" id="plt-weeks" onclick="plannerSub('weeks')">Semanas</button>
+        <button class="plan-tab active" id="plt-cal" onclick="plannerSub('cal')">Calendario</button>
+        <button class="plan-tab" id="plt-weeks" onclick="plannerSub('weeks')">Semanas</button>
         <button class="plan-tab" id="plt-gal" onclick="plannerSub('gal')">Galería</button>
         <button class="plan-tab" id="plt-indiv" onclick="plannerSub('indiv')">Individuales</button>
         <button class="plan-tab" id="plt-docs" onclick="plannerSub('docs')">S&C Docs</button>
@@ -4980,7 +5116,201 @@ async function renderWeekSummary(useCache) {
 
 
 
-// ── NAVIGATION ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+//  AGENDA DEL JUGADOR — la semana por fechas reales
+//  Sustituye al selector de semana + Day 1..5. Cada día muestra
+//  sus actividades: sesión de gym (del planner) y eventos de
+//  campo o partido. El readiness NO aparece: tiene su pestaña.
+// ═══════════════════════════════════════════════════════════════
+var _ag = { lunes:null, sel:null, data:null, abierta:null };
+
+function _agLunesDe(d){
+  const x = new Date(d); const dow = x.getDay();
+  x.setDate(x.getDate() - (dow===0?6:dow-1)); x.setHours(12,0,0,0); return x;
+}
+function _agISO(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function _agMesNombre(d){
+  return ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][d.getMonth()];
+}
+function agSemana(dir){
+  _ag.lunes.setDate(_ag.lunes.getDate() + dir*7);
+  _ag.sel = null; _ag.abierta = null;
+  renderAgenda();
+}
+function agHoy(){
+  _ag.lunes = _agLunesDe(new Date());
+  _ag.sel = _agISO(new Date()); _ag.abierta = null;
+  renderAgenda();
+}
+function agSelDia(fecha){
+  _ag.sel = fecha; _ag.abierta = null;
+  renderAgendaDia();
+  document.querySelectorAll('.ag-day').forEach(el=>{
+    el.classList.toggle('sel', el.dataset.f === fecha);
+  });
+}
+
+async function renderAgenda(){
+  const wrap = document.getElementById('agenda-wrap');
+  if (!wrap) return;
+  if (!_ag.lunes) _ag.lunes = _agLunesDe(new Date());
+  const desde = _agISO(_ag.lunes);
+  const dom   = new Date(_ag.lunes); dom.setDate(dom.getDate()+6);
+  const hasta = _agISO(dom);
+  const hoyStr = _agISO(new Date());
+  if (!_ag.sel || _ag.sel < desde || _ag.sel > hasta) {
+    _ag.sel = (hoyStr >= desde && hoyStr <= hasta) ? hoyStr : desde;
+  }
+
+  wrap.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando semana...</div>';
+  const res = await api({ action:'getAgenda', usuario:(state.user&&state.user.usuario)||'',
+                          squad: state.squad||'', desde, hasta });
+  _ag.data = (res && res.ok) ? res : { dias:{}, hecho:{} };
+
+  const DL = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+  let strip = '';
+  for (let i=0;i<7;i++){
+    const d = new Date(_ag.lunes); d.setDate(d.getDate()+i);
+    const f = _agISO(d);
+    const info = _ag.data.dias[f] || { gym:[], eventos:[] };
+    const hecho = _ag.data.hecho[f] || {};
+    const dots = [];
+    info.gym.forEach(()=> dots.push(hecho.gym ? '#00e5a0' : (f<hoyStr?'#ff5050':'rgba(255,255,255,.25)')));
+    info.eventos.forEach(e=>{
+      const ok = e.tipo==='partido' ? hecho.partido : hecho.campo;
+      dots.push(ok ? '#00e5a0' : (f<hoyStr?'#ff5050':'rgba(255,255,255,.25)'));
+    });
+    strip += `<div class="ag-day${f===_ag.sel?' sel':''}${f===hoyStr?' hoy':''}" data-f="${f}" onclick="agSelDia('${f}')">
+      <div class="ag-dlbl">${DL[i]}</div>
+      <div class="ag-dnum">${d.getDate()}</div>
+      <div class="ag-dots">${dots.map(c=>`<span class="ag-dot" style="background:${c}"></span>`).join('')}</div>
+    </div>`;
+  }
+
+  const finMes = new Date(_ag.lunes).getMonth() !== dom.getMonth();
+  const mesTxt = finMes ? _agMesNombre(_ag.lunes)+' – '+_agMesNombre(dom) : _agMesNombre(_ag.lunes);
+  const dd = f => f.slice(8,10)+'/'+f.slice(5,7);
+
+  wrap.innerHTML = `
+    <div class="ag-head">
+      <div style="flex:1;min-width:0">
+        <div class="ag-mes">${mesTxt}</div>
+        <div class="ag-rango">semana ${dd(desde)} – ${dd(hasta)}</div>
+      </div>
+      <button class="ag-nav" onclick="agSemana(-1)" title="Semana anterior">&#8249;</button>
+      <button class="ag-nav" onclick="agSemana(1)" title="Semana siguiente">&#8250;</button>
+      <button class="ag-hoy" onclick="agHoy()">hoy</button>
+    </div>
+    <div class="ag-strip">${strip}</div>
+    <div id="agenda-dia"></div>`;
+
+  renderAgendaDia();
+}
+
+function renderAgendaDia(){
+  const cont = document.getElementById('agenda-dia');
+  if (!cont || !_ag.sel) return;
+  const f = _ag.sel;
+  const info  = (_ag.data && _ag.data.dias[f]) || { gym:[], eventos:[] };
+  const hecho = (_ag.data && _ag.data.hecho[f]) || {};
+  const d = new Date(f+'T12:00:00');
+  const nombreDia = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][d.getDay()];
+  const cab = `<div class="ag-fecha-lbl">${nombreDia.charAt(0).toUpperCase()+nombreDia.slice(1)} ${d.getDate()} de ${_agMesNombre(d).toLowerCase()}</div>`;
+
+  if (!info.gym.length && !info.eventos.length) {
+    cont.innerHTML = cab + `<div class="ag-empty"><div style="font-size:28px;margin-bottom:8px">🌴</div>Día de descanso — nada programado.</div>`;
+    return;
+  }
+
+  let html = cab;
+
+  info.gym.forEach((g, idx) => {
+    const abierta = _ag.abierta === 'gym'+idx;
+    const col = _agColorTipo(g.titulo);
+    html += `<div class="ag-card" style="${abierta?'border-color:'+col.borde:''}">
+      <div class="ag-card-hd" style="background:${col.bg};color:${col.txt}">${(g.titulo||'GYM').toUpperCase()} · GYM</div>
+      <div class="ag-card-body">
+        <div class="ag-card-tit">${g.semanaNombre||''}</div>
+        <div class="ag-chips">
+          <span class="ag-chip">${g.nEj} ejercicios</span>
+          <span class="ag-chip">${g.nBloques} bloques</span>
+          ${hecho.gym?'<span class="ag-chip" style="background:rgba(0,229,160,.12);color:#00e5a0">registrada</span>':''}
+        </div>
+        <div class="ag-btn" onclick="agToggleSesion('gym${idx}',${g.semanaIdx},${g.dia})">
+          ${abierta?'Cerrar sesión ⌃':'Abrir sesión ⌄'}
+        </div>
+      </div>
+      ${abierta?'<div id="ag-sesion-cont" style="padding:0 10px 11px"><div class="loader"><div class="spinner"></div></div></div>':''}
+    </div>`;
+  });
+
+  info.eventos.forEach(e => {
+    const esPartido = e.tipo === 'partido';
+    const col = esPartido
+      ? { bg:'rgba(232,20,42,.13)', txt:'#ff7070', btn:'ag-btn-campo' }
+      : { bg:'rgba(255,160,64,.13)', txt:'#ffa040', btn:'ag-btn-campo' };
+    const ok = esPartido ? hecho.partido : hecho.campo;
+    const meta = [e.hora, e.duracion?e.duracion+' min':''].filter(Boolean).join(' · ');
+    html += `<div class="ag-card">
+      <div class="ag-card-hd" style="background:${col.bg};color:${col.txt}">
+        ${esPartido?'PARTIDO':'CAMPO'}${meta?' · '+meta:''}
+      </div>
+      <div class="ag-card-body">
+        <div class="ag-card-tit">${e.titulo || (esPartido?'Partido':'Entreno de campo')}</div>
+        <div class="ag-btn ${ok?'ag-btn-done':col.btn}" onclick="agAbrirRpe('${e.id}','${e.tipo}','${f}')">
+          ${ok ? '✓ RPE registrado — editar' : 'Registrar RPE'}
+        </div>
+      </div>
+    </div>`;
+  });
+
+  cont.innerHTML = html;
+}
+
+function _agColorTipo(titulo){
+  const t = dayType(titulo||'');
+  if (t==='high') return { bg:'rgba(232,20,42,.13)',  txt:'#ff7070', borde:'rgba(255,112,112,.35)' };
+  if (t==='mid')  return { bg:'rgba(255,160,64,.13)', txt:'#ffa040', borde:'rgba(255,160,64,.35)' };
+  if (t==='low')  return { bg:'rgba(0,229,160,.13)',  txt:'#00e5a0', borde:'rgba(0,229,160,.35)' };
+  return { bg:'rgba(255,255,255,.05)', txt:'var(--muted)', borde:'var(--border2)' };
+}
+
+// Despliega la sesión dentro de su tarjeta (o la pliega si ya estaba abierta)
+async function agToggleSesion(key, semanaIdx, dia){
+  if (_ag.abierta === key) { _ag.abierta = null; renderAgendaDia(); return; }
+  _ag.abierta = key;
+  state.semana = semanaIdx;
+  state.dia    = dia;
+  resetSessionState();
+  renderAgendaDia();
+  const cont = document.getElementById('ag-sesion-cont');
+  if (!cont) return;
+  const res = await api({ action:'getRutina', semana:semanaIdx, dia:dia, squad: state.squad||'' });
+  if (!res.ok || !res.ejercicios || !res.ejercicios.length) {
+    cont.innerHTML = '<div class="ag-empty">No hay ejercicios en esta sesión.</div>';
+    return;
+  }
+  const nota = res.sessionNotes ? `<div class="ag-nota" style="margin:0 0 10px">
+      <span style="font-size:14px">${weekAnimal(res.nombreSemana||'')||'📝'}</span>
+      <span class="ag-nota-txt">${res.sessionNotes}</span>
+    </div>` : '';
+  const prep = res.ejercicios.filter(e=>e.fase==='prep');
+  const main = res.ejercicios.filter(e=>e.fase!=='prep');
+  cont.innerHTML = nota +
+    (prep.length?`<div class="phase-header" style="margin-top:4px">🧱 Prep</div>${prep.map(renderCard).join('')}`:'') +
+    `<div class="phase-header">💥 Main Block</div>${renderMainWithBlocks(main)}` +
+    renderSessionPanel();
+}
+
+// Abre el registro de RPE de un evento de campo o partido
+function agAbrirRpe(idEvento, tipo, fecha){
+  _fl = { tipo: tipo==='partido'?'partido':'entreno', rpe:null, minutos:'', fecha:fecha, saved:false, evento:idEvento };
+  switchTab('fieldload');
+  drawFieldLoad();
+}
+
 const PLAYER_TABS = ['sesion','misemana'];
 const COACH_TABS  = ['jugadores','rpe','reports','sesion'];
 
@@ -5015,7 +5345,8 @@ function initNav() {
     }
   } else {
     // Player: Readiness · Session · Stats · S&C Docs
-    ['bn-wellness','bn-fieldload','bn-sesion','bn-misemana','bn-scdocs'].forEach(id => {
+    // Field Load deja de ser pestaña: el RPE de campo se registra desde el día en Session
+    ['bn-wellness','bn-sesion','bn-misemana','bn-scdocs'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
@@ -5067,6 +5398,18 @@ function switchTab(tab) {
   if (activeBtn) activeBtn.classList.add('active');
 
   // Load content on demand
+  if (tab === 'sesion' && !state.isCoach) {
+    // El jugador ve la agenda por fechas; el selector de semana antiguo se oculta.
+    const aw = document.getElementById('agenda-wrap');
+    const wd = document.getElementById('week-dropdown-btn');
+    const dr = document.getElementById('day-cards-row');
+    const sc = document.getElementById('session-container');
+    if (aw) aw.style.display = '';
+    if (wd) wd.style.display = 'none';
+    if (dr) dr.style.display = 'none';
+    if (sc) sc.innerHTML = '';
+    renderAgenda();
+  }
   if (tab === 'misemana') {
     // por defecto muestra el submenú Stats
     _statsSub = _statsSub || 'stats';
@@ -6355,32 +6698,100 @@ function renderLoadPanel(cardId, el) {
 
   // ── Numpad (oculto si solo hay rango de tiempo sin carga) ──
   const ejEsc = ej.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  const showNumpad = !hasTimeR; // para ejercicios de tiempo puro no hay kg
-  const numpad = showNumpad ? ['1','2','3','4','5','6','7','8','9','⌫','0','.'].map(k => {
-    if (k==='⌫') return `<button class="numpad-btn del" onclick="loadNumpad('${cardId}','del')">⌫</button>`;
-    if (k==='.') return `<button class="numpad-btn" onclick="loadNumpad('${cardId}','.')" style="font-size:16px;font-weight:700">·</button>`;
-    return `<button class="numpad-btn" onclick="loadNumpad('${cardId}','${k}')">${k}</button>`;
-  }).join('') : '';
 
-  const activeReps = hasRange ? repsStr : (repsArr[cs.activeIdx] ? repsArr[cs.activeIdx]+' reps' : '');
-  const serieLabel = hasTimeR
-    ? `Ajusta el tiempo con −/+ en cada cuadro · rango: <strong>${repsStr}</strong>`
-    : targets.length > 1
-      ? `<strong>${targets[cs.activeIdx]}</strong>${activeReps?' · '+activeReps:''} — toca otro cuadro para cambiar`
-      : hasRange
-        ? `Introduce el peso · ajusta las reps con +/− en cada serie`
-        : 'Introduce el peso en kg';
+  // ── Tabla REPS + KG con teclado ───────────────────────────
+  // Los ejercicios de tiempo puro (30'', 1'30''…) siguen con el
+  // ajuste por −/+ de segundos, que es lo que tiene sentido ahí.
+  if (hasTimeR) {
+    const boxes = targets.map((t,idx)=>{
+      const cur = cs.loadTimeSecs[idx] || 0;
+      return `<div class="load-set-box${cs.activeIdx===idx?' active':''}${cur?' done-set':''}" onclick="selectLoadSet('${cardId}',${idx})">
+        <div class="load-set-target">${t}</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:6px">
+          <button onclick="event.stopPropagation();adjTime('${cardId}',${idx},-5)" style="width:20px;height:20px;border-radius:4px;border:0.5px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:10px;cursor:pointer">−</button>
+          <span id="time-val-${cardId}-${idx}" style="font-size:13px;font-weight:700;min-width:34px;text-align:center;color:${cur?'var(--accent2)':'rgba(255,255,255,.2)'}">${cur?formatSecs(cur):'—'}</span>
+          <button onclick="event.stopPropagation();adjTime('${cardId}',${idx},5)" style="width:20px;height:20px;border-radius:4px;border:0.5px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:10px;cursor:pointer">+</button>
+        </div>
+      </div>`;
+    }).join('');
+    el.innerHTML = `
+      <div class="hist-title">Registrar — ${ej}</div>
+      <div class="load-sets-row">${boxes}</div>
+      <div class="load-hint">Ajusta el tiempo con −/+ · rango: <strong>${repsStr}</strong></div>
+      <button class="btn-load-nota" onclick="toggleLoadNota('${cardId}')">✏️ ${cs.loadNota ? 'Editar nota' : 'Añadir nota'}</button>
+      <div id="load-nota-box-${cardId}" style="display:${cs.loadNotaOpen?'block':'none'};margin-top:6px">
+        <textarea id="load-nota-txt-${cardId}" placeholder="Ej: la última serie la subí..." oninput="state.cards['${cardId}'].loadNota=this.value" style="width:100%;background:var(--surface2);border:1px solid rgba(0,229,160,.3);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--text);resize:none;font-family:inherit;outline:none" rows="2">${cs.loadNota||''}</textarea>
+      </div>
+      <button class="btn-save-load" onclick="saveLoad('${cardId}','${ejEsc}')">Guardar</button>`;
+    return;
+  }
+
+  // Campo activo: 'reps' o 'kg' de la serie cs.activeIdx
+  if (!cs.campo) cs.campo = 'reps';
+
+  const filas = targets.map((t,idx)=>{
+    const kg   = cs.loadVals[idx] || '';
+    const rp   = cs.loadRepsVals[idx] || '';
+    const objR = repsArr[idx] != null ? repsArr[idx] : repsStr;
+    const actR = cs.activeIdx===idx && cs.campo==='reps';
+    const actK = cs.activeIdx===idx && cs.campo==='kg';
+    const clsR = actR ? 'rc-cell act' : (rp ? 'rc-cell val' : 'rc-cell');
+    const clsK = actK ? 'rc-cell act' : (kg ? 'rc-cell val' : 'rc-cell');
+    return `<div class="rc-grid">
+      <span class="rc-n${(kg||rp)?' on':''}">${idx+1}</span>
+      <div class="${clsR}" onclick="rcSel('${cardId}',${idx},'reps')" title="objetivo ${objR}">${rp||'—'}</div>
+      <div class="${clsK}" onclick="rcSel('${cardId}',${idx},'kg')" title="objetivo ${t}">${kg||'—'}</div>
+    </div>`;
+  }).join('');
+
+  const teclas = ['1','2','3','4','5','6','7','8','9','.','0','⌫'].map(k=>{
+    const key = k==='⌫' ? 'del' : k;
+    return `<div class="rc-key" onclick="rcKey('${cardId}','${key}')">${k}</div>`;
+  }).join('');
+
+  const objetivo = [cs.sets?cs.sets+' ×':'', repsStr, cs.loadObj?'@ '+cs.loadObj:''].filter(Boolean).join(' ');
 
   el.innerHTML = `
     <div class="hist-title">Registrar — ${ej}</div>
-    <div class="load-sets-row">${setsHtml}</div>
-    ${showNumpad ? `<div class="load-numpad">${numpad}</div>` : ''}
-    <div class="load-hint">${serieLabel}</div>
-    <button class="btn-load-nota" onclick="toggleLoadNota('${cardId}')" id="load-nota-btn-${cardId}">✏️ ${cs.loadNota ? 'Editar nota' : 'Añadir nota'}</button>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:9px">${objetivo}</div>
+    <div class="rc-grid" style="margin-bottom:6px">
+      <span></span><span class="rc-hd">REPS</span><span class="rc-hd">KG</span>
+    </div>
+    ${filas}
+    <div class="rc-pad">${teclas}</div>
+    <button class="btn-load-nota" onclick="toggleLoadNota('${cardId}')">✏️ ${cs.loadNota ? 'Editar nota' : 'Añadir nota'}</button>
     <div id="load-nota-box-${cardId}" style="display:${cs.loadNotaOpen?'block':'none'};margin-top:6px">
       <textarea id="load-nota-txt-${cardId}" placeholder="Ej: la última serie la subí, me encontré fuerte..." oninput="state.cards['${cardId}'].loadNota=this.value" style="width:100%;background:var(--surface2);border:1px solid rgba(0,229,160,.3);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--text);resize:none;font-family:inherit;outline:none" rows="2">${cs.loadNota||''}</textarea>
     </div>
-    <button class="btn-save-load" onclick="saveLoad('${cardId}','${ejEsc}')">Guardar</button>`;
+    <div class="rc-save" onclick="saveLoad('${cardId}','${ejEsc}')">Guardar</div>`;
+}
+
+// Selecciona qué celda está recibiendo el teclado.
+// Al entrar en una celda vacía se propone el valor de la serie anterior.
+function rcSel(cardId, idx, campo){
+  const cs = state.cards[cardId]; if (!cs) return;
+  cs.activeIdx = idx; cs.campo = campo;
+  const arr = campo==='kg' ? cs.loadVals : cs.loadRepsVals;
+  if (!arr[idx] && idx>0 && arr[idx-1]) arr[idx] = arr[idx-1];
+  const el = document.getElementById('panel-load-'+cardId);
+  if (el) renderLoadPanel(cardId, el);
+  progressSave();
+}
+
+// Teclado de la tabla reps+kg
+function rcKey(cardId, key){
+  const cs = state.cards[cardId]; if (!cs) return;
+  const idx = cs.activeIdx || 0;
+  const campo = cs.campo || 'reps';
+  const arr = campo==='kg' ? cs.loadVals : cs.loadRepsVals;
+  let v = arr[idx] || '';
+  if (key==='del') v = v.slice(0,-1);
+  else if (key==='.'){ if (campo!=='kg' || v.indexOf('.')!==-1 || v.length>=5) return; v += '.'; }
+  else { if (v.length>=5) return; v += key; }
+  arr[idx] = v;
+  const el = document.getElementById('panel-load-'+cardId);
+  if (el) renderLoadPanel(cardId, el);
+  progressSave();
 }
 
 function toggleLoadNota(cardId){
@@ -6498,15 +6909,15 @@ async function saveLoad(cardId, ejercicio) {
     cargaStr = timeSecs.map(s => s > 0 ? formatSecs(s) : null).filter(Boolean).join('/');
     summary  = targets.map((t, i) => timeSecs[i] > 0 ? `${t}: ${formatSecs(timeSecs[i])}` : '').filter(Boolean).join(' · ');
   } else {
-    // Guardar kg (con reps si hay rango)
+    // Guardar kg con las reps realmente hechas (si las hay) en cada serie
     cargaStr = vals.map((v, i) => {
       if (!v || !v.trim()) return null;
-      const r = hasRange && repsVals[i] ? `x${repsVals[i]}` : '';
+      const r = repsVals[i] ? `x${repsVals[i]}` : '';
       return v + r;
     }).filter(Boolean).join('/');
     summary = targets.map((t, i) => {
       const kg = vals[i];
-      const r  = hasRange && repsVals[i] ? ` × ${repsVals[i]} reps` : '';
+      const r  = repsVals[i] ? ` × ${repsVals[i]} reps` : '';
       return kg ? `${t} → ${kg} kg${r}` : '';
     }).filter(Boolean).join(' · ');
   }
@@ -9630,9 +10041,13 @@ function drawFieldLoad() {
   if (_fl.saved) {
     c.innerHTML = `<div class="coach-header"><div><div class="coach-title">Field Load</div></div></div>
       <div class="saved-msg" style="margin-top:12px">✓ Carga registrada — ${_fl.tipo==='partido'?'Partido':'Entrenamiento'} · RPE ${_fl.rpe}${_fl.minutos?' · '+_fl.minutos+' min':''}</div>
-      <button class="btn-save-session" style="margin-top:12px" onclick="renderFieldLoad()">Registrar otra</button>`;
+      <button class="btn-save-session" style="margin-top:12px" onclick="switchTab('sesion')">Volver a mi semana</button>`;
     return;
   }
+
+  const volver = _fl.evento
+    ? `<button class="pback" onclick="switchTab('sesion')" style="margin-bottom:10px">&#8249; volver a mi semana</button>`
+    : '';
 
   const RPE_H   = [10,14,18,22,26,28,30,34,38,44];
   const RPE_COL = ['#00e5a0','#00e5a0','#00e5a0','#00e5a0','#ffc04d','#ffc04d','#ffc04d','#ff7070','#ff7070','#ff7070'];
@@ -9653,6 +10068,7 @@ function drawFieldLoad() {
   const minSub   = esPartido ? 'Minutos disputados en el partido' : 'Minutos de entrenamiento de campo';
 
   c.innerHTML = `
+    ${volver}
     <div class="coach-header"><div><div class="coach-title">Field Load</div><div class="coach-sem-label">Carga de campo o partido</div></div></div>
 
     <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px">Fecha</div>
@@ -9766,7 +10182,7 @@ function logout() {
 //  Aditivo. Reutiliza api(), openVideoModal(), state.
 // ===================================================================
 var _plan = {
-  sub:'weeks', exercises:[], lists:{}, loaded:false,
+  sub:'cal', exercises:[], lists:{}, loaded:false,
   filters:{}, search:'',
   editing:null,
   week:null,          // semana en edicion
@@ -9826,15 +10242,247 @@ async function renderPlanner(){
 
 function plannerSub(sub){
   _plan.sub=sub;
-  ['weeks','gal','indiv','docs'].forEach(s=>{
+  ['cal','weeks','gal','indiv','docs'].forEach(s=>{
     const b=document.getElementById('plt-'+s);
     if(b) b.classList.toggle('active', s===sub);
   });
-  if(sub==='gal') renderGallery();
+  if(sub==='cal') renderCalendarioCoach();
+  else if(sub==='gal') renderGallery();
   else if(sub==='indiv') renderIndividuales();
   else if(sub==='docs') renderDocsManager();
   else renderWeeksList();
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  CALENDARIO DEL COACH — el mes completo
+//  Cada celda muestra lo programado ese día (sesión de gym del
+//  planner + eventos de campo/partido). Al pinchar un día se abre
+//  un panel para crear evento o aplicar un programa ya creado.
+// ═══════════════════════════════════════════════════════════════
+var _cal = { mes:null, squad:null, data:null, diaSel:null };
+
+function calMes(dir){
+  const b = _cal.mes ? new Date(_cal.mes+'-01T12:00:00') : new Date();
+  b.setMonth(b.getMonth()+dir);
+  _cal.mes = b.getFullYear()+'-'+String(b.getMonth()+1).padStart(2,'0');
+  renderCalendarioCoach();
+}
+function calSetSquad(sq){ _cal.squad = sq; renderCalendarioCoach(); }
+
+async function renderCalendarioCoach(){
+  const c = document.getElementById('planner-content');
+  if (!c) return;
+  const hoy = new Date();
+  if (!_cal.mes) _cal.mes = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+  if (_cal.squad === null) _cal.squad = state.squadFijo || state.coachSquadFilter || SQUADS[0];
+
+  c.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  const [yy,mm] = _cal.mes.split('-').map(Number);
+  const primero = new Date(yy, mm-1, 1);
+  const ultimo  = new Date(yy, mm, 0);
+  const desde = _agISO(primero), hasta = _agISO(ultimo);
+
+  const res = await api({ action:'getAgenda', squad:_cal.squad, desde, hasta });
+  _cal.data = (res && res.ok) ? res : { dias:{} };
+
+  const squadBtns = SQUADS.map(sq=>{
+    const on = _cal.squad===sq;
+    return `<span onclick="calSetSquad('${sq.replace(/'/g,"\\'")}')" style="font-size:11px;padding:6px 12px;border-radius:7px;cursor:pointer;background:${on?'rgba(232,20,42,.12)':'var(--surface2)'};color:${on?'var(--accent)':'var(--muted)'};border:1px solid ${on?'rgba(232,20,42,.35)':'var(--border2)'}">${sq}</span>`;
+  }).join('');
+
+  const nDias = ultimo.getDate();
+  let offset = (primero.getDay()+6)%7;
+  const celdas = [];
+  for (let i=0;i<offset;i++) celdas.push(null);
+  for (let d=1; d<=nDias; d++) celdas.push(d);
+  while (celdas.length % 7 !== 0) celdas.push(null);
+
+  const hoyStr = _agISO(hoy);
+  const celdaHTML = d => {
+    if (d===null) return '<div style="min-height:74px"></div>';
+    const f = `${yy}-${String(mm).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const info = _cal.data.dias[f] || { gym:[], eventos:[] };
+    const vacio = !info.gym.length && !info.eventos.length;
+    let lineas = '';
+    info.gym.forEach(g=>{
+      const col = _agColorTipo(g.titulo);
+      lineas += `<div style="font-size:9px;color:${col.txt};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35">● ${g.titulo||'Gym'}</div>`;
+    });
+    info.eventos.forEach(e=>{
+      const col = e.tipo==='partido' ? '#ff7070' : '#ffa040';
+      lineas += `<div style="font-size:9px;color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35">● ${e.titulo||(e.tipo==='partido'?'Partido':'Campo')}</div>`;
+    });
+    const borde = f===hoyStr ? '1.5px solid rgba(232,20,42,.5)' : (vacio?'1px dashed var(--border)':'1px solid var(--border2)');
+    return `<div onclick="calAbrirDia('${f}')" style="min-height:74px;background:var(--surface);border:${borde};border-radius:8px;padding:6px;cursor:pointer">
+      <div style="font-size:9px;color:${f===hoyStr?'var(--accent)':'var(--muted)'};margin-bottom:3px">${d}</div>
+      ${lineas || '<div style="text-align:center;font-size:14px;color:rgba(255,255,255,.14);margin-top:12px">+</div>'}
+    </div>`;
+  };
+
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  let filas = '';
+  for (let i=0;i<celdas.length;i+=7){
+    filas += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px">${celdas.slice(i,i+7).map(celdaHTML).join('')}</div>`;
+  }
+
+  c.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="quad-navbtn" onclick="calMes(-1)">&#8249;</button>
+      <span style="font-size:15px;font-weight:600;min-width:140px">${MESES[mm-1]} ${yy}</span>
+      <button class="quad-navbtn" onclick="calMes(1)">&#8250;</button>
+      <span style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">${squadBtns}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px">
+      ${['L','M','X','J','V','S','D'].map(x=>`<div style="font-size:10px;color:var(--muted);text-align:center">${x}</div>`).join('')}
+    </div>
+    ${filas}
+    <div style="font-size:10px;color:var(--muted);margin-top:10px">Pincha un día para añadir una sesión de gym, un entreno de campo o un partido.</div>
+    <div id="cal-panel"></div>`;
+}
+
+// ── Panel al pinchar un día ──
+async function calAbrirDia(fecha){
+  _cal.diaSel = fecha;
+  const info = (_cal.data && _cal.data.dias[fecha]) || { gym:[], eventos:[] };
+  const d = new Date(fecha+'T12:00:00');
+  const dd = d.getDate()+'/'+(d.getMonth()+1);
+
+  let existentes = '';
+  info.gym.forEach(g=>{
+    existentes += `<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:8px;padding:9px 11px;margin-bottom:5px">
+      <span style="font-size:12px;color:var(--text);flex:1">🏋️ ${g.titulo||'Gym'} · ${g.nEj} ej.</span>
+      <span style="font-size:10px;color:var(--muted)">${g.semanaNombre||''}</span>
+    </div>`;
+  });
+  info.eventos.forEach(e=>{
+    existentes += `<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:8px;padding:9px 11px;margin-bottom:5px">
+      <span style="font-size:12px;color:var(--text);flex:1">${e.tipo==='partido'?'🏉':'🏃'} ${e.titulo||e.tipo}${e.hora?' · '+e.hora:''}</span>
+      <span style="font-size:11px;color:#ff7070;cursor:pointer" onclick="calBorrarEvento('${e.id}')">🗑</span>
+    </div>`;
+  });
+
+  const ov = document.createElement('div');
+  ov.className = 'picker-backdrop';
+  ov.id = 'cal-modal';
+  ov.innerHTML = `
+    <div class="fields-box" onclick="event.stopPropagation()">
+      <div style="font-size:16px;font-weight:700;margin-bottom:3px">${dd} · ${_cal.squad}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Qué hay programado y qué añadir</div>
+      ${existentes || '<div style="font-size:12px;color:var(--muted);font-style:italic;margin-bottom:10px">Nada programado todavía.</div>'}
+
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 7px">Añadir evento</div>
+      <div style="display:flex;gap:6px;margin-bottom:9px">
+        <span id="cal-tipo-campo" onclick="calSetTipo('campo')" style="flex:1;text-align:center;padding:9px;border-radius:8px;cursor:pointer;background:rgba(255,160,64,.12);border:1px solid rgba(255,160,64,.4);color:#ffa040;font-size:12px;font-weight:600">Entreno de campo</span>
+        <span id="cal-tipo-partido" onclick="calSetTipo('partido')" style="flex:1;text-align:center;padding:9px;border-radius:8px;cursor:pointer;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-size:12px">Partido</span>
+      </div>
+      <input id="cal-titulo" class="pe-addinput" placeholder="Título (ej. Entreno táctico)" style="margin-bottom:6px">
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <input id="cal-hora" type="time" class="pe-addinput" style="flex:1">
+        <input id="cal-dur" type="number" class="pe-addinput" placeholder="min" style="flex:1">
+      </div>
+      <button class="pe-save" style="margin-top:0" onclick="calGuardarEvento()">Añadir evento</button>
+
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:18px 0 7px">Aplicar programa creado</div>
+      <select id="cal-programa" class="semana-select" style="width:100%;margin-bottom:8px">
+        <option value="">— Cargando programas —</option>
+      </select>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Días de la semana donde repartirlo, en orden:</div>
+      <div id="cal-dows" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px"></div>
+      <button class="pe-save" style="margin-top:0;background:var(--accent)" onclick="calAplicarPrograma()">Aplicar programa desde este día</button>
+
+      <button class="doc-cancel-btn" onclick="calCerrar()">Cerrar</button>
+    </div>`;
+  ov.addEventListener('click', e=>{ if(e.target===ov) calCerrar(); });
+  document.body.appendChild(ov);
+
+  _cal.tipo = 'campo';
+  _cal.dows = [];
+  const DOWS = [['1','L'],['2','M'],['3','X'],['4','J'],['5','V'],['6','S'],['0','D']];
+  document.getElementById('cal-dows').innerHTML = DOWS.map(([v,l])=>
+    `<span id="cal-dow-${v}" onclick="calToggleDow('${v}')" style="width:34px;text-align:center;padding:7px 0;border-radius:7px;cursor:pointer;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-size:12px">${l}</span>`
+  ).join('');
+
+  // cargar programas disponibles
+  const wk = await api({ action:'getWeeks' });
+  const sel = document.getElementById('cal-programa');
+  if (sel) {
+    const ws = (wk.ok && wk.weeks) ? wk.weeks : [];
+    sel.innerHTML = '<option value="">— Elige un programa —</option>' +
+      ws.map(w=>{
+        const nd = ((w.data&&w.data.dias)||[]).length;
+        return `<option value="${w.id}">${w.nombre} (${nd} días · ${w.squad})</option>`;
+      }).join('');
+  }
+}
+
+function calSetTipo(t){
+  _cal.tipo = t;
+  const c = document.getElementById('cal-tipo-campo'), p = document.getElementById('cal-tipo-partido');
+  if (c && p){
+    const on = (el,col)=>{ el.style.background=col.bg; el.style.borderColor=col.bd; el.style.color=col.tx; el.style.fontWeight='600'; };
+    const off = el=>{ el.style.background='var(--surface2)'; el.style.borderColor='var(--border2)'; el.style.color='var(--muted)'; el.style.fontWeight='400'; };
+    if (t==='campo'){ on(c,{bg:'rgba(255,160,64,.12)',bd:'rgba(255,160,64,.4)',tx:'#ffa040'}); off(p); }
+    else            { on(p,{bg:'rgba(232,20,42,.12)',bd:'rgba(232,20,42,.4)',tx:'#ff7070'}); off(c); }
+  }
+}
+function calToggleDow(v){
+  if (!_cal.dows) _cal.dows = [];
+  const i = _cal.dows.indexOf(v);
+  if (i===-1) _cal.dows.push(v); else _cal.dows.splice(i,1);
+  const el = document.getElementById('cal-dow-'+v);
+  const on = _cal.dows.indexOf(v)!==-1;
+  if (el){
+    el.style.background = on?'rgba(0,229,160,.12)':'var(--surface2)';
+    el.style.borderColor = on?'rgba(0,229,160,.4)':'var(--border2)';
+    el.style.color = on?'var(--accent2)':'var(--muted)';
+  }
+}
+function calCerrar(){ const m=document.getElementById('cal-modal'); if(m) m.remove(); }
+
+async function calGuardarEvento(){
+  const titulo = (document.getElementById('cal-titulo')||{}).value || '';
+  const hora   = (document.getElementById('cal-hora')||{}).value || '';
+  const dur    = (document.getElementById('cal-dur')||{}).value || '';
+  const res = await api({ action:'saveEvento', squad:_cal.squad, fecha:_cal.diaSel,
+    tipo:_cal.tipo||'campo', titulo, hora, duracion:dur,
+    creado_por:(state.user&&state.user.usuario)||'' });
+  if (res && res.ok){ calCerrar(); renderCalendarioCoach(); }
+  else alert('No se pudo guardar: '+((res&&res.error)||''));
+}
+
+async function calBorrarEvento(id){
+  if (!confirm('¿Borrar este evento?')) return;
+  await api({ action:'deleteEvento', id });
+  calCerrar(); renderCalendarioCoach();
+}
+
+// Reparte los días del programa en las fechas que corresponden a los
+// días de la semana marcados, empezando por el día pinchado.
+async function calAplicarPrograma(){
+  const id = (document.getElementById('cal-programa')||{}).value || '';
+  if (!id){ alert('Elige un programa'); return; }
+  if (!_cal.dows || !_cal.dows.length){ alert('Marca al menos un día de la semana'); return; }
+
+  const inicio = new Date(_cal.diaSel+'T12:00:00');
+  const fechas = [];
+  const objetivo = _cal.dows.map(Number);
+  // Recorre hasta 28 días desde el pinchado y recoge los que caen en los dows marcados
+  for (let i=0;i<28 && fechas.length<objetivo.length;i++){
+    const d = new Date(inicio); d.setDate(d.getDate()+i);
+    if (objetivo.indexOf(d.getDay())!==-1 && fechas.indexOf(_agISO(d))===-1) fechas.push(_agISO(d));
+  }
+  fechas.sort();
+
+  const res = await api({ action:'aplicarPrograma', idPlantilla:id, squad:_cal.squad,
+    fechas, creado_por:(state.user&&state.user.usuario)||'' });
+  if (res && res.ok){
+    calCerrar();
+    alert('Programa aplicado a '+res.dias+' días.');
+    renderCalendarioCoach();
+  } else alert('No se pudo aplicar: '+((res&&res.error)||''));
+}
+
 
 // ============ S&C DOCS MANAGER (coach) ============
 var _docsSquad = '';
@@ -10361,8 +11009,9 @@ function renderDayCard(d,i){
   const blocks=(d.bloques||[]).map((b,bi)=>renderBlockRow(b,i,bi)).join('');
   const nDias=(_plan.week.data.dias||[]).length;
   const dCanUp=i>0, dCanDown=i<nDias-1;
-  const dayHandle=`<span class="day-handle-wrap"><span class="day-handle" onclick="event.stopPropagation();toggleDayMenu(${i})" title="Mover día">&#8942;</span>
+  const dayHandle=`<span class="day-handle-wrap"><span class="day-handle" onclick="event.stopPropagation();toggleDayMenu(${i})" title="Opciones del día">&#8942;</span>
     <div class="day-menu" id="daymenu-${i}">
+      <button onclick="event.stopPropagation();duplicarDia(${i})"><span>&#10697;</span> Duplicar día</button>
       ${dCanUp?`<button onclick="event.stopPropagation();moveDay(${i},-1)"><span>&#8593;</span> Subir día</button>`:''}
       ${dCanDown?`<button onclick="event.stopPropagation();moveDay(${i},1)"><span>&#8595;</span> Bajar día</button>`:''}
     </div></span>`;
@@ -10468,6 +11117,20 @@ function moveDay(i,dir){
   const ni=i+dir;
   if(ni<0||ni>=arr.length) return;
   const tmp=arr[i]; arr[i]=arr[ni]; arr[ni]=tmp;
+  renderWeekEditor();
+}
+// Duplica un día completo (bloques y prescripciones) justo detrás del original.
+// La fecha se deja vacía para que no choque con la del día copiado.
+function duplicarDia(i){
+  const arr=_plan.week.data.dias;
+  const orig=arr[i];
+  if(!orig) return;
+  const copia=JSON.parse(JSON.stringify(orig));
+  copia.fecha='';
+  copia._open=true;
+  copia.titulo=(orig.titulo||'')?orig.titulo+' (copia)':'';
+  arr.splice(i+1,0,copia);
+  document.querySelectorAll('.day-menu.open').forEach(m=>m.classList.remove('open'));
   renderWeekEditor();
 }
 function toggleRowMenu(key){
