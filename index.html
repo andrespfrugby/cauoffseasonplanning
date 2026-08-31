@@ -1302,17 +1302,13 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
 
   /* Dolor muscular · histórico: las celdas son aspect-ratio:1 sobre una rejilla
      elástica, así que a 1700px salían cuadrados gigantes. Se limita el ancho de
-     cada celda y se alinea a la izquierda; el nombre del jugador se agranda. */
+     cada celda y se alinea a la izquierda. (Tamaños finales más abajo.) */
   body.staff-desktop .mol-cal-row{
-    grid-template-columns:150px repeat(auto-fit,minmax(0,44px));
     justify-content:start;
     gap:5px;
   }
   body.staff-desktop .mol-cal-cell{ min-height:0; }
-  body.staff-desktop .mol-cal-name{
-    font-size:15px; font-weight:600; padding-right:10px;
-  }
-  body.staff-desktop .mol-cal-daylbl{ font-size:10px; }
+  body.staff-desktop .mol-cal-name{ font-weight:600; padding-right:10px; }
   body.staff-desktop .mol-cal-detail{ grid-column:1/-1; }
 
   /* Carga diaria: los SVG usan preserveAspectRatio="none" con height:auto, así que
@@ -1329,6 +1325,50 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   body.staff-desktop #tendencia-content .cd-svg-wrap{ max-width:none; }
   body.staff-desktop #tendencia-content .cd-svg-wrap svg{ height:280px !important; }
   body.staff-desktop #tendencia-content .cd-kpis{ max-width:560px; }
+
+  /* KPIs de Carga diaria / Tendencia: eran cajitas de móvil */
+  body.staff-desktop .cd-kpi{ padding:14px 10px; }
+  body.staff-desktop .cd-kpi-num{ font-size:26px; }
+  body.staff-desktop .cd-kpi-lbl{ font-size:10px; }
+
+  /* Carga diaria: el estado vacío "Sin registros" heredaba el ancho completo */
+  body.staff-desktop #carga-diaria-content .cd-empty{ max-width:820px; }
+
+  /* ── Recuperación ─────────────────────────────────────────
+     La gráfica carga-vs-readiness tenía viewBox fijo y se quedaba
+     minúscula centrada; el cuadrante es una matriz 2x2 y debe ser
+     cuadrado, no una franja estirada de lado a lado. */
+  body.staff-desktop #coach-rr-content svg{
+    width:100% !important; height:300px !important; max-width:900px;
+  }
+  body.staff-desktop #coach-quad-content .quad-wrap{ max-width:560px; }
+  body.staff-desktop #coach-quad-content .quad-grid{ height:520px; }
+  body.staff-desktop #coach-quad-content .quad-cell span{ font-size:12px; }
+  body.staff-desktop #coach-quad-content .quad-dot{ width:34px; height:34px; font-size:11px; }
+  body.staff-desktop .quad-axis-x, body.staff-desktop .quad-axis-y{ font-size:11px; }
+
+  /* ── Dolor muscular · histórico: celdas y nombres más grandes ── */
+  body.staff-desktop .mol-cal-row{
+    grid-template-columns:190px repeat(auto-fit,minmax(0,60px));
+  }
+  body.staff-desktop .mol-cal-cell{ min-height:52px; border-radius:7px; }
+  body.staff-desktop .mol-cal-name{ font-size:16px; }
+  body.staff-desktop .mol-cal-daylbl{ font-size:11px; }
+
+  /* ── Control de cargas · ACWR ─────────────────────────────
+     La gráfica de evolución usa un viewBox de 340x120: al estirarla a
+     1700px el texto y los puntos se multiplican por 5. Alto fijo y
+     ancho acotado. Las fichas de jugador tampoco necesitan 1700px. */
+  body.staff-desktop #control-cargas-content .cc-svg-wrap{ max-width:900px; }
+  body.staff-desktop #control-cargas-content .cc-svg-wrap svg{ height:260px !important; }
+  body.staff-desktop #control-cargas-content .cc-kpis{ max-width:640px; }
+  body.staff-desktop #control-cargas-content .cc-zonebar,
+  body.staff-desktop #control-cargas-content .cc-zonelbl{ max-width:900px; }
+  body.staff-desktop #control-cargas-content .cc-jrow{ max-width:900px; padding:14px 16px; }
+  body.staff-desktop #control-cargas-content .cc-jstat-n{ font-size:16px; }
+  body.staff-desktop #control-cargas-content .cc-jstat-l{ font-size:10px; }
+  body.staff-desktop .cc-kpi-n{ font-size:26px; }
+  body.staff-desktop .cc-kpi-l{ font-size:10px; }
 }
 
 /* ── PRINT / PDF ── */
@@ -5399,35 +5439,13 @@ async function renderControlCargas() {
   const acwrList = res.acwr || [];
 
   c.innerHTML = `
-    <!-- Cabecera: navegación mes + selector modo -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <button onclick="ccMesShift(-1)" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--text);cursor:pointer">‹</button>
-        <span style="font-size:15px;font-weight:600;min-width:120px;text-align:center">${mesNombre}</span>
-        <button onclick="ccMesShift(1)" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--text);cursor:pointer">›</button>
-      </div>
+    <!-- Selector de contenido -->
+    <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:14px">
       <div style="display:flex;gap:3px;background:var(--surface2);padding:3px;border-radius:9px">${modoBtns}</div>
     </div>
 
-    <!-- Calendario -->
-    <div class="cc-grid-head"><div></div>${['L','M','X','J','V','S','D'].map(x=>`<div>${x}</div>`).join('')}</div>
-    ${semanas.map((sem,i)=>{
-      const ms = mediaSemana(sem);
-      return `<div class="cc-week">
-        <div class="cc-wk">${ms!=null?`<span class="cc-wk-v" style="color:${_ccZonaDia(ms)}">${ms}</span><span class="cc-wk-l">UA</span>`:'<span class="cc-wk-l">—</span>'}</div>
-        ${sem.map(celdaHTML).join('')}
-      </div>`;
-    }).join('')}
-
-    <div class="cc-legend">
-      <span><i style="background:#00e5a0"></i>Baja &lt;${_ccUmbral().lo}</span>
-      <span><i style="background:#ffc04d"></i>Media ${_ccUmbral().lo}–${_ccUmbral().hi}</span>
-      <span><i style="background:#ff7070"></i>Alta &gt;${_ccUmbral().hi}</span>
-      <span style="margin-left:auto;color:var(--muted)">E entreno · P partido · ${_ccModo==='gym'?'umbral gym':_ccModo==='campo'?'umbral campo':'gym y campo con su propio umbral'}</span>
-    </div>
-
     <!-- ACWR total -->
-    <div style="display:flex;align-items:center;gap:8px;margin:22px 0 4px">
+    <div style="display:flex;align-items:center;gap:8px;margin:0 0 4px">
       <span style="font-size:15px;font-weight:700">⚖️ Control de carga · ACWR</span>
     </div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Ratio agudo:crónico — carga ${_ccModo==='gym'?'de gimnasio':_ccModo==='campo'?'de campo':'total (gym+campo+partido)'} · cada jugador vs. su base</div>
@@ -5466,16 +5484,7 @@ async function renderControlCargas() {
       }).join('') : '<div class="cd-empty">Sin datos de carga este periodo.</div>'}
     </div>
 
-    <div style="font-size:9px;color:var(--muted);margin-top:12px;line-height:1.5">ACWR = carga aguda (media 7d) ÷ crónica (media 4 sem). UA = RPE × min. Cada jugador vs. su propia base. Gabbett (2016), Hulin (2016), Foster (2001).</div>
-
-    <div style="margin-top:22px">
-      <div style="font-size:15px;font-weight:700;margin-bottom:2px">📈 Tendencia carga equipo</div>
-      <div id="cc-trend-content"><div class="loader"><div class="spinner"></div></div></div>
-    </div>`;
-
-  // Renderizar la tendencia de carga del equipo (movida desde Análisis RPE)
-  const equipoTrend = (state.coachEquipo||[]).filter(j => !squad || (j.squad && j.squad.toLowerCase()===String(squad).toLowerCase()));
-  renderLoadTrendInto(equipoTrend, 'cc-trend-content');
+    <div style="font-size:9px;color:var(--muted);margin-top:12px;line-height:1.5">ACWR = carga aguda (media 7d) ÷ crónica (media 4 sem). UA = RPE × min. Cada jugador vs. su propia base. Gabbett (2016), Hulin (2016), Foster (2001).</div>`;
 }
 
 
