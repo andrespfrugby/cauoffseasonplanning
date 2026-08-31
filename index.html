@@ -10566,7 +10566,10 @@ function calPintarPaso(){
         <span style="font-size:15px;color:${color}">›</span>
       </div>`;
     box.innerHTML = cab +
-      (existentes ? `<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Ya programado</div>${existentes}<div style="height:12px"></div>` : '') +
+      (existentes ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+          <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;flex:1">Ya programado</span>
+          <span onclick="calVaciarDia()" style="font-size:11px;color:#ff7070;cursor:pointer;border:1px solid rgba(255,112,112,.35);border-radius:6px;padding:4px 10px">🗑 Vaciar día</span>
+        </div>${existentes}<div style="height:12px"></div>` : '') +
       `<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Añadir</div>` +
       op('🏋️','Sesión de gym','Crear una sesión nueva desde cero',"calPaso('gym')",'var(--accent2)') +
       op('📋','Programa de entrenamiento','Aplicar un programa ya creado',"calPaso('programa')",'var(--accent2)') +
@@ -10718,6 +10721,19 @@ async function calCrearSesionGym(){
 
 // Quita una sesión de gym de este día. Si era el único día de su
 // semana, el backend borra la semana entera.
+// Borra de una vez todo lo del día: sesiones de gym y eventos.
+// Una sola confirmación en lugar de ir uno por uno.
+async function calVaciarDia(){
+  const f = _cal.diaSel;
+  const info = (_cal.data && _cal.data.dias[f]) || { gym:[], eventos:[] };
+  const total = info.gym.length + info.eventos.length;
+  if (!total) return;
+  if (!confirm(`¿Vaciar este día? Se borrarán ${total} elemento${total>1?'s':''} (sesiones y eventos).`)) return;
+  const res = await api({ action:'vaciarDia', squad:_cal.squad, fecha:f });
+  if (res && res.ok){ calCerrar(); renderCalendarioCoach(); }
+  else alert('No se pudo vaciar: '+((res&&res.error)||''));
+}
+
 async function calBorrarGym(weekId, dia){
   if (!weekId){ alert('Esta sesión viene de una hoja antigua y no se puede quitar desde aquí.'); return; }
   if (!confirm('¿Quitar esta sesión de gym del calendario?')) return;
