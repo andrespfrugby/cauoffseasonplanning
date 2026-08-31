@@ -5298,9 +5298,9 @@ function renderAgendaDia(){
     const abierta = _ag.abierta === 'gym'+idx;
     const col = _agColorTipo(g.titulo);
     html += `<div class="ag-card" style="${abierta?'border-color:'+col.borde:''}">
-      <div class="ag-card-hd" style="background:${col.bg};color:${col.txt}">${(g.titulo||'GYM').toUpperCase()} · GYM</div>
+      <div class="ag-card-hd" style="background:${col.bg};color:${col.txt}">GYM</div>
       <div class="ag-card-body">
-        <div class="ag-card-tit">${g.semanaNombre||''}</div>
+        <div class="ag-card-tit">${g.titulo || 'Sesión de gimnasio'}</div>
         <div class="ag-chips">
           <span class="ag-chip">${g.nEj} ejercicios</span>
           <span class="ag-chip">${g.nBloques} bloques</span>
@@ -5314,23 +5314,28 @@ function renderAgendaDia(){
     </div>`;
   });
 
-  info.eventos.forEach(e => {
+  info.eventos.forEach((e, ei) => {
     const esPartido = e.tipo === 'partido';
     const col = esPartido
-      ? { bg:'rgba(232,20,42,.13)', txt:'#ff7070', btn:'ag-btn-campo' }
-      : { bg:'rgba(255,160,64,.13)', txt:'#ffa040', btn:'ag-btn-campo' };
+      ? { bg:'rgba(232,20,42,.13)', txt:'#ff7070' }
+      : { bg:'rgba(255,160,64,.13)', txt:'#ffa040' };
     const ok = esPartido ? hecho.partido : hecho.campo;
-    const meta = [e.hora, e.duracion?e.duracion+' min':''].filter(Boolean).join(' · ');
+    // Solo hora limpia (HH:mm) y duración. Nada de fechas raras.
+    const horaOk = /^\d{1,2}:\d{2}$/.test(String(e.hora||'')) ? e.hora : '';
+    const meta = [horaOk, e.duracion?e.duracion+' min':''].filter(Boolean).join(' · ');
+    const key = 'ev'+ei;
+    const abierto = _ag.abierta === key;
     html += `<div class="ag-card">
       <div class="ag-card-hd" style="background:${col.bg};color:${col.txt}">
         ${esPartido?'PARTIDO':'CAMPO'}${meta?' · '+meta:''}
       </div>
       <div class="ag-card-body">
         <div class="ag-card-tit">${e.titulo || (esPartido?'Partido':'Entreno de campo')}</div>
-        <div class="ag-btn ${ok?'ag-btn-done':col.btn}" onclick="agAbrirRpe('${e.id}','${e.tipo}','${f}')">
-          ${ok ? '✓ RPE registrado — editar' : 'Registrar RPE'}
+        <div class="ag-btn ${ok&&!abierto?'ag-btn-done':'ag-btn-campo'}" onclick="agToggleRpe('${key}','${e.tipo}','${f}',${e.duracion||0})">
+          ${abierto ? 'Cerrar ⌃' : (ok ? '✓ RPE registrado — editar' : 'Registrar RPE ⌄')}
         </div>
       </div>
+      ${abierto?`<div id="ag-rpe-cont" style="padding:0 12px 12px"></div>`:''}
     </div>`;
   });
 
@@ -5372,11 +5377,101 @@ async function agToggleSesion(key, semanaIdx, dia){
     renderSessionPanel();
 }
 
-// Abre el registro de RPE de un evento de campo o partido
-function agAbrirRpe(idEvento, tipo, fecha){
-  _fl = { tipo: tipo==='partido'?'partido':'entreno', rpe:null, minutos:'', fecha:fecha, saved:false, evento:idEvento };
-  switchTab('fieldload');
-  drawFieldLoad();
+// ── Registro de RPE del evento, dentro de la propia tarjeta ──
+// La app ya sabe si es campo o partido (lo puso el coach en el
+// calendario), así que solo se pide esfuerzo y duración/minutos.
+var _agRpe = { rpe:null, min:'', tipo:'entreno', fecha:null, guardando:false };
+
+function agToggleRpe(key, tipo, fecha, durPrevista){
+  if (_ag.abierta === key) { _ag.abierta = null; renderAgendaDia(); return; }
+  _ag.abierta = key;
+  _agRpe = {
+    rpe:null,
+    min: durPrevista ? String(durPrevista) : '',
+    tipo: tipo==='partido' ? 'partido' : 'entreno',
+    fecha: fecha, guardando:false, key:key
+  };
+  renderAgendaDia();
+  agPintarRpe();
+}
+
+function agPintarRpe(){
+  const c = document.getElementById('ag-rpe-cont');
+  if (!c) return;
+  const esPartido = _agRpe.tipo === 'partido';
+  const COL = ['#00e5a0','#00e5a0','#00e5a0','#00e5a0','#ffc04d','#ffc04d','#ffc04d','#ff7070','#ff7070','#ff7070'];
+  const LBL = ['','Reposo','Muy fácil','Ligero','Cómodo','Moderado','Algo duro','Duro','Muy duro','Casi máx','Máximo'];
+  const H   = [10,14,18,22,26,28,30,34,38,44];
+  const v   = _agRpe.rpe;
+  const col = v ? COL[v-1] : 'var(--muted)';
+
+  const barras = Array.from({length:10},(_,i)=>{
+    const n=i+1;
+    const cls = v===null ? '' : (v===n ? 'active' : 'inactive');
+    return `<div class="rpe-bar-seg ${cls}" style="height:${H[i]}px;background:${COL[i]};cursor:pointer" onclick="agSetRpe(${n})"></div>`;
+  }).join('');
+
+  const teclas = ['1','2','3','4','5','6','7','8','9','.','0','⌫'].map(k=>{
+    if (k==='.') return `<div class="rc-key" style="visibility:hidden">.</div>`;
+    const key = k==='⌫' ? 'del' : k;
+    return `<div class="rc-key" onclick="agMinKey('${key}')">${k}</div>`;
+  }).join('');
+
+  c.innerHTML = `
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px">
+      ${esPartido?'Intensidad percibida del partido':'Intensidad percibida del entrenamiento'}
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Esfuerzo percibido (1–10)</div>
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:12px">
+      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:9px 12px;
+                  display:flex;flex-direction:column;align-items:center;min-width:62px;flex-shrink:0">
+        <div style="font-family:var(--font-head);font-size:34px;line-height:1;color:${col}">${v||'—'}</div>
+        <div style="font-size:9px;color:${col};text-align:center;margin-top:2px">${v?LBL[v]:'—'}</div>
+      </div>
+      <div style="flex:1">
+        <div class="rpe-bar-track" style="height:36px">${barras}</div>
+        <div class="rpe-bar-labels" style="margin-bottom:0"><span>1</span><span>5</span><span>10</span></div>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px">
+      ${esPartido?'Minutos jugados':'Duración del entreno'}
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:8px">
+      ${esPartido?'Minutos que has estado en el campo':'Minutos de entrenamiento'}
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <div class="time-display${_agRpe.min?' has-value':''}" style="flex:none;min-width:76px;font-size:19px">
+        ${_agRpe.min ? _agRpe.min+' min' : '—'}
+      </div>
+      <div class="rc-pad" style="flex:1;margin-top:0">${teclas}</div>
+    </div>
+    <div class="rc-save" style="opacity:${v?1:.45}" onclick="agGuardarRpe()">Guardar</div>`;
+}
+
+function agSetRpe(n){ _agRpe.rpe = n; agPintarRpe(); }
+function agMinKey(k){
+  if (k==='del') _agRpe.min = _agRpe.min.slice(0,-1);
+  else { if (_agRpe.min.length>=3) return; _agRpe.min += k; }
+  agPintarRpe();
+}
+
+async function agGuardarRpe(){
+  if (_agRpe.rpe===null || _agRpe.guardando) return;
+  _agRpe.guardando = true;
+  const c = document.getElementById('ag-rpe-cont');
+  if (c) c.innerHTML = '<div class="loader"><div class="spinner"></div>Guardando...</div>';
+  const res = await api({
+    action:'saveFieldLoad', usuario:(state.user&&state.user.usuario)||'',
+    fecha:_agRpe.fecha, tipo:_agRpe.tipo, rpe:_agRpe.rpe,
+    minutos: _agRpe.min ? parseInt(_agRpe.min) : '',
+    semana:'', dia:''
+  });
+  _agRpe.guardando = false;
+  if (res && res.ok) { _ag.abierta = null; renderAgenda(); }
+  else {
+    alert('No se pudo guardar: '+((res&&res.error)||''));
+    agPintarRpe();
+  }
 }
 
 const PLAYER_TABS = ['sesion','misemana'];
@@ -10455,7 +10550,7 @@ function calPintarPaso(){
     const meta = [e.hora, e.duracion?e.duracion+' min':'', e.intensidad].filter(Boolean).join(' · ');
     existentes += `<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:5px">
       <span style="font-size:13px;color:var(--text);flex:1">${et}${meta?' · '+meta:''}</span>
-      <span style="font-size:13px;color:#ff7070;cursor:pointer" onclick="calBorrarEvento('${e.id}')">🗑</span>
+      <span style="font-size:13px;color:#ff7070;cursor:pointer" title="Quitar del calendario" onclick="calBorrarEvento('${e.id}')">🗑</span>
     </div>`;
   });
 
