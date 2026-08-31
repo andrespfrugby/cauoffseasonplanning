@@ -1369,6 +1369,54 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   body.staff-desktop #control-cargas-content .cc-jstat-l{ font-size:10px; }
   body.staff-desktop .cc-kpi-n{ font-size:26px; }
   body.staff-desktop .cc-kpi-l{ font-size:10px; }
+
+  /* ══ PLANNER · vista de semana en columnas ══════════════════
+     La estructura del DOM no cambia: cada día sigue siendo un
+     .day-card dentro de #pw-days. Aquí solo se recoloca la pila
+     vertical en una rejilla de columnas, de modo que se ve la
+     semana entera de un vistazo. En móvil sigue siendo acordeón. */
+  body.staff-desktop #pw-days{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(255px,1fr));
+    gap:10px;
+    align-items:start;
+  }
+  body.staff-desktop #pw-days .day-card{
+    margin-bottom:0;
+    background:var(--surface);
+    border-top:2px solid var(--border2);
+  }
+  /* cabecera del día: el título y la fecha se apilan para caber en columna */
+  body.staff-desktop #pw-days .day-hd{
+    flex-wrap:wrap; gap:6px; padding:10px 11px;
+  }
+  body.staff-desktop #pw-days .dinp{
+    flex:1 1 100%; order:3; font-size:14px; padding:2px 0;
+  }
+  body.staff-desktop #pw-days .dchip-date{ font-size:11px; padding:3px 7px; }
+  body.staff-desktop #pw-days .day-body{ padding:9px 11px 12px; }
+  /* bloques y ejercicios: algo más de aire y letra legible */
+  body.staff-desktop #pw-days .brow{ padding:8px 9px; }
+  body.staff-desktop #pw-days .bnm{ font-size:13px; }
+  body.staff-desktop #pw-days .bmini{ font-size:11px; }
+  body.staff-desktop #pw-days .blk-name{ font-size:13px; }
+  body.staff-desktop #pw-days .addb{ font-size:11px; padding:9px; }
+  /* los dos botones de añadir bloque se apilan: en columna no caben en fila */
+  body.staff-desktop #pw-days .day-body > div[style*="display:flex"]{ flex-wrap:wrap; }
+
+  /* "añadir día" deja de ser una barra de ancho completo y pasa a ser
+     una columna más al final de la rejilla */
+  body.staff-desktop .pw-addday{
+    margin-bottom:0; min-height:104px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  body.staff-desktop #pw-days + .pw-addday{
+    width:auto; max-width:255px; margin-top:10px;
+  }
+  /* cabecera de la semana y botonera con ancho de lectura cómodo */
+  body.staff-desktop .pw-box{ max-width:900px; }
+  body.staff-desktop #tab-coach-planner .pw-new{ max-width:340px; }
+  body.staff-desktop .wk-days{ column-count:2; column-gap:18px; }
 }
 
 /* ── PRINT / PDF ── */
@@ -10318,7 +10366,10 @@ function renderDayCard(d,i){
       ${dCanUp?`<button onclick="event.stopPropagation();moveDay(${i},-1)"><span>&#8593;</span> Subir día</button>`:''}
       ${dCanDown?`<button onclick="event.stopPropagation();moveDay(${i},1)"><span>&#8595;</span> Bajar día</button>`:''}
     </div></span>`;
-  return `<div class="day-card">
+  const _dt = dayType(d.titulo||'');
+  const _stripe = _dt==='high' ? '#ff7070' : _dt==='mid' ? '#ffa040' : _dt==='low' ? '#00e5a0' : '';
+  const _stripeStyle = _stripe ? ` style="border-top:2px solid ${_stripe}"` : '';
+  return `<div class="day-card"${_stripeStyle}>
     <div class="day-hd" onclick="toggleDay(${i})">
       ${dayHandle}
       <span class="chev">${open?'&#9660;':'&#9654;'}</span>
