@@ -1496,7 +1496,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   body.staff-desktop #picker-modal .fields-box{
     pointer-events:auto;
     max-width:440px !important;
-    height:100vh;
+    height:100%;
+    min-height:100%;
     overflow-y:auto;
     border-radius:0;
     border-left:1px solid var(--border2);
@@ -1670,6 +1671,22 @@ body.light-mode .cal-mas{color:rgba(0,0,0,.13)}
 body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 .ag-day.con .ag-dnum{color:var(--text)}
 .ag-dot{width:6px;height:6px}
+
+/* ══ ESCALADO EN PANTALLAS ANCHAS (solo staff) ══════════════
+   Toda la interfaz está en píxeles fijos, pensada para móvil. En un
+   monitor ancho eso se ve diminuto por más que se suban tamaños uno
+   a uno. Aquí se escala el conjunto —texto, celdas, gráficas y barra
+   lateral— manteniendo las proporciones. El jugador y el móvil no se
+   tocan: todo cuelga de body.staff-desktop. */
+@media (min-width:1500px){
+  body.staff-desktop{ zoom:1.15; }
+}
+@media (min-width:1800px){
+  body.staff-desktop{ zoom:1.28; }
+}
+@media (min-width:2300px){
+  body.staff-desktop{ zoom:1.45; }
+}
 
 /* ── PRINT / PDF ── */
 @media print {
