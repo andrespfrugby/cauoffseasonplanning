@@ -2571,6 +2571,7 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
             <option value="women's">Women's</option>
             <option value="academy">Academy</option>
           </select>
+          <button class="test-pdf-btn" onclick="exportLoadPDF()" title="Exportar esta vista a PDF">⭳ PDF</button>
           <span class="coach-badge">Coach</span>
         </div>
       </div>
@@ -5705,6 +5706,74 @@ function onCoachSquadChangeRpe() {
   onCoachSquadChange();
   if (_loadSub === 'diaria') renderCargaDiaria();
   if (_loadSub === 'control') renderControlCargas();
+}
+
+// ── EXPORTAR A PDF la sub-vista de Load que esté abierta ──────
+// Clona el HTML ya pintado y lo abre en una ventana con paleta
+// clara. Las gráficas son SVG, así que salen tal cual en el PDF.
+function exportLoadPDF(){
+  const mapa = {
+    diaria:    { id:'carga-diaria-content',   titulo:'Carga diaria' },
+    tendencia: { id:'tendencia-content',      titulo:'Carga semanal' },
+    control:   { id:'control-cargas-content', titulo:'Control de cargas · ACWR' }
+  };
+  const def = mapa[_loadSub] || mapa.diaria;
+  const cont = document.getElementById(def.id);
+  if (!cont || !cont.innerHTML.trim()){ alert('No hay nada que exportar en esta vista.'); return; }
+
+  const squad = state.coachSquadFilter || 'Todos los squads';
+  const hoy   = new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'});
+
+  // Quitar controles que no pintan nada en papel (botones, selectores)
+  const clon = cont.cloneNode(true);
+  clon.querySelectorAll('button, .quad-navbtn, .quad-hoybtn, input, select').forEach(el=>el.remove());
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+    <title>${def.titulo} · CAU Rugby</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      :root{
+        --bg:#fff; --surface:#fff; --surface1:#f7f8fa; --surface2:#f0f2f5;
+        --text:#111; --muted:#666; --text-secondary:#555;
+        --border:#e3e5ea; --border2:#d7dae1; --border-strong:#bcc0c9;
+        --accent:#c0101f; --accent2:#009c6e;
+        --font-body:-apple-system,Segoe UI,Roboto,sans-serif;
+        --font-head:-apple-system,Segoe UI,Roboto,sans-serif;
+      }
+      body{background:#fff;color:#111;font-family:var(--font-body);padding:26px 30px}
+      .hd{border-bottom:3px solid #c0101f;padding-bottom:12px;margin-bottom:20px;
+          display:flex;justify-content:space-between;align-items:flex-end}
+      .hd h1{font-size:22px;color:#111}
+      .hd .sub{font-size:12px;color:#666;margin-top:3px}
+      .club{font-size:17px;font-weight:800;color:#c0101f;letter-spacing:.04em}
+      svg{max-width:100%;height:auto}
+      .cd-svg-wrap,.cc-svg-wrap{background:#f7f8fa;border-radius:8px;padding:8px;margin-bottom:10px;page-break-inside:avoid}
+      .cd-kpi,.cc-kpi,.kpi-card{background:#f7f8fa;border:1px solid #e3e5ea;border-radius:8px}
+      .cd-kpis,.cc-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+      .cd-chart-title{font-size:13px;font-weight:700;margin:14px 0 4px;color:#111}
+      .cc-jrow{background:#f7f8fa;border:1px solid #e3e5ea;border-radius:8px;padding:10px 12px;
+               margin-bottom:6px;page-break-inside:avoid}
+      .cc-jstat{background:#fff;border:1px solid #e3e5ea;border-radius:6px;padding:5px 8px;text-align:center;flex:1}
+      .cd-name{font-size:9px;color:#666}
+      .foot{margin-top:22px;padding-top:12px;border-top:1px solid #eee;
+            font-size:10px;color:#999;display:flex;justify-content:space-between}
+      @media print{ body{padding:14px} }
+    </style></head><body>
+    <div class="hd">
+      <div>
+        <h1>${def.titulo}</h1>
+        <div class="sub">${squad} · ${hoy}</div>
+      </div>
+      <div class="club">CAU RUGBY</div>
+    </div>
+    ${clon.innerHTML}
+    <div class="foot"><span>CAU Preseason Planner</span><span>${hoy}</span></div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script>
+    </body></html>`;
+
+  const w = window.open('','_blank');
+  if(!w){ alert('Permite las ventanas emergentes para exportar el PDF'); return; }
+  w.document.write(html); w.document.close();
 }
 
 // ── SUB-NAV de Load: Carga diaria / Tendencia / Control de cargas ──
