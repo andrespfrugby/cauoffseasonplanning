@@ -5728,6 +5728,27 @@ function exportLoadPDF(){
   const clon = cont.cloneNode(true);
   clon.querySelectorAll('button, .quad-navbtn, .quad-hoybtn, input, select').forEach(el=>el.remove());
 
+  // Los nombres bajo las gráficas se pisan al imprimir: se recortan al
+  // nombre de pila y se les da un ancho fijo con el texto en vertical.
+  clon.querySelectorAll('.cd-name').forEach(el=>{
+    const nm = (el.textContent||'').split(/[\s,]+/)[0].replace(/…$/,'');
+    el.textContent = nm.length > 9 ? nm.slice(0,9) : nm;
+  });
+
+  // Cada gráfica con su título en un bloque que no se parte entre páginas
+  const bloques = [];
+  Array.from(clon.children).forEach(el=>{
+    if (el.classList && el.classList.contains('cd-chart-title')) bloques.push([el]);
+    else if (bloques.length) bloques[bloques.length-1].push(el);
+  });
+  bloques.forEach(grupo=>{
+    if (!grupo.length) return;
+    const caja = document.createElement('div');
+    caja.className = 'pdf-bloque';
+    grupo[0].parentNode.insertBefore(caja, grupo[0]);
+    grupo.forEach(el=>caja.appendChild(el));
+  });
+
   const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
     <title>${def.titulo} · CAU Rugby</title>
     <style>
@@ -5754,7 +5775,13 @@ function exportLoadPDF(){
       .cc-jrow{background:#f7f8fa;border:1px solid #e3e5ea;border-radius:8px;padding:10px 12px;
                margin-bottom:6px;page-break-inside:avoid}
       .cc-jstat{background:#fff;border:1px solid #e3e5ea;border-radius:6px;padding:5px 8px;text-align:center;flex:1}
-      .cd-name{font-size:9px;color:#666}
+      .pdf-bloque{page-break-inside:avoid;break-inside:avoid;margin-bottom:16px}
+      .cd-names{display:flex;justify-content:space-around;margin-top:4px}
+      .cd-name{font-size:8px;color:#555;flex:1;text-align:center;
+               writing-mode:vertical-rl;transform:rotate(180deg);
+               height:52px;white-space:nowrap;overflow:visible}
+      .cd-svg-wrap svg,.cc-svg-wrap svg{height:210px !important;width:100%}
+      .cd-empty{font-size:11px;color:#777;padding:10px 0}
       .foot{margin-top:22px;padding-top:12px;border-top:1px solid #eee;
             font-size:10px;color:#999;display:flex;justify-content:space-between}
       @media print{ body{padding:14px} }
