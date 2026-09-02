@@ -5769,19 +5769,27 @@ function exportLoadPDF(){
       .club{font-size:17px;font-weight:800;color:#c0101f;letter-spacing:.04em}
       svg{max-width:100%;height:auto}
       .cd-svg-wrap,.cc-svg-wrap{background:#f7f8fa;border-radius:8px;padding:8px;margin-bottom:10px;page-break-inside:avoid}
-      .cd-kpi,.cc-kpi,.kpi-card{background:#f7f8fa;border:1px solid #e3e5ea;border-radius:8px}
-      .cd-kpis,.cc-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-      .cd-chart-title{font-size:13px;font-weight:700;margin:14px 0 4px;color:#111}
+      .cd-kpi,.cc-kpi,.kpi-card{background:#f7f8fa;border:1px solid #e3e5ea;border-radius:8px;
+        padding:12px 8px;text-align:center}
+      .cd-kpis,.cc-kpis,.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+      .cd-kpi-num,.cc-kpi-n,.kpi-num{font-size:24px;font-weight:800;line-height:1;display:block}
+      .cd-kpi-lbl,.cc-kpi-l,.kpi-lbl{font-size:9px;color:#777;text-transform:uppercase;
+        letter-spacing:.07em;margin-top:5px;display:block;font-weight:600}
+      .cd-chart-title{font-size:13px;font-weight:700;margin:0 0 5px;color:#111}
+      .cd-chart-title + div{font-size:10px;color:#888;margin:-3px 0 6px}
       .cc-jrow{background:#f7f8fa;border:1px solid #e3e5ea;border-radius:8px;padding:10px 12px;
                margin-bottom:6px;page-break-inside:avoid}
       .cc-jstat{background:#fff;border:1px solid #e3e5ea;border-radius:6px;padding:5px 8px;text-align:center;flex:1}
       .pdf-bloque{page-break-inside:avoid;break-inside:avoid;margin-bottom:16px}
       .cd-names{display:flex;justify-content:space-around;margin-top:4px}
-      .cd-name{font-size:8px;color:#555;flex:1;text-align:center;
+      .cd-name{font-size:8px;color:#555;flex:1;text-align:right;
                writing-mode:vertical-rl;transform:rotate(180deg);
-               height:52px;white-space:nowrap;overflow:visible}
+               height:44px;white-space:nowrap;overflow:visible}
       .cd-svg-wrap svg,.cc-svg-wrap svg{height:210px !important;width:100%}
-      .cd-empty{font-size:11px;color:#777;padding:10px 0}
+      .cd-empty{font-size:11px;color:#999;padding:6px 0;font-style:italic}
+      .cd-svg-wrap,.cc-svg-wrap{border:1px solid #eceef2}
+      .cc-zonebar{height:7px;border-radius:4px;display:flex;overflow:hidden;margin-bottom:4px}
+      .cc-jbar{background:#eceef2}
       .foot{margin-top:22px;padding-top:12px;border-top:1px solid #eee;
             font-size:10px;color:#999;display:flex;justify-content:space-between}
       @media print{ body{padding:14px} }
