@@ -5338,6 +5338,7 @@ async function renderAgenda(){
     // registrada, el punto se marca en verde.
     const dots = [];
     info.gym.forEach(g=>{
+      if (g.individual === true){ dots.push(hecho.gym ? '#00e5a0' : '#a99ff5'); return; }
       const col = _agColorTipo(g.titulo);
       dots.push(hecho.gym ? '#00e5a0' : (col.txt==='var(--muted)' ? '#5fb3f5' : col.txt));
     });
@@ -5393,17 +5394,21 @@ function renderAgendaDia(){
 
   info.gym.forEach((g, idx) => {
     const abierta = _ag.abierta === 'gym'+idx;
-    const col = _agColorTipo(g.titulo);
+    const esIndiv = g.individual === true;
+    const col = esIndiv
+      ? { bg:'rgba(169,159,245,.15)', txt:'#a99ff5', borde:'rgba(169,159,245,.4)' }
+      : _agColorTipo(g.titulo);
     html += `<div class="ag-card" style="${abierta?'border-color:'+col.borde:''}">
-      <div class="ag-card-hd" style="background:${col.bg};color:${col.txt}">GYM</div>
+      <div class="ag-card-hd" style="background:${col.bg};color:${col.txt}">${esIndiv?'INDIVIDUAL':'GYM'}</div>
       <div class="ag-card-body">
         <div class="ag-card-tit">${g.titulo || 'Sesión de gimnasio'}</div>
         <div class="ag-chips">
           <span class="ag-chip">${g.nEj} ejercicios</span>
           <span class="ag-chip">${g.nBloques} bloques</span>
+          ${esIndiv?'<span class="ag-chip" style="background:rgba(169,159,245,.14);color:#a99ff5">solo para ti</span>':''}
           ${hecho.gym?'<span class="ag-chip" style="background:rgba(0,229,160,.12);color:#00e5a0">registrada</span>':''}
         </div>
-        <div class="ag-btn" onclick="agToggleSesion('gym${idx}','${g.weekId||''}',${g.semanaIdx},${g.dia})">
+        <div class="ag-btn" onclick="agToggleSesion('gym${idx}','${g.weekId||''}',${g.semanaIdx||0},${g.dia},'${g.extraId||''}')">
           ${abierta?'Cerrar sesión ⌃':'Abrir sesión ⌄'}
         </div>
       </div>
@@ -5448,7 +5453,7 @@ function _agColorTipo(titulo){
 }
 
 // Despliega la sesión dentro de su tarjeta (o la pliega si ya estaba abierta)
-async function agToggleSesion(key, weekId, semanaIdx, dia){
+async function agToggleSesion(key, weekId, semanaIdx, dia, extraId){
   if (_ag.abierta === key) { _ag.abierta = null; renderAgendaDia(); return; }
   _ag.abierta = key;
   state.semana = semanaIdx;
@@ -5459,9 +5464,11 @@ async function agToggleSesion(key, weekId, semanaIdx, dia){
   if (!cont) return;
   // Por id: los índices de la lista de semanas cambian según el filtro
   // de visibles, y eso hacía que se abriera una sesión distinta.
-  const res = weekId
-    ? await api({ action:'getRutinaDia', weekId:weekId, dia:dia, squad: state.squad||'' })
-    : await api({ action:'getRutina', semana:semanaIdx, dia:dia, squad: state.squad||'' });
+  const res = extraId
+    ? await api({ action:'getRutinaDia', extraId:extraId, dia:dia, usuario:(state.user&&state.user.usuario)||'' })
+    : weekId
+      ? await api({ action:'getRutinaDia', weekId:weekId, dia:dia, squad: state.squad||'' })
+      : await api({ action:'getRutina', semana:semanaIdx, dia:dia, squad: state.squad||'' });
   if (!res.ok || !res.ejercicios || !res.ejercicios.length) {
     cont.innerHTML = '<div class="ag-empty">No hay ejercicios en esta sesión.</div>';
     return;
@@ -6365,6 +6372,7 @@ async function renderSettingsPanel() {
     <div style="background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.6">
       <strong style="color:var(--accent2)">Visibilidad de semanas</strong><br>
       Las semanas desactivadas no aparecen en la app de los jugadores. Los coaches ven siempre todas.<br>
+      Las <strong>sesiones individuales</strong> (pestaña Individuales del Planner) no se gestionan aquí: son personales y las ve siempre su jugador.<br>
       Las marcadas como <span style="color:var(--accent2);font-weight:600">Planner</span> son las que has creado desde la pesta&ntilde;a Planner.
     </div>
     ${groupsHtml}`;
@@ -10753,7 +10761,10 @@ function calPintarPaso(){
     const abierto = _cal.editGym === gi;
     existentes += `<div style="background:var(--surface2);border-radius:8px;margin-bottom:5px;overflow:hidden">
       <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer" onclick="calToggleGym(${gi},'${g.weekId||''}',${g.dia})">
-        <span style="font-size:13px;color:var(--text);flex:1">🏋️ ${g.titulo||'Gym'} · ${g.nEj} ej.</span>
+        <span style="flex:1;min-width:0">
+          <span style="display:block;font-size:13px;color:var(--text)">🏋️ ${g.titulo||'Gym'} · ${g.nEj} ej.</span>
+          <span style="display:block;font-size:10px;color:var(--muted);margin-top:2px">de: ${g.semanaNombre||'—'}</span>
+        </span>
         <span onclick="event.stopPropagation();calPublicar('${g.weekId||''}',${g.visible===true?'false':'true'})"
               title="${g.visible===true?'Visible para los jugadores':'Oculta para los jugadores'}"
               style="font-size:10px;font-weight:600;border-radius:5px;padding:3px 8px;cursor:pointer;flex-shrink:0;
@@ -10791,6 +10802,12 @@ function calPintarPaso(){
         <span style="font-size:15px;color:${color}">›</span>
       </div>`;
     box.innerHTML = cab +
+      (info.gym.filter(g=>g.visible!==false).length > 1
+        ? `<div style="background:rgba(255,192,77,.09);border:1px solid rgba(255,192,77,.3);border-radius:8px;
+                     padding:9px 11px;margin-bottom:9px;font-size:11px;color:#ffc04d;line-height:1.5">
+             ⚠ Hay ${info.gym.filter(g=>g.visible!==false).length} sesiones de gym visibles este día.
+             Los jugadores las verán todas. Oculta las que sobren con el botón «visible».
+           </div>` : '') +
       (existentes ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
           <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;flex:1">Ya programado</span>
           <span onclick="calVaciarDia()" style="font-size:11px;color:#ff7070;cursor:pointer;border:1px solid rgba(255,112,112,.35);border-radius:6px;padding:4px 10px">🗑 Vaciar día</span>
@@ -10971,7 +10988,7 @@ async function calCrearSesionGym(){
   }
   _cal.guardando = false;
   calCerrar();
-  _plan.week = { id:res.id, nombre:(titulo||'Sesión')+' · '+f, squad:_cal.squad, visible:true,
+  _plan.week = { id:res.id, nombre:(titulo||'Sesión')+' · '+f, squad:_cal.squad, visible:false,
     fecha_inicio:f, fecha_fin:f, data:{ dias:[{ titulo:titulo, fecha:f, bloques:[], _open:true }] } };
   plannerSub('weeks');
   renderWeekEditor();
@@ -11169,7 +11186,14 @@ async function calAplicarPrograma(){
   _cal.guardando = false;
   if (res && res.ok){
     calCerrar();
-    alert('Programa aplicado a '+res.dias+' días.\n\nQuedan OCULTOS para los jugadores. Actívalos desde el calendario (botón "oculta") o en Settings.');
+    // La plantilla de origen tiene sus propias fechas: si sigue visible,
+    // el jugador ve la plantilla Y la copia. Se ofrece ocultarla.
+    const ocultar = confirm(
+      'Programa aplicado a '+res.dias+' días.\n\n' +
+      'La copia queda OCULTA hasta que la actives en el calendario.\n\n' +
+      '¿Ocultar también la plantilla original? (recomendado: si no, los jugadores verán las sesiones dos veces)'
+    );
+    if (ocultar) await api({ action:'publishWeek', id:id, visible:false });
     renderCalendarioCoach();
   } else {
     if (btnP){ btnP.disabled = false; btnP.textContent = 'Aplicar desde este día'; }
@@ -11396,7 +11420,9 @@ function crearExtra(){
   const nombre=document.getElementById('indiv-nombre').value.trim()||'Extra';
   if(!u){ alert('Selecciona un jugador'); return; }
   if(!sem){ alert('Selecciona una semana'); return; }
-  _extraEdit={ id:'', usuario:u, semanaNombre:sem, nombre, dias:[{ titulo:'Día extra', fecha:'', bloques:[], _open:true }] };
+  const hoyISO = new Date().toISOString().slice(0,10);
+  _extraEdit={ id:'', usuario:u, semanaNombre:sem, nombre,
+               dias:[{ titulo:'Día extra', fecha:hoyISO, bloques:[], _open:true }] };
   renderExtraEditor();
 }
 function editExtra(id){
@@ -11673,6 +11699,11 @@ function renderWeekEditor(){
   const daysHtml=(w.data.dias||[]).map((d,i)=>renderDayCard(d,i)).join('');
   document.getElementById('planner-content').innerHTML=`
     <button class="pback" onclick="cerrarEditor()">&#8249; volver a semanas</button>
+    ${w._esExtra ? `<div style="background:rgba(169,159,245,.09);border:1px solid rgba(169,159,245,.3);
+        border-radius:9px;padding:10px 13px;margin-bottom:10px;font-size:12px;color:#a99ff5;line-height:1.6">
+        <b>Sesión individual de ${w._extraNombreJug||''}</b> — solo la ve este jugador y no hace falta activarla en Settings.
+        Aparece en su calendario <b>el día que pongas en la fecha de cada día</b>: si lo dejas vacío, no le saldrá.
+      </div>` : ''}
     <div class="pw-box">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <input class="inp" style="font-size:15px;font-weight:600;margin:0;flex:1" placeholder="Titulo de la semana (ej. OFFSEASON WEEK 1)" value="${w.nombre}" oninput="_plan.week.nombre=this.value;autosaveLocal();scheduleAutosaveServer()">
