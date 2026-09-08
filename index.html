@@ -1708,6 +1708,10 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
   body.staff-desktop{ zoom:1.35; }
 }
 
+/* ── Panel de lesiones ── */
+.les-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px}
+@media (min-width:760px){ .les-grid{grid-template-columns:1fr 1fr} }
+
 /* ── PRINT / PDF ── */
 @media print {
   * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -10073,28 +10077,83 @@ async function renderLesiones(){
       </div>
     </div>
 
-    ${_lesBarras('Zonas más afectadas', e.porZona)}
-    ${_lesBarras('Tipo de lesión', e.porTipo)}
+    ${_lesSegmentos('Contexto', e.porContexto, {entrenamiento:'#ffa040', partido:'#ff7070'})}
+    ${_lesSegmentos('Severidad', e.porSeveridad, {
+      'Mínima (0-1 d)':'#00e5a0','Leve (2-7 d)':'#9acf44','Moderada (8-28 d)':'#ffc04d',
+      'Grave (>28 d)':'#ff7070','En curso':'#7a8494'})}
+    <div class="les-grid">
+      ${_lesBarras('Zonas más afectadas', e.porZona, '#ff7070')}
+      ${_lesBarras('Tipo de lesión', e.porTipo, '#ffa040')}
+      ${_lesBarras('Mecanismo', e.porMecanismo, '#a99ff5')}
+      ${_lesBarras('Acción de contacto', e.porContacto, '#7bb8ff')}
+      ${_lesBarras('Posición de juego', e.porPosicion, '#00e5a0')}
+      ${_lesBarras('Días de baja por zona', e.diasPorZona, '#f07aaa', ' d')}
+    </div>
+    ${_lesMeses(e.porMes)}
 
     <div style="font-size:12px;font-weight:600;margin:18px 0 8px">Partes registrados</div>
     <div id="les-lista">${_lesLista()}</div>
     <div id="les-form"></div>`;
 }
 
-function _lesBarras(titulo, datos){
+function _lesBarras(titulo, datos, color, sufijo){
+  color = color || '#ff7070'; sufijo = sufijo || '';
   if (!datos || !datos.length) return '';
   const max = Math.max(...datos.map(d=>d.n), 1);
   const filas = datos.slice(0,8).map(d=>`
-    <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px">
-      <span style="width:150px;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0">${d.clave}</span>
-      <div style="flex:1;height:12px;background:var(--surface2);border-radius:3px;overflow:hidden">
-        <div style="width:${(d.n/max*100).toFixed(1)}%;height:100%;background:#ff7070;opacity:.65;border-radius:3px"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+      <span style="width:130px;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0" title="${d.clave}">${d.clave}</span>
+      <div style="flex:1;height:13px;background:var(--surface2);border-radius:3px;overflow:hidden">
+        <div style="width:${(d.n/max*100).toFixed(1)}%;height:100%;background:${color};opacity:.7;border-radius:3px"></div>
       </div>
-      <span style="width:24px;font-size:11px;font-weight:600;text-align:right;flex-shrink:0">${d.n}</span>
+      <span style="width:32px;font-size:11px;font-weight:600;text-align:right;flex-shrink:0;color:${color}">${d.n}${sufijo}</span>
     </div>`).join('');
-  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px">
     <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px">${titulo}</div>
     ${filas}</div>`;
+}
+
+// Barra apilada: para repartos de pocas categorías (contexto, severidad)
+function _lesSegmentos(titulo, datos, colores){
+  if (!datos || !datos.length) return '';
+  const total = datos.reduce((s,d)=>s+d.n,0);
+  if (!total) return '';
+  const segs = datos.map(d=>{
+    const c = (colores && colores[d.clave]) || '#7a8494';
+    return `<div style="width:${(d.n/total*100).toFixed(1)}%;background:${c};opacity:.8" title="${d.clave}: ${d.n}"></div>`;
+  }).join('');
+  const leyenda = datos.map(d=>{
+    const c = (colores && colores[d.clave]) || '#7a8494';
+    return `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:14px;font-size:11px;color:var(--muted)">
+      <span style="width:9px;height:9px;border-radius:2px;background:${c}"></span>
+      ${d.clave} <b style="color:${c}">${d.n}</b>
+      <span style="opacity:.6">(${Math.round(d.n/total*100)}%)</span></span>`;
+  }).join('');
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px">${titulo}</div>
+    <div style="display:flex;height:16px;border-radius:4px;overflow:hidden;margin-bottom:9px">${segs}</div>
+    <div>${leyenda}</div>
+  </div>`;
+}
+
+// Lesiones por mes: para ver dónde se acumulan en la temporada
+function _lesMeses(datos){
+  if (!datos || datos.length < 2) return '';
+  const MES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const max = Math.max(...datos.map(d=>d.n), 1);
+  const barras = datos.map(d=>{
+    const m = parseInt(d.clave.slice(5,7));
+    const h = Math.max(6, Math.round(d.n/max*74));
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:26px">
+      <span style="font-size:10px;font-weight:600;color:#ff7070">${d.n}</span>
+      <div style="width:100%;max-width:34px;height:${h}px;background:#ff7070;opacity:.65;border-radius:3px 3px 0 0"></div>
+      <span style="font-size:9px;color:var(--muted)">${MES[m-1]||''}</span>
+    </div>`;
+  }).join('');
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-top:10px">
+    <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:11px">Lesiones por mes</div>
+    <div style="display:flex;gap:6px;align-items:flex-end;min-height:96px">${barras}</div>
+  </div>`;
 }
 
 function _lesLista(){
