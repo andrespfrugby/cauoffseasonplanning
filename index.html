@@ -4701,7 +4701,9 @@ async function renderInformeTesting(){
         <div class="inf-step-n">3</div>
         <div class="inf-step-txt">
           <div class="inf-step-t">Sube el Excel</div>
-          <div class="inf-step-sub">Dos columnas: <b>Jugador</b> (Apellido, Nombre) y <b>Valor</b>. La unidad la coge del test elegido.</div>
+          <div class="inf-step-sub">Primera columna <b>Jugador</b> (Apellido, Nombre). Después, una columna por <b>intento</b> —
+            «Intento 1, Intento 2, Intento 3»— o una sola de <b>Valor</b>. Si hay varios intentos podrás elegir si se guarda
+            el mejor o el promedio. La unidad la coge del test elegido.</div>
           <label class="inf-upload">
             <input type="file" id="inf-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="_informeArchivo(event)">
             <span id="inf-upload-lbl">⭱ Elegir archivo Excel</span>
@@ -4720,6 +4722,7 @@ function _informeArchivo(ev){
     return;
   }
   document.getElementById('inf-upload-lbl').textContent = '📄 ' + file.name;
+  _informeRaw = []; _informeCols = []; _informeModo = 'mejor';
   const reader = new FileReader();
   reader.onload = function(e){
     try{
@@ -4743,31 +4746,52 @@ async function _informeProcesar(rows){
   const dbg = m => { if(prev) prev.innerHTML = '<div class="inf-ready"><div class="inf-ready-s">'+m+'</div></div>'; };
   dbg('Leyendo Excel...');
   if(!rows || rows.length < 2){ prev.innerHTML='<div class="inf-error">El Excel está vacío.</div>'; return; }
-  // detectar columnas por cabecera
+
   const head = rows[0].map(h=>String(h||'').toLowerCase().trim());
-  let colJug = head.findIndex(h=>h.indexOf('jugador')!==-1 || h.indexOf('nombre')!==-1 || h.indexOf('player')!==-1 || h.indexOf('apellido')!==-1);
-  let colVal = head.findIndex(h=>h.indexOf('valor')!==-1 || h.indexOf('resultado')!==-1 || h.indexOf('marca')!==-1 || h.indexOf('dato')!==-1);
-  // si no detecta, usa col 0 y col 1
+
+  // Columna del jugador
+  let colJug = head.findIndex(h=>h.indexOf('jugador')!==-1 || h.indexOf('nombre')!==-1 ||
+                                 h.indexOf('player')!==-1  || h.indexOf('apellido')!==-1);
   if(colJug===-1) colJug = 0;
-  if(colVal===-1) colVal = 1;
+
+  // Columnas de intento: todas las demás que tengan números.
+  // Así da igual que mandes "Valor" o "Intento 1 / 2 / 3".
+  const colsVal = [];
+  for(let c=0;c<Math.max(head.length, ...rows.map(r=>(r||[]).length));c++){
+    if(c===colJug) continue;
+    let numeros=0;
+    for(let i=1;i<rows.length;i++){
+      const v=(rows[i]||[])[c];
+      if(v!==undefined && v!=='' && !isNaN(parseFloat(String(v).replace(',','.')))) numeros++;
+    }
+    if(numeros>0) colsVal.push({ idx:c, nombre:(head[c]||('Col '+(c+1))) });
+  }
+  if(!colsVal.length){ prev.innerHTML='<div class="inf-error">No encuentro ninguna columna con valores numéricos.</div>'; return; }
+
+  const num = v => { const n=parseFloat(String(v).replace(',','.')); return isNaN(n)?null:n; };
 
   const raw = [];
   for(let i=1;i<rows.length;i++){
     const r = rows[i]; if(!r) continue;
-    const jug = r[colJug]; const val = r[colVal];
-    if(!jug || val===undefined || val==='' || isNaN(parseFloat(val))) continue;
-    raw.push({ nombre:String(jug).trim(), valor:parseFloat(val) });
+    const jug = r[colJug];
+    if(!jug) continue;
+    const intentos = colsVal.map(c=>num(r[c.idx])).filter(v=>v!==null);
+    if(!intentos.length) continue;
+    raw.push({ nombre:String(jug).trim(), intentos });
   }
   if(!raw.length){ prev.innerHTML='<div class="inf-error">Ningún jugador con dato válido en el Excel.</div>'; return; }
-  dbg('Excel leído ('+raw.length+' jugadores). Conectando con el servidor...');
 
-  // cruzar con jugadores del squad (nombre completo "Apellido, Nombre" en col G)
+  _informeCols = colsVal;
+  _informeRaw  = raw;
+  dbg('Excel leído ('+raw.length+' jugadores, '+colsVal.length+' columna'+(colsVal.length!==1?'s':'')+'). Conectando con el servidor...');
+
+  // Cruzar con los jugadores del squad
   let jugadores = [];
   try {
     const res = await api({ action:'getJugadoresInforme', squad:_informeSquad });
     if (res && res.jugadores) jugadores = res.jugadores;
     else if (res && res.equipo) jugadores = res.equipo;
-    else { prev.innerHTML = '<div class="inf-error">El servidor respondió sin jugadores. ¿Desplegaste la versión nueva del Apps Script? Respuesta: '+JSON.stringify(res||{}).slice(0,150)+'</div>'; return; }
+    else { prev.innerHTML = '<div class="inf-error">El servidor respondió sin jugadores. Respuesta: '+JSON.stringify(res||{}).slice(0,150)+'</div>'; return; }
   } catch(err) {
     prev.innerHTML = '<div class="inf-error">Error conectando con el servidor: '+(err&&err.message?err.message:err)+'</div>';
     return;
@@ -4775,7 +4799,6 @@ async function _informeProcesar(rows){
   const norm = _informeNorm;
   const infoByName = {};
   jugadores.forEach(j=>{ const nc = j.nombreCompleto || j.nombre; if(nc) infoByName[norm(nc)] = { pos:(j.rugbyposition||j.pos||''), usuario:j.usuario }; });
-
   const matchInfo = nombre => {
     const n = norm(nombre);
     if(infoByName[n]) return infoByName[n];
@@ -4787,25 +4810,87 @@ async function _informeProcesar(rows){
     return null;
   };
   raw.forEach(d=>{ const info=matchInfo(d.nombre); d.rugbypos = info?info.pos:''; d.usuario = info?info.usuario:''; });
-  _informeDatos = raw;
 
-  const test = _informeCatalogo.find(t=>t.id===_informeTestSel) || {nombre:'Test',unidad:''};
-  const vals = raw.map(d=>d.valor);
-  const prom = (vals.reduce((a,b)=>a+b,0)/vals.length);
-  const dec = (test.unidad==='m/s')?2:1;
-  const sinCruzar = raw.filter(d=>!d.usuario);
-  const sinUser = sinCruzar.length;
+  _informeAplicarModo();
+}
+
+// Con varios intentos hay que decidir qué se guarda: el mejor o la media.
+// "Mejor" depende del test: en un sprint es el menor tiempo, en un salto el mayor.
+var _informeModo = 'mejor';
+var _informeRaw  = [];
+var _informeCols = [];
+
+function _informeSetModo(m){ _informeModo = m; _informeAplicarModo(); }
+
+function _informeAplicarModo(){
+  const test = _informeCatalogo.find(t=>t.id===_informeTestSel) || {nombre:'Test',unidad:'',mejor_es:'mas'};
+  const mejorMas = (test.mejor_es!=='menos');
+  const dec = (test.unidad==='m/s')?2:(test.unidad==='s'?2:1);
+
+  _informeRaw.forEach(d=>{
+    const arr = d.intentos;
+    d.mejor  = mejorMas ? Math.max(...arr) : Math.min(...arr);
+    d.media  = arr.reduce((s,v)=>s+v,0)/arr.length;
+    d.valor  = (_informeModo==='media') ? Math.round(d.media*Math.pow(10,dec))/Math.pow(10,dec)
+                                        : Math.round(d.mejor*Math.pow(10,dec))/Math.pow(10,dec);
+  });
+  _informeDatos = _informeRaw;
+
+  const prev = document.getElementById('inf-preview');
+  const vals = _informeRaw.map(d=>d.valor);
+  const prom = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const sinCruzar = _informeRaw.filter(d=>!d.usuario);
+  const variasCols = _informeCols.length > 1;
+
+  const tablaPrev = _informeRaw.slice(0,6).map(d=>`
+    <tr>
+      <td style="padding:5px 8px;font-size:12px;color:var(--text)">${d.nombre}${d.usuario?'':' <span style="color:#e6a817">⚠</span>'}</td>
+      ${d.intentos.map(v=>`<td style="padding:5px 8px;font-size:12px;color:var(--muted);text-align:center">${v}</td>`).join('')}
+      <td style="padding:5px 8px;font-size:13px;font-weight:700;color:var(--accent2);text-align:center">${d.valor}</td>
+    </tr>`).join('');
+
+  const cabecera = `<tr>
+      <th style="padding:5px 8px;font-size:9px;color:var(--muted);text-align:left;letter-spacing:.05em">JUGADOR</th>
+      ${_informeCols.map(c=>`<th style="padding:5px 8px;font-size:9px;color:var(--muted);text-align:center;letter-spacing:.05em">${String(c.nombre).toUpperCase().slice(0,10)}</th>`).join('')}
+      <th style="padding:5px 8px;font-size:9px;color:var(--accent2);text-align:center;letter-spacing:.05em">SE GUARDA</th>
+    </tr>`;
+
+  const selector = variasCols ? `
+    <div style="background:var(--surface2);border-radius:9px;padding:11px 13px;margin:12px 0">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+        He detectado <b style="color:var(--text)">${_informeCols.length} intentos</b> por jugador. ¿Qué guardo como resultado?
+      </div>
+      <div style="display:flex;gap:6px">
+        <span onclick="_informeSetModo('mejor')" style="flex:1;text-align:center;padding:9px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;
+          background:${_informeModo==='mejor'?'rgba(0,229,160,.13)':'var(--surface)'};
+          border:1px solid ${_informeModo==='mejor'?'rgba(0,229,160,.4)':'var(--border2)'};
+          color:${_informeModo==='mejor'?'var(--accent2)':'var(--muted)'}">
+          Mejor intento${mejorMas?' (el mayor)':' (el menor)'}
+        </span>
+        <span onclick="_informeSetModo('media')" style="flex:1;text-align:center;padding:9px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;
+          background:${_informeModo==='media'?'rgba(0,229,160,.13)':'var(--surface)'};
+          border:1px solid ${_informeModo==='media'?'rgba(0,229,160,.4)':'var(--border2)'};
+          color:${_informeModo==='media'?'var(--accent2)':'var(--muted)'}">
+          Promedio
+        </span>
+      </div>
+    </div>` : '';
 
   prev.innerHTML = `
-    <div class="inf-ready">
-      <div class="inf-ready-t">✓ ${raw.length} jugadores con datos</div>
-      <div class="inf-ready-s">${test.nombre} · media ${prom.toFixed(dec)} ${test.unidad} · máx ${Math.max(...vals).toFixed(dec)} · mín ${Math.min(...vals).toFixed(dec)}</div>
-      ${sinUser?`<div class="inf-ready-s" style="color:#e6a817">⚠ ${sinUser} sin cruzar (no se guardarán, sí saldrán en el informe):<br><span style="font-size:11px">${sinCruzar.map(d=>d.nombre).join(' · ')}</span></div>`:''}
+    <div class="inf-ready" style="text-align:left">
+      <div class="inf-ready-t" style="text-align:center">✓ ${_informeRaw.length} jugadores con datos</div>
+      <div class="inf-ready-s" style="text-align:center">${test.nombre} · media ${prom.toFixed(dec)} ${test.unidad} · máx ${Math.max(...vals).toFixed(dec)} · mín ${Math.min(...vals).toFixed(dec)}</div>
+      ${selector}
+      <div style="background:var(--surface2);border-radius:9px;overflow:hidden;margin-bottom:10px">
+        <table style="width:100%;border-collapse:collapse">${cabecera}${tablaPrev}</table>
+        ${_informeRaw.length>6?`<div style="font-size:10px;color:var(--muted);padding:6px 9px">… y ${_informeRaw.length-6} más</div>`:''}
+      </div>
+      ${sinCruzar.length?`<div class="inf-ready-s" style="color:#e6a817;text-align:left">⚠ ${sinCruzar.length} sin cruzar (no se guardarán, sí saldrán en el informe):<br><span style="font-size:11px">${sinCruzar.map(d=>d.nombre).join(' · ')}</span></div>`:''}
       <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
         <button class="inf-gen-btn" style="background:var(--accent2)" onclick="_informeGuardar()">💾 Guardar en el Sheet</button>
         <button class="inf-gen-btn" onclick="_informeGenerarPDF()">⭳ Generar informe</button>
       </div>
-      <div id="inf-guardado" style="font-size:11px;color:var(--muted);margin-top:10px"></div>
+      <div id="inf-guardado" style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center"></div>
     </div>`;
 }
 
@@ -4853,9 +4938,12 @@ function _informeGenerarPDF(){
   // tarjetas de resultados (alfabético)
   const cards = alf.map(d=>{
     const mas = (unidad==='km/h') ? `MAS ${(d.valor*0.85*0.2778).toFixed(2)}` : '';
+    const ints = (d.intentos && d.intentos.length>1)
+      ? `<div class="rcard-s">${d.intentos.map(v=>v.toFixed(dec)).join(' · ')}</div>` : '';
     return `<div class="rcard">
       <div class="rcard-n">${d.nombre}</div>
       <div class="rcard-v">${d.valor.toFixed(dec)}<span>${unidad}</span></div>
+      ${ints}
       ${mas?`<div class="rcard-s">${mas}</div>`:''}
     </div>`;
   }).join('');
@@ -4902,7 +4990,7 @@ function _informeGenerarPDF(){
         <div class="eyebrow">CAU RUGBY · TESTING</div>
         <h1>Informe Test</h1>
         <div class="test">${test.nombre}</div>
-        <div class="meta">${squadTxt} · ${hoy}</div>
+        <div class="meta">${squadTxt} · ${hoy}${(_informeCols&&_informeCols.length>1)?' · '+(_informeModo==='media'?'promedio de '+_informeCols.length+' intentos':'mejor de '+_informeCols.length+' intentos'):''}</div>
       </div>
       <div class="kpis">
         <div class="kpi"><div class="n blue">${promEq}</div><div class="l">MEDIA ${unidad.toUpperCase()}</div></div>
