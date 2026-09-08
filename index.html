@@ -4526,12 +4526,56 @@ function renderTestDetail(id){
       <div class="test-big">${t.ultimo}<span class="test-u"> ${t.unidad||''}</span></div>
       <div class="test-big-arrow" style="color:${flecha.color}">${flecha.txt} <span class="test-vs">vs. anterior</span></div>
     </div>
+    ${_testIntentos(t)}
     ${graf}
     <div class="test-cmp">
       <div class="test-cmp-cell"><div class="test-cmp-v">${_fmtTestVal(t.ultimo,t.unidad)}</div><div class="test-cmp-l">TÚ</div></div>
       <div class="test-cmp-cell"><div class="test-cmp-v" style="color:#4aa0dc">${_fmtTestVal(cmpPos,t.unidad)}</div><div class="test-cmp-l">TU POSICIÓN</div></div>
       <div class="test-cmp-cell"><div class="test-cmp-v" style="color:var(--muted)">${_fmtTestVal(cmpEq,t.unidad)}</div><div class="test-cmp-l">EQUIPO</div></div>
     </div>`;
+}
+
+// Mejor y promedio del último test, con el desglose de intentos plegable
+var _testIntentosAbierto = false;
+function _testToggleIntentos(){
+  _testIntentosAbierto = !_testIntentosAbierto;
+  renderTestDetail(_testActualId);
+}
+function _testIntentos(t){
+  if (!t.intentos || t.intentos.length < 2) return '';
+  const u = t.unidad || '';
+  const filas = t.intentos.map((v,i)=>{
+    const esMejor = (v === t.mejor);
+    return `<div style="display:flex;align-items:center;gap:10px;background:var(--surface1);
+        border-radius:8px;padding:9px 12px;margin-bottom:5px;
+        ${esMejor?'border:1px solid rgba(0,229,160,.35)':''}">
+      <span style="font-size:11px;color:var(--muted);width:64px">Intento ${i+1}</span>
+      <span style="flex:1"></span>
+      <span style="font-size:15px;font-weight:700;color:${esMejor?'var(--accent2)':'var(--text)'}">${v}<span class="test-u"> ${u}</span></span>
+      ${esMejor?'<span style="font-size:9px;color:var(--accent2);font-weight:700">MEJOR</span>':'<span style="width:34px"></span>'}
+    </div>`;
+  }).join('');
+  return `<div style="margin-bottom:14px">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div class="test-cmp-cell" style="flex:1">
+        <div class="test-cmp-v" style="color:var(--accent2)">${t.mejor}<span class="test-u"> ${u}</span></div>
+        <div class="test-cmp-l">MEJOR</div>
+      </div>
+      <div class="test-cmp-cell" style="flex:1">
+        <div class="test-cmp-v" style="color:#4aa0dc">${t.media}<span class="test-u"> ${u}</span></div>
+        <div class="test-cmp-l">PROMEDIO</div>
+      </div>
+      <div class="test-cmp-cell" style="flex:1">
+        <div class="test-cmp-v" style="color:var(--muted)">${t.intentos.length}</div>
+        <div class="test-cmp-l">INTENTOS</div>
+      </div>
+    </div>
+    <div onclick="_testToggleIntentos()" style="background:var(--surface1);border:1px solid var(--border2);
+        border-radius:8px;padding:10px;text-align:center;font-size:12px;color:var(--text);cursor:pointer">
+      ${_testIntentosAbierto?'Ocultar intentos ⌃':'Ver todos los intentos ⌄'}
+    </div>
+    ${_testIntentosAbierto?`<div style="margin-top:8px">${filas}</div>`:''}
+  </div>`;
 }
 function _toggleRmInfo(e){
   e.stopPropagation();
@@ -4898,9 +4942,11 @@ async function _informeGuardar(){
   if(!_informeDatos || !_informeTestSel) return;
   const st = document.getElementById('inf-guardado');
   st.textContent = 'Guardando...';
-  const resultados = _informeDatos.filter(d=>d.usuario).map(d=>({ usuario:d.usuario, valor:d.valor }));
+  const resultados = _informeDatos.filter(d=>d.usuario)
+    .map(d=>({ usuario:d.usuario, valor:d.valor, intentos:d.intentos||[] }));
   if(!resultados.length){ st.textContent = 'Ningún jugador se pudo cruzar con un usuario.'; return; }
-  const res = await api({ action:'guardarTestResultados', idTest:_informeTestSel, fecha:_informeFecha, resultados });
+  const res = await api({ action:'guardarTestResultados', idTest:_informeTestSel,
+    fecha:_informeFecha, modo:_informeModo, resultados });
   if(res && res.ok){
     st.innerHTML = `✓ Guardado: ${res.guardados} nuevos, ${res.actualizados} actualizados`;
   } else {
