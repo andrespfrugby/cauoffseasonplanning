@@ -2706,8 +2706,10 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
         <button class="load-subtab active" id="rst-wellness" onclick="readinessSub('wellness')">Wellness</button>
         <button class="load-subtab" id="rst-recup" onclick="readinessSub('recup')">Recuperación</button>
         <button class="load-subtab" id="rst-dolor" onclick="readinessSub('dolor')">Dolor muscular</button>
+        <button class="load-subtab" id="rst-lesiones" onclick="readinessSub('lesiones')">Lesiones</button>
         <button class="load-subtab" id="rst-alertas" onclick="readinessSub('alertas')">⚠ Alertas <span id="rst-alertas-badge" class="rst-badge" style="display:none"></span></button>
       </div>
+      <div id="lesiones-content" style="display:none"></div>
       <div id="readiness-content"><div class="loader"><div class="spinner"></div></div></div>
 
       <!-- ── SUB-VISTA: Recuperación (carga vs. readiness + cuadrante) ── -->
@@ -5342,9 +5344,10 @@ async function renderAgenda(){
       const col = _agColorTipo(g.titulo);
       dots.push(hecho.gym ? '#00e5a0' : (col.txt==='var(--muted)' ? '#5fb3f5' : col.txt));
     });
+    const evH = (hecho && hecho.eventos) ? hecho.eventos : {};
     info.eventos.forEach(e=>{
       const esP = e.tipo==='partido';
-      const ok  = esP ? hecho.partido : hecho.campo;
+      const ok  = evH[e.id] === true;
       dots.push(ok ? '#00e5a0' : (esP ? '#ff7070' : '#ffa040'));
     });
     const conAlgo = dots.length ? ' con' : '';
@@ -5421,7 +5424,9 @@ function renderAgendaDia(){
     const col = esPartido
       ? { bg:'rgba(232,20,42,.13)', txt:'#ff7070' }
       : { bg:'rgba(255,160,64,.13)', txt:'#ffa040' };
-    const ok = esPartido ? hecho.partido : hecho.campo;
+    // Hecho por evento: dos partidos el mismo día se marcan por separado
+    const evHechos = (hecho && hecho.eventos) ? hecho.eventos : {};
+    const ok = evHechos[e.id] === true;
     // Solo hora limpia (HH:mm) y duración. Nada de fechas raras.
     const horaOk = /^\d{1,2}:\d{2}$/.test(String(e.hora||'')) ? e.hora : '';
     const meta = [horaOk, e.duracion?e.duracion+' min':''].filter(Boolean).join(' · ');
@@ -5433,7 +5438,7 @@ function renderAgendaDia(){
       </div>
       <div class="ag-card-body">
         <div class="ag-card-tit">${e.titulo || (esPartido?'Partido':'Entreno de campo')}</div>
-        <div class="ag-btn ${ok&&!abierto?'ag-btn-done':'ag-btn-campo'}" onclick="agToggleRpe('${key}','${e.tipo}','${f}',${e.duracion||0})">
+        <div class="ag-btn ${ok&&!abierto?'ag-btn-done':'ag-btn-campo'}" onclick="agToggleRpe('${key}','${e.tipo}','${f}',${e.duracion||0},'${e.id}')">
           ${abierto ? 'Cerrar ⌃' : (ok ? '✓ RPE registrado — editar' : 'Registrar RPE ⌄')}
         </div>
       </div>
@@ -5490,14 +5495,14 @@ async function agToggleSesion(key, weekId, semanaIdx, dia, extraId){
 // calendario), así que solo se pide esfuerzo y duración/minutos.
 var _agRpe = { rpe:null, min:'', tipo:'entreno', fecha:null, guardando:false };
 
-function agToggleRpe(key, tipo, fecha, durPrevista){
+function agToggleRpe(key, tipo, fecha, durPrevista, idEvento){
   if (_ag.abierta === key) { _ag.abierta = null; renderAgendaDia(); return; }
   _ag.abierta = key;
   _agRpe = {
     rpe:null,
     min: durPrevista ? String(durPrevista) : '',
     tipo: tipo==='partido' ? 'partido' : 'entreno',
-    fecha: fecha, guardando:false, key:key
+    fecha: fecha, guardando:false, key:key, idEvento: idEvento||''
   };
   renderAgendaDia();
   agPintarRpe();
@@ -5572,7 +5577,7 @@ async function agGuardarRpe(){
     action:'saveFieldLoad', usuario:(state.user&&state.user.usuario)||'',
     fecha:_agRpe.fecha, tipo:_agRpe.tipo, rpe:_agRpe.rpe,
     minutos: _agRpe.min ? parseInt(_agRpe.min) : '',
-    semana:'', dia:''
+    idEvento:_agRpe.idEvento||'', semana:'', dia:''
   });
   _agRpe.guardando = false;
   if (res && res.ok) { _ag.abierta = null; renderAgenda(); }
@@ -9965,11 +9970,376 @@ function onReadinessDateChange() {
   else renderReadinessDashboard();
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  LESIONES — parte según el consenso de rugby (Fuller 2007)
+//  El cuestionario completo, con el jugador por nombre y la fecha
+//  de retorno editable después: la lesión queda ABIERTA hasta que
+//  se rellena, que es lo que da los días de baja.
+// ═══════════════════════════════════════════════════════════════
+var _les = { lista:[], edit:null, jugadores:[], epi:null };
+
+const LES_ZONAS = ['Cabeza / Cara','Cuello / C. Cervical','Caja torácica / C. Dorsal / Esternón',
+  'C. lumbar','Abdomen','Pelvis / Sacro','Hombro / Clavícula','Brazo','Codo','Antebrazo',
+  'Muñeca','Mano / Pulgar / Dedos','Cadera / Ingle','Cara anterior del muslo',
+  'Cara posterior del muslo','Rodilla','Pierna / Tendón de Aquiles','Tobillo','Pie / Dedos'];
+
+const LES_TIPOS = ['Conmoción (con o sin pérdida de conocimiento)','Lesión estructural del cerebro',
+  'Compresión médula espinal / Lesión médula espinal','Fractura','Otras lesiones óseas',
+  'Luxación / Subluxación','Esguince / Lesión ligamentaria','Lesión de meniscos, cartílagos o discos',
+  'Rotura, sobrecarga, desgarro o calambres musculares','Tendinopatía, rotura tendinosa o bursitis',
+  'Hematoma, golpes o contusiones','Abrasión o rozadura intensa','Laceración, corte o herida',
+  'Lesión nervio periférico','Lesión dentaria','Lesión visceral','Otro'];
+
+const LES_CONTACTO = ['No','Siendo placado','Placando','Maul','Abierta / Ruck',
+  'Touche / Lineout','Melé / Scrum','Colisión o golpe fortuito','Corriendo','Otro'];
+
+const LES_PRUEBAS = ['Radiografía','Ecografía','RNM','ArtroRNM','TAC','Inmovilización de urgencia',
+  'Tratamiento farmacológico','Tratamiento quirúrgico','Rehabilitación','Otros'];
+
+const LES_PROTEC = ['No','Casco','Hombreras','Bucal','Espinilleras','Otra'];
+
+function _lesNombre(u){
+  const j = (_les.jugadores||[]).find(x=>x.usuario===u);
+  return j ? j.nombre : u;
+}
+function _lesDias(l){
+  if (!l.fecha_lesion || !l.fecha_retorno) return null;
+  const a=new Date(l.fecha_lesion+'T12:00:00'), b=new Date(l.fecha_retorno+'T12:00:00');
+  const d=Math.round((b-a)/86400000);
+  return d>=0 ? d : null;
+}
+function _lesSeveridad(d){
+  if (d===null) return { txt:'en curso', col:'#ffc04d' };
+  if (d<=1)  return { txt:'mínima',  col:'#00e5a0' };
+  if (d<=7)  return { txt:'leve',    col:'#9acf44' };
+  if (d<=28) return { txt:'moderada',col:'#ffc04d' };
+  return       { txt:'grave',   col:'#ff7070' };
+}
+
+async function renderLesiones(){
+  const c = document.getElementById('lesiones-content');
+  if (!c) return;
+  c.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const squad = state.coachSquadFilter || '';
+
+  const [resL, resE, resJ] = await Promise.all([
+    api({ action:'getLesiones', squad }),
+    api({ action:'getEpidemiologia', squad }),
+    api({ action:'getEquipo', semana: realSemanaIdx() })
+  ]);
+  _les.lista     = (resL && resL.ok) ? resL.lesiones : [];
+  _les.epi       = (resE && resE.ok) ? resE : null;
+  _les.jugadores = (resJ && resJ.ok ? resJ.equipo : [])
+    .filter(j => !squad || (j.squad && j.squad.toLowerCase() === squad.toLowerCase()));
+
+  const e = _les.epi || {};
+  const inc = e.incidencia || {};
+  const sev = e.severidad || {};
+  const kpi = (val, lbl, col, sub) =>
+    `<div class="cd-kpi" style="border-top-color:${col}">
+       <div class="cd-kpi-num" style="color:${col}">${val}</div>
+       <div class="cd-kpi-lbl">${lbl}</div>
+       ${sub?`<div style="font-size:8px;color:var(--muted);margin-top:2px">${sub}</div>`:''}
+     </div>`;
+
+  const abiertas = _les.lista.filter(l=>l.estado==='abierta');
+
+  c.innerHTML = `
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap">
+      <span style="font-size:15px;font-weight:700">🩹 Registro de lesiones</span>
+      <span style="font-size:11px;color:var(--muted)">consenso de rugby · Fuller et al., 2007</span>
+      <button class="test-pdf-btn" style="margin-left:auto" onclick="lesNueva()">+ Nuevo parte</button>
+    </div>
+
+    <div class="cd-kpis" style="grid-template-columns:repeat(4,1fr)">
+      ${kpi(e.total!=null?e.total:'—','Lesiones','var(--text)')}
+      ${kpi(abiertas.length,'Abiertas','#ffc04d')}
+      ${kpi(inc.total!=null?inc.total:'—','Incidencia','#ff7070','por 1000 h')}
+      ${kpi(sev.medianaDias!=null?sev.medianaDias:'—','Días baja','#7bb8ff','mediana')}
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <div class="cc-jstat" style="flex:1;min-width:120px">
+        <div class="cc-jstat-n" style="color:#ffa040">${inc.entreno!=null?inc.entreno:'—'}</div>
+        <div class="cc-jstat-l">INCID. ENTRENO · ${(e.exposicion&&e.exposicion.entreno)||0} h</div>
+      </div>
+      <div class="cc-jstat" style="flex:1;min-width:120px">
+        <div class="cc-jstat-n" style="color:#ff7070">${inc.partido!=null?inc.partido:'—'}</div>
+        <div class="cc-jstat-l">INCID. PARTIDO · ${(e.exposicion&&e.exposicion.partido)||0} h</div>
+      </div>
+      <div class="cc-jstat" style="flex:1;min-width:120px">
+        <div class="cc-jstat-n" style="color:#a99ff5">${e.recurrentes||0}</div>
+        <div class="cc-jstat-l">RECURRENTES</div>
+      </div>
+    </div>
+
+    ${_lesBarras('Zonas más afectadas', e.porZona)}
+    ${_lesBarras('Tipo de lesión', e.porTipo)}
+
+    <div style="font-size:12px;font-weight:600;margin:18px 0 8px">Partes registrados</div>
+    <div id="les-lista">${_lesLista()}</div>
+    <div id="les-form"></div>`;
+}
+
+function _lesBarras(titulo, datos){
+  if (!datos || !datos.length) return '';
+  const max = Math.max(...datos.map(d=>d.n), 1);
+  const filas = datos.slice(0,8).map(d=>`
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px">
+      <span style="width:150px;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0">${d.clave}</span>
+      <div style="flex:1;height:12px;background:var(--surface2);border-radius:3px;overflow:hidden">
+        <div style="width:${(d.n/max*100).toFixed(1)}%;height:100%;background:#ff7070;opacity:.65;border-radius:3px"></div>
+      </div>
+      <span style="width:24px;font-size:11px;font-weight:600;text-align:right;flex-shrink:0">${d.n}</span>
+    </div>`).join('');
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px">${titulo}</div>
+    ${filas}</div>`;
+}
+
+function _lesLista(){
+  if (!_les.lista.length) return '<div class="pevo-empty">Todavía no hay partes de lesión.</div>';
+  return _les.lista.map(l=>{
+    const d = _lesDias(l);
+    const sv = _lesSeveridad(d);
+    const abierta = l.estado === 'abierta';
+    return `<div style="background:var(--surface);border:1px solid ${abierta?'rgba(255,192,77,.3)':'var(--border)'};
+        border-left:3px solid ${sv.col};border-radius:9px;padding:11px 13px;margin-bottom:6px">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px">
+        <span style="font-size:13px;font-weight:600;color:var(--text);flex:1">${_lesNombre(l.usuario)}</span>
+        <span style="font-size:9px;font-weight:600;padding:2px 8px;border-radius:12px;
+                     background:${sv.col}22;color:${sv.col}">${abierta?'abierta':sv.txt}</span>
+        <span style="font-size:12px;color:var(--muted);cursor:pointer" title="Editar" onclick="lesEditar('${l.id}')">&#9998;</span>
+        <span style="font-size:12px;color:#ff7070;cursor:pointer" title="Borrar" onclick="lesBorrar('${l.id}')">🗑</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.5">
+        ${l.zona||'—'}${l.lado?' · '+l.lado:''} · ${l.tipo||'—'}<br>
+        ${l.fecha_lesion}${l.fecha_retorno?' → '+l.fecha_retorno+' ('+d+' días)':' · sin fecha de retorno'}
+        ${l.contexto?' · '+l.contexto:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Formulario del parte de lesión ───────────────────────────
+function lesNueva(){ _les.edit = { datos:{} }; _lesPintarForm(); }
+function lesEditar(id){
+  const l = _les.lista.find(x=>String(x.id)===String(id));
+  if (!l) return;
+  _les.edit = JSON.parse(JSON.stringify(l));
+  if (!_les.edit.datos) _les.edit.datos = {};
+  _lesPintarForm();
+}
+async function lesBorrar(id){
+  if (!confirm('¿Borrar este parte de lesión?')) return;
+  await api({ action:'deleteLesion', id });
+  renderLesiones();
+}
+function lesCerrarForm(){
+  const m = document.getElementById('les-modal');
+  if (m) m.remove();
+  _les.edit = null;
+}
+function _lesSet(campo, valor){
+  if (!_les.edit) return;
+  if (campo.indexOf('datos.') === 0) _les.edit.datos[campo.slice(6)] = valor;
+  else _les.edit[campo] = valor;
+}
+function _lesMulti(campo, valor, on){
+  const k = campo.slice(6);
+  let arr = _les.edit.datos[k] || [];
+  if (on) { if (arr.indexOf(valor)===-1) arr.push(valor); }
+  else arr = arr.filter(v=>v!==valor);
+  _les.edit.datos[k] = arr;
+}
+
+function _lesPintarForm(){
+  const e = _les.edit || { datos:{} };
+  const d = e.datos || {};
+  const sel = (v,o) => v===o ? ' selected' : '';
+  const chk = (v,o) => v===o ? 'checked' : '';
+
+  const opJug = _les.jugadores.map(j=>
+    `<option value="${j.usuario}"${sel(e.usuario,j.usuario)}>${j.nombre}</option>`).join('');
+  const opPos = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','No aplicable']
+    .map(p=>`<option value="${p}"${sel(d.posicion,p)}>${p}</option>`).join('');
+  const opZona = LES_ZONAS.map(z=>`<option value="${z}"${sel(e.zona,z)}>${z}</option>`).join('');
+  const opTipo = LES_TIPOS.map(t=>`<option value="${t}"${sel(e.tipo,t)}>${t}</option>`).join('');
+  const opCont = LES_CONTACTO.map(t=>`<option value="${t}"${sel(d.contacto,t)}>${t}</option>`).join('');
+
+  const radio = (campo, valor, etiqueta, actual) =>
+    `<label style="display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-size:13px;color:var(--text);cursor:pointer">
+       <input type="radio" name="${campo.replace('.','_')}" ${chk(actual,valor)}
+              onchange="_lesSet('${campo}','${valor}')" style="accent-color:var(--accent)"> ${etiqueta}
+     </label>`;
+
+  const pruebas = (d.pruebas||[]);
+  const chkPruebas = LES_PRUEBAS.map(p=>
+    `<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);padding:5px 0;cursor:pointer">
+       <input type="checkbox" ${pruebas.indexOf(p)!==-1?'checked':''}
+              onchange="_lesMulti('datos.pruebas','${p.replace(/'/g,"\\'")}',this.checked)"
+              style="accent-color:var(--accent2);width:15px;height:15px"> ${p}
+     </label>`).join('');
+
+  const protec = (d.proteccion||[]);
+  const chkProtec = LES_PROTEC.map(p=>
+    `<label style="display:inline-flex;align-items:center;gap:6px;margin:0 14px 6px 0;font-size:12px;color:var(--text);cursor:pointer">
+       <input type="checkbox" ${protec.indexOf(p)!==-1?'checked':''}
+              onchange="_lesMulti('datos.proteccion','${p}',this.checked)"
+              style="accent-color:var(--accent2);width:15px;height:15px"> ${p}
+     </label>`).join('');
+
+  const sec = t => `<div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+     color:var(--accent);margin:18px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--border)">${t}</div>`;
+  const lbl = t => `<label class="indiv-lbl">${t}</label>`;
+
+  const ov = document.createElement('div');
+  ov.className = 'picker-backdrop';
+  ov.id = 'les-modal';
+  ov.innerHTML = `
+    <div class="fields-box" style="max-width:620px;max-height:90%;overflow-y:auto" onclick="event.stopPropagation()">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:3px">
+        <span style="font-size:17px;font-weight:700;flex:1">Parte de lesión</span>
+        <span style="font-size:15px;color:var(--muted);cursor:pointer" onclick="lesCerrarForm()">✕</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Consenso de rugby · Fuller et al., 2007</div>
+
+      ${sec('1–3 · Jugador y fechas')}
+      ${lbl('Jugador')}
+      <select class="semana-select" style="width:100%;margin-bottom:10px" onchange="_lesSet('usuario',this.value)">
+        <option value="">— Selecciona jugador —</option>${opJug}
+      </select>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div style="flex:1">${lbl('Fecha de la lesión')}
+          <input type="date" class="pe-addinput" value="${e.fecha_lesion||''}" onchange="_lesSet('fecha_lesion',this.value)"></div>
+        <div style="flex:1">${lbl('Hora')}
+          <input type="time" class="pe-addinput" value="${d.hora||''}" onchange="_lesSet('datos.hora',this.value)"></div>
+      </div>
+      ${lbl('Fecha de retorno sin restricciones')}
+      <input type="date" class="pe-addinput" value="${e.fecha_retorno||''}" onchange="_lesSet('fecha_retorno',this.value)">
+      <div style="font-size:10px;color:var(--muted);margin:5px 0 10px">
+        Déjala vacía si aún no ha vuelto: la lesión queda <b>abierta</b> y la rellenas más adelante.
+      </div>
+
+      ${sec('4–6 · Posición, zona y lado')}
+      ${lbl('Posición de juego cuando se lesionó')}
+      <select class="semana-select" style="width:100%;margin-bottom:10px" onchange="_lesSet('datos.posicion',this.value)">
+        <option value="">—</option>${opPos}
+      </select>
+      ${lbl('Zona del cuerpo lesionada')}
+      <select class="semana-select" style="width:100%;margin-bottom:10px" onchange="_lesSet('zona',this.value)">
+        <option value="">—</option>${opZona}
+      </select>
+      ${lbl('Lado afecto')}
+      <div style="margin-bottom:4px">
+        ${radio('lado','Derecho','Derecho',e.lado)}
+        ${radio('lado','Izquierdo','Izquierdo',e.lado)}
+        ${radio('lado','No aplicable','No aplicable',e.lado)}
+      </div>
+
+      ${sec('7–9 · Diagnóstico')}
+      ${lbl('Tipo de lesión')}
+      <select class="semana-select" style="width:100%;margin-bottom:10px" onchange="_lesSet('tipo',this.value)">
+        <option value="">—</option>${opTipo}
+      </select>
+      ${lbl('Diagnóstico')}
+      <textarea class="pe-nota" style="margin-bottom:10px" onchange="_lesSet('datos.diagnostico',this.value)">${d.diagnostico||''}</textarea>
+      ${lbl('¿Ha tenido el jugador una lesión del mismo tipo en el mismo sitio? (recurrencia)')}
+      <div style="margin-bottom:6px">
+        ${radio('datos.recurrencia','no','No',d.recurrencia)}
+        ${radio('datos.recurrencia','si','Sí',d.recurrencia)}
+      </div>
+      ${lbl('Si sí, fecha en que volvió a la práctica sin restricciones')}
+      <input type="date" class="pe-addinput" value="${d.fecha_recurrencia||''}" onchange="_lesSet('datos.fecha_recurrencia',this.value)">
+
+      ${sec('10–12 · Mecanismo')}
+      ${lbl('La lesión ha sido causada por')}
+      <div style="margin-bottom:10px">
+        ${radio('mecanismo','Sobreuso','Sobreuso',e.mecanismo)}
+        ${radio('mecanismo','Trauma','Trauma',e.mecanismo)}
+      </div>
+      ${lbl('La lesión ocurrió durante')}
+      <div style="margin-bottom:10px">
+        ${radio('contexto','entrenamiento','Entrenamiento',e.contexto)}
+        ${radio('contexto','partido','Partido',e.contexto)}
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div style="flex:1">${lbl('Minuto de juego (solo partido)')}
+          <input type="number" class="pe-addinput" value="${d.minuto||''}" onchange="_lesSet('datos.minuto',this.value)"></div>
+        <div style="flex:1">${lbl('¿Fue titular?')}
+          <select class="semana-select" style="width:100%" onchange="_lesSet('datos.titular',this.value)">
+            <option value="">—</option>
+            <option value="si"${sel(d.titular,'si')}>Sí</option>
+            <option value="no"${sel(d.titular,'no')}>No</option>
+          </select></div>
+      </div>
+      ${lbl('Minuto del cambio (si no fue titular)')}
+      <input type="number" class="pe-addinput" style="margin-bottom:10px" value="${d.minuto_cambio||''}" onchange="_lesSet('datos.minuto_cambio',this.value)">
+      ${lbl('¿La lesión fue causada en un contacto?')}
+      <select class="semana-select" style="width:100%" onchange="_lesSet('datos.contacto',this.value)">
+        <option value="">—</option>${opCont}
+      </select>
+
+      ${sec('13–16 · Circunstancias')}
+      ${lbl('¿La acción fue una violación de las normas de juego?')}
+      <div style="margin-bottom:9px">
+        ${radio('datos.violacion','si','Sí',d.violacion)}
+        ${radio('datos.violacion','no','No',d.violacion)}
+      </div>
+      ${lbl('¿La acción fue sancionada por el árbitro? (Norma 10.4)')}
+      <div style="margin-bottom:9px">
+        ${radio('datos.sancionada','si','Sí',d.sancionada)}
+        ${radio('datos.sancionada','no','No',d.sancionada)}
+      </div>
+      ${lbl('¿El jugador llevaba algún vendaje?')}
+      <input class="pe-addinput" style="margin-bottom:10px" placeholder="No / especificar" value="${d.vendaje||''}" onchange="_lesSet('datos.vendaje',this.value)">
+      ${lbl('¿El jugador llevaba alguna protección?')}
+      <div style="margin-bottom:10px">${chkProtec}</div>
+      ${lbl('¿Ha hecho uso del seguro médico deportivo?')}
+      <div style="margin-bottom:4px">
+        ${radio('datos.seguro','no','No',d.seguro)}
+        ${radio('datos.seguro','si','Sí',d.seguro)}
+      </div>
+
+      ${sec('17 · Pruebas y tratamientos')}
+      <div style="background:var(--surface2);border-radius:8px;padding:8px 12px;margin-bottom:10px">${chkPruebas}</div>
+      ${lbl('Detalle (quirúrgico, otros)')}
+      <textarea class="pe-nota" onchange="_lesSet('datos.tratamiento_detalle',this.value)">${d.tratamiento_detalle||''}</textarea>
+
+      <button class="pe-save" style="margin-top:16px" onclick="lesGuardar()">Guardar parte</button>
+      <button class="doc-cancel-btn" onclick="lesCerrarForm()">Cancelar</button>
+    </div>`;
+  ov.addEventListener('click', ev=>{ if(ev.target===ov) lesCerrarForm(); });
+  document.body.appendChild(ov);
+}
+
+async function lesGuardar(){
+  const e = _les.edit;
+  if (!e || !e.usuario){ alert('Selecciona el jugador'); return; }
+  if (!e.fecha_lesion){ alert('Pon la fecha de la lesión'); return; }
+  const jug = _les.jugadores.find(j=>j.usuario===e.usuario);
+  const btn = document.querySelector('#les-modal .pe-save');
+  if (btn){ btn.disabled = true; btn.textContent = 'Guardando...'; }
+  const res = await api({
+    action:'saveLesion', id:e.id||'', usuario:e.usuario,
+    squad:(jug&&jug.squad)||state.coachSquadFilter||'',
+    fecha_lesion:e.fecha_lesion, fecha_retorno:e.fecha_retorno||'',
+    zona:e.zona||'', lado:e.lado||'', tipo:e.tipo||'',
+    mecanismo:e.mecanismo||'', contexto:e.contexto||'',
+    datos:e.datos||{}, creado_por:(state.user&&state.user.usuario)||''
+  });
+  if (res && res.ok){ lesCerrarForm(); renderLesiones(); }
+  else {
+    if (btn){ btn.disabled = false; btn.textContent = 'Guardar parte'; }
+    alert('No se pudo guardar: '+((res&&res.error)||''));
+  }
+}
+
 // ── SUB-NAV Readiness: Wellness / Recuperación / Dolor muscular / Alertas ──
 var _readinessSub = 'wellness';
 function readinessSub(sub) {
   _readinessSub = sub;
-  ['wellness','recup','dolor','alertas'].forEach(s=>{
+  ['wellness','recup','dolor','lesiones','alertas'].forEach(s=>{
     const btn=document.getElementById('rst-'+s);
     if(btn) btn.classList.toggle('active', s===sub);
   });
@@ -9977,9 +10347,12 @@ function readinessSub(sub) {
   const rec = document.getElementById('recuperacion-content');
   if (rec) rec.style.display = sub==='recup'?'':'none';
   document.getElementById('molestias-content').style.display = sub==='dolor'?'':'none';
+  const les = document.getElementById('lesiones-content');
+  if (les) les.style.display = sub==='lesiones'?'':'none';
   document.getElementById('alertas-content').style.display   = sub==='alertas'?'':'none';
   if (sub==='dolor') renderMolestias();
   else if (sub==='alertas') renderAlertas();
+  else if (sub==='lesiones') renderLesiones();
   else if (sub==='recup') cargarRpeReadinessSerie();
 }
 
