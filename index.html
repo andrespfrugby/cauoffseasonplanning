@@ -4710,8 +4710,206 @@ var _informeTestSel = null;
 var _informeFecha = null;
 var _informeDatos = null;
 
-async function renderInformeTesting(){
+var _infSub = 'consulta';
+function informeSub(sub){ _infSub = sub; renderInforme(); }
+
+function renderInforme(){
   const c = document.getElementById('informe-content');
+  if(!c) return;
+  c.innerHTML = `
+    <div class="sub-tabs" style="margin-bottom:16px">
+      <button class="sub-tab${_infSub==='consulta'?' active':''}" onclick="informeSub('consulta')">Consultar testing</button>
+      <button class="sub-tab${_infSub==='cargar'?' active':''}" onclick="informeSub('cargar')">Cargar datos</button>
+    </div>
+    <div id="inf-sub-content"><div class="loader"><div class="spinner"></div></div></div>`;
+  if (_infSub==='cargar') renderInformeTesting();
+  else renderConsultaTesting();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CONSULTA DE TESTING — resultados del squad por test y fecha
+//  Tabla jugadores × fechas con la media del grupo y exportación
+//  a PDF para pasársela a los entrenadores.
+// ═══════════════════════════════════════════════════════════════
+var _ct = { squad:null, test:'', desde:'', hasta:'', data:null };
+
+function ctSet(campo, valor){ _ct[campo] = valor; renderConsultaTesting(); }
+
+async function renderConsultaTesting(){
+  const c = document.getElementById('inf-sub-content');
+  if (!c) return;
+  if (_ct.squad === null) _ct.squad = state.squadFijo || state.coachSquadFilter || SQUADS[0];
+  c.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  if (!_informeCatalogo.length) {
+    const rc = await api({ action:'getCatalogoTests' });
+    _informeCatalogo = (rc && rc.tests) ? rc.tests : [];
+  }
+  const res = await api({ action:'getTestingSquad', squad:_ct.squad,
+    idTest:_ct.test||'', desde:_ct.desde||'', hasta:_ct.hasta||'' });
+  _ct.data = (res && res.ok) ? res : null;
+
+  const squadBtns = SQUADS.map(sq=>{
+    const on = _ct.squad===sq;
+    return `<span onclick="ctSet('squad','${sq.replace(/'/g,"\\'")}')" style="font-size:11px;padding:7px 13px;border-radius:7px;cursor:pointer;
+      background:${on?'rgba(232,20,42,.12)':'var(--surface2)'};color:${on?'var(--accent)':'var(--muted)'};
+      border:1px solid ${on?'rgba(232,20,42,.35)':'var(--border2)'}">${sq}</span>`;
+  }).join('');
+
+  const opTest = ['<option value="">Todos los tests</option>'].concat(
+    _informeCatalogo.map(t=>`<option value="${t.id}"${t.id===_ct.test?' selected':''}>${t.nombre}</option>`)).join('');
+
+  const filtros = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${squadBtns}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <select class="semana-select" style="flex:2;min-width:180px;margin:0" onchange="ctSet('test',this.value)">${opTest}</select>
+      <input type="date" class="semana-select" style="flex:1;min-width:130px;margin:0" value="${_ct.desde}" onchange="ctSet('desde',this.value)">
+      <input type="date" class="semana-select" style="flex:1;min-width:130px;margin:0" value="${_ct.hasta}" onchange="ctSet('hasta',this.value)">
+      <button class="test-pdf-btn" onclick="ctExportarPDF()">⭳ PDF</button>
+    </div>`;
+
+  if (!_ct.data || !_ct.data.jugadores.length) {
+    c.innerHTML = filtros + '<div class="pevo-empty">Sin resultados para este filtro.</div>';
+    return;
+  }
+  c.innerHTML = filtros + '<div id="ct-tabla">' + _ctTabla() + '</div>';
+}
+
+function _ctTabla(){
+  const d = _ct.data;
+  if (!d) return '';
+  // Con un test elegido: fechas en columnas. Sin test: último de cada test.
+  return _ct.test ? _ctTablaFechas(d, _ct.test) : _ctTablaResumen(d);
+}
+
+function _ctTablaFechas(d, idTest){
+  const t = d.catalogo[idTest] || { nombre:idTest, unidad:'', mejorMas:true };
+  const fechas = d.fechas;
+  const dd = f => f.slice(8,10)+'/'+f.slice(5,7);
+  const cab = `<tr>
+      <th style="padding:8px 10px;text-align:left;font-size:10px;color:var(--muted);letter-spacing:.06em;position:sticky;left:0;background:var(--surface2)">JUGADOR</th>
+      ${fechas.map(f=>`<th style="padding:8px 8px;text-align:center;font-size:10px;color:var(--muted)">${dd(f)}</th>`).join('')}
+      <th style="padding:8px 8px;text-align:center;font-size:10px;color:var(--accent2)">CAMBIO</th>
+    </tr>`;
+
+  const filas = d.jugadores.map(j=>{
+    const reg = j.datos[idTest] || {};
+    const vals = fechas.map(f => reg[f] ? reg[f].valor : null);
+    const conDato = vals.filter(v=>v!==null);
+    let cambio = '—', col = 'var(--muted)';
+    if (conDato.length >= 2) {
+      const dif = Math.round((conDato[conDato.length-1] - conDato[0])*100)/100;
+      const mejora = t.mejorMas ? dif>0 : dif<0;
+      if (dif !== 0) { cambio = (dif>0?'+':'')+dif; col = mejora ? 'var(--accent2)' : '#ff7070'; }
+      else cambio = '=';
+    }
+    const celdas = fechas.map(f=>{
+      const r = reg[f];
+      if (!r) return '<td style="padding:8px;text-align:center;font-size:12px;color:rgba(255,255,255,.15)">—</td>';
+      const media = d.medias[idTest] ? d.medias[idTest][f] : null;
+      let cc = 'var(--text)';
+      if (media != null) cc = (t.mejorMas ? r.valor >= media : r.valor <= media) ? 'var(--accent2)' : '#ffa040';
+      const asim = (r.extra && r.extra.asimetria != null) ? r.extra.asimetria : null;
+      return `<td style="padding:7px 8px;text-align:center">
+        <div style="font-size:13px;font-weight:600;color:${cc}">${r.valor}</div>
+        ${asim!=null?`<div style="font-size:9px;color:${_asimColor(asim)}">${asim}%</div>`:''}
+      </td>`;
+    }).join('');
+    return `<tr style="border-top:1px solid var(--border)">
+      <td style="padding:8px 10px;font-size:12px;color:var(--text);white-space:nowrap;position:sticky;left:0;background:var(--surface)">
+        ${j.nombre}${j.rugbyposition?`<div style="font-size:9px;color:var(--muted)">${j.rugbyposition}</div>`:''}
+      </td>
+      ${celdas}
+      <td style="padding:8px;text-align:center;font-size:12px;font-weight:600;color:${col}">${cambio}</td>
+    </tr>`;
+  }).join('');
+
+  const mediaFila = `<tr style="border-top:2px solid var(--accent);background:rgba(232,20,42,.05)">
+      <td style="padding:8px 10px;font-size:11px;font-weight:700;color:var(--accent);position:sticky;left:0;background:rgba(40,20,22,.75)">MEDIA</td>
+      ${fechas.map(f=>{
+        const m = d.medias[idTest] ? d.medias[idTest][f] : null;
+        return `<td style="padding:8px;text-align:center;font-size:13px;font-weight:700;color:var(--text)">${m!=null?m:'—'}</td>`;
+      }).join('')}
+      <td></td>
+    </tr>`;
+
+  return `<div style="font-size:13px;font-weight:600;margin-bottom:8px">${t.nombre}${t.unidad?' ('+t.unidad+')':''}</div>
+    <div style="overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)">
+      <table style="width:100%;border-collapse:collapse;min-width:520px">
+        <thead style="background:var(--surface2)">${cab}</thead>
+        <tbody>${filas}${mediaFila}</tbody>
+      </table>
+    </div>`;
+}
+
+function _ctTablaResumen(d){
+  const tests = d.tests;
+  const cab = `<tr>
+      <th style="padding:8px 10px;text-align:left;font-size:10px;color:var(--muted);letter-spacing:.06em;position:sticky;left:0;background:var(--surface2)">JUGADOR</th>
+      ${tests.map(t=>`<th style="padding:8px;text-align:center;font-size:10px;color:var(--muted)">${t.nombre}${t.unidad?`<div style="font-size:8px;opacity:.7">${t.unidad}</div>`:''}</th>`).join('')}
+    </tr>`;
+  const filas = d.jugadores.map(j=>{
+    const celdas = tests.map(t=>{
+      const reg = j.datos[t.id];
+      if (!reg) return '<td style="padding:8px;text-align:center;font-size:12px;color:rgba(255,255,255,.15)">—</td>';
+      const fs = Object.keys(reg).sort();
+      const ult = reg[fs[fs.length-1]];
+      const media = d.medias[t.id] ? d.medias[t.id][fs[fs.length-1]] : null;
+      let cc = 'var(--text)';
+      if (media != null) cc = (t.mejorMas ? ult.valor >= media : ult.valor <= media) ? 'var(--accent2)' : '#ffa040';
+      return `<td style="padding:7px 8px;text-align:center">
+        <div style="font-size:13px;font-weight:600;color:${cc}">${ult.valor}</div>
+        <div style="font-size:8px;color:var(--muted)">${fs[fs.length-1].slice(5)}</div>
+      </td>`;
+    }).join('');
+    return `<tr style="border-top:1px solid var(--border)">
+      <td style="padding:8px 10px;font-size:12px;color:var(--text);white-space:nowrap;position:sticky;left:0;background:var(--surface)">
+        ${j.nombre}${j.rugbyposition?`<div style="font-size:9px;color:var(--muted)">${j.rugbyposition}</div>`:''}
+      </td>${celdas}</tr>`;
+  }).join('');
+  return `<div style="font-size:13px;font-weight:600;margin-bottom:8px">Último resultado de cada test</div>
+    <div style="overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)">
+      <table style="width:100%;border-collapse:collapse;min-width:520px">
+        <thead style="background:var(--surface2)">${cab}</thead><tbody>${filas}</tbody>
+      </table>
+    </div>`;
+}
+
+function ctExportarPDF(){
+  const cont = document.getElementById('ct-tabla');
+  if (!cont || !cont.innerHTML.trim()){ alert('No hay datos que exportar.'); return; }
+  const hoy = new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'});
+  const rango = (_ct.desde||_ct.hasta) ? ` · ${_ct.desde||'inicio'} a ${_ct.hasta||'hoy'}` : '';
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Testing · CAU Rugby</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      :root{--text:#111;--muted:#666;--surface:#fff;--surface2:#f2f4f7;--border:#e3e5ea;--accent:#c0101f;--accent2:#009c6e}
+      body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#111;padding:24px 28px;background:#fff}
+      .hd{border-bottom:3px solid #c0101f;padding-bottom:12px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-end}
+      .hd h1{font-size:21px}.hd .sub{font-size:12px;color:#666;margin-top:3px}
+      .club{font-size:16px;font-weight:800;color:#c0101f;letter-spacing:.04em}
+      table{width:100%!important;min-width:0!important;border-collapse:collapse;font-size:11px}
+      th{background:#f2f4f7!important;border-bottom:2px solid #ddd;padding:6px 8px!important;color:#555!important}
+      td{border-top:1px solid #eceef2;padding:6px 8px!important}
+      td div,th div{color:inherit}
+      tr:last-child td{background:#fbeaec!important;font-weight:700}
+      .foot{margin-top:18px;padding-top:10px;border-top:1px solid #eee;font-size:10px;color:#999;display:flex;justify-content:space-between}
+      @media print{body{padding:12px} tr{page-break-inside:avoid}}
+    </style></head><body>
+    <div class="hd"><div><h1>Informe de testing</h1>
+      <div class="sub">${_ct.squad}${rango} · ${hoy}</div></div>
+      <div class="club">CAU RUGBY</div></div>
+    ${cont.innerHTML}
+    <div class="foot"><span>CAU Preseason Planner</span><span>${hoy}</span></div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},450);}<\/script>
+    </body></html>`;
+  const w = window.open('','_blank');
+  if(!w){ alert('Permite las ventanas emergentes para exportar el PDF'); return; }
+  w.document.write(html); w.document.close();
+}
+
+async function renderInformeTesting(){
+  const c = document.getElementById('inf-sub-content');
   if(!c) return;
   c.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
   // cargar catálogo de tests
@@ -4802,6 +5000,7 @@ async function _informeProcesar(rows){
   const head = rows[0].map(h=>String(h||'').toLowerCase().trim());
 
   // Columna del jugador
+  _informeBilateral = false;
   let colJug = head.findIndex(h=>h.indexOf('jugador')!==-1 || h.indexOf('nombre')!==-1 ||
                                  h.indexOf('player')!==-1  || h.indexOf('apellido')!==-1 ||
                                  h.indexOf('usuario')!==-1 || h.indexOf('user')!==-1);
@@ -4833,6 +5032,27 @@ async function _informeProcesar(rows){
     raw.push({ nombre:String(jug).trim(), intentos });
   }
   if(!raw.length){ prev.innerHTML='<div class="inf-error">Ningún jugador con dato válido en el Excel.</div>'; return; }
+
+  // ── Tests bilaterales: columnas de pierna derecha e izquierda ──
+  // Se detectan por la cabecera y se calcula el % de asimetría.
+  const esDer = h => /(^|[^a-z])(der|dcha|derecha|right|\br\b)([^a-z]|$)/i.test(h);
+  const esIzq = h => /(^|[^a-z])(izq|izda|izquierda|left|\bl\b)([^a-z]|$)/i.test(h);
+  const colDer = colsVal.find(c => esDer(String(c.nombre)));
+  const colIzq = colsVal.find(c => esIzq(String(c.nombre)));
+  _informeBilateral = !!(colDer && colIzq);
+
+  if (_informeBilateral) {
+    const iDer = colsVal.indexOf(colDer), iIzq = colsVal.indexOf(colIzq);
+    raw.forEach(d=>{
+      d.der = d.intentos[iDer];
+      d.izq = d.intentos[iIzq];
+      if (d.der != null && d.izq != null) {
+        const mx = Math.max(d.der, d.izq), mn = Math.min(d.der, d.izq);
+        d.asimetria = mx > 0 ? Math.round((mx - mn) / mx * 1000) / 10 : null;
+        d.dominante = d.der === mx ? 'D' : 'I';
+      }
+    });
+  }
 
   _informeCols = colsVal;
   _informeRaw  = raw;
@@ -4910,6 +5130,16 @@ var _informeModo = 'mejor';
 var _informeRaw  = [];
 var _informeCols = [];
 var _informePesos = {};      // usuario → { peso, fecha }
+var _informeBilateral = false;  // el Excel trae pierna derecha e izquierda
+
+// Umbral habitual en la literatura: por encima del 10-15% de diferencia
+// entre lados se considera asimetría relevante.
+function _asimColor(a){
+  if (a == null) return 'var(--muted)';
+  if (a < 10) return '#00e5a0';
+  if (a < 15) return '#ffc04d';
+  return '#ff7070';
+}
 var _informeMomentum = false;
 
 // Distancia del sprint, sacada del nombre del test ("10 metres" → 10)
@@ -4991,6 +5221,10 @@ function _informeAplicarModo(){
       <td style="padding:5px 8px;font-size:13px;font-weight:700;color:var(--accent2);text-align:center">${d.valor}</td>
       ${verM?celdaPeso(d):''}
       ${verM?`<td style="padding:5px 6px;font-size:13px;font-weight:700;color:#a99ff5;text-align:center">${d.momentum!=null?d.momentum:'—'}</td>`:''}
+      ${_informeBilateral?`<td style="padding:5px 6px;text-align:center">
+          <span style="font-size:13px;font-weight:700;color:${_asimColor(d.asimetria)}">${d.asimetria!=null?d.asimetria+'%':'—'}</span>
+          ${d.dominante?`<span style="font-size:9px;color:var(--muted)"> ${d.dominante}</span>`:''}
+        </td>`:''}
     </tr>`).join('');
 
   const cabecera = `<tr>
@@ -4999,7 +5233,17 @@ function _informeAplicarModo(){
       <th style="padding:5px 8px;font-size:9px;color:var(--accent2);text-align:center;letter-spacing:.05em">SE GUARDA</th>
       ${verM?'<th style="padding:5px 6px;font-size:9px;color:var(--muted);text-align:center;letter-spacing:.05em">PESO</th>':''}
       ${verM?'<th style="padding:5px 6px;font-size:9px;color:#a99ff5;text-align:center;letter-spacing:.05em">MOMENTUM</th>':''}
+      ${_informeBilateral?'<th style="padding:5px 6px;font-size:9px;color:var(--muted);text-align:center;letter-spacing:.05em">ASIMETRÍA</th>':''}
     </tr>`;
+
+  const nAsim = _informeRaw.filter(d=>d.asimetria!=null && d.asimetria>=15).length;
+  const avisoAsim = _informeBilateral ? `
+    <div style="background:rgba(169,159,245,.08);border:1px solid rgba(169,159,245,.3);border-radius:9px;
+                padding:10px 13px;margin-bottom:10px;font-size:11px;color:#a99ff5;line-height:1.6">
+      Test bilateral detectado: se calcula el <b>% de asimetría</b> entre piernas.
+      Verde &lt;10 % · ámbar 10–15 % · rojo &gt;15 %. La letra indica la pierna dominante.
+      ${nAsim?`<b style="color:#ff7070">${nAsim} jugador${nAsim!==1?'es':''} por encima del 15 %.</b>`:''}
+    </div>` : '';
 
   const sinPeso = _informeRaw.filter(d=>d.usuario && !d.peso).length;
   const bloqueMomentum = puedeMomentum ? `
@@ -5041,6 +5285,7 @@ function _informeAplicarModo(){
       <div class="inf-ready-t" style="text-align:center">✓ ${_informeRaw.length} jugadores con datos</div>
       <div class="inf-ready-s" style="text-align:center">${test.nombre} · media ${prom.toFixed(dec)} ${test.unidad} · máx ${Math.max(...vals).toFixed(dec)} · mín ${Math.min(...vals).toFixed(dec)}</div>
       ${selector}
+      ${avisoAsim}
       ${bloqueMomentum}
       <div style="background:var(--surface2);border-radius:9px;overflow:hidden;margin-bottom:10px">
         <table style="width:100%;border-collapse:collapse">${cabecera}${tablaPrev}</table>
@@ -5059,8 +5304,13 @@ async function _informeGuardar(){
   if(!_informeDatos || !_informeTestSel) return;
   const st = document.getElementById('inf-guardado');
   st.textContent = 'Guardando...';
-  const resultados = _informeDatos.filter(d=>d.usuario)
-    .map(d=>({ usuario:d.usuario, valor:d.valor, intentos:d.intentos||[] }));
+  const resultados = _informeDatos.filter(d=>d.usuario).map(d=>{
+    const r = { usuario:d.usuario, valor:d.valor, intentos:d.intentos||[] };
+    if (d.asimetria != null) {
+      r.nota = JSON.stringify({ der:d.der, izq:d.izq, asimetria:d.asimetria, dominante:d.dominante });
+    }
+    return r;
+  });
   if(!resultados.length){ st.textContent = 'Ningún jugador se pudo cruzar con un usuario.'; return; }
   const res = await api({ action:'guardarTestResultados', idTest:_informeTestSel,
     fecha:_informeFecha, modo:_informeModo, resultados });
@@ -5979,7 +6229,7 @@ function switchTab(tab) {
   }
   if (tab === 'wellness')   renderWellnessTab();
   if (tab === 'scdocs')     renderScDocs();
-  if (tab === 'informe')    renderInformeTesting();
+  if (tab === 'informe')    renderInforme();
   if (tab === 'readiness')  { _syncAllSquads(state.coachSquadFilter || ''); renderReadinessDashboard(); }
   if (tab === 'settings')   renderSettingsPanel();
   if (tab === 'planner')    renderPlanner();
