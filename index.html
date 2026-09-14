@@ -1712,6 +1712,45 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 .les-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px}
 @media (min-width:760px){ .les-grid{grid-template-columns:1fr 1fr} }
 
+/* ── Indicador de actividad de red ── */
+#net-bar{position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;background:transparent;
+  pointer-events:none;opacity:0;transition:opacity .15s}
+#net-bar.on{opacity:1}
+#net-bar-fill{height:100%;width:30%;background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  animation:netSlide 1.1s linear infinite}
+@keyframes netSlide{0%{transform:translateX(-40%)}100%{transform:translateX(360%)}}
+/* Botón ocupado: no se puede volver a pulsar */
+.busy{opacity:.55;pointer-events:none;cursor:progress}
+
+/* ══ PANEL DE READINESS (coach) ══════════════════════════════ */
+.rd-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:11px}
+@media (min-width:640px){ .rd-kpis{grid-template-columns:repeat(4,1fr)} }
+.rd-kpi{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--border-strong);
+  border-radius:9px;padding:11px 9px;text-align:center}
+.rd-kpi-n{font-family:var(--font-head);font-size:23px;line-height:1}
+.rd-kpi-l{font-size:9px;color:var(--muted);letter-spacing:.05em;margin-top:4px}
+.rd-kpi-s{font-size:9px;color:var(--muted);margin-top:2px}
+
+.rd-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px}
+@media (min-width:700px){ .rd-grid{grid-template-columns:1fr 1fr} }
+.rd-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
+.rd-box-t{font-size:10px;color:var(--muted);letter-spacing:.06em;margin-bottom:8px;text-transform:uppercase}
+
+.rd-tabla{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.rd-head{display:grid;grid-template-columns:1.5fr 46px .7fr .7fr .7fr .7fr .7fr;
+  padding:8px 12px;background:var(--surface2)}
+.rd-head span{font-size:9px;color:var(--muted);letter-spacing:.05em;text-align:center}
+.rd-head span:first-child{text-align:left}
+.rd-row{display:grid;grid-template-columns:1.5fr 46px .7fr .7fr .7fr .7fr .7fr;
+  align-items:center;padding:8px 12px;border-top:1px solid var(--border);border-left:3px solid transparent}
+.rd-nm{font-size:13px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rd-cell{display:block;border-radius:3px;padding:4px 0;margin:0 3px;font-size:11px;font-weight:700;
+  color:#0d0f12;text-align:center}
+.rd-chip{display:inline-block;border-radius:11px;padding:2px 7px;font-size:9px;font-weight:700;cursor:help}
+.rd-leyenda{padding:9px 13px;background:var(--surface2);display:flex;gap:15px;flex-wrap:wrap;
+  font-size:10px;color:var(--muted)}
+.rd-filtro{font-size:10px;border-radius:11px;padding:3px 9px;cursor:pointer}
+
 /* ── PRINT / PDF ── */
 @media print {
   * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -2447,6 +2486,9 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
+
+<!-- Indicador global: cualquier llamada al servidor lo enciende -->
+<div id="net-bar"><div id="net-bar-fill"></div></div>
 
 <!-- VIDEO MODAL -->
 <div class="video-modal-overlay" id="video-modal-overlay" onclick="closeVideoModal(event)">
@@ -3380,7 +3422,22 @@ function buildWeightChart(pesoData, W=260, H=52) {
 })();
 
 // ── API ───────────────────────────────────────────────────────
+var _netCount = 0;
+function _netOn(){
+  _netCount++;
+  const b = document.getElementById('net-bar');
+  if (b) b.classList.add('on');
+}
+function _netOff(){
+  _netCount = Math.max(0, _netCount-1);
+  if (_netCount === 0){
+    const b = document.getElementById('net-bar');
+    if (b) b.classList.remove('on');
+  }
+}
+
 async function api(payload) {
+  _netOn();
   try {
     const body = JSON.stringify(payload);
     let r;
@@ -3401,7 +3458,20 @@ async function api(payload) {
     try { return JSON.parse(txt); } catch { return { ok:false, error:'Respuesta inesperada.' }; }
   } catch(err) {
     return { ok:false, error:'Error de red: '+err.message };
+  } finally {
+    _netOff();
   }
+}
+
+// Bloquea el botón que se acaba de pulsar mientras dura la operación.
+// Evita los envíos repetidos cuando el servidor tarda en responder.
+async function conBoton(el, texto, fn){
+  if (!el || el.classList.contains('busy')) return;
+  const original = el.textContent;
+  el.classList.add('busy');
+  if (texto) el.textContent = texto;
+  try { return await fn(); }
+  finally { el.classList.remove('busy'); el.textContent = original; }
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────
@@ -3863,7 +3933,12 @@ function renderCard(e) {
     <div class="exn-nota">
       <span class="exn-nota-ic">ℹ</span>
       <span class="exn-nota-txt">${e.notas}</span>
-    </div>` : '';
+    </div>` : `
+    <div style="background:var(--surface2);border-radius:9px;padding:9px 12px;margin-bottom:10px;
+                font-size:10px;color:var(--muted);line-height:1.5">
+      El momentum no se puede calcular en este test: hace falta que la unidad sea de tiempo (s) con la
+      distancia en el nombre («10 metres»), o que el resultado ya venga en m/s o km/h.
+    </div>`;
 
   const videoBtn = hasVideo
     ? `<span class="exn-ic exn-ic-vid" title="Ver vídeo" onclick="openVideoModal('${nombreEsc}','${videoEsc}')">▶</span>`
@@ -5144,14 +5219,18 @@ var _informeMomentum = false;
 
 // Distancia del sprint, sacada del nombre del test ("10 metres" → 10)
 function _informeDistancia(nombre){
-  const m = String(nombre||'').match(/(\d+)\s*(m\b|metro|metre|meter)/i);
-  return m ? parseFloat(m[1]) : null;
+  const m = String(nombre||'').match(/(\d+(?:[.,]\d+)?)\s*(m\b|mts?\b|metro|metre|meter)/i);
+  return m ? parseFloat(String(m[1]).replace(',','.')) : null;
 }
 // Velocidad en m/s a partir del resultado del test
 function _informeVelocidad(valor, unidad, nombreTest){
-  if (unidad === 'm/s')  return valor;
-  if (unidad === 'km/h') return valor / 3.6;
-  if (unidad === 's') {
+  // Tolerante con cómo esté escrita la unidad en el catálogo:
+  // 's', 'seg', 'sec', 'segundos'... y con espacios de más.
+  const u = String(unidad||'').trim().toLowerCase();
+  if (u === 'm/s' || u === 'ms')  return valor;
+  if (u === 'km/h' || u === 'kmh') return valor / 3.6;
+  const esSeg = /^s(e[cg])?/.test(u) || u === '';
+  if (esSeg) {
     const d = _informeDistancia(nombreTest);
     return (d && valor > 0) ? d / valor : null;
   }
@@ -5293,7 +5372,7 @@ function _informeAplicarModo(){
       </div>
       ${sinCruzar.length?`<div class="inf-ready-s" style="color:#e6a817;text-align:left">⚠ ${sinCruzar.length} sin cruzar (no se guardarán, sí saldrán en el informe):<br><span style="font-size:11px">${sinCruzar.map(d=>d.nombre).join(' · ')}</span></div>`:''}
       <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
-        <button class="inf-gen-btn" style="background:var(--accent2)" onclick="_informeGuardar()">💾 Guardar en el Sheet</button>
+        <button class="inf-gen-btn" style="background:var(--accent2)" onclick="conBoton(this,'Guardando...',_informeGuardar)">💾 Guardar en el Sheet</button>
         <button class="inf-gen-btn" onclick="_informeGenerarPDF()">⭳ Generar informe</button>
       </div>
       <div id="inf-guardado" style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center"></div>
@@ -10185,172 +10264,225 @@ async function renderReadinessDashboard() {
   content.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
   const sqFilter = state.coachSquadFilter || '';
 
-  // Fecha seleccionada (por defecto hoy). El selector permite ver días pasados.
   const hoyStr = new Date().toISOString().slice(0,10);
   const picker = document.getElementById('readiness-date-picker');
   if (picker && !picker.value) picker.value = hoyStr;
-  if (picker) picker.max = hoyStr; // no permitir futuro
+  if (picker) picker.max = hoyStr;
   const fechaSel = (picker && picker.value) ? picker.value : hoyStr;
 
-  const res = await api({ action:'getWellnessEquipo', fecha: fechaSel });
-  if (!res.ok) { content.innerHTML = '<div class="hist-empty">Error cargando datos de readiness.</div>'; return; }
+  const r = await api({ action:'getReadinessPanel', fecha:fechaSel, squad:sqFilter });
+  if (!r || !r.ok) { content.innerHTML = '<div class="hist-empty">Error cargando datos de readiness.</div>'; return; }
+  _rd.data = r;
 
   const esHoy = (fechaSel === hoyStr);
   const fechaLbl = fechaSel.split('-').reverse().slice(0,2).join('/');
-  document.getElementById('readiness-date-lbl').textContent = (esHoy ? 'Hoy · ' : '') + fechaLbl;
+  const lblEl = document.getElementById('readiness-date-lbl');
+  if (lblEl) lblEl.textContent = (esHoy ? 'Hoy · ' : '') + fechaLbl;
 
-  let equipo = res.equipo || [];
-  if (sqFilter) equipo = equipo.filter(j => j.squad && j.squad.toLowerCase() === sqFilter.toLowerCase());
+  const badge = document.getElementById('rst-alertas-badge');
+  if (badge) {
+    if (r.conAlerta) { badge.textContent = r.conAlerta; badge.style.display = ''; }
+    else badge.style.display = 'none';
+  }
 
-  // ── Compatibilidad de escalas: registros viejos usaban 1-10 (score 0-100).
-  // Los normalizamos a la escala nueva 1-5 (score 0-20) para que se vean bien mezclados.
-  const _n5 = v => (v!=null && v!=='' && !isNaN(parseFloat(v)) && parseFloat(v)>5) ? Math.round(parseFloat(v)/2) : v;
-  equipo.forEach(j=>{
-    if (j.score!=null && !isNaN(parseFloat(j.score)) && parseFloat(j.score)>20) j.score = Math.round(parseFloat(j.score)/5);
-    if (Array.isArray(j.trend)) j.trend = j.trend.map(v => (v!=null && !isNaN(parseFloat(v)) && parseFloat(v)>20) ? Math.round(parseFloat(v)/5) : v);
-    if (j.today){
-      ['ganas_entrenar','dolor','fatiga','calidad_sueno'].forEach(k=>{ if(j.today[k]!=null) j.today[k]=_n5(j.today[k]); });
-    }
-  });
+  content.innerHTML = _rdKpis(r) + _rdGraficas(r) + _rdReparto(r) + _rdTabla(r);
+}
 
-  // media recalculada desde los scores ya normalizados (no la del backend, que puede venir en escala vieja)
-  const _scoresValidos = equipo.map(j=>j.score).filter(s=>s!=null && !isNaN(parseFloat(s)));
-  const media      = _scoresValidos.length ? Math.round(_scoresValidos.reduce((a,b)=>a+parseFloat(b),0)/_scoresValidos.length) : null;
-  const alertas    = equipo.filter(j=>j.score!==null&&j.score<10).length;
-  const sinResp    = equipo.filter(j=>j.score===null).length;
-  const respondidos= equipo.filter(j=>j.score!==null).length;
-  const mediaCol   = media===null?'var(--muted)':media>=14?'var(--accent2)':media>=10?'#ffc04d':'var(--danger)';
+var _rd = { data:null, soloAlerta:false };
+function rdToggleFiltro(){ _rd.soloAlerta = !_rd.soloAlerta; renderReadinessDashboard(); }
 
-  // KPI row
-  const kpis = `<div class="kpi-row" style="margin-bottom:12px">
-    <div class="kpi-card"><div class="kpi-num" style="color:${mediaCol}">${media||'—'}</div><div class="kpi-lbl">Score Avg</div></div>
-    <div class="kpi-card"><div class="kpi-num red">${alertas}</div><div class="kpi-lbl">Alertas</div></div>
-    <div class="kpi-card"><div class="kpi-num green">${respondidos}</div><div class="kpi-lbl">Respondido</div></div>
-    <div class="kpi-card"><div class="kpi-num amber">${sinResp}</div><div class="kpi-lbl">Sin resp.</div></div>
+function _rdCol(v){
+  if (v == null) return 'var(--muted)';
+  if (v >= 4) return '#00e5a0';
+  if (v >= 3) return '#ffc04d';
+  return '#ff7070';
+}
+function _rdColScore(s){
+  if (s == null) return 'var(--muted)';
+  if (s >= 16) return '#00e5a0';
+  if (s >= 12) return '#ffc04d';
+  return '#ff7070';
+}
+
+function _rdKpis(r){
+  const d = (a,b) => (a!=null && b!=null) ? Math.round((a-b)*10)/10 : null;
+  const dScore = d(r.scoreMedio, r.scoreAyer);
+  const dHoras = d(r.horasMedia, r.horasMedia7);
+  const flecha = (v, masEsMejor) => {
+    if (v == null || v === 0) return '<span style="color:var(--muted)">sin cambio</span>';
+    const sube = v > 0, bien = masEsMejor ? sube : !sube;
+    return `<span style="color:${bien?'#00e5a0':'#ff7070'}">${sube?'▲':'▼'} ${Math.abs(v)}</span>`;
+  };
+  const sinResp = (r.plantilla||0) - (r.respondido||0);
+  const card = (num, lbl, sub, col) =>
+    `<div class="rd-kpi" style="border-top-color:${col}">
+       <div class="rd-kpi-n" style="color:${col}">${num}</div>
+       <div class="rd-kpi-l">${lbl}</div>
+       <div class="rd-kpi-s">${sub}</div>
+     </div>`;
+  return `<div class="rd-kpis">
+    ${card(r.scoreMedio!=null?r.scoreMedio:'—','SCORE MEDIO', flecha(dScore,true)+' vs ayer', _rdColScore(r.scoreMedio))}
+    ${card(`${r.respondido}<span style="font-size:12px;color:var(--muted)">/${r.plantilla}</span>`,'HAN RESPONDIDO',
+           sinResp?`<span style="color:#ffc04d">${sinResp} sin responder</span>`:'<span style="color:#00e5a0">todos</span>','#ffc04d')}
+    ${card(r.conAlerta,'CON ALERTA', r.conAlerta?'ver tabla ↓':'ninguno', r.conAlerta?'#ff7070':'#00e5a0')}
+    ${card(r.horasMedia!=null?r.horasMedia:'—','HORAS SUEÑO', flecha(dHoras,true)+' vs media 7 d','#7bb8ff')}
   </div>`;
+}
 
-  // Metric cell: colored background if bad/amber/good
-  function metricCell(val) {
-    if (val === null || val === undefined || val === '') return `<td style="text-align:center;color:var(--muted);font-size:12px">—</td>`;
-    const v   = parseFloat(val);
-    const col = v>=4 ? 'rgba(0,229,160,.12)'   : v>=3 ? 'rgba(255,192,77,.12)'   : 'rgba(232,20,42,.15)';
-    const tcl = v>=4 ? '#00e5a0'                : v>=3 ? '#ffc04d'                : '#ff7070';
-    const bold= v<3;
-    return `<td style="text-align:center;padding:6px 4px">
-      <div style="background:${col};border-radius:5px;padding:4px 6px;font-size:13px;font-weight:${bold?700:500};color:${tcl};min-width:28px;text-align:center">${v%1===0?v:v.toFixed(1)}</div>
-    </td>`;
-  }
-  function hoursCell(val) {
-    if (!val) return `<td style="text-align:center;color:var(--muted);font-size:12px">—</td>`;
-    const h   = parseFloat(val);
-    const col = h>=7&&h<=9?'rgba(0,229,160,.12)':h<6?'rgba(232,20,42,.15)':'rgba(255,192,77,.12)';
-    const tcl = h>=7&&h<=9?'#00e5a0':h<6?'#ff7070':'#ffc04d';
-    return `<td style="text-align:center;padding:6px 4px">
-      <div style="background:${col};border-radius:5px;padding:4px 6px;font-size:12px;font-weight:500;color:${tcl};text-align:center">${h%1===0?h:h.toFixed(1)}</div>
-    </td>`;
-  }
-  function scoreCell(score, delta) {
-    if (score===null) return `<td style="text-align:center;color:var(--muted);font-size:12px">—</td>`;
-    const col = score>=14?'#00e5a0':score>=10?'#ffc04d':'#ff7070';
-    const deltaStr = delta!==null ? `<div style="font-size:9px;color:${delta>=0?'#00e5a0':'#ff7070'}">${delta>=0?'↑':'↓'}${Math.abs(delta)}</div>` : '';
-    return `<td style="text-align:center;padding:6px 4px">
-      <div style="font-size:16px;font-weight:700;color:${col}">${Math.round(score)}</div>${deltaStr}
-    </td>`;
-  }
-  function pesoCell(val) {
-    if (!val) return `<td style="text-align:center;color:var(--muted);font-size:12px">—</td>`;
-    return `<td style="text-align:center;font-size:12px;color:var(--text)">${val} kg</td>`;
-  }
+// Radar de los 4 ítems: hoy contra la media de los últimos 7 días.
+// Dice QUÉ ha caído, no solo cuánto.
+function _rdRadar(hoy, m7){
+  const cx=125, cy=72, R=48;
+  const ejes = [
+    { k:'ganas',  lbl:'GANAS',  ang:-Math.PI/2 },
+    { k:'dolor',  lbl:'DOLOR',  ang:0 },
+    { k:'fatiga', lbl:'FATIGA', ang:Math.PI/2 },
+    { k:'sueno',  lbl:'SUEÑO',  ang:Math.PI }
+  ];
+  const pt = (val, ang) => {
+    const v = Math.max(0, Math.min(5, val||0)) / 5;
+    return [cx + Math.cos(ang)*R*v, cy + Math.sin(ang)*R*v];
+  };
+  const poly = obj => ejes.map(e=>{ const p = pt(obj[e.k], e.ang); return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' ');
+  const guia = f => ejes.map(e=>{
+    const p=[cx+Math.cos(e.ang)*R*f, cy+Math.sin(e.ang)*R*f];
+    return p[0].toFixed(1)+','+p[1].toFixed(1);
+  }).join(' ');
+  const puntos = ejes.map(e=>{ const p=pt(hoy[e.k], e.ang);
+    return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.4" fill="#00e5a0"/>`; }).join('');
+  const etiquetas = ejes.map(e=>{
+    const rr = R + 24;
+    const x = cx + Math.cos(e.ang)*rr, y = cy + Math.sin(e.ang)*rr + 3;
+    const anchor = Math.abs(Math.cos(e.ang))<0.3 ? 'middle' : (Math.cos(e.ang)>0 ? 'end' : 'start');
+    const v = hoy[e.k];
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" font-size="9" fill="var(--text-secondary)">${e.lbl} ${v!=null?v:'—'}</text>`;
+  }).join('');
+  return `<div class="rd-box">
+    <div class="rd-box-t">LOS 4 ÍTEMS · HOY vs MEDIA 7 D</div>
+    <svg viewBox="0 0 250 150" style="width:100%;height:150px;display:block">
+      <polygon points="${guia(1)}" fill="none" stroke="var(--border)"/>
+      <polygon points="${guia(0.5)}" fill="none" stroke="var(--border)"/>
+      <polygon points="${poly(m7)}" fill="rgba(122,132,148,.14)" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="3 3"/>
+      <polygon points="${poly(hoy)}" fill="rgba(0,229,160,.16)" stroke="#00e5a0" stroke-width="2"/>
+      ${puntos}${etiquetas}
+    </svg>
+    <div style="display:flex;gap:14px;justify-content:center;font-size:9px">
+      <span style="color:#00e5a0">▬ hoy</span><span style="color:var(--muted)">┄ media 7 d</span>
+    </div>
+  </div>`;
+}
 
-  const tableRows = equipo.map(j => {
-    const sc  = j.score;
-    const scCol = sc===null?'#7a8494':sc>=14?'#00e5a0':sc>=10?'#ffc04d':'#ff7070';
-    const today = j.today || {};
-    const initials = j.nombre.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
-    // Mini trend bars from 7-day history
-    const trendBarsHtml = (j.trend||[]).map(vRaw => {
-      if (vRaw===null) return `<div style="width:3px;height:4px;border-radius:1px;background:var(--border2);align-self:flex-end"></div>`;
-      // Compatibilidad: datos viejos venían en escala 0-100; los nuevos en 0-20. Normalizar a /20.
-      const v = vRaw > 20 ? vRaw/5 : vRaw;
-      const bc = v>=14?'#00e5a0':v>=10?'#ffc04d':'#ff7070';
-      const bh = Math.max(3, Math.min(14, Math.round((v/20)*14)));
-      return `<div style="width:3px;height:${bh}px;border-radius:1px;background:${bc};align-self:flex-end"></div>`;
+function _rdTendencia(serie){
+  const W=250,H=150,padL=24,padT=16,padB=34;
+  const plotH=H-padT-padB, plotW=W-padL-6;
+  const y = v => padT + plotH - (Math.max(0,Math.min(20,v))/20)*plotH;
+  const n = serie.length;
+  const x = i => padL + (n>1 ? (plotW*i/(n-1)) : plotW/2);
+  const bandas = `
+    <rect x="${padL}" y="${y(20)}" width="${plotW}" height="${y(16)-y(20)}" fill="#00e5a0" opacity=".06"/>
+    <rect x="${padL}" y="${y(16)}" width="${plotW}" height="${y(12)-y(16)}" fill="#ffc04d" opacity=".06"/>
+    <rect x="${padL}" y="${y(12)}" width="${plotW}" height="${y(0)-y(12)}" fill="#ff7070" opacity=".06"/>`;
+  const grid = [20,16,12,8].map(v=>
+    `<line x1="${padL}" y1="${y(v)}" x2="${W-6}" y2="${y(v)}" stroke="var(--border)" stroke-width=".5"/>
+     <text x="${padL-5}" y="${y(v)+3}" text-anchor="end" font-size="8" fill="var(--muted)">${v}</text>`).join('');
+  const pts = serie.map((p,i)=> p.score!=null ? [x(i), y(p.score)] : null).filter(Boolean);
+  if (!pts.length) return `<div class="rd-box"><div class="rd-box-t">TENDENCIA · 14 DÍAS</div>
+    <div class="pevo-empty" style="padding:26px 0">Sin datos suficientes.</div></div>`;
+  const poly = pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const area = `<polygon points="${pts[0][0].toFixed(1)},${padT+plotH} ${poly} ${pts[pts.length-1][0].toFixed(1)},${padT+plotH}" fill="#00e5a0" opacity=".1"/>`;
+  const ult = pts[pts.length-1];
+  const ultVal = serie.filter(p=>p.score!=null).pop().score;
+  const dd = f => f.slice(8,10)+'/'+f.slice(5,7);
+  return `<div class="rd-box">
+    <div class="rd-box-t">TENDENCIA · 14 DÍAS</div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:150px;display:block">
+      ${bandas}${grid}
+      <line x1="${padL}" y1="${padT+plotH}" x2="${W-6}" y2="${padT+plotH}" stroke="var(--border2)"/>
+      ${area}<polyline points="${poly}" fill="none" stroke="#00e5a0" stroke-width="2.2" stroke-linejoin="round"/>
+      <circle cx="${ult[0].toFixed(1)}" cy="${ult[1].toFixed(1)}" r="4" fill="#00e5a0"/>
+      <text x="${ult[0].toFixed(1)}" y="${(ult[1]-8).toFixed(1)}" text-anchor="end" font-size="9" font-weight="600" fill="#00e5a0">${ultVal}</text>
+      <text x="${padL}" y="${H-10}" font-size="8" fill="var(--muted)">${dd(serie[0].fecha)}</text>
+      <text x="${W-6}" y="${H-10}" text-anchor="end" font-size="8" fill="var(--muted)">${dd(serie[n-1].fecha)}</text>
+    </svg>
+  </div>`;
+}
+
+function _rdGraficas(r){
+  return `<div class="rd-grid">${_rdRadar(r.radar.hoy, r.radar.media7)}${_rdTendencia(r.tendencia)}</div>`;
+}
+
+function _rdReparto(r){
+  const t = r.reparto.optimos + r.reparto.medios + r.reparto.bajos;
+  if (!t) return '';
+  const seg = (n,col,lbl) => n ? `<div style="width:${(n/t*100).toFixed(1)}%;background:${col};opacity:.8;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#0d0f12;white-space:nowrap;overflow:hidden">${n} ${lbl}</div>` : '';
+  return `<div class="rd-box" style="margin-bottom:10px">
+    <div style="display:flex;height:24px;border-radius:5px;overflow:hidden">
+      ${seg(r.reparto.optimos,'#00e5a0','óptimos')}${seg(r.reparto.medios,'#ffc04d','medios')}${seg(r.reparto.bajos,'#ff7070','bajos')}
+    </div>
+    <div style="font-size:9px;color:var(--muted);margin-top:7px">score ≥16 óptimo · 12–15 medio · &lt;12 bajo</div>
+  </div>`;
+}
+
+function _rdTabla(r){
+  let lista = r.jugadores;
+  if (_rd.soloAlerta) lista = lista.filter(j=>j.avisos.length);
+  const ICO = { carga:'⚡', wellness:'⚠', lesion:'🩹' };
+  const COL = { carga:'#ff7070', wellness:'#ffc04d', lesion:'#ff7070' };
+
+  const filas = lista.map(j=>{
+    const tipos = {};
+    j.avisos.forEach(a=>{ tipos[a.tipo] = (tipos[a.tipo]||0)+1; });
+    const chips = Object.keys(tipos).map(t=>{
+      const motivos = j.avisos.filter(a=>a.tipo===t).map(a=>a.txt).join(' · ');
+      return `<span class="rd-chip" style="background:${COL[t]}26;border-color:${COL[t]}66;color:${COL[t]}" title="${motivos.replace(/"/g,'&quot;')}">${ICO[t]}${tipos[t]>1?tipos[t]:''}</span>`;
     }).join('');
-    return `<tr style="cursor:pointer" onclick="openWellnessPlayerModal('${j.usuario}','${j.nombre.replace(/'/g,"\\'")}')">
-      <td style="padding:6px 8px;white-space:nowrap;border-right:0.5px solid var(--border);position:sticky;left:0;background:var(--surface)">
-        <div style="display:flex;align-items:center;gap:7px">
-          <div style="width:26px;height:26px;border-radius:50%;background:${scCol}22;border:1.5px solid ${scCol}66;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${scCol};flex-shrink:0">${initials}</div>
-          <div>
-            <div style="font-size:12px;font-weight:500;color:var(--text)">${j.nombre.split(',')[0]}</div>
-            <div style="display:flex;align-items:flex-end;gap:2px;height:16px;margin-top:2px">
-              ${trendBarsHtml||`<span style="font-size:9px;color:var(--muted)">${j.rugbyposition||''}</span>`}
-            </div>
-          </div>
-        </div>
-      </td>
-      ${scoreCell(sc, j.delta)}
-      ${metricCell(today.ganas_entrenar)}
-      ${metricCell(today.dolor)}
-      ${metricCell(today.fatiga)}
-      ${metricCell(today.calidad_sueno)}
-      ${hoursCell(today.horas_sueno)}
-      ${pesoCell(today.peso_corporal)}
-    </tr>`;
+    const borde = j.avisos.some(a=>a.tipo!=='wellness'||j.score<12) && j.avisos.length
+      ? (j.score!=null && j.score<12 ? '#ff7070' : '#ffc04d')
+      : _rdColScore(j.score);
+    const fondo = j.avisos.length ? (borde==='#ff7070'?'rgba(255,112,112,.05)':'rgba(255,192,77,.04)') : '';
+    const item = v => v==null
+      ? '<span class="rd-cell" style="background:var(--surface2);color:var(--muted)">—</span>'
+      : `<span class="rd-cell" style="background:${_rdCol(v)};opacity:.78;color:#0d0f12">${v}</span>`;
+    if (!j.respondido) {
+      return `<div class="rd-row" style="border-left-color:var(--border2);opacity:.5">
+        <span class="rd-nm">${j.nombre}</span>
+        <span style="text-align:center">${chips||'<span style="color:rgba(255,255,255,.15);font-size:11px">—</span>'}</span>
+        <span style="text-align:center;font-size:11px;color:var(--muted)">sin responder</span>
+        <span></span><span></span><span></span><span></span>
+      </div>`;
+    }
+    return `<div class="rd-row" style="border-left-color:${borde};background:${fondo}">
+      <span class="rd-nm">${j.nombre}</span>
+      <span style="text-align:center">${chips||'<span style="color:rgba(255,255,255,.15);font-size:11px">—</span>'}</span>
+      <span style="text-align:center;font-size:15px;font-weight:700;color:${_rdColScore(j.score)}">${j.score!=null?j.score:'—'}</span>
+      <span>${item(j.ganas)}</span><span>${item(j.dolor)}</span><span>${item(j.fatiga)}</span><span>${item(j.sueno)}</span>
+    </div>`;
   }).join('');
 
-  // ── Fila PROMEDIO del equipo ────────────────────────────────
-  function avgOf(getter) {
-    const vals = equipo.map(getter).filter(v => v !== null && v !== undefined && v !== '' && !isNaN(parseFloat(v))).map(parseFloat);
-    if (!vals.length) return null;
-    return vals.reduce((s,v)=>s+v,0) / vals.length;
-  }
-  function promCell(val, isHours) {
-    if (val === null) return `<td style="text-align:center;color:var(--muted);font-size:12px;padding:8px 4px">—</td>`;
-    const v = Math.round(val*10)/10;
-    return `<td style="text-align:center;padding:8px 4px;font-size:13px;font-weight:700;color:var(--text)">${v%1===0?v:v.toFixed(1)}</td>`;
-  }
-  const avgScore = avgOf(j => j.score);
-  const avgScoreCol = avgScore===null?'var(--muted)':avgScore>=14?'#00e5a0':avgScore>=10?'#ffc04d':'#ff7070';
-  const promedioRow = `<tr style="border-top:2px solid var(--accent);background:rgba(232,20,42,.06)">
-    <td style="padding:8px 10px;white-space:nowrap;border-right:0.5px solid var(--border);position:sticky;left:0;background:rgba(40,20,22,.6)">
-      <div style="display:flex;align-items:center;gap:7px">
-        <div style="width:26px;height:26px;border-radius:50%;background:${avgScoreCol}22;border:1.5px solid ${avgScoreCol}66;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <span style="width:8px;height:8px;border-radius:50%;background:${avgScoreCol}"></span>
-        </div>
-        <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.03em">PROMEDIO</div>
-      </div>
-    </td>
-    <td style="text-align:center;padding:8px 4px"><div style="font-size:16px;font-weight:700;color:${avgScoreCol}">${avgScore!==null?Math.round(avgScore):'—'}</div></td>
-    ${promCell(avgOf(j=>j.today&&j.today.ganas_entrenar))}
-    ${promCell(avgOf(j=>j.today&&j.today.dolor))}
-    ${promCell(avgOf(j=>j.today&&j.today.fatiga))}
-    ${promCell(avgOf(j=>j.today&&j.today.calidad_sueno))}
-    ${promCell(avgOf(j=>j.today&&j.today.horas_sueno), true)}
-    ${promCell(avgOf(j=>j.today&&j.today.peso_corporal))}
-  </tr>`;
-
-  content.innerHTML = `
-    ${kpis}
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:0.5px solid var(--border)">
-      <table style="width:100%;border-collapse:collapse;min-width:520px;background:var(--surface)">
-        <thead>
-          <tr style="border-bottom:0.5px solid var(--border2)">
-            <th style="padding:8px 10px;text-align:left;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap;position:sticky;left:0;background:var(--surface2)">Jugador</th>
-            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Score</th>
-            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Ganas</th>
-            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Dolor</th>
-            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Fatiga</th>
-            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Sueño</th>
-            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Horas</th>
-            <th style="padding:8px 6px;text-align:center;font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap">Peso</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${tableRows||`<tr><td colspan="8" style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Nadie ha respondido el cuestionario ${esHoy?'hoy':'ese día'} todavía.</td></tr>`}
-          ${tableRows ? promedioRow : ''}
-        </tbody>
-      </table>
-    </div>`;
+  return `<div class="rd-tabla">
+    <div class="rd-head">
+      <span class="rd-nm" style="color:var(--muted);font-size:9px;letter-spacing:.05em">JUGADOR</span>
+      <span style="text-align:center;font-size:9px;color:var(--muted)">⚠</span>
+      <span style="text-align:center;font-size:9px;color:var(--muted);letter-spacing:.05em">SCORE</span>
+      <span style="text-align:center;font-size:9px;color:var(--muted);letter-spacing:.05em">GANAS</span>
+      <span style="text-align:center;font-size:9px;color:var(--muted);letter-spacing:.05em">DOLOR</span>
+      <span style="text-align:center;font-size:9px;color:var(--muted);letter-spacing:.05em">FATIGA</span>
+      <span style="text-align:center;font-size:9px;color:var(--muted);letter-spacing:.05em">SUEÑO</span>
+    </div>
+    <div style="padding:7px 12px;display:flex;gap:6px;align-items:center;background:var(--surface2)">
+      <span onclick="rdToggleFiltro()" style="font-size:10px;padding:3px 10px;border-radius:11px;cursor:pointer;
+        background:${_rd.soloAlerta?'rgba(255,112,112,.16)':'transparent'};
+        color:${_rd.soloAlerta?'#ff7070':'var(--muted)'};border:1px solid ${_rd.soloAlerta?'rgba(255,112,112,.4)':'var(--border2)'}">solo con aviso</span>
+      <span style="font-size:10px;color:var(--muted)">${lista.length} jugadores</span>
+    </div>
+    ${filas || '<div class="pevo-empty">Nadie con avisos hoy.</div>'}
+    <div class="rd-leyenda">
+      <span>⚡ carga · ACWR fuera de zona</span>
+      <span>⚠ wellness · score o ítem bajo</span>
+      <span>🩹 lesión abierta</span>
+      <span style="opacity:.6">pasa el cursor para ver el motivo</span>
+    </div>
+  </div>`;
 }
 
 // ── WELLNESS PLAYER MODAL (coach) ────────────────────────────
@@ -10888,7 +11020,7 @@ function _lesPintarForm(){
       ${lbl('Detalle (quirúrgico, otros)')}
       <textarea class="pe-nota" onchange="_lesSet('datos.tratamiento_detalle',this.value)">${d.tratamiento_detalle||''}</textarea>
 
-      <button class="pe-save" style="margin-top:16px" onclick="lesGuardar()">Guardar parte</button>
+      <button class="pe-save" style="margin-top:16px" onclick="conBoton(this,'Guardando...',lesGuardar)">Guardar parte</button>
       <button class="doc-cancel-btn" onclick="lesCerrarForm()">Cancelar</button>
     </div>`;
   ov.addEventListener('click', ev=>{ if(ev.target===ov) lesCerrarForm(); });
@@ -11574,6 +11706,10 @@ function plannerSub(sub){
     const b=document.getElementById('plt-'+s);
     if(b) b.classList.toggle('active', s===sub);
   });
+  // Feedback inmediato: las vistas cargan del servidor y sin esto
+  // parece que el clic no ha hecho nada y se vuelve a pulsar.
+  const pc = document.getElementById('planner-content');
+  if (pc) pc.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
   if(sub==='cal') renderCalendarioCoach();
   else if(sub==='gal') renderGallery();
   else if(sub==='indiv') renderIndividuales();
@@ -12014,7 +12150,10 @@ function renderInlineDia(){
      <div id="cal-dia-estado" style="font-size:10px;color:var(--muted);text-align:center;margin-top:6px"></div>`;
 }
 
+var _diaGuardando = false;
 async function calGuardarDia(){
+  if (_diaGuardando) return;
+  _diaGuardando = true;
   const est = document.getElementById('cal-dia-estado');
   const btn = document.querySelector('#cal-dia-guardar .pw-publish');
   if (btn){ btn.disabled = true; btn.textContent = 'Guardando...'; }
@@ -12024,6 +12163,7 @@ async function calGuardarDia(){
   const res = await api({ action:'saveWeek', id:w.id, nombre:w.nombre, squad:w.squad,
     fecha_inicio:w.fecha_inicio, fecha_fin:w.fecha_fin, data:clean,
     visible: w.visible===true, creado_por:(state.user&&state.user.usuario)||'' });
+  _diaGuardando = false;
   if (res && res.ok){
     if (est){ est.textContent = '✓ Guardado'; est.style.color = 'var(--accent2)'; }
     if (btn){ btn.disabled = false; btn.textContent = 'Guardar sesión'; }
@@ -12034,6 +12174,7 @@ async function calGuardarDia(){
     const ag = await api({ action:'getAgenda', squad, desde, hasta, soloVisibles:false });
     if (ag && ag.ok) _cal.data = ag;
   } else {
+    _diaGuardando = false;
     if (btn){ btn.disabled = false; btn.textContent = 'Guardar sesión'; }
     alert('No se pudo guardar: '+((res&&res.error)||''));
   }
@@ -12239,7 +12380,7 @@ async function renderDocsManager(){
       <input id="doc-categoria" class="semana-select" style="width:100%;margin-bottom:10px" placeholder="Ej. Movilidad, Fuerza, Nutrición" value="${(e.categoria||'').replace(/"/g,'&quot;')}">
       <label class="indiv-lbl">Enlace al PDF (Google Drive, Dropbox...)</label>
       <input id="doc-url" class="semana-select" style="width:100%;margin-bottom:12px" placeholder="https://..." value="${(e.url||'').replace(/"/g,'&quot;')}">
-      <button class="indiv-add-btn" onclick="crearDoc()">${_docEdit?'Guardar cambios':'Subir documento'}</button>
+      <button class="indiv-add-btn" onclick="conBoton(this,'Subiendo...',crearDoc)">${_docEdit?'Guardar cambios':'Subir documento'}</button>
       ${_docEdit?'<button class="doc-cancel-btn" onclick="_docCancelEdit()">Cancelar edición</button>':''}
     </div>
     <div class="indiv-list-title">Documentos subidos</div>
@@ -12270,7 +12411,9 @@ async function editDoc(id){
   renderDocsManager();
 }
 function _docCancelEdit(){ _docEdit=null; renderDocsManager(); }
+var _docGuardando = false;
 async function crearDoc(){
+  if (_docGuardando) return;
   const ambito=document.getElementById('doc-ambito').value;
   const titulo=document.getElementById('doc-titulo').value.trim();
   const url=document.getElementById('doc-url').value.trim();
@@ -12290,7 +12433,9 @@ async function crearDoc(){
     usuario=document.getElementById('doc-jugador').value;
     if(!usuario){ alert('Selecciona el jugador'); return; }
   }
+  _docGuardando = true;
   const res=await api({ action:'saveDoc', id:(_docEdit&&_docEdit.id)||'', ambito, squad, usuario, titulo, url, categoria, creado_por:(state.user&&state.user.usuario)||'' });
+  _docGuardando = false;
   if(res.ok){ _docEdit=null; renderDocsManager(); } else { alert('Error: '+(res.error||'')); }
 }
 async function delDoc(id){
@@ -12360,7 +12505,7 @@ async function renderIndividuales(){
       </select>
       <label class="indiv-lbl">Nombre del extra (opcional)</label>
       <input id="indiv-nombre" class="semana-select" style="width:100%;margin-bottom:12px" placeholder="Ej. Prensa + core">
-      <button class="indiv-add-btn" onclick="crearExtra()">+ Añadir día extra</button>
+      <button class="indiv-add-btn" onclick="conBoton(this,'Creando...',crearExtra)">+ Añadir día extra</button>
     </div>
     <div class="indiv-list-title">Extras creados</div>
     <div class="indiv-list">${extrasHTML}</div>`;
@@ -13655,7 +13800,7 @@ async function saveWeekNow(){
     } else { btns.forEach(b=>{ b.disabled=false; b.textContent='Guardar'; }); alert('Error: '+(res.error||'')); }
     return;
   }
-  if(!w.nombre.trim()){ alert('Ponle titulo a la semana'); return; }
+  if(!w.nombre.trim()){ _weekGuardando=false; alert('Ponle titulo a la semana'); return; }
   const clean=JSON.parse(JSON.stringify(w.data));
   (clean.dias||[]).forEach(d=>{ delete d._open; });
   const btns=document.querySelectorAll('.pw-draft,.pw-publish');
@@ -13665,6 +13810,7 @@ async function saveWeekNow(){
   const res=await api({ action:'saveWeek', id:w.id||'', nombre:w.nombre, squad:w.squad,
     fecha_inicio:w.fecha_inicio, fecha_fin:w.fecha_fin, data:clean,
     visible:vis, creado_por:(state.user&&state.user.usuario)||'' });
+  _weekGuardando = false;
   if(res.ok){
     if(res.id && !w.id) w.id=res.id;
     limpiarBorrador();
