@@ -1,641 +1,4131 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAU Offseason Planner</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg:        #0d0f12;
-  --surface:   #151920;
-  --surface2:  #1c2330;
-  --border:    rgba(255,255,255,0.08);
-  --border2:   rgba(255,255,255,0.14);
-  --accent:    #e8142a;
-  --accent2:   #00e5a0;
-  --text:      #f0f2f5;
-  --muted:     #7a8494;
-  --danger:    #ff4d4d;
-  --font-head: 'Bebas Neue', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
-  --r:         10px;
-}
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 15px;
-  min-height: 100vh;
-  line-height: 1.5;
-}
-.hidden { display: none !important; }
+// ============================================================
+// RUGBY GYM PLANNER — Google Apps Script Backend v10
+// Fixes vs v9:
+//   · getDiasActivos(): excluye fila header BLOCK/EXERCISE
+//     y fila de estructura (A1, B1...) sin ejercicio real.
+//     Solo cuenta día activo si exName es texto real ≠ "EXERCISE"
+//     y block ≠ "BLOCK" y ambos no vacíos.
+//   · getDiasActivos(): devuelve diasActivos.length como
+//     `diasProgramados` para calcular compliance correcto.
+//   · getEquipo(): compliance semanal usa diasProgramados
+//     de getDiasActivos en vez de hardcoded 5.
+// ============================================================
 
-/* ── LOGIN ── */
-#screen-login {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  position: relative;
-  overflow: hidden;
-}
-.login-bg {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(232,20,42,0.08) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 60% at 10% 80%, rgba(232,20,42,0.04) 0%, transparent 60%);
-  pointer-events: none;
-}
-.login-box { width: 100%; max-width: 380px; position: relative; z-index: 1; }
-.login-logo { font-family: var(--font-head); font-size: 56px; letter-spacing: 2px; line-height: 1; margin-bottom: 4px; }
-.login-logo .cau  { color: #e8142a; }
-.login-logo .rest { color: #ffffff; }
-.login-sub { color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2.5rem; }
-.field-group { margin-bottom: 1rem; }
-.field-group label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-.field-group input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--r); padding: 12px 14px; font-size: 15px; font-family: var(--font-body); color: var(--text); outline: none; transition: border-color .2s; }
-.field-group input:focus { border-color: var(--accent); }
-.btn-primary { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: var(--r); padding: 13px; font-size: 14px; font-weight: 600; font-family: var(--font-body); letter-spacing: .04em; cursor: pointer; transition: opacity .15s, transform .1s; margin-top: .5rem; }
-.btn-primary:hover { opacity: .88; }
-.btn-primary:active { transform: scale(.98); }
-.btn-primary:disabled { opacity: .4; cursor: not-allowed; }
-.error-msg { color: var(--danger); font-size: 13px; margin-top: .75rem; text-align: center; min-height: 20px; }
-
-/* ── APP ── */
-#screen-app { display: none; min-height: 100vh; padding-bottom: 5rem; }
-.topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(13,15,18,.93); backdrop-filter: blur(12px); z-index: 10; }
-.topbar-logo { font-family: var(--font-head); font-size: 20px; letter-spacing: 1px; }
-.topbar-logo .cau  { color: #e8142a; }
-.topbar-logo .rest { color: #ffffff; }
-.topbar-right { display: flex; align-items: center; gap: 10px; }
-.player-badge { background: var(--surface2); border: 1px solid var(--border2); border-radius: 99px; padding: 4px 12px 4px 8px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
-.avatar { width: 24px; height: 24px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
-.btn-logout { background: none; border: 1px solid var(--border2); border-radius: 8px; color: var(--muted); padding: 5px 10px; font-size: 12px; cursor: pointer; font-family: var(--font-body); }
-.btn-logout:hover { color: var(--text); }
-
-.content { padding: 1.5rem 1.25rem; max-width: 680px; margin: 0 auto; }
-.week-header { margin-bottom: 1.5rem; }
-.week-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .75rem; }
-.semana-select { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 8px 14px; color: var(--text); font-family: var(--font-body); font-size: 13px; outline: none; cursor: pointer; margin-bottom: 1rem; min-width: 220px; }
-.semana-select:focus { border-color: var(--accent); }
-.day-pills { display: flex; gap: 8px; flex-wrap: wrap; }
-.day-pill { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 6px 16px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; color: var(--muted); font-family: var(--font-body); }
-.day-pill:hover { border-color: rgba(232,20,42,.4); color: var(--text); }
-.day-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
-.session-title { font-family: var(--font-head); font-size: 34px; letter-spacing: 1px; line-height: 1; margin-bottom: .25rem; }
-.session-meta { color: var(--muted); font-size: 13px; margin-bottom: 1.5rem; }
-.phase-header { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 1.5rem 0 .75rem; display: flex; align-items: center; gap: 8px; }
-.phase-header::after { content:''; flex:1; height:1px; background:var(--border); }
-
-/* ── EXERCISE CARD ── */
-.ex-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 8px; overflow: hidden; }
-.ex-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
-.block-id { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--muted); flex-shrink: 0; }
-.ex-info { flex: 1; min-width: 0; }
-.ex-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ex-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
-.tag { font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
-.tag-squat   { background: rgba(55,138,221,.15);  color: #5fb3f5; }
-.tag-hinge   { background: rgba(29,158,117,.15);  color: #3ecfa0; }
-.tag-push    { background: rgba(239,159,39,.15);  color: #ffc04d; }
-.tag-row     { background: rgba(127,119,221,.15); color: #a99ff5; }
-.tag-pull    { background: rgba(99,153,34,.15);   color: #9acf44; }
-.tag-plyo    { background: rgba(226,75,74,.15);   color: #ff7070; }
-.tag-iso     { background: rgba(136,135,128,.15); color: #aaa; }
-.tag-other   { background: rgba(212,83,126,.15);  color: #f07aaa; }
-.tag-neutral { background: var(--surface2); color: var(--muted); }
-
-/* ── VIDEO BUTTON & EMBED ── */
-.btn-video {
-  flex-shrink: 0;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border2);
-  border-radius: 8px;
-  width: 34px; height: 34px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  transition: background .15s, border-color .15s;
-  color: var(--muted);
-  font-size: 14px;
-}
-.btn-video:hover { background: rgba(232,20,42,.15); border-color: rgba(232,20,42,.4); color: var(--accent); }
-.btn-video.no-video { opacity: .25; cursor: default; pointer-events: none; }
-
-.video-embed {
-  display: none;
-  padding: 0 14px 14px;
-}
-.video-embed.open { display: block; }
-.video-wrap {
-  position: relative;
-  padding-bottom: 56.25%; /* 16:9 */
-  height: 0;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #000;
-}
-.video-wrap iframe {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  border: none;
-}
-
-/* ── SESSION PANEL (RPE + Tiempo) ── */
-.session-panel {
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  border-radius: var(--r);
-  padding: 16px;
-  margin-top: 1.5rem;
-}
-.panel-section { margin-bottom: 18px; }
-.panel-section:last-child { margin-bottom: 0; }
-.panel-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
-.panel-sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
-
-/* RPE grid */
-.rpe-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
-.rpe-btn { background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 4px; cursor: pointer; color: var(--muted); font-family: var(--font-body); transition: all .15s; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.rpe-btn .rpe-num  { font-size: 17px; font-weight: 600; }
-.rpe-btn .rpe-desc { font-size: 9px; }
-.rpe-btn:hover { color: var(--text); border-color: rgba(232,20,42,.4); }
-.rpe-btn.sel { background: var(--accent); color: #fff; border-color: var(--accent); }
-
-/* Tiempo — teclado numérico */
-.time-display {
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-family: var(--font-head);
-  font-size: 36px;
-  letter-spacing: 2px;
-  text-align: center;
-  margin-bottom: 10px;
-  color: var(--text);
-  min-height: 60px;
-}
-.time-display.has-value { color: var(--accent2); }
-.numpad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
-.numpad-btn {
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-radius: 8px;
-  padding: 12px 4px;
-  font-size: 18px;
-  font-family: var(--font-body);
-  font-weight: 500;
-  color: var(--text);
-  cursor: pointer;
-  transition: all .12s;
-  text-align: center;
-}
-.numpad-btn:hover { background: var(--surface2); border-color: var(--border2); }
-.numpad-btn:active { transform: scale(.96); }
-.numpad-btn.del { color: var(--muted); font-size: 15px; }
-.numpad-btn.wide { grid-column: span 2; }
-.numpad-hint { font-size: 11px; color: var(--muted); text-align: center; margin-top: 6px; }
-
-/* Save button */
-.btn-save-session {
-  width: 100%;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: var(--r);
-  padding: 13px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--font-body);
-  letter-spacing: .04em;
-  cursor: pointer;
-  margin-top: 16px;
-  transition: opacity .15s;
-}
-.btn-save-session:hover { opacity: .88; }
-.btn-save-session:disabled { opacity: .4; cursor: not-allowed; }
-.saved-msg { color: var(--accent2); font-size: 14px; font-weight: 600; text-align: center; padding: 8px 0; }
-
-.notes-banner { background: var(--surface2); border-left: 2px solid var(--accent); border-radius: 0 var(--r) var(--r) 0; padding: 10px 14px; font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 1.25rem; }
-.notes-banner strong { color: var(--text); }
-.loader { text-align: center; padding: 3rem; color: var(--muted); font-size: 13px; }
-.spinner { width: 28px; height: 28px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 1rem; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.empty { text-align: center; padding: 3rem 1rem; color: var(--muted); }
-.empty-icon { font-size: 36px; margin-bottom: .75rem; }
-@media (max-width: 500px) {
-  .session-title { font-size: 26px; }
-}
-</style>
-</head>
-<body>
-
-<!-- LOGIN -->
-<div id="screen-login">
-  <div class="login-bg"></div>
-  <div class="login-box">
-    <div class="login-logo">
-      <span class="cau">CAU</span><span class="rest">OFFSEASON</span>
-    </div>
-    <div class="login-sub">Club Planner · Summer 2026</div>
-    <div class="field-group">
-      <label>Usuario</label>
-      <input type="text" id="input-user" placeholder="tu_usuario" autocomplete="username">
-    </div>
-    <div class="field-group">
-      <label>Contraseña</label>
-      <input type="password" id="input-pass" placeholder="••••••" autocomplete="current-password">
-    </div>
-    <button class="btn-primary" id="btn-login" onclick="doLogin()">Entrar</button>
-    <div class="error-msg" id="login-error"></div>
-  </div>
-</div>
-
-<!-- APP -->
-<div id="screen-app">
-  <div class="topbar">
-    <div class="topbar-logo"><span class="cau">CAU</span><span class="rest">OFFSEASON</span></div>
-    <div class="topbar-right">
-      <div class="player-badge">
-        <div class="avatar" id="avatar-initials">?</div>
-        <span id="player-name">Jugador</span>
-      </div>
-      <button class="btn-logout" onclick="logout()">Salir</button>
-    </div>
-  </div>
-  <div class="content">
-    <div class="week-header">
-      <div class="week-label">Semana activa</div>
-      <select id="sel-semana" class="semana-select" onchange="onSemanaChange()">
-        <option value="1">Cargando...</option>
-      </select>
-      <div class="day-pills">
-        <button class="day-pill active" onclick="selectDay(1,this)">Day 1</button>
-        <button class="day-pill" onclick="selectDay(2,this)">Day 2</button>
-        <button class="day-pill" onclick="selectDay(3,this)">Day 3</button>
-        <button class="day-pill" onclick="selectDay(4,this)">Day 4</button>
-        <button class="day-pill" onclick="selectDay(5,this)">Extra</button>
-      </div>
-    </div>
-    <div id="session-container"></div>
-  </div>
-</div>
-
-<script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVyC8AFCalPyYy116XmEtzdSMYUc2tzW2c_Tm_H_TcJSt-FGvUWjfnflDS-GukmqpX/exec';
-
-let state = {
-  user: null,
-  dia: 1,
-  semana: 1,
-  semanas: [],
-  rpeSession: null,
-  tiempoSesion: '',   // string numérico en minutos
-  guardado: false
+const DAY_COL_OFFSETS = {
+  1: 1,
+  2: 12,
+  3: 23,
+  4: 34,
+  5: 45
 };
 
-// ── API ───────────────────────────────────────────────────────
-async function api(payload) {
+function sheetForSquad(squad) {
+  const s = String(squad || '').toLowerCase().trim();
+  if (s.includes('women'))   return 'Women_sessions';
+  if (s.includes('academy')) return 'Academy_sessions';
+  return 'Mens_sessions';
+}
+
+// Detecta si una posición corresponde a staff (no jugador): coach, s&c, fisio.
+// Se usa para excluir al staff de las listas de jugadores. Robusto a variantes.
+function esStaff(posicion) {
+  const p = String(posicion || '').toLowerCase().trim();
+  return p === 'coach' || p === 'entrenador' || p === 'head coach' || p === 'headcoach' ||
+         p === 's&c' || p === 'sc' || p === 's y c' || p === 'strength' || p === 'preparador' ||
+         p === 'fisio' || p === 'physio' || p === 'fisioterapeuta' || p === 'medico' || p === 'médico';
+}
+
+function doPost(e) {
   try {
-    const url = APPS_SCRIPT_URL + '?payload=' + encodeURIComponent(JSON.stringify(payload));
-    const r   = await fetch(url, { redirect: 'follow' });
-    const txt = await r.text();
-    try { return JSON.parse(txt); }
-    catch { console.error('Respuesta no-JSON:', txt.substring(0, 300)); return { ok: false, error: 'Respuesta inesperada del servidor.' }; }
-  } catch(err) {
-    return { ok: false, error: 'Error de red: ' + err.message };
+    let data;
+    // Puede llegar como "payload=<urlencoded JSON>" (peticiones grandes del frontend)
+    // o como JSON directo en el cuerpo.
+    if (e.parameter && e.parameter.payload) {
+      data = JSON.parse(e.parameter.payload);
+    } else if (e.postData && e.postData.contents) {
+      const raw = e.postData.contents;
+      if (raw.indexOf('payload=') === 0) {
+        data = JSON.parse(decodeURIComponent(raw.substring(8).replace(/\+/g, ' ')));
+      } else {
+        data = JSON.parse(raw);
+      }
+    } else {
+      return respond({ ok: false, error: 'Sin datos' });
+    }
+    return respond(dispatch(data));
+  } catch (err) {
+    return respond({ ok: false, error: err.message });
   }
 }
 
-// ── LOGIN ─────────────────────────────────────────────────────
-async function doLogin() {
-  const btn      = document.getElementById('btn-login');
-  const errEl    = document.getElementById('login-error');
-  const usuario  = document.getElementById('input-user').value.trim();
-  const password = document.getElementById('input-pass').value;
-  if (!usuario || !password) { errEl.textContent = 'Rellena usuario y contraseña'; return; }
-  btn.disabled = true; btn.textContent = 'Entrando...'; errEl.textContent = '';
-  const res = await api({ action: 'login', usuario, password });
-  if (res.ok) {
-    state.user = res;
-    document.getElementById('player-name').textContent = res.nombre;
-    document.getElementById('avatar-initials').textContent =
-      res.nombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-    document.getElementById('screen-login').style.display = 'none';
-    document.getElementById('screen-app').style.display   = 'block';
-    await loadSemanas();
-    loadRutina();
-  } else {
-    errEl.textContent = res.error || 'Error al iniciar sesión';
-    btn.disabled = false; btn.textContent = 'Entrar';
+function doGet(e) {
+  if (e.parameter && e.parameter.payload) {
+    try {
+      const data = JSON.parse(e.parameter.payload);
+      return respond(dispatch(data));
+    } catch(err) {
+      return respond({ ok: false, error: err.message });
+    }
   }
+  return respond({ ok: true, msg: 'CAU Offseason Planner API v10 activa' });
 }
 
-document.getElementById('input-pass').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
-});
+function dispatch(data) {
+  const action = data.action;
+  if (action === 'login')          return login(data);
+  if (action === 'getSemanas')     return getSemanas(data);
+  if (action === 'getRutina')      return getRutina(data);
+  if (action === 'getDiasActivos') return getDiasActivos(data);
+  if (action === 'saveRegistro')   return saveRegistro(data);
+  if (action === 'getNotaDia')     return getNotaDia(data);
+  if (action === 'saveNotaDia')    return saveNotaDia(data);
+  if (action === 'getHistorial')   return getHistorial(data);
+  if (action === 'getEquipo')      return getEquipo(data);
+  if (action === 'getMolestiasZonas') return getMolestiasZonas(data);
+  if (action === 'getMolestiasSemana') return getMolestiasSemana(data);
+  if (action === 'getComplianceMes') return getComplianceMes(data);
+  if (action === 'getWeekConfig')  return getWeekConfig(data);
+  if (action === 'setWeekVisible')      return setWeekVisible(data);
+  if (action === 'saveWellness')        return saveWellness(data);
+  if (action === 'getMolestiasEquipo')  return getMolestiasEquipo(data);
+  if (action === 'getControlCargas')    return getControlCargas(data);
+  if (action === 'getWellness')         return getWellness(data);
+  if (action === 'getWellnessEquipo')   return getWellnessEquipo(data);
+  if (action === 'getReadinessPanel')   return getReadinessPanel(data);
+  if (action === 'getRpeReadinessSerie') return getRpeReadinessSerie(data);
+  if (action === 'getTests')            return getTests(data);
+  if (action === 'getCatalogoTests')    return getCatalogoTests(data);
+  if (action === 'getJugadoresInforme') return getJugadoresInforme(data);
+  if (action === 'guardarTestResultados') return guardarTestResultados(data);
+  if (action === 'saveTestResultado')   return saveTestResultado(data);
+  if (action === 'getHiitPerfiles')     return getHiitPerfiles(data);
+  // ── PLANNER (añadido) ──────────────────────────────────────
+  if (action === 'getExerciseLibrary')  return getExerciseLibrary(data);
+  if (action === 'saveExerciseTags')    return saveExerciseTags(data);
+  if (action === 'addListValue')        return addListValue(data);
+  if (action === 'getWeeks')            return getWeeks(data);
+  if (action === 'saveWeek')            return saveWeek(data);
+  if (action === 'getExtras')           return getExtras(data);
+  if (action === 'saveExtra')           return saveExtra(data);
+  if (action === 'deleteExtra')         return deleteExtra(data);
+  if (action === 'getDocs')             return getDocs(data);
+  if (action === 'saveDoc')             return saveDoc(data);
+  if (action === 'deleteDoc')           return deleteDoc(data);
+  if (action === 'deleteWeek')          return deleteWeek(data);
+  if (action === 'publishWeek')         return publishWeek(data);
+  if (action === 'getPrevPrescription') return getPrevPrescription(data);
+  if (action === 'saveFieldLoad')       return saveFieldLoad(data);
+  if (action === 'getFieldLoad')        return getFieldLoad(data);
+  if (action === 'getCargaDiaria')      return getCargaDiaria(data);
+  if (action === 'getTendencia')        return getTendencia(data);
+  if (action === 'getEventos')          return getEventos(data);
+  if (action === 'saveEvento')          return saveEvento(data);
+  if (action === 'deleteEvento')        return deleteEvento(data);
+  if (action === 'getAgenda')           return getAgenda(data);
+  if (action === 'aplicarPrograma')     return aplicarPrograma(data);
+  if (action === 'borrarDiaSemana')     return borrarDiaSemana(data);
+  if (action === 'vaciarDia')           return vaciarDia(data);
+  if (action === 'repetirSesion')       return repetirSesion(data);
+  if (action === 'getRutinaDia')        return getRutinaDia(data);
+  if (action === 'getLesiones')         return getLesiones(data);
+  if (action === 'saveLesion')          return saveLesion(data);
+  if (action === 'deleteLesion')        return deleteLesion(data);
+  if (action === 'getEpidemiologia')    return getEpidemiologia(data);
+  if (action === 'getPesosActuales')    return getPesosActuales(data);
+  if (action === 'getTestingSquad')     return getTestingSquad(data);
+  if (action === 'getTestingSquad')     return getTestingSquad(data);
+  if (action === 'getPesos')            return getPesos(data);
+  return { ok: false, error: 'Acción desconocida: ' + action };
+}
 
-// ── SEMANAS ───────────────────────────────────────────────────
-async function loadSemanas() {
-  const res    = await api({ action: 'getSemanas' });
-  const select = document.getElementById('sel-semana');
-  if (res.ok && res.semanas && res.semanas.length) {
-    state.semanas = res.semanas;
-    select.innerHTML = res.semanas.map((s, i) =>
-      `<option value="${i + 1}">${s}</option>`
-    ).join('');
-  } else {
-    state.semanas = ['Semana 1'];
-    select.innerHTML = '<option value="1">Semana 1</option>';
+// ── WELLNESS — fórmula readiness ─────────────────────────────
+// Ganas×30% + Dolor×20% + Fatiga×25% + CalidadSueño×25%  →  0–100
+function calcReadinessScore(ganas, dolor, fatiga, calidad) {
+  const g = parseFloat(ganas)||0, d = parseFloat(dolor)||0,
+        f = parseFloat(fatiga)||0, c = parseFloat(calidad)||0;
+  // Escala 1-5 por pregunta · 4 preguntas → total sobre 20 (sin escalar).
+  return Math.round(g + d + f + c);
+}
+
+// ── SAVE WELLNESS ─────────────────────────────────────────────
+function saveWellness({ usuario, ganas_entrenar, dolor, fatiga,
+                        calidad_sueno, horas_sueno, peso_corporal, fecha_override, molestias }) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Wellness');
+  if (!sheet) {
+    sheet = ss.insertSheet('Wellness');
+    sheet.getRange(1,1,1,11).setValues([[
+      'timestamp','usuario','fecha','ganas_entrenar','dolor',
+      'fatiga','calidad_sueno','horas_sueno','peso_corporal','readiness_score','molestias'
+    ]]);
+    sheet.getRange(1,3,1000,1).setNumberFormat('@STRING@');
   }
-  state.semana = 1;
-}
-
-function onSemanaChange() {
-  state.semana  = parseInt(document.getElementById('sel-semana').value);
-  resetSessionState();
-  loadRutina();
-}
-
-function selectDay(dia, btn) {
-  state.dia = dia;
-  resetSessionState();
-  document.querySelectorAll('.day-pill').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  loadRutina();
-}
-
-function resetSessionState() {
-  state.rpeSession  = null;
-  state.tiempoSesion = '';
-  state.guardado    = false;
-}
-
-// ── RUTINA ────────────────────────────────────────────────────
-async function loadRutina() {
-  state.semana = parseInt(document.getElementById('sel-semana').value);
-  const container = document.getElementById('session-container');
-  container.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando sesión...</div>';
-  const res = await api({ action: 'getRutina', semana: state.semana, dia: state.dia });
-  if (!res.ok) {
-    container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${res.error || 'Error al cargar'}</div>`;
-    return;
+  // Asegurar cabecera de molestias en columna K (11)
+  if (String(sheet.getRange(1,11).getValue()).trim().toLowerCase() !== 'molestias') {
+    sheet.getRange(1,11).setValue('molestias');
   }
-  if (!res.ejercicios || !res.ejercicios.length) {
-    container.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>No hay ejercicios para este día todavía.</div>';
-    return;
+  const now   = new Date();
+  // Allow registering for a past date
+  const fecha = fecha_override && /^\d{4}-\d{2}-\d{2}$/.test(fecha_override) ? fecha_override : fmtDate(now);
+  const score = calcReadinessScore(ganas_entrenar, dolor, fatiga, calidad_sueno);
+  const molJson = molestias ? (typeof molestias === 'string' ? molestias : JSON.stringify(molestias)) : '';
+  sheet.appendRow([
+    now.toISOString(), usuario, fecha,
+    ganas_entrenar||'', dolor||'', fatiga||'', calidad_sueno||'',
+    horas_sueno||'', peso_corporal||'', score, ''
+  ]);
+  const lastRow = sheet.getLastRow();
+  sheet.getRange(lastRow, 3).setNumberFormat('@STRING@').setValue(fecha);
+  // molestias como texto plano en col K
+  if (molJson) { sheet.getRange(lastRow, 11).setNumberFormat('@').setValue(molJson); }
+  return { ok: true, score, fecha };
+}
+// ── GET WELLNESS (jugador — últimos N días) ───────────────────
+function getWellness({ usuario, dias }) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Wellness');
+  if (!sheet) return { ok: true, wellness: [], todayScore: null };
+  const rows   = sheet.getDataRange().getValues();
+  const limit  = parseInt(dias) || 30;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - limit);
+  const hoyStr = fmtDate(new Date());
+  const result = [];
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][1]).trim() !== String(usuario).trim()) continue;
+    const ts = new Date(rows[i][0]);
+    if (ts < cutoff) continue;
+    result.push({
+      fecha:           safeReadFecha(rows[i][2]),
+      ganas_entrenar:  rows[i][3],
+      dolor:           rows[i][4],
+      fatiga:          rows[i][5],
+      calidad_sueno:   rows[i][6],
+      horas_sueno:     rows[i][7],
+      peso_corporal:   rows[i][8],
+      readiness_score: rows[i][9]
+    });
   }
-  renderSession(res.ejercicios, res.nombreSemana || '');
+  result.sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+  const todayEntry = result.find(w => w.fecha === hoyStr) || null;
+  return { ok: true, wellness: result, todayScore: todayEntry?.readiness_score||null, hasToday: !!todayEntry };
 }
 
-// ── RENDER ────────────────────────────────────────────────────
-const DAY_NAMES = ['','Lunes — Day 1','Martes — Day 2','Miércoles — Day 3','Jueves — Day 4','Sábado — Extra'];
+// ── GET WELLNESS EQUIPO (coach — una fecha) ───────────────────
+// ── TESTING ───────────────────────────────────────────────
+// Lee hoja "Tests" (catálogo) y "TestResultados" (valores).
+// Devuelve por jugador: cada test con último/penúltimo valor, serie, comparativas y top3.
+// ── HIIT APP ────────────────────────────────────────────────
+// Guarda o actualiza UN resultado de test (para autoguardado del registro masivo).
+// Clave única: usuario + id_test + fecha (si ya existe esa combinación, actualiza).
+function saveTestResultado({ fecha, usuario, idTest, valor, bw, nota }) {
+  if (!usuario || !idTest) return { ok: false, error: 'Falta usuario o test' };
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('TestResultados');
+  if (!sheet) {
+    sheet = ss.insertSheet('TestResultados');
+    sheet.getRange(1,1,1,6).setValues([['fecha','usuario','id_test','valor','bw_kg','nota']]);
+  }
+  const f = fecha || fmtDate(new Date());
+  const last = sheet.getLastRow();
+  // buscar fila existente con misma clave
+  let row = -1;
+  if (last >= 2) {
+    const data = sheet.getRange(2,1,last-1,3).getValues();
+    for (let i=0;i<data.length;i++){
+      const rf = safeReadFecha(data[i][0]);
+      const ru = String(data[i][1]||'').trim();
+      const rt = String(data[i][2]||'').trim();
+      if (ru===String(usuario).trim() && rt===String(idTest).trim() && rf===f) { row=i+2; break; }
+    }
+  }
+  // si el valor está vacío y existe la fila, la borramos (el coach borró el dato)
+  const valTxt = (valor===undefined||valor===null) ? '' : String(valor).trim();
+  if (valTxt==='' ) {
+    if (row!==-1) sheet.deleteRow(row);
+    return { ok: true, borrado: true };
+  }
+  if (row===-1) row = last+1;
+  sheet.getRange(row,1,1,6).setValues([[ f, usuario, idTest, valTxt, (bw||''), (nota||'') ]]);
+  return { ok: true, fila: row };
+}
 
-const patternTag = p => {
-  const map = {
-    Squat:'tag-squat', Hinge:'tag-hinge',
-    Horizontal_push:'tag-push', Horizontal_row:'tag-row',
-    Vertical_push:'tag-push',   Vertical_pull:'tag-pull',
-    Plyo:'tag-plyo', Iso:'tag-iso',
-    Olympics:'tag-other', Anti_rotation:'tag-other',
-    Anti_extension:'tag-other', Reset:'tag-neutral'
+// Devuelve solo el catálogo de tests (para el selector del generador de informes)
+function getCatalogoTests() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetCat = ss.getSheetByName('CatalogoTests') || ss.getSheetByName('Tests') || ss.getSheetByName('Test');
+  if (!sheetCat) return { ok: true, tests: [] };
+  const cat = sheetCat.getDataRange().getValues();
+  const tests = [];
+  for (let i = 1; i < cat.length; i++) {
+    const id = String(cat[i][0]||'').trim();
+    if (!id) continue;
+    tests.push({
+      id,
+      nombre:  String(cat[i][1]||id).trim(),
+      unidad:  String(cat[i][2]||'').trim(),
+      tipo:    String(cat[i][3]||'').trim(),
+      mejor_es: String(cat[i][4]||'mas').trim().toLowerCase()
+    });
+  }
+  return { ok: true, tests };
+}
+
+// Devuelve jugadores con su nombre completo "Apellido, Nombre" (col G) para cruzar
+// con el Excel de tests. Filtra por squad y excluye staff.
+function getJugadoresInforme({ squad } = {}) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetJ = ss.getSheetByName('Jugadores');
+  if (!sheetJ) return { ok: true, jugadores: [] };
+  const rows = sheetJ.getDataRange().getValues();
+  const jugadores = [];
+  for (let i = 1; i < rows.length; i++) {
+    const usuario  = String(rows[i][0]||'').trim();      // A
+    const posicion = String(rows[i][3]||'').trim();      // D
+    const sq       = String(rows[i][4]||'').trim();      // E
+    const rugbypos = String(rows[i][5]||'').trim();      // F
+    const nombreCompleto = String(rows[i][6]||'').trim(); // G "Apellido, Nombre"
+    if (!usuario || esStaff(posicion)) continue;
+    if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+    jugadores.push({ usuario, rugbyposition: rugbypos, nombreCompleto, squad: sq });
+  }
+  return { ok: true, jugadores };
+}
+
+
+function guardarTestResultados({ idTest, fecha, resultados, modo } = {}) {
+  if (!idTest || !resultados || !resultados.length) return { ok: false, error: 'Faltan datos' };
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('TestResultados');
+  if (!sheet) {
+    sheet = ss.insertSheet('TestResultados');
+    sheet.appendRow(['fecha','usuario','id_test','valor','bw_kg','nota','intentos','asimetria','lado_der','lado_izq']);
+  }
+  const f = fecha || fmtDate(new Date());
+  const data = sheet.getDataRange().getValues();
+  let guardados = 0, actualizados = 0;
+  resultados.forEach(r => {
+    const u = String(r.usuario||'').trim();
+    if (!u) return;
+    const valTxt = "'" + String(r.valor);
+    // Se guardan TODOS los intentos, no solo el valor elegido
+    const intTxt = (r.intentos && r.intentos.length) ? JSON.stringify(r.intentos) : '';
+    const asim = (r.asimetria !== undefined && r.asimetria !== null && r.asimetria !== '') ? r.asimetria : '';
+    const der  = (r.der !== undefined && r.der !== null && r.der !== '') ? r.der : '';
+    const izq  = (r.izq !== undefined && r.izq !== null && r.izq !== '') ? r.izq : '';
+    let filaExiste = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][1]).trim() === u &&
+          String(data[i][2]).trim() === idTest &&
+          _normFecha(data[i][0]) === f) { filaExiste = i + 1; break; }
+    }
+    if (filaExiste > 0) {
+      sheet.getRange(filaExiste,1,1,10).setValues([[ f, u, idTest, valTxt, (r.bw||''), (r.nota||''), intTxt, asim, der, izq ]]);
+      actualizados++;
+    } else {
+      sheet.appendRow([ f, u, idTest, valTxt, (r.bw||''), (r.nota||''), intTxt, asim, der, izq ]);
+      guardados++;
+    }
+  });
+  return { ok: true, guardados, actualizados };
+}
+
+// Devuelve los jugadores de un squad con su perfil de velocidad (MAS, ASR, VIFT)
+// calculado a partir de su último 30-15 IFT (VIFT) y su último sprint (MSS).
+function getHiitPerfiles({ squad, factorMas } = {}) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetJ = ss.getSheetByName('Jugadores');
+  const sheetR = ss.getSheetByName('TestResultados');
+  const fMas = parseFloat(factorMas) || 0.85; // MAS = 85% VIFT por defecto
+  const jug = sheetJ ? sheetJ.getDataRange().getValues() : [];
+  const jugadores = [];
+  for (let i=1;i<jug.length;i++){
+    const u = String(jug[i][0]||'').trim();
+    const pos = String(jug[i][3]||'').trim();
+    if (!u || esStaff(pos)) continue;
+    const sq = String(jug[i][4]||'').trim();
+    if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+    jugadores.push({ usuario:u, nombre:String(jug[i][2]||'').trim()||u, squad:sq, rugbyposition:String(jug[i][5]||'').trim() });
+  }
+  // últimos resultados de vift (30-15) y sprint (MSS) por jugador
+  const res = sheetR ? sheetR.getDataRange().getValues() : [];
+  const numLoco = raw => {
+    if (raw==null||raw==='') return NaN;
+    if (typeof raw==='number') return raw;
+    let s=String(raw).trim().replace(/\s+/g,'');
+    if (s.indexOf(',')!==-1 && s.indexOf('.')===-1) s=s.replace(',','.');
+    const n=parseFloat(s); return isNaN(n)?NaN:n;
   };
-  return map[p] || 'tag-neutral';
-};
+  const ultVift={}, ultSprint={};
+  for (let i=1;i<res.length;i++){
+    const u=String(res[i][1]||'').trim();
+    const idt=String(res[i][2]||'').trim().toLowerCase();
+    const v=numLoco(res[i][3]);
+    if(!u||isNaN(v)) continue;
+    const f=safeReadFecha(res[i][0]);
+    if(idt.indexOf('30')!==-1 && idt.indexOf('15')!==-1){ // 30-15 IFT → VIFT
+      if(!ultVift[u]||f>ultVift[u].fecha) ultVift[u]={valor:v,fecha:f};
+    } else if(idt.indexOf('sprint')!==-1 || idt.indexOf('30m')!==-1 || idt.indexOf('metres')!==-1){
+      // sprint 30m: tiempo en segundos → MSS km/h = 30m / t * 3.6
+      if(!ultSprint[u]||f>ultSprint[u].fecha) ultSprint[u]={valor:v,fecha:f};
+    }
+  }
+  const perfiles = jugadores.map(j=>{
+    const vift = ultVift[j.usuario] ? ultVift[j.usuario].valor : null;
+    const viftFecha = ultVift[j.usuario] ? ultVift[j.usuario].fecha : null;
+    const mas = vift!=null ? Math.round(vift*fMas*10)/10 : null;
+    // MSS desde sprint 30m (si el valor parece un tiempo en segundos, 3-6s)
+    let mss = null;
+    if (ultSprint[j.usuario]) {
+      const sv = ultSprint[j.usuario].valor;
+      if (sv > 0 && sv < 10) mss = Math.round((30/sv*3.6)*10)/10; // tiempo→velocidad
+      else if (sv > 10) mss = Math.round(sv*10)/10; // ya es velocidad
+    }
+    const asr = (mss!=null && mas!=null) ? Math.round((mss-mas)*10)/10 : null;
+    return { ...j, vift, viftFecha, mas, mss, asr };
+  });
+  return { ok:true, perfiles, factorMas:fMas };
+}
 
-// Convierte una URL de YouTube a embed
-function toEmbedUrl(url) {
-  if (!url) return '';
-  let id = '';
+function getTests({ usuario, squad } = {}) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetCat = ss.getSheetByName('CatalogoTests') || ss.getSheetByName('Tests') || ss.getSheetByName('Test');
+  const sheetRes = ss.getSheetByName('TestResultados');
+  const sheetJ   = ss.getSheetByName('Jugadores');
+  if (!sheetCat || !sheetRes) {
+    return { ok: true, tests: [], catalogo: [], aviso: 'Faltan las hojas Test/Tests y/o TestResultados' };
+  }
+
+  // Catálogo: id_test, nombre, unidad, tipo, mejor_es (↑/↓ o "mas"/"menos"), objetivo
+  const cat = sheetCat.getDataRange().getValues();
+  const catalogo = {};
+  for (let i = 1; i < cat.length; i++) {
+    const id = String(cat[i][0]||'').trim();
+    if (!id) continue;
+    catalogo[id] = {
+      id,
+      nombre:  String(cat[i][1]||'').trim() || id,
+      unidad:  String(cat[i][2]||'').trim(),
+      tipo:    String(cat[i][3]||'').trim(),
+      mejorMas: !/men|↓|baj|low/i.test(String(cat[i][4]||'mas')), // true si "más es mejor"
+      objetivo: parseFloat(cat[i][5])
+    };
+  }
+
+  // Info jugadores: posición (rugbyposition col F=5), squad (col E=4)
+  const jug = sheetJ ? sheetJ.getDataRange().getValues() : [];
+  const posOf = {}, squadOf = {}, nombreOf = {};
+  for (let i = 1; i < jug.length; i++) {
+    const u = String(jug[i][0]||'').trim(); if (!u) continue;
+    posOf[u]    = String(jug[i][5]||'').trim() || String(jug[i][3]||'').trim();
+    squadOf[u]  = String(jug[i][4]||'').trim();
+    nombreOf[u] = String(jug[i][2]||'').trim() || u;
+  }
+
+  // Resultados: fecha, usuario, id_test, valor, bw_kg, nota
+  const res = sheetRes.getDataRange().getValues();
+  const registros = [];
+  // Convierte un valor de celda a número, aceptando coma o punto decimal y espacios.
+  const numLoco = raw => {
+    if (raw == null || raw === '') return NaN;
+    if (typeof raw === 'number') return raw;
+    let s = String(raw).trim().replace(/\s+/g, '');
+    // si tiene coma y no punto, la coma es decimal → cambiar a punto
+    if (s.indexOf(',') !== -1 && s.indexOf('.') === -1) s = s.replace(',', '.');
+    // si tiene ambos, asumir que la coma es de miles → quitarla
+    else if (s.indexOf(',') !== -1 && s.indexOf('.') !== -1) s = s.replace(/,/g, '');
+    const n = parseFloat(s);
+    return isNaN(n) ? NaN : n;
+  };
+  for (let i = 1; i < res.length; i++) {
+    const u = String(res[i][1]||'').trim();
+    const id = String(res[i][2]||'').trim();
+    const val = numLoco(res[i][3]);
+    if (!u || !id || isNaN(val)) continue;
+    let intentos = null;
+    try { const p = res[i][6] ? JSON.parse(res[i][6]) : null; if (Array.isArray(p) && p.length) intentos = p; } catch(e) {}
+    registros.push({
+      fecha: safeReadFecha(res[i][0]),
+      usuario: u, idTest: id, valor: val,
+      bw: numLoco(res[i][4]) || null,
+      intentos: intentos
+    });
+  }
+
+  const miPos = posOf[usuario] || '';
+  const miSquad = squadOf[usuario] || squad || '';
+
+  // Todos los pesos del wellness por jugador (para buscar el más cercano a cada test)
+  const pesosDe = {}; // usuario → [{ peso, fecha }]
+  const sheetW = ss.getSheetByName('Wellness');
+  if (sheetW) {
+    const wel = sheetW.getDataRange().getValues();
+    for (let i = 1; i < wel.length; i++) {
+      const u = String(wel[i][1]||'').trim();
+      const p = parseFloat(wel[i][8]);
+      if (!u || isNaN(p) || p <= 0) continue;
+      const f = safeReadFecha(wel[i][2]);
+      if (!pesosDe[u]) pesosDe[u] = [];
+      pesosDe[u].push({ peso: p, fecha: f });
+    }
+  }
+  // Devuelve el peso más cercano a una fecha dada, dentro de ±7 días. Si no hay, null.
+  const MARGEN_DIAS = 7;
+  function pesoCercano(usuario, fechaTest) {
+    const arr = pesosDe[usuario];
+    if (!arr || !arr.length || !fechaTest) return null;
+    const ft = new Date(fechaTest + 'T00:00').getTime();
+    let mejor = null, mejorDif = Infinity;
+    arr.forEach(w => {
+      if (!w.fecha) return;
+      const dif = Math.abs(new Date(w.fecha + 'T00:00').getTime() - ft) / 86400000;
+      if (dif <= MARGEN_DIAS && dif < mejorDif) { mejor = w; mejorDif = dif; }
+    });
+    return mejor; // { peso, fecha } o null
+  }
+
+  // Para cada test del catálogo, construir datos del jugador + comparativas
+  const tests = Object.keys(catalogo).map(id => {
+    const c = catalogo[id];
+    const esFuerza = /fuerza|strength|peso|weight/i.test(c.tipo);
+    const deTest = registros.filter(r => r.idTest === id);
+    // serie del jugador (ordenada por fecha)
+    const mios = deTest.filter(r => r.usuario === usuario).sort((a,b)=> (a.fecha<b.fecha?-1:1));
+    const ultimo = mios.length ? mios[mios.length-1].valor : null;
+    const penultimo = mios.length>1 ? mios[mios.length-2].valor : null;
+    const r2 = v => Math.round(v*100)/100;
+    const serie = mios.map(r => {
+      const o = { fecha: r.fecha, valor: r.valor };
+      if (r.intentos && r.intentos.length) {
+        o.intentos = r.intentos;
+        o.mejor    = c.mejorMas ? Math.max.apply(null, r.intentos) : Math.min.apply(null, r.intentos);
+        o.media    = r2(r.intentos.reduce((s,v)=>s+v,0) / r.intentos.length);
+      }
+      return o;
+    });
+    const ultimoReg2 = mios.length ? mios[mios.length-1] : null;
+    const ultimosIntentos = (ultimoReg2 && ultimoReg2.intentos) ? ultimoReg2.intentos : null;
+    const ultimaMedia = ultimosIntentos ? r2(ultimosIntentos.reduce((s,v)=>s+v,0)/ultimosIntentos.length) : null;
+    const ultimoMejor = ultimosIntentos
+      ? (c.mejorMas ? Math.max.apply(null, ultimosIntentos) : Math.min.apply(null, ultimosIntentos))
+      : null;
+
+    // último valor de cada jugador (para medias y top)
+    const ultimoDe = {};
+    deTest.forEach(r => {
+      if (!ultimoDe[r.usuario] || r.fecha > ultimoDe[r.usuario].fecha) ultimoDe[r.usuario] = r;
+    });
+    const arr = Object.keys(ultimoDe).map(u => ({ usuario:u, nombre:nombreOf[u]||u, valor:ultimoDe[u].valor, pos:posOf[u], squad:squadOf[u] }));
+
+    const media = a => a.length ? Math.round(a.reduce((s,v)=>s+v.valor,0)/a.length*10)/10 : null;
+    const delEquipo = arr.filter(x => !miSquad || x.squad === miSquad);
+    const dePos = delEquipo.filter(x => x.pos === miPos);
+    const mediaEquipo = media(delEquipo);
+    const mediaPos = media(dePos);
+
+    // ── RATIO RM:BW (solo tests de fuerza) ──
+    let ratio = null, serieRatio = null, mediaRatioPos = null, mediaRatioEq = null;
+    let miPeso = null, miPesoFecha = null, penultimoRatio = null;
+    // valor para rankings/top3: ratio en fuerza, valor base en el resto
+    let arrRank = arr.map(x => ({ ...x }));
+    if (esFuerza) {
+      const r2 = v => Math.round(v*100)/100;
+      // peso del jugador cercano a la fecha de SU último test (o bw_kg de esa fila como respaldo)
+      const ultReg = mios.length ? mios[mios.length-1] : null;
+      const penReg = mios.length>1 ? mios[mios.length-2] : null;
+      const pesoParaFecha = (fechaTest, bwFila) => {
+        const w = pesoCercano(usuario, fechaTest);
+        if (w) return { peso: w.peso, fecha: w.fecha, fuente:'wellness' };
+        if (bwFila) return { peso: bwFila, fecha: fechaTest, fuente:'manual' };
+        return null;
+      };
+      const pUlt = ultReg ? pesoParaFecha(ultReg.fecha, ultReg.bw) : null;
+      miPeso = pUlt ? pUlt.peso : null;
+      miPesoFecha = pUlt ? pUlt.fecha : null;
+      if (miPeso && ultimo != null) ratio = r2(ultimo / miPeso);
+      // penúltimo ratio con SU propio peso cercano
+      if (penReg) {
+        const pPen = pesoParaFecha(penReg.fecha, penReg.bw);
+        if (pPen) penultimoRatio = r2(penReg.valor / pPen.peso);
+      }
+      // serie del ratio: cada punto con el peso cercano a SU fecha
+      serieRatio = mios.map(r => {
+        const p = pesoParaFecha(r.fecha, r.bw);
+        return p ? { fecha:r.fecha, valor: r2(r.valor / p.peso) } : null;
+      }).filter(Boolean);
+      if (!serieRatio.length) serieRatio = null;
+      // comparativas/ranking: último test de cada jugador con su peso cercano
+      const pesoJugFecha = (u, fechaTest, bwFila) => {
+        const w = pesoCercano(u, fechaTest);
+        if (w) return w.peso;
+        return bwFila || null;
+      };
+      arrRank = arr.map(x => {
+        const reg = ultimoDe[x.usuario];
+        const w = pesoJugFecha(x.usuario, reg.fecha, reg.bw);
+        return w ? { ...x, valor: r2(x.valor / w) } : null;
+      }).filter(Boolean);
+      const mR = a => a.length ? r2(a.reduce((s,v)=>s+v.valor,0)/a.length) : null;
+      const rEq = arrRank.filter(x => !miSquad || x.squad === miSquad);
+      const rPos = rEq.filter(x => x.pos === miPos);
+      mediaRatioEq = mR(rEq);
+      mediaRatioPos = mR(rPos);
+    }
+
+    // top 3 (según mejor_es) — en fuerza por ratio, resto por valor
+    const ordenar = a => a.slice().sort((x,y)=> c.mejorMas ? y.valor-x.valor : x.valor-y.valor);
+    const rkEq = arrRank.filter(x => !miSquad || x.squad === miSquad);
+    const rkPos = rkEq.filter(x => x.pos === miPos);
+    const top3Pos = ordenar(rkPos).slice(0,3).map(x=>({ nombre:x.nombre, valor:x.valor, esYo:x.usuario===usuario }));
+    const top3Eq  = ordenar(rkEq).slice(0,3).map(x=>({ nombre:x.nombre, valor:x.valor, esYo:x.usuario===usuario }));
+    const ordPos = ordenar(rkPos);
+    const miPuesto = ordPos.findIndex(x=>x.usuario===usuario)+1;
+
+    return {
+      id, nombre:c.nombre, unidad:c.unidad, tipo:c.tipo, mejorMas:c.mejorMas, esFuerza,
+      ultimo, penultimo, serie,
+      intentos: ultimosIntentos, media: ultimaMedia, mejor: ultimoMejor,
+      mediaEquipo, mediaPos,
+      top3Pos, top3Eq,
+      miPuesto: miPuesto||null, totalPos: dePos.length,
+      // fuerza:
+      ratio, penultimoRatio, serieRatio, mediaRatioPos, mediaRatioEq,
+      miPeso, miPesoFecha
+    };
+  }).filter(t => t.ultimo !== null); // solo tests con algún resultado del jugador
+
+  return { ok:true, tests, miPos, nombre:nombreOf[usuario]||usuario };
+}
+
+// ── SERIE RPE + READINESS POR FECHA (para gráfica promedio y cuadrante) ──
+// Devuelve, por fecha: media RPE del equipo y media readiness (solo de quien registró).
+// Y para el cuadrante: por jugador, RPE de su última sesión antes de la fecha ref + readiness de ref.
+function getRpeReadinessSerie({ squad, dias, fechaRef }) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetR = ss.getSheetByName('Registros');
+  const sheetW = ss.getSheetByName('Wellness');
+  const sheetJ = ss.getSheetByName('Jugadores');
+  if (!sheetJ) return { ok:false, error:'Falta hoja Jugadores' };
+
+  const nDias = parseInt(dias) || 7;
+  const ref = fechaRef ? new Date(fechaRef + 'T00:00') : new Date();
+  // fechas del rango (de más antigua a ref)
+  const fechas = [];
+  for (let i = nDias - 1; i >= 0; i--) {
+    const d = new Date(ref); d.setDate(d.getDate() - i);
+    fechas.push(fmtDate(d));
+  }
+  const fechaSet = {}; fechas.forEach(f => fechaSet[f] = true);
+  // incluir el día anterior al primero (para el desfase RPE ayer → readiness hoy)
+  const dPrev = new Date(fechas[0] + 'T00:00'); dPrev.setDate(dPrev.getDate() - 1);
+  fechaSet[fmtDate(dPrev)] = true;
+
+  // squad de cada jugador
+  const jugRows = sheetJ.getDataRange().getValues();
+  const squadOf = {}, nombreOf = {};
+  for (let i = 1; i < jugRows.length; i++) {
+    const u = String(jugRows[i][0]).trim();
+    const pos = String(jugRows[i][3]).trim().toLowerCase();
+    if (!u || esStaff(pos)) continue;
+    squadOf[u] = String(jugRows[i][4]||'').trim();
+    nombreOf[u] = String(jugRows[i][2]||'').trim() || u;
+  }
+  const enSquad = u => !squad || squadOf[u] === squad;
+
+  // ── RPE por fecha (RPE_GLOBAL). Usa timestamp (col A) para la fecha. ──
+  // Por jugador guardamos el máx RPE del día (una sesión = un RPE global).
+  const rpePorFechaUser = {}; // fecha → { user → rpe }
+  const rpeUserFechas = {};   // user → [{fecha, rpe}]  (para el cuadrante)
+  if (sheetR) {
+    const reg = sheetR.getDataRange().getValues();
+    for (let i = 1; i < reg.length; i++) {
+      const r = reg[i];
+      if (r[5] !== 'RPE_GLOBAL') continue;
+      const u = String(r[1]).trim();
+      if (!enSquad(u)) continue;
+      const rpe = parseFloat(r[7]);
+      if (isNaN(rpe)) continue;
+      const f = safeReadFecha(r[0]); // timestamp → fecha
+      if (!f) continue;
+      // para la serie (solo dentro del rango)
+      if (fechaSet[f]) {
+        if (!rpePorFechaUser[f]) rpePorFechaUser[f] = {};
+        // si hay varias, quedarse con la mayor del día
+        if (rpePorFechaUser[f][u] == null || rpe > rpePorFechaUser[f][u]) rpePorFechaUser[f][u] = rpe;
+      }
+      // para el cuadrante (todas, para buscar la última antes de ref)
+      if (!rpeUserFechas[u]) rpeUserFechas[u] = [];
+      rpeUserFechas[u].push({ fecha: f, rpe: rpe });
+    }
+  }
+
+  // ── Readiness por fecha ──
+  const redPorFechaUser = {}; // fecha → { user → score }
+  if (sheetW) {
+    const wel = sheetW.getDataRange().getValues();
+    for (let i = 1; i < wel.length; i++) {
+      const u = String(wel[i][1]).trim();
+      if (!enSquad(u)) continue;
+      const f = safeReadFecha(wel[i][2]);
+      if (!fechaSet[f]) continue;
+      let sc = parseFloat(wel[i][9]);
+      if (isNaN(sc)) continue;
+      if (sc > 20) sc = sc / 5; // normalizar datos viejos (escala 100)
+      if (!redPorFechaUser[f]) redPorFechaUser[f] = {};
+      redPorFechaUser[f][u] = sc;
+    }
+  }
+
+  // ── Serie: media por fecha (solo de quien registró) ──
+  const medR = arr => arr.length ? Math.round(arr.reduce((s,v)=>s+v,0)/arr.length) : null;
+  const medRpe = arr => arr.length ? Math.round(arr.reduce((s,v)=>s+v,0)/arr.length*10)/10 : null;
+  const rpeMediaDe = f => {
+    const o = rpePorFechaUser[f];
+    if(!o) return { v:null, n:0 };
+    const vals = Object.keys(o).map(u => o[u]);
+    return { v: medRpe(vals), n: vals.length };
+  };
+  // Serie: cada día muestra su propio RPE y su propio readiness (mismo día).
+  const serie = fechas.map(f => {
+    const rpeHoy = rpeMediaDe(f);
+    const redVals = redPorFechaUser[f] ? Object.keys(redPorFechaUser[f]).map(u => redPorFechaUser[f][u]) : [];
+    return { fecha: f, rpe: rpeHoy.v, rpeFecha: f, readiness: medR(redVals), nRpe: rpeHoy.n, nRed: redVals.length };
+  });
+
+  // ── Cuadrante: por jugador, RPE de la última sesión antes/hasta refFecha + readiness de refFecha ──
+  const refStr = fmtDate(ref);
+  const cuadrante = [];
+  Object.keys(nombreOf).forEach(u => {
+    if (!enSquad(u)) return;
+    // readiness del día ref
+    const red = (redPorFechaUser[refStr] && redPorFechaUser[refStr][u] != null) ? redPorFechaUser[refStr][u] : null;
+    // última sesión con RPE en/antes de ref
+    let ultRpe = null, ultFecha = null;
+    (rpeUserFechas[u] || []).forEach(e => {
+      if (e.fecha <= refStr) {
+        if (!ultFecha || e.fecha > ultFecha) { ultFecha = e.fecha; ultRpe = e.rpe; }
+      }
+    });
+    if (red != null || ultRpe != null) {
+      cuadrante.push({ usuario: u, nombre: nombreOf[u], rpe: ultRpe, rpeFecha: ultFecha, readiness: red });
+    }
+  });
+
+  return { ok:true, serie, cuadrante, fechaRef: refStr, dias: nDias };
+}
+
+function getWellnessEquipo({ fecha }) {
+  const ss     = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetW = ss.getSheetByName('Wellness');
+  const sheetJ = ss.getSheetByName('Jugadores');
+  if (!sheetJ) return { ok: false, error: 'Hoja Jugadores no encontrada' };
+  const targetFecha = fecha || fmtDate(new Date());
+
+  // Collect last 7 days dates
+  const last7 = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(targetFecha); d.setDate(d.getDate()-i);
+    last7.push(fmtDate(d));
+  }
+  const ayerStr = last7[last7.length-2];
+
+  // Build per-user per-date map
+  const wellnessByUser = {}; // user → { fecha → entry }
+  if (sheetW) {
+    const rows = sheetW.getDataRange().getValues();
+    for (let i = 1; i < rows.length; i++) {
+      const u = String(rows[i][1]).trim();
+      const f = safeReadFecha(rows[i][2]);
+      if (!last7.includes(f)) continue;
+      if (!wellnessByUser[u]) wellnessByUser[u] = {};
+      wellnessByUser[u][f] = {
+        ganas_entrenar:  rows[i][3], dolor: rows[i][4],
+        fatiga:          rows[i][5], calidad_sueno: rows[i][6],
+        horas_sueno:     rows[i][7], peso_corporal: rows[i][8],
+        readiness_score: rows[i][9]
+      };
+    }
+  }
+
+  const jugadores = sheetJ.getDataRange().getValues();
+  const equipo = [];
+  let totalScore = 0, countScore = 0, alertas = 0, sinResponder = 0;
+  for (let i = 1; i < jugadores.length; i++) {
+    const usuario = String(jugadores[i][0]).trim();
+    const posicion = String(jugadores[i][3]).trim();
+    if (!usuario || esStaff(posicion)) continue;
+    const nombre        = String(jugadores[i][2]).trim();
+    const squad         = String(jugadores[i][4]||'').trim();
+    const rugbyposition = String(jugadores[i][5]||'').trim();
+    const userMap = wellnessByUser[usuario] || {};
+    const today   = userMap[targetFecha] || null;
+    const yest    = userMap[ayerStr]     || null;
+    const score   = today ? parseFloat(today.readiness_score||0) : null;
+    const ySc     = yest  ? parseFloat(yest.readiness_score||0)  : null;
+    const delta   = (score!==null&&ySc!==null) ? Math.round(score-ySc) : null;
+    // 7-day trend array (null where no data)
+    const trend = last7.map(d => userMap[d] ? parseFloat(userMap[d].readiness_score||0) : null);
+    if (score!==null){ totalScore+=score; countScore++; }
+    if (score!==null&&score<50) alertas++;
+    if (!today) sinResponder++;
+    equipo.push({ usuario, nombre, squad, rugbyposition, today, score, delta, trend });
+  }
+  equipo.sort((a,b)=>{
+    if (a.score!==null&&b.score!==null) return a.score-b.score;
+    if (a.score!==null) return -1; return 1;
+  });
+  return {
+    ok:true, equipo, fecha:targetFecha,
+    mediaScore:   countScore ? Math.round(totalScore/countScore) : null,
+    alertas, sinResponder, respondidos: countScore
+  };
+}
+
+// ── GET DIAS ACTIVOS ─────────────────────────────────────────
+function getDiasActivos({ semana, squad }) {
+  // Semana del planner (índice 1000+)
+  const semNum0 = parseInt(semana);
+  if (semNum0 >= 1000) {
+    try {
+      const wk = getWeeks({ squad: squad });
+      const w = wk.ok && wk.weeks ? wk.weeks[semNum0 - 1000] : null;
+      if (!w || !w.data || !w.data.dias) return { ok: true, diasActivos: [], diasTitles: {}, diasProgramados: 0 };
+      const diasActivos = [], diasTitles = {};
+      w.data.dias.forEach((d, i) => {
+        const dnum = i + 1;
+        const tieneEj = (d.bloques || []).some(b => (b.ejercicios || []).length > 0);
+        if (tieneEj) { diasActivos.push(dnum); if (d.titulo) diasTitles[dnum] = d.titulo; }
+      });
+      return { ok: true, diasActivos: diasActivos, diasTitles: diasTitles, diasProgramados: diasActivos.length };
+    } catch(e) {
+      return { ok: true, diasActivos: [], diasTitles: {}, diasProgramados: 0 };
+    }
+  }
+  const sheetName = sheetForSquad(squad);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (!sheet) return { ok: false, error: `Hoja "${sheetName}" no encontrada` };
+
+  const data      = sheet.getDataRange().getValues();
+  const semanaNum = parseInt(semana);
+
+  const weekStarts = [];
+  for (let i = 0; i < data.length; i++) {
+    const cell = data[i][1];
+    if (cell && typeof cell === 'string' && cell.includes('WK')) {
+      weekStarts.push({ row: i, nombre: cell.trim() });
+    }
+  }
+
+  const weekIdx = semanaNum - 1;
+  if (weekIdx >= weekStarts.length) return { ok: true, diasActivos: [], diasTitles: {}, diasProgramados: 0 };
+
+  const wRow    = weekStarts[weekIdx].row;
+  const wRowEnd = weekIdx + 1 < weekStarts.length ? weekStarts[weekIdx + 1].row : data.length;
+
+  const diasActivos = [];
+  const diasTitles  = {};
+
+  const offsets = { 1: 1, 2: 12, 3: 23, 4: 34, 5: 45 };
+
+  for (const [dia, colOff] of Object.entries(offsets)) {
+    let hasExercise = false;
+    let dayTitle    = '';
+
+    for (let r = wRow + 1; r < wRowEnd; r++) {
+      const cellBlock = String(data[r][colOff]     || '').trim();
+      const cellEx    = String(data[r][colOff + 3] || '').trim();
+
+      // Capturar título del día
+      if (!dayTitle && cellBlock && /DAY|EXTRA/i.test(cellBlock) &&
+          !/session notes|📝/i.test(cellBlock)) {
+        dayTitle = cellBlock;
+      }
+
+      // ── CORRECCIÓN v10 ──────────────────────────────────────
+      // Ignorar:
+      //  · fila de cabecera de tabla: block='BLOCK', exName='EXERCISE'
+      //  · filas de bloque vacío: block='A1','B2'... exName=''
+      //  · filas de estructura: 'Prep', 'Main Block', 'Session Notes'
+      //  · día vacío: ambos vacíos
+      if (!cellBlock || !cellEx)                               continue;
+      if (cellBlock.toUpperCase() === 'BLOCK')                 continue;
+      if (cellEx.toUpperCase()    === 'EXERCISE')              continue;
+      if (/^(prep|main block|session notes|📝)/i.test(cellBlock)) continue;
+      if (/^(prep|main block|session notes|📝)/i.test(cellEx))    continue;
+
+      // Es un ejercicio real
+      hasExercise = true;
+      break;
+    }
+
+    if (hasExercise) {
+      diasActivos.push(parseInt(dia));
+      diasTitles[dia] = dayTitle;
+    }
+  }
+
+  return {
+    ok: true,
+    diasActivos,
+    diasTitles,
+    diasProgramados: diasActivos.length   // ← nuevo: cuántos días tiene esta semana
+  };
+}
+
+// ── LOGIN ────────────────────────────────────────────────────
+function login({ usuario, password }) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Jugadores');
+  if (!sheet) return { ok: false, error: 'Hoja "Jugadores" no encontrada' };
+  const rows = sheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === String(usuario).trim() &&
+        String(rows[i][1]).trim() === String(password).trim()) {
+      const squad = String(rows[i][4] || '').trim();
+      return { ok: true, nombre: rows[i][2], posicion: rows[i][3], usuario, squad, rugbyposition: String(rows[i][5]||'').trim() };
+    }
+  }
+  return { ok: false, error: 'Usuario o contraseña incorrectos' };
+}
+
+// ── GET SEMANAS ──────────────────────────────────────────────
+// Convierte una semana del planner (JSON de Plantillas) al formato de rutina del jugador
+function getRutinaPlanner(idx, dia, squad) {
   try {
-    const u = new URL(url);
-    if (u.hostname.includes('youtu.be')) {
-      id = u.pathname.slice(1);
-    } else if (u.hostname.includes('youtube.com')) {
-      id = u.searchParams.get('v') || '';
-      // soporte /shorts/ID
-      if (!id && u.pathname.includes('/shorts/')) {
-        id = u.pathname.split('/shorts/')[1].split('/')[0];
+    const wk = getWeeks({ squad: squad });
+    if (!wk.ok || !wk.weeks || !wk.weeks[idx]) return { ok: true, ejercicios: [], nombreSemana: '', sessionNotes: '', dayTitle: '' };
+    const w = wk.weeks[idx];
+    const data = w.data || {};
+    const dias = data.dias || [];
+    const diaObj = dias[dia - 1];
+    // Nota del coach para este día (se antepone al banner que ve el jugador).
+    // El frontend guarda con realSemanaIdx() = índice 1000+ (idx aquí ya viene sin el offset de 1000),
+    // así que reconstruyo idx+1000 para leer con la misma clave con la que se guardó.
+    let _notaCoachP = '';
+    try { const _ndP = getNotaDia({ squad: squad, semana: (idx + 1000), dia: dia }); _notaCoachP = (_ndP && _ndP.nota) ? _ndP.nota : ''; } catch(e){}
+    if (!diaObj) return { ok: true, ejercicios: [], nombreSemana: w.nombre, sessionNotes: _notaCoachP, dayTitle: '' };
+
+    const ejercicios = [];
+    (diaObj.bloques || []).forEach(b => {
+      const esPrep = /prep|activ|calent|warm/i.test(String(b.nombre || ''));
+      (b.ejercicios || []).forEach(it => {
+        // Formatear el objetivo de carga según el tipo, para que el jugador lo vea claro:
+        // % → "80%80%80%" (calcula peso) · RPE → "RPE 8" · RIR → "RIR 2" · BW → "BW"
+        let loadObj = it.carga || '';
+        const tc = it.tipo_carga || '%';
+        if (/^BW$/i.test(loadObj.trim())) {
+          loadObj = 'BW';
+        } else if (tc === 'RPE' || tc === 'RIR') {
+          const nums = String(loadObj).match(/\d+\.?\d*/g);
+          if (nums && nums.length) {
+            const uniq = nums.filter((v,i,a)=>a.indexOf(v)===i);
+            const val = uniq.length === 1 ? uniq[0] : nums[0] + '-' + nums[nums.length-1];
+            loadObj = tc + ' ' + val;
+          }
+        }
+        ejercicios.push({
+          bloque:        it.orden || (b.letra || ''),
+          bloque_nombre: b.nombre || '',
+          patron:        it.patron || '',
+          contraccion:   '',
+          ejercicio:     it.ejercicio || '',
+          sets:          it.sets || '',
+          reps:          it.reps || '',
+          tempo:         it.tempo || '',
+          load_objetivo: loadObj,
+          tipo_carga:    tc,
+          video:         it.video || it.video_url || '',
+          notas:         it.nota || '',
+          fase:          esPrep ? 'prep' : 'main'
+        });
+      });
+    });
+
+    const _dayTitleP = String(diaObj.nombre || diaObj.titulo || diaObj.title || '').trim();
+    const _notasDiaP = String(diaObj.nota || diaObj.notas || diaObj.sessionNotes || '').trim();
+    const _sessionNotesP = [_notaCoachP, _notasDiaP].filter(function(x){return x && x.trim();}).join('\n');
+    return { ok: true, ejercicios, nombreSemana: w.nombre, sessionNotes: _sessionNotesP, dayTitle: _dayTitleP };
+
+  } catch(e) {
+    return { ok: false, error: 'Error leyendo planner: ' + e.message };
+  }
+}
+
+function getSemanas({ squad, isCoach } = {}) {
+  const sheetName = sheetForSquad(squad);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (!sheet) return { ok: false, error: `Hoja "${sheetName}" no encontrada` };
+  const data = sheet.getDataRange().getValues();
+  let semanas = [];
+  for (let i = 0; i < data.length; i++) {
+    const cell = data[i][1];
+    if (cell && typeof cell === 'string') {
+      const upper = cell.toUpperCase().trim();
+      // Detecta OFFSEASON_... / INSEASON_... (incluyendo BUDAPESTWEEK, GETXOSF, etc.)
+      if (upper.startsWith('OFFSEASON_') || upper.startsWith('INSEASON_')) {
+        semanas.push({ nombre: cell.trim(), fila: i, originalIdx: semanas.length + 1 });
       }
     }
-  } catch(_) {}
-  return id ? `https://www.youtube.com/embed/${id}` : '';
-}
-
-let _cardId = 0;
-function renderCard(e) {
-  const uid      = 'ex-' + (++_cardId);
-  const embedUrl = toEmbedUrl(e.video);
-  const hasVideo = !!embedUrl;
-
-  const tags = [
-    e.patron      ? `<span class="tag ${patternTag(e.patron)}">${e.patron.replace(/_/g,' ')}</span>` : '',
-    e.contraccion ? `<span class="tag tag-neutral">${e.contraccion}</span>` : '',
-    e.sets        ? `<span class="tag tag-neutral">${e.sets} sets</span>` : '',
-    e.reps        ? `<span class="tag tag-neutral">${e.reps}</span>` : '',
-    e.tempo       ? `<span class="tag tag-neutral">Tempo ${e.tempo}</span>` : '',
-    e.load_objetivo ? `<span class="tag tag-neutral">${e.load_objetivo}</span>` : '',
-  ].filter(Boolean).join('');
-
-  return `
-  <div class="ex-card">
-    <div class="ex-header">
-      <div class="block-id">${e.bloque}</div>
-      <div class="ex-info">
-        <div class="ex-name">${e.ejercicio}</div>
-        ${tags ? `<div class="ex-tags">${tags}</div>` : ''}
-      </div>
-      <button class="btn-video ${hasVideo ? '' : 'no-video'}"
-              onclick="toggleVideo('${uid}','${embedUrl}')"
-              title="${hasVideo ? 'Ver vídeo' : 'Sin vídeo'}">
-        ▶
-      </button>
-    </div>
-    <div class="video-embed" id="${uid}">
-      <div class="video-wrap">
-        <iframe id="${uid}-iframe" src="" allowfullscreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-        </iframe>
-      </div>
-    </div>
-  </div>`;
-}
-
-function toggleVideo(uid, embedUrl) {
-  const panel  = document.getElementById(uid);
-  const iframe = document.getElementById(uid + '-iframe');
-  const isOpen = panel.classList.contains('open');
-  // Cerrar todos los demás
-  document.querySelectorAll('.video-embed.open').forEach(el => {
-    el.classList.remove('open');
-    el.querySelector('iframe').src = '';
-  });
-  if (!isOpen) {
-    panel.classList.add('open');
-    iframe.src = embedUrl;
   }
-}
+  if (!semanas.length) return { ok: false, error: `No se encontraron semanas en ${sheetName}` };
 
-// ── SESSION PANEL ─────────────────────────────────────────────
-function renderSessionPanel() {
-  if (state.guardado) {
-    return `<div class="session-panel"><div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion ? ' · ' + state.tiempoSesion + ' min' : ''}</div></div>`;
+  // ── Filtrar por Config para jugadores (no coach) ───────────
+  if (!isCoach) {
+    const configRes = getWeekConfig();
+    const config    = configRes.config || {};
+    semanas = semanas.filter(s => {
+      const key = sheetName + ':' + s.nombre;
+      if (config[key] === undefined) return true;  // visible por defecto
+      return config[key] === true;
+    });
   }
 
-  const rpeDescs = { 6:'Fácil', 7:'Moderado', 8:'Difícil', 9:'Muy duro', 10:'Máximo' };
-
-  const rpeButtons = [6,7,8,9,10].map(n => `
-    <button class="rpe-btn${state.rpeSession===n?' sel':''}" onclick="selectRpe(${n},this)">
-      <span class="rpe-num">${n}</span>
-      <span class="rpe-desc">${rpeDescs[n]}</span>
-    </button>`).join('');
-
-  const tiempoDisplay = state.tiempoSesion
-    ? `${state.tiempoSesion} min`
-    : '— min';
-  const tiempoHasVal  = !!state.tiempoSesion;
-
-  const numpad = [
-    '1','2','3',
-    '4','5','6',
-    '7','8','9',
-    '⌫','0',''
-  ].map(k => {
-    if (k === '') return '';
-    if (k === '⌫') return `<button class="numpad-btn del" onclick="numpadInput('del')">⌫</button>`;
-    return `<button class="numpad-btn" onclick="numpadInput('${k}')">${k}</button>`;
-  }).join('');
-
-  const canSave = state.rpeSession !== null;
-
-  return `
-  <div class="session-panel" id="session-panel">
-    <div class="panel-section">
-      <div class="panel-title">¿Cómo ha sido la sesión?</div>
-      <div class="panel-sub">RPE global del entrenamiento</div>
-      <div class="rpe-grid">${rpeButtons}</div>
-    </div>
-
-    <div class="panel-section">
-      <div class="panel-title">Tiempo de sesión</div>
-      <div class="panel-sub">Introduce los minutos totales</div>
-      <div class="time-display${tiempoHasVal?' has-value':''}" id="time-display">${tiempoDisplay}</div>
-      <div class="numpad">${numpad}</div>
-      <div class="numpad-hint">Minutos totales de entrenamiento</div>
-    </div>
-
-    <button class="btn-save-session" id="btn-save-session"
-            onclick="saveSession()" ${canSave?'':'disabled'}>
-      Guardar sesión
-    </button>
-  </div>`;
-}
-
-function renderSession(ejercicios, nombreSemana) {
-  const container = document.getElementById('session-container');
-  _cardId = 0;
-  const prep = ejercicios.filter(e => e.fase === 'prep');
-  const main = ejercicios.filter(e => e.fase !== 'prep');
-  const semanaTxt = nombreSemana ||
-    document.getElementById('sel-semana').options[
-      document.getElementById('sel-semana').selectedIndex
-    ]?.text || '';
-
-  container.innerHTML = `
-    <div class="session-title">${DAY_NAMES[state.dia] || 'Sesión'}</div>
-    <div class="session-meta">${semanaTxt}</div>
-    ${prep.length ? `<div class="phase-header">Prep</div>${prep.map(renderCard).join('')}` : ''}
-    <div class="phase-header">Main Block</div>
-    ${main.map(renderCard).join('')}
-    <div class="notes-banner">
-      <strong>Tempo ECC-ISO-CC.</strong> Ejemplo 510: 5'' excéntrica · 1'' pausa · 0'' concéntrica explosiva.
-    </div>
-    ${renderSessionPanel()}`;
-}
-
-// ── RPE ───────────────────────────────────────────────────────
-function selectRpe(val, btn) {
-  state.rpeSession = val;
-  document.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('sel'));
-  btn.classList.add('sel');
-  const saveBtn = document.getElementById('btn-save-session');
-  if (saveBtn) saveBtn.disabled = false;
-}
-
-// ── NUMPAD ────────────────────────────────────────────────────
-function numpadInput(key) {
-  if (key === 'del') {
-    state.tiempoSesion = state.tiempoSesion.slice(0, -1);
-  } else {
-    if (state.tiempoSesion.length >= 3) return; // max 999 min
-    state.tiempoSesion += key;
-  }
-  updateTimeDisplay();
-}
-
-function updateTimeDisplay() {
-  const el = document.getElementById('time-display');
-  if (!el) return;
-  if (state.tiempoSesion) {
-    el.textContent = state.tiempoSesion + ' min';
-    el.classList.add('has-value');
-  } else {
-    el.textContent = '— min';
-    el.classList.remove('has-value');
-  }
-}
-
-// ── GUARDAR SESIÓN ────────────────────────────────────────────
-async function saveSession() {
-  if (!state.rpeSession) return;
-  const btn = document.getElementById('btn-save-session');
-  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
-
-  const res = await api({
-    action:        'saveRegistro',
-    usuario:       state.user.usuario,
-    semana:        state.semana,
-    dia:           state.dia,
-    bloque:        'SESION',
-    ejercicio:     'RPE_GLOBAL',
-    carga_real:    '',
-    rpe:           state.rpeSession,
-    notas_jugador: '',
-    tiempo_sesion: state.tiempoSesion ? parseInt(state.tiempoSesion) : ''
-  });
-
-  if (res.ok) {
-    state.guardado = true;
-    const panel = document.getElementById('session-panel');
-    if (panel) {
-      panel.innerHTML = `<div class="saved-msg">✓ Sesión guardada — RPE ${state.rpeSession}${state.tiempoSesion ? ' · ' + state.tiempoSesion + ' min' : ''}</div>`;
+  // ── Añadir semanas del PLANNER (hoja Plantillas) para este squad ──
+  // Se identifican con índices altos (1000+) para distinguirlas al pedir la rutina.
+  const nombresSalida  = semanas.map(s => s.nombre);
+  const indicesSalida  = semanas.map(s => s.originalIdx);
+  try {
+    const wk = getWeeks({ squad: squad, onlyVisible: !isCoach });
+    if (wk.ok && wk.weeks) {
+      wk.weeks.forEach((w, k) => {
+        nombresSalida.push(w.nombre);
+        indicesSalida.push(1000 + k); // índice planner
+      });
     }
-  } else {
-    if (btn) { btn.disabled = false; btn.textContent = 'Guardar sesión'; }
-    alert('Error al guardar: ' + (res.error || 'inténtalo de nuevo'));
-  }
+  } catch(e) {}
+
+  if (!nombresSalida.length) return { ok: false, error: 'No hay semanas visibles actualmente.' };
+
+  return {
+    ok: true,
+    semanas:       nombresSalida,
+    semanaIndices: indicesSalida,
+    sheetName
+  };
 }
 
-// ── LOGOUT ────────────────────────────────────────────────────
-function logout() {
-  state = { user:null, dia:1, semana:1, semanas:[], rpeSession:null, tiempoSesion:'', guardado:false };
-  document.getElementById('screen-app').style.display  = 'none';
-  document.getElementById('screen-login').style.display = 'flex';
-  document.getElementById('input-user').value  = '';
-  document.getElementById('input-pass').value  = '';
-  const btn = document.getElementById('btn-login');
-  btn.disabled = false; btn.textContent = 'Entrar';
-  document.getElementById('login-error').textContent = '';
+// ── GET RUTINA ───────────────────────────────────────────────
+function getRutina({ semana, dia, squad }) {
+  // Si el índice es alto (1000+), es una semana del PLANNER (hoja Plantillas)
+  const semNum = parseInt(semana);
+  if (semNum >= 1000) {
+    return getRutinaPlanner(semNum - 1000, parseInt(dia), squad);
+  }
+  const sheetName = sheetForSquad(squad);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (!sheet) return { ok: false, error: `Hoja "${sheetName}" no encontrada` };
+
+  const range    = sheet.getDataRange();
+  const data     = range.getValues();
+  const richText = range.getRichTextValues();
+
+  const diaNum    = parseInt(dia);
+  const semanaNum = parseInt(semana);
+  const colOff    = DAY_COL_OFFSETS[diaNum];
+  if (colOff === undefined) return { ok: false, error: 'Día no válido: ' + dia };
+
+  const weekStarts = [];
+  for (let i = 0; i < data.length; i++) {
+    const cell = data[i][1];
+    if (cell && typeof cell === 'string' && cell.includes('WK')) {
+      weekStarts.push({ row: i, nombre: cell.trim() });
+    }
+  }
+  if (!weekStarts.length) return { ok: false, error: `No se encontraron semanas en ${sheetName}` };
+
+  const weekIdx = semanaNum - 1;
+  if (weekIdx >= weekStarts.length) return { ok: true, ejercicios: [], nombreSemana: '', sessionNotes: '', dayTitle: '' };
+
+  const wRow         = weekStarts[weekIdx].row;
+  const nombreSemana = weekStarts[weekIdx].nombre;
+  const wRowEnd      = weekIdx + 1 < weekStarts.length ? weekStarts[weekIdx + 1].row : data.length;
+
+  let prepHeaderRow = -1;
+  let mainHeaderRow = -1;
+  let notesRow      = -1;
+
+  for (let r = wRow + 1; r < wRowEnd; r++) {
+    const cellB   = String(data[r][1]      || '').trim();
+    const cellDay = String(data[r][colOff] || '').trim();
+    if (prepHeaderRow === -1 && cellB.toLowerCase().includes('prep'))       prepHeaderRow = r;
+    if (mainHeaderRow === -1 && cellB.toLowerCase().includes('main block')) mainHeaderRow = r;
+    if (notesRow === -1 && (
+      cellB.includes('📝')   || cellB.toLowerCase().includes('session notes') ||
+      cellDay.includes('📝') || cellDay.toLowerCase().includes('session notes')
+    )) notesRow = r;
+    if (prepHeaderRow !== -1 && mainHeaderRow !== -1 && notesRow !== -1) break;
+  }
+
+  const ejercicios = [];
+
+  if (prepHeaderRow !== -1) {
+    const dataStart = prepHeaderRow + 2;
+    const dataEnd   = mainHeaderRow !== -1 ? mainHeaderRow : wRowEnd;
+    for (let r = dataStart; r < dataEnd; r++) {
+      const ex = parseExerciseRow(data[r], richText[r], colOff, 'prep');
+      if (ex) ejercicios.push(ex);
+    }
+  }
+
+  if (mainHeaderRow !== -1) {
+    const dataStart = mainHeaderRow + 2;
+    for (let r = dataStart; r < wRowEnd; r++) {
+      const cellB   = String(data[r][1]      || '').trim();
+      const cellDay = String(data[r][colOff] || '').trim();
+      if (
+        cellB.includes('📝')   || cellB.toLowerCase().includes('session notes') ||
+        cellDay.includes('📝') || cellDay.toLowerCase().includes('session notes')
+      ) break;
+      const ex = parseExerciseRow(data[r], richText[r], colOff, 'main');
+      if (ex) ejercicios.push(ex);
+    }
+  }
+
+  let sessionNotes = '';
+  if (notesRow !== -1) {
+    const noteLines = [];
+    for (let r = notesRow + 1; r < wRowEnd; r++) {
+      const txt = String(data[r][colOff] || '').trim();
+      if (txt) noteLines.push(txt);
+    }
+    sessionNotes = noteLines.join('\n');
+  }
+
+  let dayTitle = '';
+  for (let r = wRow + 1; r < wRowEnd; r++) {
+    const cellDay = String(data[r][colOff] || '').trim();
+    if (cellDay && /DAY|EXTRA/i.test(cellDay) && !/session notes|📝/i.test(cellDay)) {
+      dayTitle = cellDay;
+      break;
+    }
+  }
+
+
+  // nota del coach para este día (se antepone al banner)
+  // OJO: se lee con el mismo identificador de semana que guarda el frontend (realSemanaIdx = 'semana' crudo),
+  // no con semanaNum-1, para que guardar y leer usen la misma clave.
+  let _notaCoachR = '';
+  try { const _ndR = getNotaDia({ squad: squad, semana: semana, dia: diaNum }); _notaCoachR = (_ndR && _ndR.nota) ? _ndR.nota : ''; } catch(e){}
+  const _sessionNotesFinal = [_notaCoachR, sessionNotes].filter(function(x){return x&&x.trim();}).join('\n');
+
+  return { ok: true, ejercicios, nombreSemana, sessionNotes: _sessionNotesFinal, dayTitle };
 }
-</script>
-</body>
-</html>
+
+function parseExerciseRow(row, richTextRow, off, fase) {
+  const block    = row[off];
+  const exercise = row[off + 3];
+  if (!block || !exercise) return null;
+
+  const s = v => {
+    if (v instanceof Date) return '';
+    if (v === null || v === undefined) return '';
+    return String(v).trim();
+  };
+
+  const blockStr = s(block);
+  const exStr    = s(exercise);
+
+  // ── v10: descartar fila de cabecera ──────────────────────
+  if (blockStr.toUpperCase() === 'BLOCK') return null;
+  if (exStr.toUpperCase()    === 'EXERCISE') return null;
+  if (!blockStr || !exStr) return null;
+
+  let videoUrl = '';
+  try {
+    if (richTextRow && richTextRow[off + 8]) {
+      const rtCell   = richTextRow[off + 8];
+      const cellLink = rtCell.getLinkUrl();
+      if (cellLink && cellLink.startsWith('http')) {
+        videoUrl = cellLink;
+      } else {
+        const runs = rtCell.getRuns();
+        for (const run of runs) {
+          const runLink = run.getLinkUrl();
+          if (runLink && runLink.startsWith('http')) { videoUrl = runLink; break; }
+        }
+      }
+    }
+  } catch(e) {
+    const videoVal = s(row[off + 8]);
+    if (videoVal.startsWith('http')) videoUrl = videoVal;
+  }
+  if (!videoUrl) {
+    const videoVal = s(row[off + 8]);
+    if (videoVal.startsWith('http')) videoUrl = videoVal;
+  }
+
+  return {
+    bloque:        blockStr,
+    patron:        s(row[off + 1]),
+    contraccion:   s(row[off + 2]),
+    ejercicio:     exStr,
+    sets:          s(row[off + 4]),
+    reps:          s(row[off + 5]),
+    tempo:         s(row[off + 6]),
+    load_objetivo: s(row[off + 7]),
+    video:         videoUrl,
+    notas:         s(row[off + 9]),
+    fase:          fase
+  };
+}
+
+// ── GET WEEK CONFIG ──────────────────────────────────────────
+// Lee Config: col A = "SheetName:semana", col B = TRUE/FALSE
+// Si col A no tiene prefijo (legado) lo trata como global
+function getWeekConfig() {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Config');
+  if (!sheet) return { ok: true, config: {} };
+
+  const rows   = sheet.getDataRange().getValues();
+  const config = {};
+  for (let i = 1; i < rows.length; i++) {
+    const key    = String(rows[i][0] || '').trim();
+    const rawVis = rows[i][1];
+    if (!key) continue;
+    const visible = (rawVis === true || String(rawVis).toUpperCase() === 'TRUE');
+    config[key] = visible;
+  }
+  return { ok: true, config };
+}
+
+// ── SET WEEK VISIBLE ──────────────────────────────────────────
+// Clave = "SheetName:semana" para distinguir squads con mismo nombre de semana
+function setWeekVisible({ semana, visible, squad }) {
+  const ss        = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet       = ss.getSheetByName('Config');
+  const sheetName = sheetForSquad(squad || '');
+  const key       = sheetName + ':' + semana;   // ← clave única por squad
+
+  if (!sheet) {
+    sheet = ss.insertSheet('Config');
+    sheet.getRange(1, 1).setValue('semana');
+    sheet.getRange(1, 2).setValue('visible');
+  }
+
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === key) {
+      sheet.getRange(i + 1, 2).setValue(visible ? true : false);
+      return { ok: true };
+    }
+  }
+  sheet.appendRow([key, visible ? true : false]);
+  return { ok: true };
+}
+
+// ── GUARDAR REGISTRO ─────────────────────────────────────────
+// ── Notas del coach por día (banner que ve el jugador) ──
+// Hoja NotasDia: A=squad, B=semana_idx, C=dia, D=nota, E=creado_por, F=fecha
+function _sheetNotasDia(){
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName('NotasDia');
+  if(!sh){ sh = ss.insertSheet('NotasDia'); sh.appendRow(['squad','semana','dia','nota','creado_por','fecha']); }
+  return sh;
+}
+function getNotaDia({ squad, semana, dia } = {}){
+  const sh = _sheetNotasDia();
+  const rows = sh.getDataRange().getValues();
+  const sq = String(squad||'').toLowerCase();
+  for(let i=1;i<rows.length;i++){
+    if(String(rows[i][0]).toLowerCase()===sq && String(rows[i][1])===String(semana) && String(rows[i][2])===String(dia)){
+      return { ok:true, nota:String(rows[i][3]||'') };
+    }
+  }
+  return { ok:true, nota:'' };
+}
+function saveNotaDia({ squad, semana, dia, nota, creado_por } = {}){
+  const sh = _sheetNotasDia();
+  const rows = sh.getDataRange().getValues();
+  const sq = String(squad||'').toLowerCase();
+  for(let i=1;i<rows.length;i++){
+    if(String(rows[i][0]).toLowerCase()===sq && String(rows[i][1])===String(semana) && String(rows[i][2])===String(dia)){
+      // actualizar
+      sh.getRange(i+1,4).setValue(nota||'');
+      sh.getRange(i+1,5).setValue(creado_por||'');
+      sh.getRange(i+1,6).setValue(fmtDate(new Date()));
+      return { ok:true, actualizado:true };
+    }
+  }
+  sh.appendRow([squad||'', semana, dia, nota||'', creado_por||'', fmtDate(new Date())]);
+  return { ok:true, creado:true };
+}
+
+function saveRegistro({ usuario, semana, dia, bloque, ejercicio,
+                        carga_real, rpe, notas_jugador, tiempo_sesion, fecha_sesion }) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registros');
+  if (!sheet) return { ok: false, error: 'Hoja "Registros" no encontrada' };
+
+  // Timestamp: por defecto ahora. Si el jugador indicó que la sesión fue otro día
+  // (fecha_sesion = 'YYYY-MM-DD'), se usa esa fecha (a mediodía para evitar líos de zona horaria).
+  let ts;
+  if (fecha_sesion && /^\d{4}-\d{2}-\d{2}$/.test(fecha_sesion)) {
+    ts = new Date(fecha_sesion + 'T12:00:00').toISOString();
+  } else {
+    ts = new Date().toISOString();
+  }
+
+  sheet.appendRow([
+    ts,
+    usuario, semana, dia, bloque,
+    ejercicio, carga_real || '', rpe || '',
+    notas_jugador || '', tiempo_sesion || ''
+  ]);
+
+  // ── v10 FIX: forzar formato TEXTO en carga_real (col 7) ──
+  // Evita que Google Sheets auto-convierta "30/40" → fecha
+  const lastRow  = sheet.getLastRow();
+  const cargaCell = sheet.getRange(lastRow, 7);
+  cargaCell.setNumberFormat('@STRING@');
+  cargaCell.setValue(String(carga_real || ''));
+
+  return { ok: true };
+}
+
+// ── HISTORIAL ────────────────────────────────────────────────
+function getHistorial({ usuario, ejercicio }) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registros');
+  if (!sheet) return { ok: false, error: 'Hoja "Registros" no encontrada' };
+  const rows   = sheet.getDataRange().getValues();
+  const result = [];
+
+  // ── v10: sanitizar carga — evita fechas auto-convertidas ──
+  function sanitizeCarga(val) {
+    if (!val && val !== 0) return '';
+    // Si Sheets convirtió "30/40" a Date, lo descartamos (dato corrupto)
+    if (val instanceof Date) return '';
+    const s = String(val).trim();
+    // Limpiar el formato ISO date si llegara como string
+    if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return '';
+    return s;
+  }
+
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][1]) === String(usuario) &&
+        (!ejercicio || rows[i][5] === ejercicio)) {
+      result.push({
+        fecha:         rows[i][0] instanceof Date ? rows[i][0].toISOString() : String(rows[i][0]||''),
+        semana:        rows[i][2],
+        dia:           rows[i][3],
+        bloque:        rows[i][4],
+        ejercicio:     rows[i][5],
+        carga:         sanitizeCarga(rows[i][6]),
+        rpe:           rows[i][7],
+        notas:         rows[i][8],
+        tiempo_sesion: rows[i][9]
+      });
+    }
+  }
+  return { ok: true, historial: result };
+}
+
+// ── HELPERS DE FECHA ─────────────────────────────────────────
+function getLunesDeSemana(fecha) {
+  const d = new Date(fecha);
+  const dia = d.getDay();
+  const diffToLun = (dia === 0) ? -6 : 1 - dia;
+  d.setDate(d.getDate() + diffToLun);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function fmtDate(d) {
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+
+// Safe fecha reader — handles Date objects auto-converted by Sheets
+function safeReadFecha(raw) {
+  if (!raw) return '';
+  if (raw instanceof Date) return fmtDate(raw);
+  const s = String(raw).trim();
+  // If it looks like a full ISO/datetime string, extract date part
+  if (s.length > 10 && s.includes('T')) return s.slice(0,10);
+  if (s.length > 10 && (s.includes('/') || s.includes(' '))) {
+    const d = new Date(s);
+    if (!isNaN(d)) return fmtDate(d);
+  }
+  return s;
+}
+// ── GET EQUIPO ───────────────────────────────────────────────
+function getEquipo({ semana }) {
+  const sheetJ = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Jugadores');
+  const sheetR = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registros');
+  if (!sheetJ || !sheetR) return { ok: false, error: 'Hojas no encontradas' };
+
+  const jugadores = sheetJ.getDataRange().getValues();
+  const registros = sheetR.getDataRange().getValues();
+
+  const hoy    = new Date();
+  const hoyStr = fmtDate(hoy);
+  const lunes  = getLunesDeSemana(hoy);
+
+  const hace7 = new Date(hoy);
+  hace7.setDate(hace7.getDate() - 6);
+  hace7.setHours(0, 0, 0, 0);
+
+  const DIA_LABELS = ['L','M','X','J','V','S','D'];
+
+  const semanasCache = {};
+  function getSemanasSquad(squad) {
+    const sn = sheetForSquad(squad);
+    if (semanasCache[sn]) return semanasCache[sn];
+    // Siempre isCoach:true → obtiene TODAS las semanas sin filtro de Config
+    // Así los índices 1,2,3... coinciden exactamente con los números guardados en Registros
+    const res = getSemanas({ squad, isCoach: true });
+    semanasCache[sn] = res.ok ? res.semanas : [];
+    return semanasCache[sn];
+  }
+
+  // ── v10: caché de diasProgramados por squad+semana ───────
+  const diasProgramadosCache = {};
+  function getDiasProgramados(squad, semanaNum) {
+    const key = `${squad}_${semanaNum}`;
+    if (diasProgramadosCache[key] !== undefined) return diasProgramadosCache[key];
+    const res = getDiasActivos({ semana: semanaNum, squad });
+    const n   = res.ok ? res.diasProgramados : 5;
+    diasProgramadosCache[key] = n || 5; // fallback a 5 si no hay datos
+    return diasProgramadosCache[key];
+  }
+
+  const equipo = [];
+
+  for (let i = 1; i < jugadores.length; i++) {
+    const usuario        = String(jugadores[i][0]).trim();
+    const posicion       = String(jugadores[i][3]).trim();
+    const nombre         = String(jugadores[i][2]).trim();
+    const squad          = String(jugadores[i][4] || '').trim();
+    const rugbyposition  = String(jugadores[i][5] || '').trim();
+    if (!usuario || esStaff(posicion)) continue;
+
+    const regsRPE = registros.filter(r =>
+      String(r[1]).trim() === usuario && r[5] === 'RPE_GLOBAL'
+    );
+
+    const sesiones7dias = DIA_LABELS.map((label, idx) => {
+      const fecha = new Date(lunes);
+      fecha.setDate(fecha.getDate() + idx);
+      const fechaStr = fmtDate(fecha);
+      const reg = regsRPE.find(r => fmtDate(new Date(r[0])) === fechaStr);
+      return {
+        label:    label,
+        fecha:    fechaStr,
+        guardada: !!reg,
+        rpe:      reg ? parseFloat(reg[7]) : null,
+        tiempo:   reg ? (reg[9] || null) : null
+      };
+    });
+
+    const rpes7 = regsRPE
+      .filter(r => {
+        const f = new Date(r[0]);
+        return f >= hace7 && f <= hoy && !isNaN(parseFloat(r[7]));
+      })
+      .map(r => parseFloat(r[7]));
+    const rpe7dias = rpes7.length
+      ? Math.round((rpes7.reduce((s,v) => s+v, 0) / rpes7.length) * 10) / 10
+      : null;
+
+    const ultimaReg = regsRPE.filter(r => r[9]).sort((a,b) => new Date(b[0]) - new Date(a[0]))[0];
+    const tiempoUltima = ultimaReg ? ultimaReg[9] : null;
+
+    const ultimaFecha    = regsRPE.length
+      ? regsRPE.sort((a,b) => new Date(b[0]) - new Date(a[0]))[0] : null;
+    const ultimaFechaStr = ultimaFecha ? fmtDate(new Date(ultimaFecha[0])) : null;
+
+    const rpeHoy       = regsRPE.find(r => fmtDate(new Date(r[0])) === hoyStr);
+    const diasConSesion = new Set(regsRPE.map(r => fmtDate(new Date(r[0])))).size;
+
+    let estado;
+    if (rpeHoy)             estado = 'guardada';
+    else if (diasConSesion) estado = 'pendiente';
+    else                    estado = 'inactivo';
+
+    // ── v10: diasProgramados para compliance correcto ─────
+    const semNum         = parseInt(semana);
+    const diasProgramados = getDiasProgramados(squad, semNum);
+    const sesGuardadasSem = sesiones7dias.filter(s => s.guardada).length;
+    const complianceSem   = diasProgramados > 0
+      ? Math.min(Math.round((sesGuardadasSem / diasProgramados) * 100), 100)
+      : null;
+
+    equipo.push({
+      usuario, nombre, posicion, rugbyposition, squad, estado,
+      rpe7dias, sesiones7dias, tiempoUltima,
+      ultimaFecha: ultimaFechaStr,
+      diasProgramados, complianceSem
+    });
+  }
+
+  // RPE chart agrupado por squad
+  const rpesPorSquadSemana = {};
+  for (let i = 1; i < registros.length; i++) {
+    const r   = registros[i];
+    if (r[5] !== 'RPE_GLOBAL') continue;
+    const usuario = String(r[1]).trim();
+    const sem     = String(r[2]).trim();
+    const dia     = String(r[3]).trim();
+    const rpe     = parseFloat(r[7]);
+    if (!sem || isNaN(rpe)) continue;
+    const jug   = equipo.find(j => j.usuario === usuario);
+    const squad = jug ? jug.squad : '';
+    if (!rpesPorSquadSemana[squad])           rpesPorSquadSemana[squad] = {};
+    if (!rpesPorSquadSemana[squad][sem])       rpesPorSquadSemana[squad][sem] = {};
+    if (!rpesPorSquadSemana[squad][sem][dia])  rpesPorSquadSemana[squad][sem][dia] = [];
+    rpesPorSquadSemana[squad][sem][dia].push(rpe);
+  }
+
+  const rpeChartBySquad = {};
+  for (const squad of Object.keys(rpesPorSquadSemana)) {
+    const semanaNames = getSemanasSquad(squad);
+    // nombres de las semanas del planner (índices 1000+) para este squad
+    let plannerNames = [];
+    try { const wk = getWeeks({ squad: squad }); if (wk.ok && wk.weeks) plannerNames = wk.weeks.map(w => w.nombre); } catch(e) {}
+    const nombreDeSem = sem => {
+      const n = parseInt(sem);
+      if (n >= 1000) return plannerNames[n - 1000] || ('Semana ' + sem);
+      return semanaNames[n - 1] || ('Semana ' + sem);
+    };
+    rpeChartBySquad[squad] = Object.keys(rpesPorSquadSemana[squad])
+      .sort((a,b) => parseInt(a) - parseInt(b))
+      .map(sem => {
+        const semNombre = nombreDeSem(sem);
+        const diasData  = rpesPorSquadSemana[squad][sem];
+        const sesiones  = Object.keys(diasData)
+          .sort((a,b) => parseInt(a)-parseInt(b))
+          .map(dia => {
+            const vals  = diasData[dia];
+            const media = Math.round((vals.reduce((s,v)=>s+v,0)/vals.length)*10)/10;
+            return { dia, rpeMedia: media };
+          });
+        const allVals    = Object.values(diasData).flat();
+        const mediaTotal = allVals.length
+          ? Math.round((allVals.reduce((s,v)=>s+v,0)/allVals.length)*10)/10 : null;
+        return { semana: sem, nombreSemana: semNombre, sesiones, rpeMedia: mediaTotal };
+      });
+  }
+
+  const rpesPorSemana = {};
+  for (const squad of Object.keys(rpesPorSquadSemana)) {
+    for (const sem of Object.keys(rpesPorSquadSemana[squad])) {
+      if (!rpesPorSemana[sem]) rpesPorSemana[sem] = {};
+      for (const dia of Object.keys(rpesPorSquadSemana[squad][sem])) {
+        if (!rpesPorSemana[sem][dia]) rpesPorSemana[sem][dia] = [];
+        rpesPorSemana[sem][dia].push(...rpesPorSquadSemana[squad][sem][dia]);
+      }
+    }
+  }
+  const allSemanaNames = getSemanasSquad("men's xv");
+  let allPlannerNames = [];
+  try { const wk = getWeeks({ squad: "men's xv" }); if (wk.ok && wk.weeks) allPlannerNames = wk.weeks.map(w => w.nombre); } catch(e) {}
+  const rpeChart = Object.keys(rpesPorSemana)
+    .sort((a,b) => parseInt(a)-parseInt(b))
+    .map(sem => {
+      const n = parseInt(sem);
+      const semNombre = (n >= 1000)
+        ? (allPlannerNames[n - 1000] || ('Semana ' + sem))
+        : (allSemanaNames[n - 1] || ('Semana ' + sem));
+      const diasData  = rpesPorSemana[sem];
+      const sesiones  = Object.keys(diasData)
+        .sort((a,b) => parseInt(a)-parseInt(b))
+        .map(dia => {
+          const vals  = diasData[dia];
+          const media = Math.round((vals.reduce((s,v)=>s+v,0)/vals.length)*10)/10;
+          return { dia, rpeMedia: media };
+        });
+      const allVals    = Object.values(diasData).flat();
+      const mediaTotal = allVals.length
+        ? Math.round((allVals.reduce((s,v)=>s+v,0)/allVals.length)*10)/10 : null;
+      return { semana: sem, nombreSemana: semNombre, sesiones, rpeMedia: mediaTotal };
+    });
+
+  return { ok: true, equipo, rpeChart, rpeChartBySquad };
+}
+
+// Compliance mensual correcto: promedio de los compliance semanales del mes.
+// Para cada semana con actividad del jugador ese mes: sesiones guardadas / días programados.
+function getComplianceMes({ usuario, squad, mes, anio }) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetR = ss.getSheetByName('Registros');
+  if (!sheetR) return { ok: true, compliance: null };
+  const data = sheetR.getDataRange().getValues();
+  const m = parseInt(mes), y = parseInt(anio);
+
+  // sesiones RPE_GLOBAL del jugador en ese mes, agrupadas por semana (columna C)
+  const porSemana = {}; // semanaNum → set de fechas (días distintos con registro)
+  for (let i = 1; i < data.length; i++) {
+    const u = String(data[i][1]||'').trim();
+    if (u !== usuario) continue;
+    if (data[i][5] !== 'RPE_GLOBAL') continue; // F = ejercicio (índice 5)
+    const f = safeReadFecha(data[i][0]);
+    if (!f) continue;
+    const d = new Date(f + 'T00:00');
+    if (isNaN(d) || d.getMonth() !== m || d.getFullYear() !== y) continue;
+    const sem = parseInt(data[i][2]); // C = semana
+    if (isNaN(sem)) continue;
+    if (!porSemana[sem]) porSemana[sem] = {};
+    porSemana[sem][f] = true; // día distinto
+  }
+
+  const semanas = Object.keys(porSemana);
+  if (!semanas.length) return { ok: true, compliance: 0, semanas: 0 };
+
+  // caché de días programados
+  const cache = {};
+  const diasProg = (sq, semNum) => {
+    const key = sq + '_' + semNum;
+    if (cache[key] !== undefined) return cache[key];
+    const res = getDiasActivos({ semana: semNum, squad: sq });
+    const n = (res.ok ? res.diasProgramados : 5) || 5;
+    cache[key] = n;
+    return n;
+  };
+
+  let suma = 0, cuenta = 0;
+  semanas.forEach(sem => {
+    const realizadas = Object.keys(porSemana[sem]).length;
+    const prog = diasProg(squad, parseInt(sem));
+    const comp = prog > 0 ? Math.min(Math.round((realizadas / prog) * 100), 100) : 0;
+    suma += comp; cuenta++;
+  });
+  const compliance = cuenta > 0 ? Math.round(suma / cuenta) : 0;
+  return { ok: true, compliance, semanas: cuenta };
+}
+
+// Agrupa las molestias del equipo (Wellness col K, JSON) por zona grande y severidad.
+// periodo: 'mes' (últimos 30 días) o 'temporada' (todo).
+function getMolestiasZonas({ squad, periodo, desde, hasta } = {}) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetJ = ss.getSheetByName('Jugadores');
+  const sheetW = ss.getSheetByName('Wellness');
+  if (!sheetW) return { ok: true, zonas: [], total: 0 };
+
+  // jugadores del squad
+  const setSquad = {};
+  if (sheetJ) {
+    const jj = sheetJ.getDataRange().getValues();
+    for (let i=1;i<jj.length;i++){
+      const u=String(jj[i][0]||'').trim();
+      const sq=String(jj[i][4]||'').trim();
+      if(!u) continue;
+      if(!squad || sq.toLowerCase()===String(squad).toLowerCase()) setSquad[u]=true;
+    }
+  }
+
+  // mapeo zona detallada → zona grande
+  const grupo = id => {
+    id = String(id||'').toLowerCase();
+    if (id.indexOf('cabeza')!==-1 || id.indexOf('cuello')!==-1) return 'Cabeza/Cuello';
+    if (id.indexOf('hombro')!==-1) return 'Hombro';
+    if (id.indexOf('pecho')!==-1) return 'Pecho';
+    if (id.indexOf('abdomen')!==-1) return 'Abdomen';
+    if (id.indexOf('biceps')!==-1) return 'Bíceps';
+    if (id.indexOf('antebrazo')!==-1) return 'Antebrazo';
+    if (id.indexOf('lumbar')!==-1 || id.indexOf('espalda')!==-1) return 'Lumbar';
+    if (id.indexOf('dorsal')!==-1) return 'Dorsal';
+    if (id.indexOf('gluteo')!==-1) return 'Glúteo';
+    if (id.indexOf('cuadriceps')!==-1) return 'Cuádriceps';
+    if (id.indexOf('isquio')!==-1) return 'Isquios';
+    if (id.indexOf('rodilla')!==-1) return 'Rodilla';
+    if (id.indexOf('gemelo')!==-1) return 'Gemelo';
+    return 'Otras';
+  };
+
+  // límite de fecha: rango explícito (desde/hasta) o periodo (mes/temporada)
+  let fDesde = null, fHasta = null;
+  if (desde) fDesde = new Date(desde + 'T00:00');
+  if (hasta) fHasta = new Date(hasta + 'T23:59');
+  if (!fDesde && periodo === 'mes') {
+    fDesde = new Date();
+    fDesde.setDate(fDesde.getDate() - 30);
+  }
+
+  const data = sheetW.getDataRange().getValues();
+  const zonas = {}; // zona → {leve, moderado, grave, total}
+  let total = 0;
+  for (let i=1;i<data.length;i++){
+    const u=String(data[i][1]||'').trim();
+    if(!setSquad[u]) continue;
+    // fecha en columna C (índice 2)
+    const f = safeReadFecha(data[i][2]);
+    if(f){
+      const d=new Date(f+'T00:00');
+      if(!isNaN(d)){
+        if(fDesde && d<fDesde) continue;
+        if(fHasta && d>fHasta) continue;
+      }
+    }
+    // molestias en columna K (índice 10) JSON: {"zonas":[{id,label,intensidad}],"nota":""}
+    const raw = data[i][10];
+    if(!raw) continue;
+    const parsed = safeParseJSON(raw);
+    // acepta tanto array directo como objeto {zonas:[...]}
+    const arr = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.zonas) ? parsed.zonas : null);
+    if(!arr || !arr.length) continue;
+    arr.forEach(m=>{
+      const g = grupo(m.id || m.zona);
+      // intensidades reales: leve / media / alta (también acepta moderado / grave)
+      const sev = String(m.intensidad||'leve').toLowerCase();
+      if(!zonas[g]) zonas[g]={ zona:g, leve:0, moderado:0, grave:0, total:0 };
+      if(sev==='alta' || sev==='grave') zonas[g].grave++;
+      else if(sev==='media' || sev==='moderado') zonas[g].moderado++;
+      else zonas[g].leve++;
+      zonas[g].total++;
+      total++;
+    });
+  }
+  const lista = Object.keys(zonas).map(k=>zonas[k]).sort((a,b)=>b.total-a.total);
+  return { ok: true, zonas: lista, total };
+}
+
+// Histórico por jugador: para cada jugador con molestias, devuelve por día su gravedad
+// máxima y las zonas de ese día. Rango: últimos N días (dias) o desde/hasta.
+function getMolestiasSemana({ squad, dias, desde, hasta } = {}) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetJ = ss.getSheetByName('Jugadores');
+  const sheetW = ss.getSheetByName('Wellness');
+  if (!sheetW) return { ok: true, jugadores: [], fechas: [] };
+
+  // nombre visible por usuario + filtro squad
+  const nombreDe = {}, delSquad = {};
+  if (sheetJ) {
+    const jj = sheetJ.getDataRange().getValues();
+    for (let i=1;i<jj.length;i++){
+      const u=String(jj[i][0]||'').trim();
+      const pos=String(jj[i][3]||'').trim();
+      const sq=String(jj[i][4]||'').trim();
+      const nom=String(jj[i][2]||'').trim();
+      if(!u || esStaff(pos)) continue;
+      if(!squad || sq.toLowerCase()===String(squad).toLowerCase()){ delSquad[u]=true; nombreDe[u]=nom||u; }
+    }
+  }
+
+  // rango de fechas
+  let fDesde=null, fHasta=null;
+  if (desde) fDesde = new Date(desde+'T00:00');
+  if (hasta) fHasta = new Date(hasta+'T23:59');
+  if (!fDesde) {
+    const n = dias || 7;
+    fHasta = new Date(); fHasta.setHours(23,59,0,0);
+    fDesde = new Date(); fDesde.setDate(fDesde.getDate()-(n-1)); fDesde.setHours(0,0,0,0);
+  }
+  if (!fHasta) { fHasta = new Date(); fHasta.setHours(23,59,0,0); }
+
+  // lista de fechas del rango (YYYY-MM-DD)
+  const fechas = [];
+  for (let d=new Date(fDesde); d<=fHasta; d.setDate(d.getDate()+1)) fechas.push(fmtDate(new Date(d)));
+
+  const sev = { alta:3, media:2, leve:1 };
+  const sevNombre = { 3:'alta', 2:'media', 1:'leve' };
+  // data[usuario][fecha] = { maxSev, zonas:[{label,intensidad}], nota }
+  const data = {};
+  const rows = sheetW.getDataRange().getValues();
+  // detectar columna de molestias por cabecera (por defecto K = 10)
+  let molCol = 10;
+  for (let c=0;c<rows[0].length;c++){ if(String(rows[0][c]).trim().toLowerCase()==='molestias'){ molCol=c; break; } }
+  for (let i=1;i<rows.length;i++){
+    const u=String(rows[i][1]||'').trim();
+    if(!delSquad[u]) continue;
+    const f = _normFecha(rows[i][2]);
+    if(!f) continue;
+    const d=new Date(f+'T00:00');
+    if(isNaN(d)||d<fDesde||d>fHasta) continue;
+    const parsed = safeParseJSON(rows[i][molCol]);
+    const arr = Array.isArray(parsed)?parsed:(parsed&&Array.isArray(parsed.zonas)?parsed.zonas:null);
+    if(!arr||!arr.length) continue;
+    const nota = (parsed&&parsed.nota)?parsed.nota:'';
+    if(!data[u]) data[u]={};
+    if(!data[u][f]) data[u][f]={ maxSev:0, zonas:[], nota:'' };
+    arr.forEach(z=>{
+      const inten = String(z.intensidad||'leve').toLowerCase();
+      const s = sev[inten]||1;
+      if(s>data[u][f].maxSev) data[u][f].maxSev=s;
+      data[u][f].zonas.push({ label:(z.label||z.id||'zona'), intensidad:inten });
+    });
+    if(nota) data[u][f].nota = nota;
+  }
+
+  // construir salida solo con jugadores que tienen algo en el rango
+  const jugadores = [];
+  Object.keys(data).forEach(u=>{
+    const porDia = {};
+    let totalDias = 0;
+    fechas.forEach(f=>{
+      if(data[u][f]){
+        porDia[f] = { sev:sevNombre[data[u][f].maxSev]||'leve', zonas:data[u][f].zonas, nota:data[u][f].nota };
+        totalDias++;
+      } else {
+        porDia[f] = null;
+      }
+    });
+    if(totalDias>0) jugadores.push({ usuario:u, nombre:nombreDe[u]||u, dias:porDia, totalDias });
+  });
+  // ordenar: más días de molestias primero
+  jugadores.sort((a,b)=>b.totalDias-a.totalDias);
+  return { ok: true, jugadores, fechas };
+}
+function testGetSemanasMens()  { Logger.log(JSON.stringify(getSemanas({ squad: "men's xv" }))); }
+function testGetSemanasWomen() { Logger.log(JSON.stringify(getSemanas({ squad: "women's" }))); }
+function testGetSemanasAcad()  { Logger.log(JSON.stringify(getSemanas({ squad: 'academy' }))); }
+function testRutinaMensD1()    { Logger.log(JSON.stringify(getRutina({ semana:1, dia:1, squad:"men's xv" }))); }
+function testDiasActivos()     { Logger.log(JSON.stringify(getDiasActivos({ semana:6, squad:"men's xv" }))); }
+function testGetEquipo()       { Logger.log(JSON.stringify(getEquipo({ semana: 6 }))); }
+function testLogin()           { Logger.log(JSON.stringify(login({ usuario:'matiasg', password:'cau1234' }))); }
+
+// ── Respuesta JSON ────────────────────────────────────────────
+function respond(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+// ============================================================
+//  PLANNER — Galería de ejercicios + Semanas (JSON)   [AÑADIDO]
+//  Todo aditivo: no modifica ninguna función existente.
+//  Devuelve objetos planos — respond() los envuelve en JSON.
+// ============================================================
+
+// ── Columnas de Database ────────────────────────────────────
+// A=ID | B=EXERCISE | C=MOVEMENT PATTERN | D=VIDEO LINK
+// E=LATERALITY | F=CATEGORY | G=GOAL | H=CONTRACTION   ← añadir estas 4
+
+function getExerciseLibrary() {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Database');
+  if (!sheet) return { ok: false, error: 'Hoja "Database" no encontrada' };
+
+  const last = sheet.getLastRow();
+  if (last < 2) return { ok: true, exercises: [], lists: getListsObject() };
+
+  const data = sheet.getRange(1, 1, last, 8).getValues();
+  let rich = null;
+  try { rich = sheet.getRange(1, 4, last, 1).getRichTextValues(); } catch(e) { rich = null; }
+
+  const out = [];
+  for (let r = 1; r < data.length; r++) {
+    const name = data[r][1];
+    if (!name) continue;
+
+    // Link de vídeo: primero richtext (hyperlink), si no el valor de celda
+    let url = '';
+    try {
+      if (rich && rich[r] && rich[r][0]) {
+        const rt = rich[r][0];
+        const cellLink = rt.getLinkUrl();
+        if (cellLink && cellLink.indexOf('http') === 0) {
+          url = cellLink;
+        } else {
+          const runs = rt.getRuns();
+          for (let k = 0; k < runs.length; k++) {
+            const rl = runs[k].getLinkUrl();
+            if (rl && rl.indexOf('http') === 0) { url = rl; break; }
+          }
+        }
+      }
+    } catch(e) { url = ''; }
+    if (!url) {
+      const v = String(data[r][3] || '').trim();
+      if (v.indexOf('http') === 0) url = v;
+    }
+
+    out.push({
+      id:          String(data[r][0] || ''),
+      name:        String(name).trim(),
+      pattern:     String(data[r][2] || '').trim(),
+      laterality:  String(data[r][4] || '').trim(),
+      category:    String(data[r][5] || '').trim(),
+      goal:        String(data[r][6] || '').trim(),
+      contraction: String(data[r][7] || '').trim(),
+      video:       url
+    });
+  }
+  return { ok: true, exercises: out, lists: getListsObject() };
+}
+
+// Lee la hoja Lists → { 'Movement Pattern':[...], 'Laterality':[...], ... }
+function getListsObject() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Lists');
+  if (!sheet) return {};
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const obj     = {};
+  for (let c = 0; c < headers.length; c++) {
+    const h = headers[c];
+    if (!h) continue;
+    const vals = [];
+    for (let r = 1; r < data.length; r++) {
+      if (data[r][c] !== '' && data[r][c] != null) vals.push(String(data[r][c]).trim());
+    }
+    if (vals.length) obj[String(h).trim()] = vals;
+  }
+  return obj;
+}
+
+// Guarda los ejes de un ejercicio (busca por id, si no por nombre)
+function saveExerciseTags({ id, name, pattern, laterality, category, goal, contraction }) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Database');
+  if (!sheet) return { ok: false, error: 'Hoja "Database" no encontrada' };
+  const data = sheet.getDataRange().getValues();
+  for (let r = 1; r < data.length; r++) {
+    const matchId   = id   && String(data[r][0]).trim() === String(id).trim();
+    const matchName = name && String(data[r][1]).trim().toLowerCase() === String(name).trim().toLowerCase();
+    if (matchId || matchName) {
+      if (pattern     !== undefined) sheet.getRange(r + 1, 3).setValue(pattern);
+      if (laterality  !== undefined) sheet.getRange(r + 1, 5).setValue(laterality);
+      if (category    !== undefined) sheet.getRange(r + 1, 6).setValue(category);
+      if (goal        !== undefined) sheet.getRange(r + 1, 7).setValue(goal);
+      if (contraction !== undefined) sheet.getRange(r + 1, 8).setValue(contraction);
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: 'Ejercicio no encontrado' };
+}
+
+// Añade un valor nuevo a una categoría de Lists (si no existe)
+function addListValue({ categoria, valor }) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Lists');
+  if (!sheet) return { ok: false, error: 'Hoja "Lists" no encontrada' };
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0];
+
+  let col = -1;
+  for (let c = 0; c < headers.length; c++) {
+    if (String(headers[c]).trim().toLowerCase() === String(categoria).trim().toLowerCase()) { col = c; break; }
+  }
+  if (col === -1) return { ok: false, error: 'Categoría no encontrada: ' + categoria };
+
+  for (let r = 1; r < data.length; r++) {
+    if (String(data[r][col]).trim().toLowerCase() === String(valor).trim().toLowerCase()) {
+      return { ok: true, existed: true };
+    }
+  }
+
+  let targetRow = -1;
+  for (let r = 1; r < data.length; r++) {
+    if (data[r][col] === '' || data[r][col] == null) { targetRow = r; break; }
+  }
+  if (targetRow === -1) targetRow = data.length;
+
+  sheet.getRange(targetRow + 1, col + 1).setValue(valor);
+  return { ok: true, existed: false };
+}
+
+// ── SEMANAS (JSON en Plantillas) ────────────────────────────
+// Columnas: A id | B nombre | C squad | D tipo_dia(rango fechas) |
+//           E ejercicios_json | F creado_por | G fecha | H (ignorar) | I visible
+
+function _plantillasSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Plantillas');
+  if (!sheet) {
+    sheet = ss.insertSheet('Plantillas');
+    sheet.getRange(1, 1, 1, 9).setValues([[
+      'id','nombre','squad','tipo_dia','ejercicios_json','creado_por','fecha','','visible'
+    ]]);
+  }
+  // Asegurar cabecera 'visible' en columna I
+  if (String(sheet.getRange(1, 9).getValue()).trim().toLowerCase() !== 'visible') {
+    sheet.getRange(1, 9).setValue('visible');
+  }
+  return sheet;
+}
+
+function getWeeks({ squad, onlyVisible } = {}) {
+  const sheet = _plantillasSheet();
+  const last  = sheet.getLastRow();
+  if (last < 2) return { ok: true, weeks: [] };
+
+  const data = sheet.getRange(2, 1, last - 1, 9).getValues();
+  const out  = [];
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    if (!row[0]) continue;
+    if (squad && String(row[2]).trim().toLowerCase() !== String(squad).trim().toLowerCase()) continue;
+
+    const visible = (row[8] === true || String(row[8]).toUpperCase() === 'TRUE');
+    if (onlyVisible && !visible) continue;
+
+    const rango = String(row[3] || '').split('|');
+    out.push({
+      id:            String(row[0]),
+      nombre:        String(row[1] || ''),
+      squad:         String(row[2] || ''),
+      fecha_inicio:  rango[0] || '',
+      fecha_fin:     rango[1] || '',
+      data:          safeParseJSON(row[4]),
+      creado_por:    String(row[5] || ''),
+      fecha:         String(row[6] || ''),
+      visible:       visible
+    });
+  }
+  return { ok: true, weeks: out };
+}
+
+function saveWeek({ id, nombre, squad, fecha_inicio, fecha_fin, data, creado_por, fecha, visible }) {
+  const sheet = _plantillasSheet();
+  const wid   = id || ('W' + new Date().getTime());
+  const last  = sheet.getLastRow();
+
+  let row = -1;
+  if (last >= 2) {
+    const ids = sheet.getRange(2, 1, last - 1, 1).getValues();
+    for (let i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]).trim() === String(wid).trim()) { row = i + 2; break; }
+    }
+  }
+  if (row === -1) row = last + 1;
+
+  const rango = (fecha_inicio || '') + '|' + (fecha_fin || '');
+
+  sheet.getRange(row, 1).setValue(wid);
+  sheet.getRange(row, 2).setValue(nombre || '');
+  sheet.getRange(row, 3).setValue(squad || '');
+  sheet.getRange(row, 4).setNumberFormat('@STRING@').setValue(rango);
+  sheet.getRange(row, 5).setNumberFormat('@STRING@').setValue(JSON.stringify(data || {}));
+  sheet.getRange(row, 6).setValue(creado_por || '');
+  sheet.getRange(row, 7).setNumberFormat('@STRING@').setValue(fecha || fmtDate(new Date()));
+  if (visible !== undefined) sheet.getRange(row, 9).setValue(visible ? true : false);
+
+  return { ok: true, id: wid };
+}
+
+function publishWeek({ id, visible }) {
+  const sheet = _plantillasSheet();
+  const last  = sheet.getLastRow();
+  if (last < 2) return { ok: false, error: 'No hay semanas' };
+  const ids = sheet.getRange(2, 1, last - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]).trim() === String(id).trim()) {
+      sheet.getRange(i + 2, 9).setValue(visible ? true : false);
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: 'Semana no encontrada' };
+}
+
+// ── EXTRAS INDIVIDUALES ─────────────────────────────────────
+// Hoja "Extras". Columnas: A id | B usuario | C squad | D semana_nombre |
+//   E dias_json | F creado_por | G fecha | H nombre
+function _extrasSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Extras');
+  if (!sheet) {
+    sheet = ss.insertSheet('Extras');
+    sheet.getRange(1, 1, 1, 8).setValues([[
+      'id','usuario','squad','semana_nombre','dias_json','creado_por','fecha','nombre'
+    ]]);
+  }
+  return sheet;
+}
+
+function getExtras({ usuario, semanaNombre, squad } = {}) {
+  const sheet = _extrasSheet();
+  const last = sheet.getLastRow();
+  if (last < 2) return { ok: true, extras: [] };
+  const data = sheet.getRange(2, 1, last - 1, 8).getValues();
+  const out = [];
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    if (!row[0]) continue;
+    if (usuario && String(row[1]).trim() !== String(usuario).trim()) continue;
+    if (semanaNombre && String(row[3]).trim() !== String(semanaNombre).trim()) continue;
+    if (squad && String(row[2]).trim().toLowerCase() !== String(squad).trim().toLowerCase()) continue;
+    out.push({
+      id:           String(row[0]),
+      usuario:      String(row[1] || ''),
+      squad:        String(row[2] || ''),
+      semanaNombre: String(row[3] || ''),
+      dias:         safeParseJSON(row[4]),
+      creado_por:   String(row[5] || ''),
+      fecha:        String(row[6] || ''),
+      nombre:       String(row[7] || 'Extra')
+    });
+  }
+  return { ok: true, extras: out };
+}
+
+function saveExtra({ id, usuario, squad, semanaNombre, dias, creado_por, nombre }) {
+  if (!usuario || !semanaNombre) return { ok: false, error: 'Falta usuario o semana' };
+  const sheet = _extrasSheet();
+  const eid = id || ('E' + new Date().getTime());
+  const last = sheet.getLastRow();
+  let row = -1;
+  if (last >= 2) {
+    const ids = sheet.getRange(2, 1, last - 1, 1).getValues();
+    for (let i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]).trim() === String(eid).trim()) { row = i + 2; break; }
+    }
+  }
+  if (row === -1) row = last + 1;
+  sheet.getRange(row, 1, 1, 8).setValues([[
+    eid, usuario, squad || '', semanaNombre,
+    JSON.stringify(dias || []), creado_por || '', fmtDate(new Date()), nombre || 'Extra'
+  ]]);
+  return { ok: true, id: eid };
+}
+
+function deleteExtra({ id }) {
+  const sheet = _extrasSheet();
+  const last = sheet.getLastRow();
+  if (last < 2) return { ok: false, error: 'No hay extras' };
+  const ids = sheet.getRange(2, 1, last - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]).trim() === String(id).trim()) {
+      sheet.deleteRow(i + 2);
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: 'Extra no encontrado' };
+}
+
+// ── S&C DOCS (enlaces a PDFs) ───────────────────────────────
+// Hoja "Docs". Columnas: A id | B ambito(squad|jugador) | C squad |
+//   D usuario | E titulo | F url | G categoria | H creado_por | I fecha
+function _docsSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Docs');
+  if (!sheet) {
+    sheet = ss.insertSheet('Docs');
+    sheet.getRange(1, 1, 1, 9).setValues([[
+      'id','ambito','squad','usuario','titulo','url','categoria','creado_por','fecha'
+    ]]);
+  }
+  return sheet;
+}
+
+// Para el jugador: devuelve docs de su squad (generales) + los suyos personales.
+// Para el coach: puede filtrar por squad para gestionar.
+function getDocs({ usuario, squad, rol, soloCoach } = {}) {
+  const sheet = _docsSheet();
+  const last = sheet.getLastRow();
+  if (last < 2) return { ok: true, docs: [] };
+  const data = sheet.getRange(2, 1, last - 1, 9).getValues();
+  const out = [];
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    if (!row[0]) continue;
+    const doc = {
+      id:        String(row[0]),
+      ambito:    String(row[1] || 'squad'),
+      squad:     String(row[2] || ''),   // ámbito squad: "men's xv,women's" · ámbito staff: "coach,fisio"
+      usuario:   String(row[3] || ''),
+      titulo:    String(row[4] || 'Documento'),
+      url:       String(row[5] || ''),
+      categoria: String(row[6] || ''),
+      creado_por:String(row[7] || ''),
+      fecha:     String(row[8] || '')
+    };
+    if (soloCoach) {
+      // modo gestión (S&C): devuelve todos
+      out.push(doc);
+    } else {
+      const lista = String(doc.squad||'').toLowerCase().split(',').map(s=>s.trim()).filter(Boolean);
+      const miSquad = String(squad||'').toLowerCase().trim();
+      const miRol = String(rol||'').toLowerCase().trim();
+      let visible = false;
+      if (doc.ambito === 'squad') {
+        visible = (lista.length === 0 || lista.indexOf(miSquad) !== -1);
+      } else if (doc.ambito === 'jugador') {
+        visible = (doc.usuario === usuario);
+      } else if (doc.ambito === 'staff') {
+        // el campo squad guarda los roles destino (coach, fisio, s&c)
+        visible = (miRol && lista.indexOf(miRol) !== -1);
+      }
+      if (visible) out.push(doc);
+    }
+  }
+  return { ok: true, docs: out };
+}
+
+function saveDoc({ id, ambito, squad, usuario, titulo, url, categoria, creado_por }) {
+  if (!titulo || !url) return { ok: false, error: 'Falta título o enlace' };
+  const sheet = _docsSheet();
+  const did = id || ('D' + new Date().getTime());
+  const last = sheet.getLastRow();
+  let row = -1;
+  if (last >= 2) {
+    const ids = sheet.getRange(2, 1, last - 1, 1).getValues();
+    for (let i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]).trim() === String(did).trim()) { row = i + 2; break; }
+    }
+  }
+  if (row === -1) row = last + 1;
+  sheet.getRange(row, 1, 1, 9).setValues([[
+    did, ambito || 'squad', squad || '', usuario || '',
+    titulo, url, categoria || '', creado_por || '', fmtDate(new Date())
+  ]]);
+  return { ok: true, id: did };
+}
+
+function deleteDoc({ id }) {
+  const sheet = _docsSheet();
+  const last = sheet.getLastRow();
+  if (last < 2) return { ok: false, error: 'No hay docs' };
+  const ids = sheet.getRange(2, 1, last - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]).trim() === String(id).trim()) {
+      sheet.deleteRow(i + 2);
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: 'Doc no encontrado' };
+}
+
+function deleteWeek({ id }) {
+  const sheet = _plantillasSheet();
+  const last  = sheet.getLastRow();
+  if (last < 2) return { ok: false, error: 'No hay semanas' };
+  const ids = sheet.getRange(2, 1, last - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]).trim() === String(id).trim()) {
+      sheet.deleteRow(i + 2);
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: 'Semana no encontrada' };
+}
+
+// ── CONTROL DE CARGA ────────────────────────────────────────
+// Busca la prescripción del mismo ejercicio en la semana anterior
+// (misma squad, fecha_inicio más reciente que sea anterior a la actual).
+function getPrevPrescription({ squad, fecha_inicio_actual, ejercicio, exclude_id }) {
+  const res    = getWeeks({ squad: squad });
+  const target = String(ejercicio || '').trim().toLowerCase();
+  if (!target) return { ok: true, prev: null };
+
+  let best = null, bestDate = '';
+
+  (res.weeks || []).forEach(function(w) {
+    if (exclude_id && String(w.id) === String(exclude_id)) return;
+    // Solo semanas anteriores a la actual
+    if (fecha_inicio_actual && w.fecha_inicio && w.fecha_inicio >= fecha_inicio_actual) return;
+
+    const dias = (w.data && w.data.dias) || [];
+    dias.forEach(function(d) {
+      (d.bloques || []).forEach(function(b) {
+        (b.ejercicios || []).forEach(function(it) {
+          if (String(it.ejercicio || '').trim().toLowerCase() === target) {
+            if (!best || (w.fecha_inicio || '') > bestDate) {
+              best = {
+                sets:       it.sets,
+                reps:       it.reps,
+                tempo:      it.tempo,
+                carga:      it.carga,
+                tipo_carga: it.tipo_carga,
+                semana:     w.nombre
+              };
+              bestDate = w.fecha_inicio || '';
+            }
+          }
+        });
+      });
+    });
+  });
+
+  return { ok: true, prev: best };
+}
+
+function safeParseJSON(s) {
+  try { return JSON.parse(s); } catch(e) { return {}; }
+}
+
+// ── Tests del Planner ───────────────────────────────────────
+function testExerciseLibrary() {
+  const r = getExerciseLibrary();
+  Logger.log('Ejercicios: ' + (r.exercises ? r.exercises.length : 0));
+  Logger.log('Listas: ' + JSON.stringify(Object.keys(r.lists || {})));
+  if (r.exercises && r.exercises.length) Logger.log('Primero: ' + JSON.stringify(r.exercises[0]));
+}
+function testGetWeeks() { Logger.log(JSON.stringify(getWeeks({}))); }
+
+// ============================================================
+//  FIELD LOAD — Carga de campo/partido (independiente del gym)
+//  Se guarda en Registros reutilizando columnas existentes:
+//  ejercicio = FIELD_PARTIDO | FIELD_ENTRENO
+//  bloque    = S1, S2, S3... (auto-incrementa por usuario+fecha)
+//  rpe       = RPE | tiempo = minutos
+// ============================================================
+function saveFieldLoad({ usuario, fecha, tipo, rpe, minutos, semana, dia, idEvento }) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registros');
+  if (!sheet) return { ok: false, error: 'Hoja "Registros" no encontrada' };
+  if (!usuario) return { ok: false, error: 'Falta usuario' };
+
+  const ejercicio = (tipo === 'partido') ? 'FIELD_PARTIDO' : 'FIELD_ENTRENO';
+  const fechaReg  = fecha || fmtDate(new Date());
+
+  // Contar cuántos FIELD ya tiene ese usuario ESE día → siguiente Sn
+  const rows = sheet.getDataRange().getValues();
+  let count = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const u = String(rows[i][1]).trim();
+    const ej = String(rows[i][5]||'');
+    if (u !== String(usuario).trim()) continue;
+    if (ej !== 'FIELD_PARTIDO' && ej !== 'FIELD_ENTRENO') continue;
+    // fecha del registro: puede estar en timestamp (col1) o en col 'dia' guardada como fecha.
+    const ts = rows[i][0];
+    let regFecha = _normFecha(ts);
+    // Guardamos la fecha real en notas_jugador (col 9) como YYYY-MM-DD para robustez
+    const notaFecha = _normFecha(rows[i][8]);
+    if (regFecha === fechaReg || notaFecha === fechaReg) count++;
+  }
+  // Si viene de un evento del calendario se guarda su id: así dos
+  // partidos el mismo día (triangular) no se confunden entre sí.
+  const sesionId = idEvento ? String(idEvento) : ('S' + (count + 1));
+
+  // Editar en vez de duplicar si ese evento ya tenía RPE de este jugador
+  if (idEvento) {
+    for (let i = 1; i < rows.length; i++) {
+      if (String(rows[i][1]).trim() !== String(usuario).trim()) continue;
+      if (String(rows[i][4]) !== sesionId) continue;
+      const ej2 = String(rows[i][5]||'');
+      if (ej2 !== 'FIELD_PARTIDO' && ej2 !== 'FIELD_ENTRENO') continue;
+      sheet.getRange(i+1, 6).setValue(ejercicio);
+      sheet.getRange(i+1, 8).setValue(rpe || '');
+      sheet.getRange(i+1, 10).setValue(minutos || '');
+      sheet.getRange(i+1, 9).setNumberFormat('@').setValue(fechaReg);
+      return { ok: true, sesion: sesionId, tipo: ejercicio, fecha: fechaReg, actualizado: true };
+    }
+  }
+
+  sheet.appendRow([
+    new Date().toISOString(),
+    usuario,
+    semana || '',
+    dia || '',
+    sesionId,          // bloque = identificador de sesión
+    ejercicio,
+    '',                // carga_real
+    rpe || '',
+    "'" + fechaReg,    // notas_jugador = fecha real como TEXTO (apóstrofo evita auto-conversión)
+    minutos || ''      // tiempo = minutos
+  ]);
+
+  // Asegurar que la celda de fecha quede como texto plano
+  const lastRow = sheet.getLastRow();
+  try { sheet.getRange(lastRow, 9).setNumberFormat('@'); sheet.getRange(lastRow, 9).setValue(fechaReg); } catch(e) {}
+
+  return { ok: true, sesion: sesionId, tipo: ejercicio, fecha: fechaReg };
+}
+
+// Devuelve los Field Load de un día (para el dashboard del coach)
+// payload: { fecha, squad }
+function getFieldLoad({ fecha, squad }) {
+  const ss     = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet  = ss.getSheetByName('Registros');
+  const sheetJ = ss.getSheetByName('Jugadores');
+  if (!sheet) return { ok: false, error: 'Hoja "Registros" no encontrada' };
+
+  const targetFecha = fecha || fmtDate(new Date());
+
+  // Mapa usuario → {nombre, squad}
+  const userInfo = {};
+  if (sheetJ) {
+    const jug = sheetJ.getDataRange().getValues();
+    for (let i = 1; i < jug.length; i++) {
+      const u = String(jug[i][0]).trim();
+      if (!u) continue;
+      userInfo[u] = { nombre: String(jug[i][2]||'').trim(), squad: String(jug[i][4]||'').trim() };
+    }
+  }
+
+  const rows = sheet.getDataRange().getValues();
+  const registros = [];
+  for (let i = 1; i < rows.length; i++) {
+    const ej = String(rows[i][5]||'');
+    if (ej !== 'FIELD_PARTIDO' && ej !== 'FIELD_ENTRENO') continue;
+
+    const usuario = String(rows[i][1]).trim();
+    // fecha real: notas_jugador (col 9) o timestamp
+    let regFecha = _normFecha(rows[i][8]);
+    if (!regFecha) regFecha = _normFecha(rows[i][0]);
+    if (regFecha !== targetFecha) continue;
+
+    const info = userInfo[usuario] || { nombre: usuario, squad: '' };
+    if (squad && info.squad.toLowerCase() !== String(squad).toLowerCase()) continue;
+
+    registros.push({
+      usuario,
+      nombre:  info.nombre,
+      squad:   info.squad,
+      tipo:    ej === 'FIELD_PARTIDO' ? 'partido' : 'entreno',
+      sesion:  String(rows[i][4]||''),
+      rpe:     rows[i][7] !== '' ? parseFloat(rows[i][7]) : null,
+      minutos: rows[i][9] !== '' ? parseFloat(rows[i][9]) : null
+    });
+  }
+
+  return { ok: true, fecha: targetFecha, registros };
+}
+
+// ============================================================
+//  CARGA DIARIA — dashboard del coach para un día concreto
+//  Junta, por jugador: RPE Gym (RPE_GLOBAL) + Field Load
+//  (partido/entreno). Filtra por fecha y squad.
+// ============================================================
+// Normaliza una celda de fecha a 'YYYY-MM-DD', venga como Date, ISO string o texto
+function _normFecha(v) {
+  if (!v && v !== 0) return '';
+  if (v instanceof Date) {
+    try { return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd'); }
+    catch(e) { return v.toISOString().slice(0,10); }
+  }
+  const s = String(v).trim();
+  if (s.length >= 10 && s.charAt(4) === '-' && s.charAt(7) === '-') return s.slice(0,10);
+  // fecha tipo "Mon Jul 20 2026..." → parsear
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    try { return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd'); }
+    catch(e) { return d.toISOString().slice(0,10); }
+  }
+  return s;
+}
+
+function getCargaDiaria({ fecha, squad }) {
+  const ss     = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet  = ss.getSheetByName('Registros');
+  const sheetJ = ss.getSheetByName('Jugadores');
+  if (!sheet)  return { ok: false, error: 'Hoja "Registros" no encontrada' };
+  if (!sheetJ) return { ok: false, error: 'Hoja "Jugadores" no encontrada' };
+
+  const targetFecha = fecha || fmtDate(new Date());
+
+  // Jugadores (solo no-coach), filtrado por squad
+  const jug = sheetJ.getDataRange().getValues();
+  const jugadores = {}; // usuario → {nombre, squad}
+  const orden = [];
+  for (let i = 1; i < jug.length; i++) {
+    const u   = String(jug[i][0]).trim();
+    const pos = String(jug[i][3]||'').trim().toLowerCase();
+    if (!u || esStaff(pos)) continue;
+    const sq  = String(jug[i][4]||'').trim();
+    if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+    jugadores[u] = { usuario:u, nombre:String(jug[i][2]||'').trim(), squad:sq,
+                     rpe_gym:null, tiempo_gym:null,
+                     field:[] };  // lista de {tipo, sesion, rpe, minutos}
+    orden.push(u);
+  }
+
+  // Recorrer Registros una vez
+  const rows = sheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    const u  = String(rows[i][1]).trim();
+    if (!jugadores[u]) continue;
+    const ej = String(rows[i][5]||'');
+
+    // Fecha del registro
+    const ts = rows[i][0];
+    let regFecha = _normFecha(ts);
+
+    if (ej === 'RPE_GLOBAL') {
+      if (regFecha !== targetFecha) continue;
+      jugadores[u].rpe_gym    = rows[i][7] !== '' ? parseFloat(rows[i][7]) : null;
+      jugadores[u].tiempo_gym = rows[i][9] !== '' ? parseFloat(rows[i][9]) : null;
+    } else if (ej === 'FIELD_PARTIDO' || ej === 'FIELD_ENTRENO') {
+      // fecha real en notas_jugador (col 9) o timestamp
+      let fFecha = _normFecha(rows[i][8]);
+      if (!fFecha) fFecha = regFecha;
+      if (fFecha !== targetFecha) continue;
+      jugadores[u].field.push({
+        tipo:    ej === 'FIELD_PARTIDO' ? 'partido' : 'entreno',
+        sesion:  String(rows[i][4]||''),
+        rpe:     rows[i][7] !== '' ? parseFloat(rows[i][7]) : null,
+        minutos: rows[i][9] !== '' ? parseFloat(rows[i][9]) : null
+      });
+    }
+  }
+
+  // Construir salida + promedios
+  const equipo = orden.map(u => jugadores[u]);
+
+  function avg(getter) {
+    const vals = equipo.map(getter).filter(v => v !== null && v !== undefined && !isNaN(v));
+    if (!vals.length) return null;
+    return Math.round((vals.reduce((s,v)=>s+v,0) / vals.length) * 10) / 10;
+  }
+  // RPE de partido (media de los que jugaron partido)
+  function fieldRpeOf(j, tipo) {
+    const arr = j.field.filter(f => f.tipo === tipo && f.rpe !== null).map(f => f.rpe);
+    if (!arr.length) return null;
+    return arr.reduce((s,v)=>s+v,0) / arr.length;
+  }
+  equipo.forEach(j => {
+    j.rpe_partido = fieldRpeOf(j, 'partido');
+    j.rpe_campo   = fieldRpeOf(j, 'entreno');
+    // Carga UA = RPE × minutos (si no hay minutos, 60 por defecto)
+    j.ua_gym = (j.rpe_gym !== null) ? Math.round(j.rpe_gym * (j.tiempo_gym && j.tiempo_gym>0 ? j.tiempo_gym : 60)) : null;
+    const uaCampo   = j.field.filter(f=>f.tipo==='entreno' && f.rpe!==null).reduce((s,f)=>s + f.rpe*(f.minutos&&f.minutos>0?f.minutos:60), 0);
+    const uaPartido = j.field.filter(f=>f.tipo==='partido' && f.rpe!==null).reduce((s,f)=>s + f.rpe*(f.minutos&&f.minutos>0?f.minutos:60), 0);
+    j.ua_campo   = uaCampo   > 0 ? Math.round(uaCampo)   : null;
+    j.ua_partido = uaPartido > 0 ? Math.round(uaPartido) : null;
+    // Carga total del día = gym + campo + partido
+    const totalUA = (j.ua_gym||0) + (j.ua_campo||0) + (j.ua_partido||0);
+    j.ua_total = totalUA > 0 ? totalUA : null;
+  });
+
+  const promedios = {
+    rpe_gym:     avg(j => j.rpe_gym),
+    rpe_partido: avg(j => j.rpe_partido),
+    rpe_campo:   avg(j => j.rpe_campo)
+  };
+
+  return { ok: true, fecha: targetFecha, equipo, promedios };
+}
+
+// ============================================================
+//  MOLESTIAS — jugadores con dolor muscular en una fecha (coach)
+//  Lee la columna K (molestias, JSON) de Wellness.
+//  payload: { fecha, squad }
+// ============================================================
+function getMolestiasEquipo({ fecha, squad }) {
+  const ss     = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetW = ss.getSheetByName('Wellness');
+  const sheetJ = ss.getSheetByName('Jugadores');
+  if (!sheetJ) return { ok: false, error: 'Hoja Jugadores no encontrada' };
+  const targetFecha = fecha || fmtDate(new Date());
+
+  // info de jugadores
+  const userInfo = {};
+  const jug = sheetJ.getDataRange().getValues();
+  for (let i = 1; i < jug.length; i++) {
+    const u = String(jug[i][0]).trim();
+    if (!u) continue;
+    userInfo[u] = {
+      nombre: String(jug[i][2]||'').trim(),
+      squad:  String(jug[i][4]||'').trim(),
+      posicion: String(jug[i][3]||'').trim()
+    };
+  }
+
+  const result = [];
+  if (sheetW) {
+    const rows = sheetW.getDataRange().getValues();
+    // detectar la columna de molestias por si acaso (por cabecera)
+    let molCol = 10; // K = índice 10
+    for (let c = 0; c < rows[0].length; c++) {
+      if (String(rows[0][c]).trim().toLowerCase() === 'molestias') { molCol = c; break; }
+    }
+    for (let i = 1; i < rows.length; i++) {
+      const u = String(rows[i][1]).trim();
+      const f = _normFecha(rows[i][2]);
+      if (f !== targetFecha) continue;
+      const raw = rows[i][molCol];
+      if (!raw) continue;
+      let parsed = null;
+      try { parsed = JSON.parse(raw); } catch(e) { continue; }
+      if (!parsed) continue;
+      // Formato: {zonas:[...], nota:''} o array antiguo [...]
+      const zonasArr = Array.isArray(parsed) ? parsed : (parsed.zonas || []);
+      if (!zonasArr.length) continue;
+      const info = userInfo[u] || { nombre:u, squad:'', posicion:'' };
+      if (esStaff(info.posicion)) continue;
+      if (squad && info.squad.toLowerCase() !== String(squad).toLowerCase()) continue;
+      result.push({
+        usuario: u,
+        nombre:  info.nombre,
+        squad:   info.squad,
+        zonas:   parsed   // objeto completo {zonas, nota} o array
+      });
+    }
+  }
+
+  // ordenar: más intensidad primero
+  const sev = { alta:3, media:2, leve:1 };
+  result.forEach(r => {
+    const zs = Array.isArray(r.zonas) ? r.zonas : (r.zonas.zonas || []);
+    r.maxSev = zs.length ? Math.max.apply(null, zs.map(z => sev[z.intensidad]||0)) : 0;
+  });
+  result.sort((a,b) => b.maxSev - a.maxSev);
+
+  return { ok: true, fecha: targetFecha, jugadores: result };
+}
+
+// ============================================================
+//  CONTROL DE CARGAS — carga interna (UA = sRPE × min)
+//  combinando Gym + Campo + Partido. Base científica:
+//  Foster (2001) sRPE, Gabbett (2016) ACWR, Hulin (2016).
+//  payload: { squad, mes:'YYYY-MM' (opcional), modo:'gym'|'campo'|'total' }
+//  Devuelve: dias{fecha→{gym,campo,total,tipo,nJug}}, semanas[],
+//            acwr[] por jugador (aguda7/cronica28/ratio), equipo.
+// ============================================================
+function getControlCargas({ squad, mes, modo, fecha }) {
+  const ss     = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet  = ss.getSheetByName('Registros');
+  const sheetJ = ss.getSheetByName('Jugadores');
+  if (!sheet)  return { ok:false, error:'Hoja Registros no encontrada' };
+  if (!sheetJ) return { ok:false, error:'Hoja Jugadores no encontrada' };
+
+  // Jugadores válidos (no coach) filtrados por squad
+  const jugData = sheetJ.getDataRange().getValues();
+  const jugValidos = {};
+  for (let i = 1; i < jugData.length; i++) {
+    const u   = String(jugData[i][0]).trim();
+    const pos = String(jugData[i][3]||'').trim().toLowerCase();
+    if (!u || esStaff(pos)) continue;
+    const sq  = String(jugData[i][4]||'').trim();
+    if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+    jugValidos[u] = { nombre:String(jugData[i][2]||'').trim(), squad:sq };
+  }
+
+  // Recolectar UA por usuario+fecha+origen
+  // ua[usuario][fecha] = { gym, campo, partido, tipoCampo }
+  const ua = {};
+  const rows = sheet.getDataRange().getValues();
+  const sesionVista = {}; // "usuario|semana|dia" → true (evita duplicados de la misma sesión del planner)
+  for (let i = 1; i < rows.length; i++) {
+    const u = String(rows[i][1]).trim();
+    if (!jugValidos[u]) continue;
+    const ej = String(rows[i][5]||'');
+    const rpe = rows[i][7] !== '' ? parseFloat(rows[i][7]) : null;
+    const min = rows[i][9] !== '' ? parseFloat(rows[i][9]) : null;
+    if (rpe === null) continue;
+
+    let fecha, origen, tipoCampo = null;
+    if (ej === 'RPE_GLOBAL') {
+      fecha = _normFecha(rows[i][0]);
+      origen = 'gym';
+      // deduplicar: si ya vimos esta sesión del planner (misma semana+día), saltar.
+      // Evita que pulsar guardar varias veces cuente como varias sesiones.
+      const sem = String(rows[i][2]).trim();
+      const dia = String(rows[i][3]).trim();
+      if (sem && dia) {
+        const key = u + '|' + sem + '|' + dia;
+        if (sesionVista[key]) continue; // duplicado exacto de la misma sesión → ignorar
+        sesionVista[key] = true;
+      }
+    } else if (ej === 'FIELD_ENTRENO' || ej === 'FIELD_PARTIDO') {
+      fecha = _normFecha(rows[i][8]) || _normFecha(rows[i][0]);
+      origen = 'campo';
+      tipoCampo = (ej === 'FIELD_PARTIDO') ? 'partido' : 'entreno';
+    } else continue;
+    if (!fecha) continue;
+
+    // UA = rpe × minutos. Si no hay minutos, usar 60 por defecto (sesión tipo)
+    const carga = rpe * (min && min > 0 ? min : 60);
+    if (!ua[u]) ua[u] = {};
+    if (!ua[u][fecha]) ua[u][fecha] = { gym:0, campo:0, partido:0, tipoCampo:null, nSes:0 };
+    ua[u][fecha].nSes += 1; // nº de sesiones registradas ese día (para normalizar la media)
+    if (origen === 'gym') ua[u][fecha].gym += carga;
+    else {
+      ua[u][fecha].campo += carga;
+      if (tipoCampo === 'partido') { ua[u][fecha].partido += carga; ua[u][fecha].tipoCampo = 'partido'; }
+      else if (ua[u][fecha].tipoCampo !== 'partido') ua[u][fecha].tipoCampo = 'entreno';
+    }
+  }
+
+  const modoSel = modo || 'total';
+  const valorDe = (o) => modoSel === 'gym' ? o.gym : modoSel === 'campo' ? o.campo : (o.gym + o.campo);
+
+  // ── CALENDARIO: media por jugador por día del mes ──
+  // mes objetivo (por defecto, el actual)
+  const hoy = new Date();
+  const mesStr = mes || (hoy.getFullYear() + '-' + String(hoy.getMonth()+1).padStart(2,'0'));
+  const dias = {}; // fecha → { valor, tipo, nJug }
+  // agregamos por fecha sumando entre jugadores y contando cuántos registraron
+  const porFecha = {}; // fecha → { suma, n, tipoCampo }
+  Object.keys(ua).forEach(u => {
+    Object.keys(ua[u]).forEach(f => {
+      if (f.slice(0,7) !== mesStr) return;
+      const v = valorDe(ua[u][f]);
+      if (v <= 0) return;
+      if (!porFecha[f]) porFecha[f] = { suma:0, n:0, tipoCampo:null };
+      porFecha[f].suma += v;
+      porFecha[f].n    += 1;
+      const tc = ua[u][f].tipoCampo;
+      if (tc === 'partido') porFecha[f].tipoCampo = 'partido';
+      else if (tc === 'entreno' && porFecha[f].tipoCampo !== 'partido') porFecha[f].tipoCampo = 'entreno';
+    });
+  });
+  Object.keys(porFecha).forEach(f => {
+    dias[f] = {
+      valor: Math.round(porFecha[f].suma / porFecha[f].n),
+      tipo:  porFecha[f].tipoCampo || (modoSel==='gym'?'gym':'entreno'),
+      nJug:  porFecha[f].n
+    };
+  });
+
+  // ── ACWR por jugador: aguda (7d) vs crónica (28d) ──
+  // Referencia temporal: la fecha pasada (para coherencia con la vista) o hoy
+  const refBase = fecha ? new Date(fecha + 'T23:59:59') : hoy;
+  const refBaseTime = (refBase && !isNaN(refBase)) ? refBase.getTime() : hoy.getTime();
+  const hoyStr = fmtDate(hoy);
+  const msDia = 86400000;
+  // media diaria de UA en la ventana [ref - dias_atras, ref]
+  // Divide por nº de SESIONES (no de fechas), para que varias sesiones registradas
+  // el mismo día (p.ej. olvidos que se meten juntos) no inflen la media de ese día.
+  function mediaVentanaRef(u, dias_atras, refTime) {
+    let suma = 0, nSes = 0;
+    for (let d = 0; d < dias_atras; d++) {
+      const fecha = fmtDate(new Date(refTime - d*msDia));
+      const reg = ua[u] && ua[u][fecha];
+      if (reg) {
+        const v = valorDe(reg);
+        if (v > 0) { suma += v; nSes += (reg.nSes || 1); }
+      }
+    }
+    return nSes > 0 ? { media: suma / nSes, n: nSes } : { media: 0, n: 0 };
+  }
+  function mediaVentana(u, dias_atras) { return mediaVentanaRef(u, dias_atras, refBaseTime); }
+  // ACWR de un jugador a una fecha de referencia (para la evolución)
+  function acwrEn(u, refTime) {
+    const ag = mediaVentanaRef(u, 7, refTime);
+    const cr = mediaVentanaRef(u, 28, refTime);
+    if (cr.n < 2 || cr.media <= 0) return null;
+    return Math.round(ag.media / cr.media * 100) / 100;
+  }
+
+  const acwr = [];
+  Object.keys(jugValidos).forEach(u => {
+    if (!ua[u]) return;
+    const aguda   = mediaVentana(u, 7);
+    const cronica = mediaVentana(u, 28);
+    const nTotal = Object.keys(ua[u]).filter(f => valorDe(ua[u][f]) > 0).length;
+    let ratio = null, zona = 'insuf';
+    const fiable = nTotal >= 4 && cronica.n >= 2;
+    if (fiable && cronica.media > 0) {
+      ratio = aguda.media / cronica.media;
+      zona = ratio < 0.8 ? 'subcarga' : ratio <= 1.3 ? 'optimo' : ratio <= 1.5 ? 'elevado' : 'riesgo';
+    }
+    // Serie de evolución: ACWR al final de cada una de las últimas 8 semanas
+    const serie = [];
+    for (let w = 7; w >= 0; w--) {
+      const refTime = refBaseTime - w*7*msDia;
+      serie.push(acwrEn(u, refTime));
+    }
+    acwr.push({
+      usuario: u, nombre: jugValidos[u].nombre,
+      aguda: Math.round(aguda.media), cronica: Math.round(cronica.media),
+      ratio: ratio !== null ? Math.round(ratio*100)/100 : null,
+      zona, nRegistros: nTotal, serie
+    });
+  });
+  const zOrd = { riesgo:0, elevado:1, optimo:2, subcarga:3, insuf:4 };
+  acwr.sort((a,b) => (zOrd[a.zona]-zOrd[b.zona]) || ((b.ratio||0)-(a.ratio||0)));
+
+  // Media del equipo: solo jugadores con ratio fiable Y carga aguda real (>0).
+  // Un jugador sin carga esta semana (aguda 0) no debe arrastrar la media a la baja.
+  const fiables = acwr.filter(a => a.ratio !== null && a.aguda > 0);
+  let agudaEq = 0, cronicaEq = 0;
+  fiables.forEach(a => { agudaEq += a.aguda; cronicaEq += a.cronica; });
+  agudaEq   = fiables.length ? Math.round(agudaEq/fiables.length) : 0;
+  cronicaEq = fiables.length ? Math.round(cronicaEq/fiables.length) : 0;
+  const ratioEq = cronicaEq > 0 ? Math.round(agudaEq/cronicaEq*100)/100 : null;
+
+  // Evolución del ACWR de equipo: media de los ratios individuales por semana
+  // (excluye ratios 0 = jugadores sin carga esa semana, que no deben bajar la media)
+  const serieEquipo = [];
+  for (let i = 0; i < 8; i++) {
+    const vals = acwr.map(a => a.serie[i]).filter(v => v !== null && v > 0);
+    serieEquipo.push(vals.length ? Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*100)/100 : null);
+  }
+
+  return {
+    ok: true,
+    mes: mesStr,
+    modo: modoSel,
+    dias,
+    acwr,
+    equipo: { aguda:agudaEq, cronica:cronicaEq, ratio:ratioEq, nFiables:fiables.length },
+    serieEquipo
+  };
+}
+// ============================================================
+//  TENDENCIA — evolución de la carga del equipo por día
+//  Devuelve, para cada día del rango: RPE promedio de la sesión
+//  y UA promedio por jugador activo (UA = RPE × min).
+//  Filtrable por contenido: todo | gym | campo (campo incluye partido).
+//  rango: 7 | 14 días → un punto por día
+//         30 días     → agregado por semana (un punto por semana)
+//  payload: { squad, contenido, rango, offset }
+//    offset: 0 = periodo actual, -1 = anterior, +1 = siguiente
+// ============================================================
+function getTendencia({ squad, contenido, rango, offset }) {
+  const ss     = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet  = ss.getSheetByName('Registros');
+  const sheetJ = ss.getSheetByName('Jugadores');
+  if (!sheet)  return { ok: false, error: 'Hoja "Registros" no encontrada' };
+  if (!sheetJ) return { ok: false, error: 'Hoja "Jugadores" no encontrada' };
+
+  const cont  = String(contenido || 'todo').toLowerCase();
+  const nDias = parseInt(rango) || 7;
+  const off   = parseInt(offset) || 0;
+  const porSemana = (nDias >= 30);
+
+  // Jugadores válidos del squad (sin staff)
+  const jugRows = sheetJ.getDataRange().getValues();
+  const valido  = {};
+  for (let i = 1; i < jugRows.length; i++) {
+    const u   = String(jugRows[i][0]).trim();
+    const pos = String(jugRows[i][3] || '').trim();
+    if (!u || esStaff(pos)) continue;
+    const sq = String(jugRows[i][4] || '').trim();
+    if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+    valido[u] = true;
+  }
+
+  // Ventana de fechas. El periodo se desplaza en bloques completos con offset.
+  const msDia = 86400000;
+  const hoy   = new Date(); hoy.setHours(12,0,0,0);
+  let ini, fin;
+  if (nDias === 7) {
+    // "Esta semana" = lunes a domingo de la semana natural, no los últimos 7 días
+    const base = new Date(hoy.getTime() + off * 7 * msDia);
+    const dow  = base.getDay();
+    ini = new Date(base.getTime() - ((dow === 0 ? 6 : dow - 1) * msDia));
+    fin = new Date(ini.getTime() + 6 * msDia);
+  } else {
+    fin = new Date(hoy.getTime() + off * nDias * msDia);
+    ini = new Date(fin.getTime() - (nDias - 1) * msDia);
+  }
+
+  const fechas = [];
+  for (let d = 0; d < nDias; d++) fechas.push(fmtDate(new Date(ini.getTime() + d * msDia)));
+  const enRango = {};
+  fechas.forEach(f => enRango[f] = true);
+
+  // Recolectar por fecha: RPE de cada sesión y UA por jugador
+  // acum[fecha] = { rpes:[], uaPorJug:{usuario→ua} }
+  const acum = {};
+  fechas.forEach(f => acum[f] = { rpes: [], uaPorJug: {} });
+
+  const vistoGym = {};  // usuario|semana|dia → evita duplicar la misma sesión de gym
+  const rows = sheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    const u = String(rows[i][1]).trim();
+    if (!valido[u]) continue;
+    const ej = String(rows[i][5] || '');
+
+    let origen = null, fecha = null;
+    if (ej === 'RPE_GLOBAL') {
+      origen = 'gym';
+      fecha  = _normFecha(rows[i][0]);
+      const sem = String(rows[i][2]).trim(), dia = String(rows[i][3]).trim();
+      if (sem && dia) {
+        const k = u + '|' + sem + '|' + dia;
+        if (vistoGym[k]) continue;
+        vistoGym[k] = true;
+      }
+    } else if (ej === 'FIELD_ENTRENO' || ej === 'FIELD_PARTIDO') {
+      origen = 'campo';
+      fecha  = _normFecha(rows[i][8]) || _normFecha(rows[i][0]);
+    } else continue;
+
+    if (cont !== 'todo' && cont !== origen) continue;
+    if (!fecha || !enRango[fecha]) continue;
+
+    const rpe = rows[i][7] !== '' ? parseFloat(rows[i][7]) : null;
+    if (rpe === null || isNaN(rpe) || rpe <= 0) continue;
+    const min = rows[i][9] !== '' ? parseFloat(rows[i][9]) : null;
+
+    acum[fecha].rpes.push(rpe);
+    const ua = rpe * (min && min > 0 ? min : 60);
+    acum[fecha].uaPorJug[u] = (acum[fecha].uaPorJug[u] || 0) + ua;
+  }
+
+  // Punto por día
+  const media = a => a.length ? a.reduce((s,v) => s+v, 0) / a.length : null;
+  const puntosDia = fechas.map(f => {
+    const a    = acum[f];
+    const jugs = Object.keys(a.uaPorJug);
+    const uaV  = jugs.map(k => a.uaPorJug[k]);
+    return {
+      fecha:     f,
+      etiqueta:  f.slice(8,10) + '/' + f.slice(5,7),
+      rpe:       a.rpes.length ? Math.round(media(a.rpes) * 10) / 10 : null,
+      ua:        jugs.length   ? Math.round(media(uaV))              : 0,
+      nSesiones: a.rpes.length,
+      nJug:      jugs.length
+    };
+  });
+
+  if (!porSemana) {
+    const conDato = puntosDia.filter(p => p.rpe !== null);
+    return {
+      ok: true, contenido: cont, rango: nDias, offset: off, porSemana: false,
+      desde: fechas[0], hasta: fechas[fechas.length-1],
+      puntos: puntosDia,
+      resumen: {
+        rpeMedio: conDato.length ? Math.round(media(conDato.map(p=>p.rpe)) * 10) / 10 : null,
+        uaMedia:  conDato.length ? Math.round(media(conDato.map(p=>p.ua)))            : null,
+        diasConSesion: conDato.length
+      }
+    };
+  }
+
+  // Agregado por semana (rango de mes): agrupa por lunes de cada semana
+  const grupos = {};
+  puntosDia.forEach(p => {
+    const d = new Date(p.fecha + 'T12:00:00');
+    const dow = d.getDay();
+    const lun = new Date(d.getTime() - ((dow === 0 ? 6 : dow - 1) * msDia));
+    const k = fmtDate(lun);
+    if (!grupos[k]) grupos[k] = { rpes: [], uas: [], nSes: 0, dom: fmtDate(new Date(lun.getTime() + 6*msDia)) };
+    if (p.rpe !== null) { grupos[k].rpes.push(p.rpe); grupos[k].uas.push(p.ua); }
+    grupos[k].nSes += p.nSesiones;
+  });
+  const puntosSem = Object.keys(grupos).sort().map(k => {
+    const g = grupos[k];
+    return {
+      fecha:     k,
+      etiqueta:  k.slice(8,10) + '/' + k.slice(5,7),
+      rpe:       g.rpes.length ? Math.round(media(g.rpes) * 10) / 10 : null,
+      ua:        g.uas.length  ? Math.round(media(g.uas))            : 0,
+      nSesiones: g.nSes,
+      nJug:      0
+    };
+  });
+  const conDatoS = puntosSem.filter(p => p.rpe !== null);
+  return {
+    ok: true, contenido: cont, rango: nDias, offset: off, porSemana: true,
+    desde: fechas[0], hasta: fechas[fechas.length-1],
+    puntos: puntosSem,
+    resumen: {
+      rpeMedio: conDatoS.length ? Math.round(media(conDatoS.map(p=>p.rpe)) * 10) / 10 : null,
+      uaMedia:  conDatoS.length ? Math.round(media(conDatoS.map(p=>p.ua)))            : null,
+      diasConSesion: conDatoS.length
+    }
+  };
+}
+
+// ============================================================
+//  EVENTOS — entrenamientos de campo y partidos programados
+//  Hoja "Eventos": A id | B squad | C fecha | D tipo | E titulo
+//                  F hora | G duracion | H creado_por
+//  tipo: 'campo' | 'partido'
+// ============================================================
+function _eventosSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Eventos');
+  if (!sheet) {
+    sheet = ss.insertSheet('Eventos');
+    sheet.getRange(1,1,1,10).setValues([[
+      'id','squad','fecha','tipo','titulo','hora','duracion','creado_por','intensidad','rival'
+    ]]);
+    sheet.getRange(2,3,2000,1).setNumberFormat('@STRING@');
+  }
+  return sheet;
+}
+
+function getEventos({ squad, desde, hasta } = {}) {
+  const sheet = _eventosSheet();
+  const last  = sheet.getLastRow();
+  if (last < 2) return { ok: true, eventos: [] };
+  const data = sheet.getRange(2,1,last-1,10).getValues();
+  const out = [];
+  for (let i = 0; i < data.length; i++) {
+    const r = data[i];
+    if (!r[0]) continue;
+    const sq = String(r[1]||'').trim();
+    if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+    const f = _normFecha(r[2]);
+    if (desde && f < desde) continue;
+    if (hasta && f > hasta) continue;
+    out.push({
+      id:       String(r[0]),
+      squad:    sq,
+      fecha:    f,
+      tipo:     String(r[3]||'campo'),
+      titulo:   String(r[4]||''),
+      hora:       _normHora(r[5]),
+      duracion:   r[6] !== '' ? parseInt(r[6]) : null,
+      intensidad: String(r[8]||''),
+      rival:      String(r[9]||'')
+    });
+  }
+  out.sort((a,b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0);
+  return { ok: true, eventos: out };
+}
+
+function saveEvento({ id, squad, fecha, tipo, titulo, hora, duracion, creado_por, intensidad, rival }) {
+  if (!fecha) return { ok: false, error: 'Falta la fecha' };
+  const sheet = _eventosSheet();
+  const eid   = id || ('EV' + new Date().getTime());
+  const last  = sheet.getLastRow();
+  let row = -1;
+  if (last >= 2) {
+    const ids = sheet.getRange(2,1,last-1,1).getValues();
+    for (let i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]).trim() === String(eid).trim()) { row = i+2; break; }
+    }
+  }
+  if (row === -1) row = last + 1;
+  sheet.getRange(row,1,1,10).setValues([[
+    eid, squad||'', '', tipo||'campo', titulo||'', hora||'', duracion||'', creado_por||'',
+    intensidad||'', rival||''
+  ]]);
+  // fecha y hora como texto plano para que Sheets no las convierta
+  sheet.getRange(row,3).setNumberFormat('@STRING@').setValue(fecha);
+  sheet.getRange(row,6).setNumberFormat('@STRING@').setValue(hora||'');
+  return { ok: true, id: eid };
+}
+
+function deleteEvento({ id }) {
+  const sheet = _eventosSheet();
+  const last  = sheet.getLastRow();
+  if (last < 2) return { ok: false, error: 'No hay eventos' };
+  const ids = sheet.getRange(2,1,last-1,1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]).trim() === String(id).trim()) {
+      sheet.deleteRow(i+2);
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: 'Evento no encontrado' };
+}
+
+// ============================================================
+//  AGENDA — qué le toca a un jugador (o al equipo) cada día
+//  Cruza las semanas del planner (que ya guardan fecha por día)
+//  con los eventos, y devuelve un mapa fecha → actividades.
+//  payload: { usuario, squad, desde, hasta }
+// ============================================================
+function getAgenda({ usuario, squad, desde, hasta, soloVisibles } = {}) {
+  const dias = {};   // fecha → { gym:[], eventos:[] }
+  const push = (f, tipo, obj) => {
+    if (!f) return;
+    if (!dias[f]) dias[f] = { gym: [], eventos: [] };
+    dias[f][tipo].push(obj);
+  };
+
+  // ── Sesiones de gym desde las semanas del planner ──
+  try {
+    // El coach pide soloVisibles:false para ver también los borradores.
+    const wk = getWeeks({ squad: squad, onlyVisible: soloVisibles !== false });
+    if (wk.ok && wk.weeks) {
+      wk.weeks.forEach((w, k) => {
+        const ds = (w.data && w.data.dias) || [];
+        ds.forEach((d, di) => {
+          const f = _normFecha(d.fecha);
+          if (!f) return;
+          if (desde && f < desde) return;
+          if (hasta && f > hasta) return;
+          let nEj = 0, nBloques = 0;
+          (d.bloques || []).forEach(b => { nBloques++; nEj += (b.ejercicios || []).length; });
+          if (!nEj) return;
+          push(f, 'gym', {
+            semanaIdx:    1000 + k,          // índice que entiende getRutina
+            weekId:       w.id,              // para poder borrar este día
+            visible:      w.visible === true,
+            dia:          di + 1,
+            semanaNombre: w.nombre,
+            titulo:       d.titulo || ('Día ' + (di+1)),
+            nEj:          nEj,
+            nBloques:     nBloques
+          });
+        });
+      });
+    }
+  } catch(e) {}
+
+  // ── Sesiones individuales del jugador (hoja Extras) ──
+  // Son personales: no pasan por la visibilidad de Settings, se ven
+  // siempre que tengan fecha en el día correspondiente.
+  if (usuario) {
+    try {
+      const ex = getExtras({ usuario: usuario });
+      if (ex.ok && ex.extras) {
+        ex.extras.forEach(e => {
+          (e.dias || []).forEach((d, di) => {
+            const f = _normFecha(d.fecha);
+            if (!f) return;
+            if (desde && f < desde) return;
+            if (hasta && f > hasta) return;
+            let nEj = 0, nBloques = 0;
+            (d.bloques || []).forEach(b => { nBloques++; nEj += (b.ejercicios || []).length; });
+            if (!nEj) return;
+            push(f, 'gym', {
+              extraId:      e.id,
+              individual:   true,
+              visible:      true,
+              dia:          di + 1,
+              semanaNombre: e.nombre || 'Individual',
+              titulo:       d.titulo || e.nombre || 'Sesión individual',
+              nEj:          nEj,
+              nBloques:     nBloques
+            });
+          });
+        });
+      }
+    } catch(err) {}
+  }
+
+  // ── Eventos de campo y partido ──
+  try {
+    const ev = getEventos({ squad: squad, desde: desde, hasta: hasta });
+    if (ev.ok) ev.eventos.forEach(e => push(e.fecha, 'eventos', e));
+  } catch(e) {}
+
+  // ── Qué ha registrado ya el jugador (para marcar hecho/pendiente) ──
+  const hecho = {};  // fecha → { gym:bool, campo:bool, partido:bool }
+  if (usuario) {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registros');
+    if (sheet) {
+      const rows = sheet.getDataRange().getValues();
+      for (let i = 1; i < rows.length; i++) {
+        if (String(rows[i][1]).trim() !== String(usuario).trim()) continue;
+        const ej = String(rows[i][5] || '');
+        let f = null, clave = null;
+        if (ej === 'RPE_GLOBAL')          { f = _normFecha(rows[i][0]); clave = 'gym'; }
+        else if (ej === 'FIELD_ENTRENO')  { f = _normFecha(rows[i][8]) || _normFecha(rows[i][0]); clave = 'campo'; }
+        else if (ej === 'FIELD_PARTIDO')  { f = _normFecha(rows[i][8]) || _normFecha(rows[i][0]); clave = 'partido'; }
+        else continue;
+        if (!f) continue;
+        if (desde && f < desde) continue;
+        if (hasta && f > hasta) continue;
+        if (!hecho[f]) hecho[f] = { eventos: {} };
+        if (!hecho[f].eventos) hecho[f].eventos = {};
+        hecho[f][clave] = true;
+        // El identificador de sesión guarda el id del evento cuando
+        // el registro salió del calendario. Permite distinguir dos
+        // partidos el mismo día.
+        const ref = String(rows[i][4] || '').trim();
+        if (ref) hecho[f].eventos[ref] = true;
+      }
+    }
+  }
+
+  return { ok: true, dias: dias, hecho: hecho, desde: desde, hasta: hasta };
+}
+
+// ============================================================
+//  APLICAR PROGRAMA — copia los días de una semana plantilla
+//  a fechas concretas, en orden (día 1 → 1ª fecha, etc.)
+//  payload: { idPlantilla, squad, fechas:[], nombre }
+// ============================================================
+function aplicarPrograma({ idPlantilla, squad, fechas, nombre, creado_por }) {
+  if (!idPlantilla || !fechas || !fechas.length) {
+    return { ok: false, error: 'Faltan la plantilla o las fechas' };
+  }
+  const wk = getWeeks({});
+  if (!wk.ok) return { ok: false, error: 'No se pudieron leer las plantillas' };
+  const orig = (wk.weeks || []).find(w => String(w.id) === String(idPlantilla));
+  if (!orig) return { ok: false, error: 'Plantilla no encontrada' };
+
+  const dias = JSON.parse(JSON.stringify((orig.data && orig.data.dias) || []));
+  if (!dias.length) return { ok: false, error: 'La plantilla no tiene días' };
+
+  // Fechas únicas y ordenadas: dos días del programa nunca pueden caer
+  // en el mismo día, que es lo que generaba sesiones duplicadas.
+  const unicas = [];
+  (fechas || []).forEach(f => { if (f && unicas.indexOf(f) === -1) unicas.push(f); });
+  unicas.sort();
+
+  // Asignar cada día a su fecha, en orden. Si sobran días, se descartan.
+  const asignados = [];
+  for (let i = 0; i < dias.length && i < unicas.length; i++) {
+    const d = dias[i];
+    d.fecha = unicas[i];
+    delete d._open;
+    asignados.push(d);
+  }
+
+  const ordenadas = unicas.slice(0, asignados.length);
+  const res = saveWeek({
+    id: '',
+    nombre: nombre || (orig.nombre + ' · ' + ordenadas[0]),
+    squad: squad || orig.squad,
+    fecha_inicio: ordenadas[0],
+    fecha_fin: ordenadas[ordenadas.length - 1],
+    data: { dias: asignados },
+    creado_por: creado_por || '',
+    visible: false     // se publica a mano desde el calendario o Settings
+  });
+  return { ok: res.ok, id: res.id, dias: asignados.length };
+}
+
+
+// ============================================================
+//  BORRAR DÍA DE UNA SEMANA — para quitar una sesión de gym
+//  desde el calendario. Si la semana se queda sin días, se borra
+//  entera para no dejar semanas fantasma en la lista.
+//  payload: { weekId, dia }   (dia es 1-based)
+// ============================================================
+function borrarDiaSemana({ weekId, dia }) {
+  if (!weekId) return { ok: false, error: 'Falta la semana' };
+  const wk = getWeeks({});
+  if (!wk.ok) return { ok: false, error: 'No se pudieron leer las semanas' };
+  const w = (wk.weeks || []).find(x => String(x.id) === String(weekId));
+  if (!w) return { ok: false, error: 'Semana no encontrada' };
+
+  const dias = (w.data && w.data.dias) || [];
+  const idx  = parseInt(dia) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= dias.length) {
+    return { ok: false, error: 'Día no encontrado' };
+  }
+  dias.splice(idx, 1);
+
+  if (!dias.length) {
+    deleteWeek({ id: weekId });
+    return { ok: true, borradaSemana: true };
+  }
+
+  // Recalcular el rango de fechas con los días que quedan
+  const fechas = dias.map(d => _normFecha(d.fecha)).filter(Boolean).sort();
+  saveWeek({
+    id: weekId, nombre: w.nombre, squad: w.squad,
+    fecha_inicio: fechas.length ? fechas[0] : w.fecha_inicio,
+    fecha_fin:    fechas.length ? fechas[fechas.length-1] : w.fecha_fin,
+    data: { dias: dias },
+    creado_por: w.creado_por, visible: w.visible
+  });
+  return { ok: true, borradaSemana: false, quedan: dias.length };
+}
+
+
+// Normaliza una hora a "HH:mm". Sheets convierte "19:00" en un Date,
+// que al serializarse sale como "Sun Dec 31 1899 ...". Aquí se corrige.
+function _normHora(v) {
+  if (!v && v !== 0) return '';
+  if (v instanceof Date) {
+    const h = String(v.getHours()).padStart(2,'0');
+    const m = String(v.getMinutes()).padStart(2,'0');
+    return h + ':' + m;
+  }
+  const s = String(v).trim();
+  const m = s.match(/^(\d{1,2}):(\d{2})/);
+  if (m) return String(m[1]).padStart(2,'0') + ':' + m[2];
+  return '';
+}
+
+
+// ============================================================
+//  VACIAR DÍA — borra de una vez todo lo programado en una fecha:
+//  las sesiones de gym (días de plantillas) y los eventos de
+//  campo o partido. Una sola confirmación en el frontend.
+//  payload: { squad, fecha }
+// ============================================================
+function vaciarDia({ squad, fecha }) {
+  if (!fecha) return { ok: false, error: 'Falta la fecha' };
+  let gym = 0, eventos = 0;
+
+  // ── Días de gym dentro de las plantillas ──
+  try {
+    const wk = getWeeks({ squad: squad });
+    if (wk.ok && wk.weeks) {
+      wk.weeks.forEach(w => {
+        const dias = (w.data && w.data.dias) || [];
+        const quedan = dias.filter(d => _normFecha(d.fecha) !== fecha);
+        if (quedan.length === dias.length) return;   // esta semana no toca ese día
+        gym += (dias.length - quedan.length);
+        if (!quedan.length) {
+          deleteWeek({ id: w.id });
+        } else {
+          const fechas = quedan.map(d => _normFecha(d.fecha)).filter(Boolean).sort();
+          saveWeek({
+            id: w.id, nombre: w.nombre, squad: w.squad,
+            fecha_inicio: fechas.length ? fechas[0] : w.fecha_inicio,
+            fecha_fin:    fechas.length ? fechas[fechas.length-1] : w.fecha_fin,
+            data: { dias: quedan },
+            creado_por: w.creado_por, visible: w.visible
+          });
+        }
+      });
+    }
+  } catch(e) {}
+
+  // ── Sesiones individuales del jugador (hoja Extras) ──
+  // Son personales: no pasan por la visibilidad de Settings, se ven
+  // siempre que tengan fecha en el día correspondiente.
+  if (usuario) {
+    try {
+      const ex = getExtras({ usuario: usuario });
+      if (ex.ok && ex.extras) {
+        ex.extras.forEach(e => {
+          (e.dias || []).forEach((d, di) => {
+            const f = _normFecha(d.fecha);
+            if (!f) return;
+            if (desde && f < desde) return;
+            if (hasta && f > hasta) return;
+            let nEj = 0, nBloques = 0;
+            (d.bloques || []).forEach(b => { nBloques++; nEj += (b.ejercicios || []).length; });
+            if (!nEj) return;
+            push(f, 'gym', {
+              extraId:      e.id,
+              individual:   true,
+              visible:      true,
+              dia:          di + 1,
+              semanaNombre: e.nombre || 'Individual',
+              titulo:       d.titulo || e.nombre || 'Sesión individual',
+              nEj:          nEj,
+              nBloques:     nBloques
+            });
+          });
+        });
+      }
+    } catch(err) {}
+  }
+
+  // ── Eventos de campo y partido ──
+  try {
+    const sheet = _eventosSheet();
+    const last  = sheet.getLastRow();
+    if (last >= 2) {
+      const data = sheet.getRange(2,1,last-1,4).getValues();
+      // de abajo arriba, para que al borrar no se descoloquen las filas
+      for (let i = data.length - 1; i >= 0; i--) {
+        if (!data[i][0]) continue;
+        const sq = String(data[i][1]||'').trim();
+        if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+        if (_normFecha(data[i][2]) !== fecha) continue;
+        sheet.deleteRow(i+2);
+        eventos++;
+      }
+    }
+  } catch(e) {}
+
+  return { ok: true, gym: gym, eventos: eventos };
+}
+
+
+// ============================================================
+//  REPETIR SESIÓN — copia un día de gym al mismo día de la
+//  semana durante las siguientes N semanas. Cada copia es
+//  independiente: se pueden cambiar cargas o ejercicios luego.
+//  payload: { weekId, dia, squad, semanas }
+// ============================================================
+function repetirSesion({ weekId, dia, squad, semanas }) {
+  if (!weekId) return { ok: false, error: 'Falta la sesión' };
+  const n = parseInt(semanas) || 0;
+  if (n < 1) return { ok: false, error: 'Indica cuántas semanas' };
+
+  const wk = getWeeks({});
+  if (!wk.ok) return { ok: false, error: 'No se pudieron leer las semanas' };
+  const w = (wk.weeks || []).find(x => String(x.id) === String(weekId));
+  if (!w) return { ok: false, error: 'Sesión no encontrada' };
+
+  const dias = (w.data && w.data.dias) || [];
+  const idx  = parseInt(dia) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= dias.length) return { ok: false, error: 'Día no encontrado' };
+
+  const orig  = dias[idx];
+  const fBase = _normFecha(orig.fecha);
+  if (!fBase) return { ok: false, error: 'La sesión no tiene fecha' };
+
+  const msDia = 86400000;
+  const base  = new Date(fBase + 'T12:00:00');
+  let creadas = 0;
+
+  for (let k = 1; k <= n; k++) {
+    const f = fmtDate(new Date(base.getTime() + k * 7 * msDia));
+    const copia = JSON.parse(JSON.stringify(orig));
+    copia.fecha = f;
+    delete copia._open;
+    const res = saveWeek({
+      id: '',
+      nombre: (orig.titulo || w.nombre || 'Sesión') + ' · ' + f,
+      squad: squad || w.squad,
+      fecha_inicio: f, fecha_fin: f,
+      data: { dias: [copia] },
+      creado_por: w.creado_por || '',
+      visible: false     // se publica a mano
+    });
+    if (res && res.ok) creadas++;
+  }
+  return { ok: true, creadas: creadas };
+}
+
+
+// ============================================================
+//  GET RUTINA DIA — la sesión de un día concreto buscando la
+//  semana por su id, no por posición en la lista.
+//  Los índices de getWeeks cambian según se filtre por visibles
+//  o no, lo que hacía que el jugador abriera otra sesión.
+//  payload: { weekId, dia, squad }
+// ============================================================
+function getRutinaDia({ weekId, dia, squad, extraId, usuario }) {
+  let w = null;
+
+  if (extraId) {
+    // Sesión individual: vive en la hoja Extras, no en Plantillas
+    const ex = getExtras({ usuario: usuario || '' });
+    const e  = (ex.ok && ex.extras) ? ex.extras.find(x => String(x.id) === String(extraId)) : null;
+    if (!e) return { ok: false, error: 'Sesión individual no encontrada' };
+    w = { id: e.id, nombre: e.nombre || 'Individual', data: { dias: e.dias || [] } };
+  } else {
+    if (!weekId) return { ok: false, error: 'Falta la sesión' };
+    const wk = getWeeks({});
+    if (!wk.ok) return { ok: false, error: 'No se pudieron leer las semanas' };
+    w = (wk.weeks || []).find(x => String(x.id) === String(weekId));
+    if (!w) return { ok: false, error: 'Sesión no encontrada' };
+  }
+
+  const dias   = (w.data && w.data.dias) || [];
+  const diaObj = dias[parseInt(dia) - 1];
+  if (!diaObj) return { ok: true, ejercicios: [], nombreSemana: w.nombre, sessionNotes: '', dayTitle: '' };
+
+  const ejercicios = [];
+  (diaObj.bloques || []).forEach(b => {
+    const esPrep = /prep|activ|calent|warm/i.test(String(b.nombre || ''));
+    (b.ejercicios || []).forEach(it => {
+      let loadObj = it.carga || '';
+      const tc = it.tipo_carga || '%';
+      if (/^BW$/i.test(String(loadObj).trim())) loadObj = 'BW';
+      else if (tc === 'RPE' || tc === 'RIR') {
+        const nums = String(loadObj).match(/\d+\.?\d*/g);
+        if (nums && nums.length) {
+          const uniq = nums.filter((v,i,a)=>a.indexOf(v)===i);
+          loadObj = tc + ' ' + (uniq.length === 1 ? uniq[0] : nums[0] + '-' + nums[nums.length-1]);
+        }
+      }
+      ejercicios.push({
+        bloque:        it.orden || (b.letra || ''),
+        bloque_nombre: b.nombre || '',
+        patron:        it.patron || '',
+        contraccion:   '',
+        ejercicio:     it.ejercicio || '',
+        sets:          it.sets || '',
+        reps:          it.reps || '',
+        tempo:         it.tempo || '',
+        load_objetivo: loadObj,
+        tipo_carga:    tc,
+        video:         it.video || it.video_url || '',
+        notas:         it.nota || '',
+        fase:          esPrep ? 'prep' : 'main'
+      });
+    });
+  });
+
+  const notaDia = String(diaObj.nota || diaObj.notas || diaObj.sessionNotes || '').trim();
+  return {
+    ok: true, ejercicios: ejercicios,
+    nombreSemana: w.nombre,
+    sessionNotes: notaDia,
+    dayTitle: String(diaObj.titulo || '').trim()
+  };
+}
+
+
+// ============================================================
+//  LESIONES — parte de lesión según el consenso de rugby
+//  (Fuller et al., 2007). Hoja "Lesiones":
+//  A id | B usuario | C squad | D fecha_lesion | E fecha_retorno
+//  F zona | G lado | H tipo | I mecanismo | J contexto
+//  K estado | L datos_json | M creado_por | N fecha_registro
+//  El resto de respuestas viaja en datos_json para no llenar la
+//  hoja de columnas y poder ampliar el cuestionario sin migrar.
+// ============================================================
+function _lesionesSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Lesiones');
+  if (!sheet) {
+    sheet = ss.insertSheet('Lesiones');
+    sheet.getRange(1,1,1,14).setValues([[
+      'id','usuario','squad','fecha_lesion','fecha_retorno','zona','lado','tipo',
+      'mecanismo','contexto','estado','datos_json','creado_por','fecha_registro'
+    ]]);
+    sheet.getRange(2,4,3000,2).setNumberFormat('@STRING@');
+  }
+  return sheet;
+}
+
+function getLesiones({ squad, usuario, estado } = {}) {
+  const sheet = _lesionesSheet();
+  const last  = sheet.getLastRow();
+  if (last < 2) return { ok: true, lesiones: [] };
+  const data = sheet.getRange(2,1,last-1,14).getValues();
+  const out = [];
+  for (let i = 0; i < data.length; i++) {
+    const r = data[i];
+    if (!r[0]) continue;
+    const sq = String(r[2]||'').trim();
+    if (squad   && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+    if (usuario && String(r[1]).trim() !== String(usuario).trim())   continue;
+    const est = String(r[10]||'abierta');
+    if (estado && est !== estado) continue;
+    out.push({
+      id:            String(r[0]),
+      usuario:       String(r[1]||''),
+      squad:         sq,
+      fecha_lesion:  _normFecha(r[3]),
+      fecha_retorno: _normFecha(r[4]),
+      zona:          String(r[5]||''),
+      lado:          String(r[6]||''),
+      tipo:          String(r[7]||''),
+      mecanismo:     String(r[8]||''),
+      contexto:      String(r[9]||''),
+      estado:        est,
+      datos:         safeParseJSON(r[11]),
+      creado_por:    String(r[12]||''),
+      registrada:    _normFecha(r[13])
+    });
+  }
+  out.sort((a,b) => a.fecha_lesion < b.fecha_lesion ? 1 : a.fecha_lesion > b.fecha_lesion ? -1 : 0);
+  return { ok: true, lesiones: out };
+}
+
+function saveLesion(d) {
+  if (!d.usuario)      return { ok: false, error: 'Falta el jugador' };
+  if (!d.fecha_lesion) return { ok: false, error: 'Falta la fecha de la lesión' };
+  const sheet = _lesionesSheet();
+  const lid   = d.id || ('L' + new Date().getTime());
+  const last  = sheet.getLastRow();
+  let row = -1;
+  if (last >= 2) {
+    const ids = sheet.getRange(2,1,last-1,1).getValues();
+    for (let i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]).trim() === String(lid).trim()) { row = i+2; break; }
+    }
+  }
+  if (row === -1) row = last + 1;
+
+  // Abierta mientras no haya fecha de retorno sin restricciones
+  const estado = d.fecha_retorno ? 'cerrada' : 'abierta';
+
+  sheet.getRange(row,1,1,14).setValues([[
+    lid, d.usuario, d.squad||'', '', '',
+    d.zona||'', d.lado||'', d.tipo||'', d.mecanismo||'', d.contexto||'',
+    estado, JSON.stringify(d.datos||{}), d.creado_por||'', fmtDate(new Date())
+  ]]);
+  // fechas como texto plano
+  sheet.getRange(row,4).setNumberFormat('@STRING@').setValue(d.fecha_lesion);
+  sheet.getRange(row,5).setNumberFormat('@STRING@').setValue(d.fecha_retorno||'');
+  return { ok: true, id: lid, estado: estado };
+}
+
+function deleteLesion({ id }) {
+  const sheet = _lesionesSheet();
+  const last  = sheet.getLastRow();
+  if (last < 2) return { ok: false, error: 'No hay lesiones' };
+  const ids = sheet.getRange(2,1,last-1,1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]).trim() === String(id).trim()) {
+      sheet.deleteRow(i+2);
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: 'Lesión no encontrada' };
+}
+
+// ============================================================
+//  EPIDEMIOLOGÍA — incidencia por 1000 horas de exposición
+//  La exposición sale de los registros de campo y partido, que
+//  ya guardan minutos. Es lo que convierte un listado de
+//  lesiones en un estudio comparable (Fuller et al., 2007).
+//  payload: { squad, desde, hasta }
+// ============================================================
+function getEpidemiologia({ squad, desde, hasta } = {}) {
+  const les = getLesiones({ squad: squad });
+  if (!les.ok) return { ok: false, error: 'No se pudieron leer las lesiones' };
+
+  let lista = les.lesiones;
+  if (desde) lista = lista.filter(l => l.fecha_lesion >= desde);
+  if (hasta) lista = lista.filter(l => l.fecha_lesion <= hasta);
+
+  // ── Exposición en horas, separando entreno y partido ──
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetR = ss.getSheetByName('Registros');
+  const sheetJ = ss.getSheetByName('Jugadores');
+  const valido = {};
+  if (sheetJ) {
+    const jug = sheetJ.getDataRange().getValues();
+    for (let i = 1; i < jug.length; i++) {
+      const u = String(jug[i][0]).trim();
+      const pos = String(jug[i][3]||'').trim();
+      if (!u || esStaff(pos)) continue;
+      const sq = String(jug[i][4]||'').trim();
+      if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+      valido[u] = true;
+    }
+  }
+
+  let minEntreno = 0, minPartido = 0;
+  if (sheetR) {
+    const rows = sheetR.getDataRange().getValues();
+    for (let i = 1; i < rows.length; i++) {
+      const u = String(rows[i][1]).trim();
+      if (!valido[u]) continue;
+      const ej = String(rows[i][5]||'');
+      if (ej !== 'FIELD_ENTRENO' && ej !== 'FIELD_PARTIDO') continue;
+      const f = _normFecha(rows[i][8]) || _normFecha(rows[i][0]);
+      if (desde && f < desde) continue;
+      if (hasta && f > hasta) continue;
+      const min = rows[i][9] !== '' ? parseFloat(rows[i][9]) : 0;
+      if (!min || isNaN(min)) continue;
+      if (ej === 'FIELD_PARTIDO') minPartido += min; else minEntreno += min;
+    }
+  }
+  const hEntreno = Math.round(minEntreno / 60 * 10) / 10;
+  const hPartido = Math.round(minPartido / 60 * 10) / 10;
+  const hTotal   = Math.round((hEntreno + hPartido) * 10) / 10;
+
+  const nEntreno = lista.filter(l => l.contexto === 'entrenamiento').length;
+  const nPartido = lista.filter(l => l.contexto === 'partido').length;
+  const inc = (n, h) => h > 0 ? Math.round(n / h * 1000 * 10) / 10 : null;
+
+  // ── Días de baja (severidad) de las lesiones ya cerradas ──
+  const dias = [];
+  lista.forEach(l => {
+    if (!l.fecha_retorno || !l.fecha_lesion) return;
+    const a = new Date(l.fecha_lesion + 'T12:00:00');
+    const b = new Date(l.fecha_retorno + 'T12:00:00');
+    const d = Math.round((b - a) / 86400000);
+    if (d >= 0) dias.push(d);
+  });
+  const media = a => a.length ? Math.round(a.reduce((s,v)=>s+v,0)/a.length*10)/10 : null;
+  const mediana = a => {
+    if (!a.length) return null;
+    const x = a.slice().sort((p,q)=>p-q); const m = Math.floor(x.length/2);
+    return x.length % 2 ? x[m] : Math.round((x[m-1]+x[m])/2*10)/10;
+  };
+
+  // ── Recuentos ──
+  const cuenta = campo => {
+    const o = {};
+    lista.forEach(l => { const v = l[campo] || 'sin especificar'; o[v] = (o[v]||0)+1; });
+    return Object.keys(o).map(k => ({ clave:k, n:o[k] })).sort((a,b)=>b.n-a.n);
+  };
+  const cuentaDato = campo => {
+    const o = {};
+    lista.forEach(l => { const v = (l.datos && l.datos[campo]) || 'sin especificar'; o[v] = (o[v]||0)+1; });
+    return Object.keys(o).map(k => ({ clave:k, n:o[k] })).sort((a,b)=>b.n-a.n);
+  };
+
+  // Severidad según el consenso: mínima ≤1 d, leve 2–7, moderada 8–28, grave >28
+  const sevCubos = { 'Mínima (0-1 d)':0, 'Leve (2-7 d)':0, 'Moderada (8-28 d)':0, 'Grave (>28 d)':0, 'En curso':0 };
+  lista.forEach(l => {
+    if (!l.fecha_retorno || !l.fecha_lesion) { sevCubos['En curso']++; return; }
+    const a = new Date(l.fecha_lesion + 'T12:00:00');
+    const b = new Date(l.fecha_retorno + 'T12:00:00');
+    const dd = Math.round((b - a) / 86400000);
+    if (dd <= 1)      sevCubos['Mínima (0-1 d)']++;
+    else if (dd <= 7) sevCubos['Leve (2-7 d)']++;
+    else if (dd <= 28) sevCubos['Moderada (8-28 d)']++;
+    else              sevCubos['Grave (>28 d)']++;
+  });
+  const porSeveridad = Object.keys(sevCubos).map(k => ({ clave:k, n:sevCubos[k] })).filter(x=>x.n>0);
+
+  // Distribución por mes, para ver la evolución de la temporada
+  const meses = {};
+  lista.forEach(l => {
+    const m = String(l.fecha_lesion||'').slice(0,7);
+    if (m) meses[m] = (meses[m]||0)+1;
+  });
+  const porMes = Object.keys(meses).sort().map(k => ({ clave:k, n:meses[k] }));
+
+  // Días de baja acumulados por zona: dónde se pierde más tiempo
+  const bajaZona = {};
+  lista.forEach(l => {
+    const dd = (l.fecha_retorno && l.fecha_lesion)
+      ? Math.round((new Date(l.fecha_retorno+'T12:00:00') - new Date(l.fecha_lesion+'T12:00:00'))/86400000) : 0;
+    if (dd > 0) { const z = l.zona || 'sin especificar'; bajaZona[z] = (bajaZona[z]||0)+dd; }
+  });
+  const diasPorZona = Object.keys(bajaZona).map(k => ({ clave:k, n:bajaZona[k] })).sort((a,b)=>b.n-a.n);
+
+  return {
+    ok: true,
+    total: lista.length,
+    abiertas: lista.filter(l => l.estado === 'abierta').length,
+    exposicion: { entreno: hEntreno, partido: hPartido, total: hTotal },
+    incidencia: {
+      entreno: inc(nEntreno, hEntreno),
+      partido: inc(nPartido, hPartido),
+      total:   inc(lista.length, hTotal)
+    },
+    severidad: { mediaDias: media(dias), medianaDias: mediana(dias), cerradas: dias.length },
+    porZona: cuenta('zona'),
+    porTipo: cuenta('tipo'),
+    porMecanismo: cuenta('mecanismo'),
+    porContexto: cuenta('contexto'),
+    porLado: cuenta('lado'),
+    porContacto: cuentaDato('contacto'),
+    porPosicion: cuentaDato('posicion'),
+    porSeveridad: porSeveridad,
+    porMes: porMes,
+    diasPorZona: diasPorZona,
+    diasTotales: dias.reduce((s,v)=>s+v,0),
+    recurrentes: lista.filter(l => l.datos && l.datos.recurrencia === 'si').length
+  };
+}
+
+
+// ============================================================
+//  PESOS — último peso corporal registrado por cada jugador
+//  Sale del wellness (columna peso_corporal). Se usa para
+//  calcular el momentum (masa × velocidad) en los sprints.
+//  payload: { squad }
+// ============================================================
+function getPesos({ squad } = {}) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetW = ss.getSheetByName('Wellness');
+  const sheetJ = ss.getSheetByName('Jugadores');
+  if (!sheetW) return { ok: true, pesos: {} };
+
+  const valido = {};
+  if (sheetJ) {
+    const jug = sheetJ.getDataRange().getValues();
+    for (let i = 1; i < jug.length; i++) {
+      const u = String(jug[i][0]).trim();
+      if (!u) continue;
+      const sq = String(jug[i][4]||'').trim();
+      if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+      valido[u] = true;
+    }
+  }
+
+  const pesos = {};
+  const rows = sheetW.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    const u = String(rows[i][1]||'').trim();
+    if (!u) continue;
+    if (squad && !valido[u]) continue;
+    const p = parseFloat(rows[i][8]);
+    if (isNaN(p) || p <= 0) continue;
+    const f = _normFecha(rows[i][2]);
+    if (!pesos[u] || f > pesos[u].fecha) pesos[u] = { peso: p, fecha: f };
+  }
+  return { ok: true, pesos: pesos };
+}
+
+
+// ============================================================
+//  PESOS ACTUALES — último peso corporal de cada jugador
+//  Sale del wellness. Se usa para el momentum (masa × velocidad).
+//  payload: { squad }
+// ============================================================
+function getPesosActuales({ squad } = {}) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetW = ss.getSheetByName('Wellness');
+  const sheetJ = ss.getSheetByName('Jugadores');
+  const valido = {};
+  if (sheetJ) {
+    const jug = sheetJ.getDataRange().getValues();
+    for (let i = 1; i < jug.length; i++) {
+      const u = String(jug[i][0]).trim();
+      const pos = String(jug[i][3]||'').trim();
+      if (!u || esStaff(pos)) continue;
+      const sq = String(jug[i][4]||'').trim();
+      if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+      valido[u] = true;
+    }
+  }
+  const pesos = {};
+  if (sheetW) {
+    const rows = sheetW.getDataRange().getValues();
+    for (let i = 1; i < rows.length; i++) {
+      const u = String(rows[i][1]||'').trim();
+      if (!valido[u]) continue;
+      const p = parseFloat(rows[i][8]);
+      if (isNaN(p) || p <= 0) continue;
+      const f = _normFecha(rows[i][2]);
+      if (!f) continue;
+      if (!pesos[u] || f > pesos[u].fecha) pesos[u] = { peso: p, fecha: f };
+    }
+  }
+  return { ok: true, pesos: pesos };
+}
+
+
+// ============================================================
+//  TESTING DEL SQUAD — tabla de consulta para el cuerpo técnico
+//  Devuelve, por jugador, el resultado de cada test en el rango
+//  de fechas pedido, con su progresión respecto al anterior.
+//  payload: { squad, idTest, desde, hasta }
+// ============================================================
+function getTestingSquad({ squad, idTest, desde, hasta } = {}) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetCat = ss.getSheetByName('CatalogoTests') || ss.getSheetByName('Tests') || ss.getSheetByName('Test');
+  const sheetRes = ss.getSheetByName('TestResultados');
+  const sheetJ   = ss.getSheetByName('Jugadores');
+  if (!sheetRes) return { ok: true, jugadores: [], tests: [], fechas: [] };
+
+  // Catálogo
+  const catalogo = {};
+  if (sheetCat) {
+    const cat = sheetCat.getDataRange().getValues();
+    for (let i = 1; i < cat.length; i++) {
+      const id = String(cat[i][0]||'').trim();
+      if (!id) continue;
+      catalogo[id] = {
+        id: id,
+        nombre: String(cat[i][1]||id).trim(),
+        unidad: String(cat[i][2]||'').trim(),
+        mejorMas: !/men|↓|baj|low/i.test(String(cat[i][4]||'mas'))
+      };
+    }
+  }
+
+  // Jugadores del squad
+  const info = {};
+  const orden = [];
+  if (sheetJ) {
+    const jug = sheetJ.getDataRange().getValues();
+    for (let i = 1; i < jug.length; i++) {
+      const u = String(jug[i][0]).trim();
+      const pos = String(jug[i][3]||'').trim();
+      if (!u || esStaff(pos)) continue;
+      const sq = String(jug[i][4]||'').trim();
+      if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+      info[u] = {
+        usuario: u,
+        nombre: String(jug[i][6]||'').trim() || String(jug[i][2]||'').trim() || u,
+        posicion: String(jug[i][5]||'').trim(),
+        squad: sq
+      };
+      orden.push(u);
+    }
+  }
+
+  const numLoco = raw => {
+    if (raw == null || raw === '') return NaN;
+    if (typeof raw === 'number') return raw;
+    let t = String(raw).trim().replace(/\s+/g,'');
+    if (t.indexOf(',') !== -1 && t.indexOf('.') === -1) t = t.replace(',', '.');
+    const n = parseFloat(t);
+    return isNaN(n) ? NaN : n;
+  };
+
+  // Resultados
+  const res = sheetRes.getDataRange().getValues();
+  const porJug = {};       // usuario → idTest → [{fecha, valor, asimetria, der, izq}]
+  const testsVistos = {};
+  const fechasVistas = {};
+  for (let i = 1; i < res.length; i++) {
+    const f  = _normFecha(res[i][0]);
+    const u  = String(res[i][1]||'').trim();
+    const id = String(res[i][2]||'').trim();
+    const v  = numLoco(res[i][3]);
+    if (!u || !id || isNaN(v)) continue;
+    if (!info[u]) continue;
+    if (idTest && id !== idTest) continue;
+    if (desde && f < desde) continue;
+    if (hasta && f > hasta) continue;
+    testsVistos[id] = true;
+    fechasVistas[f] = true;
+    if (!porJug[u]) porJug[u] = {};
+    if (!porJug[u][id]) porJug[u][id] = [];
+    porJug[u][id].push({
+      fecha: f, valor: v,
+      asimetria: numLoco(res[i][7]) || null,
+      der: numLoco(res[i][8]) || null,
+      izq: numLoco(res[i][9]) || null
+    });
+  }
+
+  const tests = Object.keys(testsVistos).map(id => catalogo[id] || { id:id, nombre:id, unidad:'', mejorMas:true });
+  const fechas = Object.keys(fechasVistas).sort();
+
+  const jugadores = orden.filter(u => porJug[u]).map(u => {
+    const fila = { usuario:u, nombre:info[u].nombre, posicion:info[u].posicion, squad:info[u].squad, tests:{} };
+    Object.keys(porJug[u]).forEach(id => {
+      const arr = porJug[u][id].sort((a,b)=> a.fecha < b.fecha ? -1 : 1);
+      const ult = arr[arr.length-1];
+      const pen = arr.length > 1 ? arr[arr.length-2] : null;
+      const c   = catalogo[id] || { mejorMas:true };
+      let delta = null, mejora = null;
+      if (pen) {
+        delta = Math.round((ult.valor - pen.valor)*100)/100;
+        mejora = c.mejorMas ? delta > 0 : delta < 0;
+      }
+      fila.tests[id] = {
+        valor: ult.valor, fecha: ult.fecha,
+        asimetria: ult.asimetria, der: ult.der, izq: ult.izq,
+        delta: delta, mejora: mejora, n: arr.length
+      };
+    });
+    return fila;
+  });
+
+  // Medias del equipo por test
+  const medias = {};
+  tests.forEach(t => {
+    const vals = jugadores.map(j => j.tests[t.id] ? j.tests[t.id].valor : null).filter(v => v !== null);
+    medias[t.id] = vals.length ? Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*100)/100 : null;
+  });
+
+  return { ok: true, jugadores: jugadores, tests: tests, fechas: fechas, medias: medias };
+}
+
+
+// ============================================================
+//  TESTING POR SQUAD — consulta de resultados para el informe
+//  Devuelve una matriz jugadores × fechas de un test concreto,
+//  o el último valor de todos los tests si no se indica cuál.
+//  payload: { squad, idTest, desde, hasta }
+// ============================================================
+function getTestingSquad({ squad, idTest, desde, hasta } = {}) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetCat = ss.getSheetByName('CatalogoTests') || ss.getSheetByName('Tests') || ss.getSheetByName('Test');
+  const sheetRes = ss.getSheetByName('TestResultados');
+  const sheetJ   = ss.getSheetByName('Jugadores');
+  if (!sheetRes) return { ok: true, jugadores: [], fechas: [], tests: [] };
+
+  // Catálogo
+  const catalogo = {};
+  if (sheetCat) {
+    const cat = sheetCat.getDataRange().getValues();
+    for (let i = 1; i < cat.length; i++) {
+      const id = String(cat[i][0]||'').trim();
+      if (!id) continue;
+      catalogo[id] = {
+        id: id,
+        nombre: String(cat[i][1]||id).trim(),
+        unidad: String(cat[i][2]||'').trim(),
+        mejorMas: !/men|↓|baj|low/i.test(String(cat[i][4]||'mas'))
+      };
+    }
+  }
+
+  // Jugadores del squad
+  const info = {};
+  const orden = [];
+  if (sheetJ) {
+    const jug = sheetJ.getDataRange().getValues();
+    for (let i = 1; i < jug.length; i++) {
+      const u = String(jug[i][0]||'').trim();
+      const pos = String(jug[i][3]||'').trim();
+      if (!u || esStaff(pos)) continue;
+      const sq = String(jug[i][4]||'').trim();
+      if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+      info[u] = {
+        usuario: u,
+        nombre: String(jug[i][6]||'').trim() || String(jug[i][2]||'').trim() || u,
+        rugbyposition: String(jug[i][5]||'').trim(),
+        squad: sq
+      };
+      orden.push(u);
+    }
+  }
+
+  const numLoco = raw => {
+    if (raw == null || raw === '') return NaN;
+    if (typeof raw === 'number') return raw;
+    let t = String(raw).trim().replace(/\s+/g,'');
+    if (t.indexOf(',') !== -1 && t.indexOf('.') === -1) t = t.replace(',', '.');
+    const n = parseFloat(t);
+    return isNaN(n) ? NaN : n;
+  };
+
+  const res = sheetRes.getDataRange().getValues();
+  const datos = {};        // usuario → idTest → fecha → { valor, intentos, extra }
+  const fechasSet = {};
+  const testsSet = {};
+
+  for (let i = 1; i < res.length; i++) {
+    const u  = String(res[i][1]||'').trim();
+    if (!info[u]) continue;
+    const id = String(res[i][2]||'').trim();
+    if (!id) continue;
+    if (idTest && id !== idTest) continue;
+    const v = numLoco(res[i][3]);
+    if (isNaN(v)) continue;
+    const f = safeReadFecha(res[i][0]);
+    if (!f) continue;
+    if (desde && f < desde) continue;
+    if (hasta && f > hasta) continue;
+
+    let intentos = null, extra = null;
+    try { const p = res[i][6] ? JSON.parse(res[i][6]) : null; if (Array.isArray(p) && p.length) intentos = p; } catch(e) {}
+    try { const n = res[i][5] ? JSON.parse(res[i][5]) : null; if (n && typeof n === 'object') extra = n; } catch(e) {}
+
+    if (!datos[u]) datos[u] = {};
+    if (!datos[u][id]) datos[u][id] = {};
+    datos[u][id][f] = { valor: v, intentos: intentos, extra: extra };
+    fechasSet[f] = true;
+    testsSet[id] = true;
+  }
+
+  const fechas = Object.keys(fechasSet).sort();
+  const tests  = Object.keys(testsSet).map(id => catalogo[id] || { id:id, nombre:id, unidad:'', mejorMas:true });
+
+  const jugadores = orden.filter(u => datos[u]).map(u => ({
+    usuario: u,
+    nombre: info[u].nombre,
+    rugbyposition: info[u].rugbyposition,
+    squad: info[u].squad,
+    datos: datos[u]
+  }));
+
+  // Medias por test y fecha, para comparar a cada jugador con el grupo
+  const medias = {};
+  Object.keys(testsSet).forEach(id => {
+    medias[id] = {};
+    fechas.forEach(f => {
+      const vals = jugadores.map(j => (j.datos[id] && j.datos[id][f]) ? j.datos[id][f].valor : null)
+                            .filter(v => v !== null);
+      if (vals.length) medias[id][f] = Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*100)/100;
+    });
+  });
+
+  return { ok: true, jugadores: jugadores, fechas: fechas, tests: tests, medias: medias, catalogo: catalogo };
+}
+
+
+// ============================================================
+//  PANEL DE READINESS — todo lo que pinta la pantalla en una
+//  sola llamada: medias por ítem de hoy y de los últimos 7 días
+//  (radar), tendencia del score del equipo, reparto por zonas y
+//  los avisos de cada jugador (wellness, lesión abierta y carga).
+//  payload: { fecha, squad }
+// ============================================================
+function getReadinessPanel({ fecha, squad } = {}) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetW = ss.getSheetByName('Wellness');
+  const sheetJ = ss.getSheetByName('Jugadores');
+  if (!sheetW || !sheetJ) return { ok:false, error:'Faltan hojas Wellness o Jugadores' };
+
+  const hoy = fecha || fmtDate(new Date());
+  const msDia = 86400000;
+  const base = new Date(hoy + 'T12:00:00');
+  const desde14 = fmtDate(new Date(base.getTime() - 13*msDia));
+  const desde7  = fmtDate(new Date(base.getTime() - 6*msDia));
+
+  // Jugadores del squad
+  const info = {};
+  const jug = sheetJ.getDataRange().getValues();
+  for (let i = 1; i < jug.length; i++) {
+    const u = String(jug[i][0]||'').trim();
+    const pos = String(jug[i][3]||'').trim();
+    if (!u || esStaff(pos)) continue;
+    const sq = String(jug[i][4]||'').trim();
+    if (squad && sq.toLowerCase() !== String(squad).toLowerCase()) continue;
+    info[u] = { usuario:u, nombre:String(jug[i][2]||u).trim(), squad:sq,
+                rugbyposition:String(jug[i][5]||'').trim() };
+  }
+  const plantilla = Object.keys(info).length;
+
+  // Escalas antiguas (1-10) normalizadas a 1-5
+  const n5 = v => { const x = parseFloat(v); return (!isNaN(x) && x > 5) ? Math.round(x/2) : (isNaN(x) ? null : x); };
+
+  // Recorrido único de Wellness
+  const hoyPorJug = {};      // usuario → fila de hoy
+  const itemsHoy  = { ganas:[], dolor:[], fatiga:[], sueno:[] };
+  const items7    = { ganas:[], dolor:[], fatiga:[], sueno:[] };
+  const scorePorDia = {};    // fecha → [scores]
+  const ayerScores = [];
+  const ayer = fmtDate(new Date(base.getTime() - msDia));
+  const horasHoy = [], horas7 = [];
+
+  const rows = sheetW.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    const u = String(rows[i][1]||'').trim();
+    if (!info[u]) continue;
+    const f = _normFecha(rows[i][2]);
+    if (!f || f > hoy) continue;
+
+    const g = n5(rows[i][3]), d = n5(rows[i][4]), fa = n5(rows[i][5]), su = n5(rows[i][6]);
+    const h = parseFloat(rows[i][7]);
+    let sc = parseFloat(rows[i][9]);
+    if (isNaN(sc)) sc = [g,d,fa,su].filter(v=>v!=null).reduce((s,v)=>s+v,0);
+    else if (sc > 20) sc = Math.round(sc/5);
+
+    if (f >= desde14) {
+      if (!scorePorDia[f]) scorePorDia[f] = [];
+      if (!isNaN(sc)) scorePorDia[f].push(sc);
+    }
+    if (f >= desde7) {
+      if (g!=null) items7.ganas.push(g);
+      if (d!=null) items7.dolor.push(d);
+      if (fa!=null) items7.fatiga.push(fa);
+      if (su!=null) items7.sueno.push(su);
+      if (!isNaN(h) && h > 0) horas7.push(h);
+    }
+    if (f === ayer && !isNaN(sc)) ayerScores.push(sc);
+    if (f === hoy) {
+      hoyPorJug[u] = { ganas:g, dolor:d, fatiga:fa, sueno:su, horas:isNaN(h)?null:h, score:isNaN(sc)?null:sc,
+                       zonas:String(rows[i][8]||'').trim(), comentario:String(rows[i][10]||'').trim() };
+      if (g!=null) itemsHoy.ganas.push(g);
+      if (d!=null) itemsHoy.dolor.push(d);
+      if (fa!=null) itemsHoy.fatiga.push(fa);
+      if (su!=null) itemsHoy.sueno.push(su);
+      if (!isNaN(h) && h > 0) horasHoy.push(h);
+    }
+  }
+
+  const media = a => a.length ? Math.round(a.reduce((s,v)=>s+v,0)/a.length*10)/10 : null;
+
+  // ── Tendencia de 14 días ──
+  const tendencia = [];
+  for (let k = 13; k >= 0; k--) {
+    const f = fmtDate(new Date(base.getTime() - k*msDia));
+    const arr = scorePorDia[f] || [];
+    tendencia.push({ fecha:f, score: arr.length ? media(arr) : null, n: arr.length });
+  }
+
+  // ── Lesiones abiertas ──
+  const lesionAbierta = {};
+  try {
+    const les = getLesiones({ squad: squad, estado: 'abierta' });
+    if (les.ok) les.lesiones.forEach(l => {
+      const dias = l.fecha_lesion ? Math.round((base - new Date(l.fecha_lesion+'T12:00:00'))/msDia) : null;
+      lesionAbierta[l.usuario] = { zona: l.zona || 'sin zona', dias: dias };
+    });
+  } catch(e) {}
+
+  // ── ACWR por jugador, para el aviso de carga ──
+  const acwr = {};
+  try {
+    const cc = getControlCargas({ squad: squad, modo: 'total' });
+    if (cc && cc.ok && cc.acwr) {
+      cc.acwr.forEach(a => { if (a.ratio != null) acwr[a.usuario] = a.ratio; });
+    }
+  } catch(e) {}
+
+  // ── Ficha de cada jugador con sus avisos ──
+  const jugadores = [];
+  Object.keys(info).forEach(u => {
+    const w = hoyPorJug[u] || null;
+    const avisos = [];
+    if (w) {
+      if (w.score != null && w.score <= 10) avisos.push({ tipo:'wellness', txt:'Score '+w.score+' · muy bajo' });
+      ['ganas','dolor','fatiga','sueno'].forEach(k => {
+        if (w[k] != null && w[k] <= 2) {
+          const nom = { ganas:'Ganas', dolor:'Dolor', fatiga:'Fatiga', sueno:'Sueño' }[k];
+          avisos.push({ tipo:'wellness', txt:nom+' '+w[k]+'/5' });
+        }
+      });
+      if (w.horas != null && w.horas > 0 && w.horas < 6) avisos.push({ tipo:'wellness', txt:'Solo '+w.horas+' h de sueño' });
+      if (w.zonas) avisos.push({ tipo:'wellness', txt:'Molestias: '+w.zonas });
+    }
+    if (lesionAbierta[u]) {
+      const L = lesionAbierta[u];
+      avisos.push({ tipo:'lesion', txt:'Lesión abierta: '+L.zona+(L.dias!=null?' · '+L.dias+' días':'') });
+    }
+    if (acwr[u] != null) {
+      if (acwr[u] > 1.5)      avisos.push({ tipo:'carga', txt:'ACWR '+acwr[u]+' · zona de riesgo' });
+      else if (acwr[u] > 1.3) avisos.push({ tipo:'carga', txt:'ACWR '+acwr[u]+' · carga elevada' });
+      else if (acwr[u] < 0.8 && acwr[u] > 0) avisos.push({ tipo:'carga', txt:'ACWR '+acwr[u]+' · subcarga' });
+    }
+    jugadores.push({
+      usuario:u, nombre:info[u].nombre, squad:info[u].squad, rugbyposition:info[u].rugbyposition,
+      respondido: !!w,
+      ganas: w?w.ganas:null, dolor: w?w.dolor:null, fatiga: w?w.fatiga:null, sueno: w?w.sueno:null,
+      horas: w?w.horas:null, score: w?w.score:null, comentario: w?w.comentario:'',
+      acwr: acwr[u] != null ? acwr[u] : null,
+      avisos: avisos
+    });
+  });
+
+  // Los que tienen aviso primero, y dentro por score más bajo
+  jugadores.sort((a,b) => {
+    if (a.avisos.length !== b.avisos.length) return b.avisos.length - a.avisos.length;
+    if (a.score == null) return 1;
+    if (b.score == null) return -1;
+    return a.score - b.score;
+  });
+
+  const conDato = jugadores.filter(j => j.score != null);
+  const scoreMedio = media(conDato.map(j=>j.score));
+  const scoreAyer  = media(ayerScores);
+
+  return {
+    ok: true,
+    fecha: hoy,
+    plantilla: plantilla,
+    respondido: conDato.length,
+    scoreMedio: scoreMedio,
+    scoreAyer: scoreAyer,
+    horasMedia: media(horasHoy),
+    horasMedia7: media(horas7),
+    radar: {
+      hoy:   { ganas:media(itemsHoy.ganas), dolor:media(itemsHoy.dolor), fatiga:media(itemsHoy.fatiga), sueno:media(itemsHoy.sueno) },
+      media7:{ ganas:media(items7.ganas),   dolor:media(items7.dolor),   fatiga:media(items7.fatiga),   sueno:media(items7.sueno) }
+    },
+    tendencia: tendencia,
+    reparto: {
+      optimos: conDato.filter(j=>j.score>=16).length,
+      medios:  conDato.filter(j=>j.score>=12 && j.score<16).length,
+      bajos:   conDato.filter(j=>j.score<12).length
+    },
+    conAlerta: jugadores.filter(j=>j.avisos.length).length,
+    jugadores: jugadores
+  };
+}
