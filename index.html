@@ -1727,29 +1727,74 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 @media (min-width:640px){ .rd-kpis{grid-template-columns:repeat(4,1fr)} }
 .rd-kpi{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--border-strong);
   border-radius:9px;padding:11px 9px;text-align:center}
-.rd-kpi-n{font-family:var(--font-head);font-size:23px;line-height:1}
-.rd-kpi-l{font-size:9px;color:var(--muted);letter-spacing:.05em;margin-top:4px}
-.rd-kpi-s{font-size:9px;color:var(--muted);margin-top:2px}
+.rd-kpi-n{font-family:var(--font-head);font-size:30px;line-height:1}
+.rd-kpi-l{font-size:10px;color:var(--muted);letter-spacing:.05em;margin-top:5px}
+.rd-kpi-s{font-size:10px;color:var(--muted);margin-top:3px}
 
 .rd-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px}
 @media (min-width:700px){ .rd-grid{grid-template-columns:1fr 1fr} }
 .rd-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
-.rd-box-t{font-size:10px;color:var(--muted);letter-spacing:.06em;margin-bottom:8px;text-transform:uppercase}
+.rd-box-t{font-size:11px;color:var(--muted);letter-spacing:.06em;margin-bottom:10px;text-transform:uppercase}
+/* Las gráficas se dibujan con viewBox pequeño: sin alto explícito quedan
+   diminutas en pantallas grandes. */
+.rd-box svg{width:100%;height:auto;min-height:230px;display:block}
+.rd-head span{font-size:10px}
 
 .rd-tabla{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.rd-head{display:grid;grid-template-columns:1.5fr 46px .7fr .7fr .7fr .7fr .7fr;
-  padding:8px 12px;background:var(--surface2)}
+.rd-head{display:grid;grid-template-columns:1.5fr 60px .8fr .9fr .9fr .9fr .9fr;
+  padding:9px 14px;background:var(--surface2)}
 .rd-head span{font-size:9px;color:var(--muted);letter-spacing:.05em;text-align:center}
 .rd-head span:first-child{text-align:left}
-.rd-row{display:grid;grid-template-columns:1.5fr 46px .7fr .7fr .7fr .7fr .7fr;
-  align-items:center;padding:8px 12px;border-top:1px solid var(--border);border-left:3px solid transparent}
-.rd-nm{font-size:13px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rd-cell{display:block;border-radius:3px;padding:4px 0;margin:0 3px;font-size:11px;font-weight:700;
+.rd-item{border-top:1px solid var(--border);border-left:3px solid transparent}
+.rd-row{display:grid;grid-template-columns:1.5fr 60px .8fr .9fr .9fr .9fr .9fr;
+  align-items:center;padding:11px 14px}
+.rd-motivos{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 11px 14px;margin-top:-4px}
+.rd-motivo{font-size:11px;border-radius:6px;padding:4px 9px;font-weight:500;line-height:1.35}
+.rd-nm{font-size:15px;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rd-cell{display:block;border-radius:5px;padding:7px 0;margin:0 4px;font-size:14px;font-weight:700;
   color:#0d0f12;text-align:center}
 .rd-chip{display:inline-block;border-radius:11px;padding:2px 7px;font-size:9px;font-weight:700;cursor:help}
 .rd-leyenda{padding:9px 13px;background:var(--surface2);display:flex;gap:15px;flex-wrap:wrap;
   font-size:10px;color:var(--muted)}
 .rd-filtro{font-size:10px;border-radius:11px;padding:3px 9px;cursor:pointer}
+
+/* ══ TABLERO DE TESTING ══════════════════════════════════════ */
+.ct-cards{display:grid;grid-template-columns:1fr;gap:9px}
+@media (min-width:720px){ .ct-cards{grid-template-columns:1fr 1fr} }
+@media (min-width:1400px){ .ct-cards{grid-template-columns:1fr 1fr 1fr} }
+.ct-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border2);
+  border-radius:10px;padding:12px 13px}
+.ct-card-hd{display:flex;align-items:baseline;gap:8px}
+.ct-card-nm{font-size:14px;color:var(--text);font-weight:600;flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ct-card-v{font-size:19px;font-weight:700;flex-shrink:0}
+.ct-card-sub{font-size:10px;color:var(--muted);margin-top:3px;text-transform:capitalize}
+.ct-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:11px}
+.ct-kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.ct-kpi-l{font-size:9px;color:var(--muted);letter-spacing:.06em;margin-bottom:6px}
+.ct-kpi-n{font-family:var(--font-head);font-size:26px;line-height:1}
+.ct-u{font-size:12px;color:var(--muted);font-family:var(--font-body)}
+.ct-kpi-s{font-size:10px;color:var(--muted);margin-top:5px}
+
+.ct-tabla{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ct-head{display:grid;grid-template-columns:30px 1.5fr 1fr 1.5fr .8fr;padding:9px 13px;background:var(--surface2)}
+.ct-head span{font-size:9px;color:var(--muted);letter-spacing:.05em}
+.ct-row{display:grid;grid-template-columns:30px 1.5fr 1fr 1.5fr .8fr;align-items:center;
+  padding:10px 13px;border-top:1px solid var(--border)}
+.ct-pos{font-size:11px;font-weight:700}
+.ct-nm{display:block;font-size:14px;color:var(--text);font-weight:600}
+.ct-sub{display:block;font-size:10px;color:var(--muted);margin-top:1px}
+.ct-val{font-size:18px;font-weight:700}
+.ct-barwrap{padding:0 10px}
+.ct-bar{position:relative;display:block;height:8px;background:var(--surface2);border-radius:4px}
+.ct-fill{position:absolute;top:0;height:100%;border-radius:4px;opacity:.85}
+.ct-zero{position:absolute;left:50%;top:-3px;width:1px;height:14px;background:var(--muted);opacity:.6}
+.ct-des{display:block;font-size:10px;text-align:center;margin-top:4px}
+@media (max-width:640px){
+  .ct-kpis{grid-template-columns:1fr}
+  .ct-head,.ct-row{grid-template-columns:24px 1.4fr .9fr .7fr}
+  .ct-barwrap{display:none}
+}
 
 /* ── PRINT / PDF ── */
 @media print {
@@ -4838,8 +4883,8 @@ async function renderConsultaTesting(){
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${squadBtns}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
       <select class="semana-select" style="flex:2;min-width:180px;margin:0" onchange="ctSet('test',this.value)">${opTest}</select>
-      <input type="date" class="semana-select" style="flex:1;min-width:130px;margin:0" value="${_ct.desde}" onchange="ctSet('desde',this.value)">
-      <input type="date" class="semana-select" style="flex:1;min-width:130px;margin:0" value="${_ct.hasta}" onchange="ctSet('hasta',this.value)">
+      <input type="date" class="semana-select" style="flex:1;min-width:130px;margin:0" title="Desde" value="${_ct.desde}" onchange="ctSet('desde',this.value)">
+      <input type="date" class="semana-select" style="flex:1;min-width:130px;margin:0" title="Hasta" value="${_ct.hasta}" onchange="ctSet('hasta',this.value)">
       <button class="test-pdf-btn" onclick="ctExportarPDF()">⭳ PDF</button>
     </div>`;
 
@@ -4850,11 +4895,230 @@ async function renderConsultaTesting(){
   c.innerHTML = filtros + '<div id="ct-tabla">' + _ctTabla() + '</div>';
 }
 
+function ctVista(v){ _ct.vista = v; const c=document.getElementById('ct-tabla'); if(c) c.innerHTML=_ctTabla(); }
+function ctFecha(f){ _ct.fecha = f; const c=document.getElementById('ct-tabla'); if(c) c.innerHTML=_ctTabla(); }
+
 function _ctTabla(){
   const d = _ct.data;
   if (!d) return '';
-  // Con un test elegido: fechas en columnas. Sin test: último de cada test.
-  return _ct.test ? _ctTablaFechas(d, _ct.test) : _ctTablaResumen(d);
+  if (!_ct.test) return _ctTablaResumen(d);
+  return _ctVisor(d, _ct.test);
+}
+
+// ── Visor de un test: fecha, equipo en barras, medias por posición
+//    y una tarjeta por jugador con su evolución ──
+function _ctVisor(d, idTest){
+  const t = d.catalogo[idTest] || { nombre:idTest, unidad:'', mejorMas:true };
+  const u = t.unidad || '';
+  const fechas = d.fechas.slice().sort();
+  if (!fechas.length) return '<div class="pevo-empty">Sin datos de este test.</div>';
+  if (!_ct.fecha || fechas.indexOf(_ct.fecha) === -1) _ct.fecha = fechas[fechas.length-1];
+  const fSel = _ct.fecha;
+  const dd = f => f.slice(8,10)+'/'+f.slice(5,7);
+
+  // Datos del jugador en la fecha elegida + su serie completa
+  const filas = [];
+  d.jugadores.forEach(j=>{
+    const reg = j.datos[idTest];
+    if (!reg) return;
+    const serie = Object.keys(reg).sort().map(f=>({ fecha:f, valor:reg[f].valor, extra:reg[f].extra }));
+    const aqui = reg[fSel];
+    filas.push({
+      nombre:j.nombre, pos:(j.rugbyposition||'sin posición'),
+      valor: aqui ? aqui.valor : null,
+      extra: aqui ? aqui.extra : null,
+      serie: serie
+    });
+  });
+  const conDato = filas.filter(f=>f.valor!=null);
+  if (!conDato.length) return _ctPills(d,fechas,fSel) + '<div class="pevo-empty">Nadie tiene registro en esta fecha.</div>';
+
+  const vals = conDato.map(f=>f.valor);
+  const media = Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*100)/100;
+  const mejorV = t.mejorMas ? Math.max(...vals) : Math.min(...vals);
+  const mejorJ = conDato.find(f=>f.valor===mejorV);
+  const dec = (String(media).split('.')[1]||'').length > 1 ? 2 : (String(media).indexOf('.')!==-1 ? 2 : 1);
+  const fmt = v => Number(v).toFixed(v%1===0?0:dec);
+
+  // Comparación con la fecha anterior que tenga datos
+  const iSel = fechas.indexOf(fSel);
+  const fPrev = iSel > 0 ? fechas[iSel-1] : null;
+  let mediaPrev = null, mejoran = 0, conPrev = 0;
+  if (fPrev) {
+    const prevVals = [];
+    filas.forEach(f=>{
+      const a = f.serie.find(x=>x.fecha===fPrev), b = f.serie.find(x=>x.fecha===fSel);
+      if (a) prevVals.push(a.valor);
+      if (a && b) { conPrev++; if (t.mejorMas ? b.valor>a.valor : b.valor<a.valor) mejoran++; }
+    });
+    if (prevVals.length) mediaPrev = Math.round(prevVals.reduce((s,v)=>s+v,0)/prevVals.length*100)/100;
+  }
+  const difMedia = mediaPrev!=null ? Math.round((media-mediaPrev)*100)/100 : null;
+  const bienMedia = difMedia!=null && (t.mejorMas ? difMedia>0 : difMedia<0);
+
+  // ── Medias por posición ──
+  const porPos = {};
+  conDato.forEach(f=>{ (porPos[f.pos] = porPos[f.pos] || []).push(f.valor); });
+  const mediasPos = {};
+  Object.keys(porPos).forEach(p=>{
+    mediasPos[p] = Math.round(porPos[p].reduce((s,v)=>s+v,0)/porPos[p].length*100)/100;
+  });
+
+  const colDe = v => {
+    const mejorQue = t.mejorMas ? v >= media : v <= media;
+    if (v === mejorV) return '#00e5a0';
+    if (mejorQue) return '#9acf44';
+    const rango = Math.max(...vals) - Math.min(...vals) || 1;
+    return Math.abs(v-media) > rango*0.3 ? '#ff7070' : '#ffc04d';
+  };
+
+  const kpi = (n,l,sub,col) => `<div class="ct-kpi">
+      <div class="ct-kpi-l">${l}</div>
+      <div class="ct-kpi-n" style="color:${col}">${n}<span class="ct-u"> ${u}</span></div>
+      <div class="ct-kpi-s">${sub}</div></div>`;
+  const kpis = `<div class="ct-kpis">
+      ${kpi(fmt(media),'MEDIA EQUIPO',
+        difMedia!=null ? `<span style="color:${bienMedia?'#00e5a0':'#ff7070'}">${difMedia>0?'▲':'▼'}${Math.abs(difMedia)}</span> vs ${dd(fPrev)}` : conDato.length+' jugadores',
+        'var(--text)')}
+      ${kpi(fmt(mejorV),'MEJOR', mejorJ?mejorJ.nombre:'', '#00e5a0')}
+      ${kpi(fPrev ? mejoran+'<span class="ct-u">/'+conPrev+'</span>' : conDato.length,
+        fPrev?'MEJORAN':'CON REGISTRO', fPrev?'vs '+dd(fPrev):'en esta fecha',
+        fPrev ? (mejoran>=conPrev/2?'#00e5a0':'#ffa040') : 'var(--text)')}
+    </div>`;
+
+  // ── Barras de todo el equipo ──
+  const orden = conDato.slice().sort((a,b)=> t.mejorMas ? b.valor-a.valor : a.valor-b.valor);
+  const W = Math.max(560, orden.length*52), H = 200, base = 146, padL = 38;
+  const maxV = Math.max(...vals), minV = Math.min(...vals);
+  const lo = Math.max(0, minV - (maxV-minV||1)*0.6);
+  const alto = v => Math.max(6, ((v-lo)/((maxV-lo)||1))*96 + 12);
+  const barras = orden.map((f,i)=>{
+    const x = padL + i*((W-padL-14)/orden.length);
+    const an = Math.min(38, (W-padL-14)/orden.length - 10);
+    const h = alto(f.valor), y = base-h, c = colDe(f.valor);
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${an.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${c}" opacity=".82"><title>${f.nombre}: ${f.valor} ${u}</title></rect>
+      <text x="${(x+an/2).toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="${c}">${f.valor}</text>
+      <text x="${(x+an/2).toFixed(1)}" y="${base+14}" text-anchor="end" font-size="9" fill="var(--muted)" transform="rotate(-50 ${(x+an/2).toFixed(1)} ${base+14})">${f.nombre.split(',')[0]}</text>`;
+  }).join('');
+  const yMedia = base - alto(media);
+  const grafico = `<div class="rd-box" style="margin-bottom:11px">
+      <div class="rd-box-t">Todo el equipo · ${dd(fSel)}</div>
+      <div style="overflow-x:auto">
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W,760)}px;height:auto;display:block">
+        <line x1="${padL}" y1="${base}" x2="${W-8}" y2="${base}" stroke="var(--border2)"/>
+        <line x1="${padL}" y1="${yMedia.toFixed(1)}" x2="${W-8}" y2="${yMedia.toFixed(1)}" stroke="var(--muted)" stroke-dasharray="4 4" opacity=".7"/>
+        <text x="${padL-5}" y="${(yMedia+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${fmt(media)}</text>
+        ${barras}
+      </svg></div></div>`;
+
+  // ── Medias por posición ──
+  const posOrden = Object.keys(mediasPos).sort();
+  const maxPos = Math.max(...posOrden.map(p=>mediasPos[p]));
+  const minPos = Math.min(...posOrden.map(p=>mediasPos[p]));
+  const bloquePos = `<div class="rd-box" style="margin-bottom:11px">
+      <div class="rd-box-t">Media por posición</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${posOrden.map(p=>{
+          const m = mediasPos[p];
+          const esMejor = t.mejorMas ? m===maxPos : m===minPos;
+          const col = esMejor ? '#00e5a0' : 'var(--text)';
+          return `<div style="flex:1;min-width:104px;background:var(--surface2);border-radius:8px;padding:10px 8px;text-align:center">
+            <div style="font-size:19px;font-weight:700;color:${col};line-height:1">${fmt(m)}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:4px;text-transform:capitalize">${p}</div>
+            <div style="font-size:9px;color:var(--muted);opacity:.7">${porPos[p].length} jug.</div>
+          </div>`;
+        }).join('')}
+      </div></div>`;
+
+  // ── Tarjetas por jugador, en orden alfabético ──
+  const alf = filas.slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  const tarjetas = alf.map(f=>_ctTarjeta(f, t, u, media, mediasPos[f.pos], fSel, dec)).join('');
+
+  return _ctPills(d,fechas,fSel) + kpis + grafico + bloquePos +
+    `<div style="font-size:11px;color:var(--muted);margin:14px 0 8px">Evolución por jugador · orden alfabético</div>
+     <div class="ct-cards">${tarjetas}</div>`;
+}
+
+function _ctPills(d, fechas, fSel){
+  const dd = f => f.slice(8,10)+'/'+f.slice(5,7);
+  const tests = d.tests.map(t=>{
+    const on = t.id===_ct.test;
+    return `<span onclick="ctSet('test','${t.id}')" style="font-size:12px;padding:8px 15px;border-radius:8px;cursor:pointer;font-weight:${on?'600':'400'};
+      background:${on?'rgba(232,20,42,.13)':'var(--surface2)'};color:${on?'var(--accent)':'var(--muted)'};
+      border:1px solid ${on?'rgba(232,20,42,.4)':'var(--border2)'}">${t.nombre}</span>`;
+  }).join('');
+  const pf = fechas.map(f=>{
+    const on = f===fSel;
+    return `<span onclick="ctFecha('${f}')" style="font-size:11px;padding:6px 12px;border-radius:7px;cursor:pointer;
+      background:${on?'var(--surface2)':'transparent'};color:${on?'var(--text)':'var(--muted)'};
+      border:1px solid ${on?'var(--border-strong)':'var(--border2)'}">${dd(f)}</span>`;
+  }).join('');
+  return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${tests}</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <span style="font-size:10px;color:var(--muted);margin-right:3px">FECHA</span>${pf}</div>`;
+}
+
+// Tarjeta de un jugador: marca del día, comparación con su posición
+// y con el equipo, y la serie con el valor y la fecha de cada punto.
+function _ctTarjeta(f, t, u, mediaEq, mediaPos, fSel, dec){
+  const fmt = v => Number(v).toFixed(v%1===0?0:dec);
+  if (f.valor == null) {
+    return `<div class="ct-card" style="border-left-color:var(--border2);opacity:.5">
+      <div class="ct-card-hd"><span class="ct-card-nm">${f.nombre}</span></div>
+      <div style="font-size:11px;color:var(--muted)">Sin registro en esta fecha</div></div>`;
+  }
+  const serie = f.serie;
+  const idx = serie.findIndex(x=>x.fecha===fSel);
+  const ant = idx > 0 ? serie[idx-1] : null;
+  const dif = ant ? Math.round((f.valor-ant.valor)*100)/100 : null;
+  const bien = dif!=null && (t.mejorMas ? dif>0 : dif<0);
+  const col = dif==null ? 'var(--muted)' : (bien ? '#00e5a0' : (dif===0 ? 'var(--muted)' : '#ff7070'));
+
+  const cmp = (val, etiqueta) => {
+    if (val == null) return '';
+    const d = Math.round((f.valor-val)*100)/100;
+    const mejor = t.mejorMas ? d>0 : d<0;
+    return `<div style="flex:1;text-align:center">
+      <div style="font-size:13px;font-weight:700;color:${d===0?'var(--muted)':(mejor?'#00e5a0':'#ffa040')}">${d>0?'+':''}${d}</div>
+      <div style="font-size:9px;color:var(--muted)">${etiqueta}</div></div>`;
+  };
+
+  // Mini gráfica con valor y fecha en cada punto
+  let graf = '<div style="font-size:10px;color:var(--muted);padding:8px 0">Solo un registro</div>';
+  if (serie.length > 1) {
+    const W=250,H=86, padX=24, top=16, bot=58;
+    const vs = serie.map(p=>p.valor);
+    const mn=Math.min(...vs), mx=Math.max(...vs), rg=(mx-mn)||1;
+    const y = v => t.mejorMas ? bot-((v-mn)/rg)*(bot-top) : top+((v-mn)/rg)*(bot-top);
+    const x = i => padX + i*((W-padX*2)/(serie.length-1));
+    const pts = serie.map((p,i)=>`${x(i).toFixed(1)},${y(p.valor).toFixed(1)}`).join(' ');
+    const lineCol = (serie.length>1 && (t.mejorMas ? serie[serie.length-1].valor>serie[0].valor : serie[serie.length-1].valor<serie[0].valor)) ? '#00e5a0' : '#ff7070';
+    const dots = serie.map((p,i)=>{
+      const es = p.fecha===fSel;
+      return `<circle cx="${x(i).toFixed(1)}" cy="${y(p.valor).toFixed(1)}" r="${es?5:3.5}" fill="${lineCol}"/>
+        <text x="${x(i).toFixed(1)}" y="${(y(p.valor)-9).toFixed(1)}" text-anchor="middle" font-size="${es?10:9}" ${es?'font-weight="700"':''} fill="${es?lineCol:'var(--muted)'}">${p.valor}</text>
+        <text x="${x(i).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="8" fill="var(--muted)">${p.fecha.slice(8,10)}/${p.fecha.slice(5,7)}</text>`;
+    }).join('');
+    graf = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:86px;display:block">
+      <line x1="10" y1="${bot+6}" x2="${W-10}" y2="${bot+6}" stroke="var(--border)"/>
+      <polyline points="${pts}" fill="none" stroke="${lineCol}" stroke-width="2.2" stroke-linejoin="round"/>
+      ${dots}</svg>`;
+  }
+
+  const asim = (f.extra && f.extra.asimetria!=null)
+    ? `<span style="font-size:10px;color:${_asimColor(f.extra.asimetria)}"> · ${f.extra.asimetria}% asim</span>` : '';
+
+  return `<div class="ct-card" style="border-left-color:${col}">
+    <div class="ct-card-hd">
+      <span class="ct-card-nm">${f.nombre}</span>
+      <span class="ct-card-v" style="color:${col}">${f.valor}<span class="ct-u"> ${u}</span></span>
+    </div>
+    <div class="ct-card-sub">${f.pos}${asim}${dif!=null?` · <span style="color:${col}">${dif>0?'▲':'▼'}${Math.abs(dif)} vs ${ant.fecha.slice(8,10)}/${ant.fecha.slice(5,7)}</span>`:''}</div>
+    <div style="display:flex;gap:6px;background:var(--surface2);border-radius:7px;padding:7px;margin:8px 0">
+      ${cmp(mediaPos,'vs su posición')}${cmp(mediaEq,'vs equipo')}
+    </div>
+    ${graf}
+  </div>`;
 }
 
 function _ctTablaFechas(d, idTest){
@@ -10426,16 +10690,19 @@ function _rdReparto(r){
 function _rdTabla(r){
   let lista = r.jugadores;
   if (_rd.soloAlerta) lista = lista.filter(j=>j.avisos.length);
-  const ICO = { carga:'⚡', wellness:'⚠', lesion:'🩹' };
-  const COL = { carga:'#ff7070', wellness:'#ffc04d', lesion:'#ff7070' };
+  const ICO = { carga:'⚡', wellness:'⚠', lesion:'🩹', molestia:'📍' };
+  const COL = { carga:'#ff7070', wellness:'#ffc04d', lesion:'#ff7070', molestia:'#ffa040' };
 
   const filas = lista.map(j=>{
     const tipos = {};
     j.avisos.forEach(a=>{ tipos[a.tipo] = (tipos[a.tipo]||0)+1; });
-    const chips = Object.keys(tipos).map(t=>{
-      const motivos = j.avisos.filter(a=>a.tipo===t).map(a=>a.txt).join(' · ');
-      return `<span class="rd-chip" style="background:${COL[t]}26;border-color:${COL[t]}66;color:${COL[t]}" title="${motivos.replace(/"/g,'&quot;')}">${ICO[t]}${tipos[t]>1?tipos[t]:''}</span>`;
-    }).join('');
+    const chips = Object.keys(tipos).map(t=>
+      `<span class="rd-chip" style="background:${COL[t]}26;border-color:${COL[t]}66;color:${COL[t]}">${ICO[t]}${tipos[t]>1?tipos[t]:''}</span>`
+    ).join('');
+    // El motivo se ve directamente, sin tener que pasar el cursor
+    const motivos = j.avisos.map(a=>
+      `<span class="rd-motivo" style="background:${COL[a.tipo]}1f;border:1px solid ${COL[a.tipo]}55;color:${COL[a.tipo]}">${ICO[a.tipo]}${a.txt?' '+a.txt:''}</span>`
+    ).join('');
     const borde = j.avisos.some(a=>a.tipo!=='wellness'||j.score<12) && j.avisos.length
       ? (j.score!=null && j.score<12 ? '#ff7070' : '#ffc04d')
       : _rdColScore(j.score);
@@ -10444,18 +10711,24 @@ function _rdTabla(r){
       ? '<span class="rd-cell" style="background:var(--surface2);color:var(--muted)">—</span>'
       : `<span class="rd-cell" style="background:${_rdCol(v)};opacity:.78;color:#0d0f12">${v}</span>`;
     if (!j.respondido) {
-      return `<div class="rd-row" style="border-left-color:var(--border2);opacity:.5">
-        <span class="rd-nm">${j.nombre}</span>
-        <span style="text-align:center">${chips||'<span style="color:rgba(255,255,255,.15);font-size:11px">—</span>'}</span>
-        <span style="text-align:center;font-size:11px;color:var(--muted)">sin responder</span>
-        <span></span><span></span><span></span><span></span>
+      return `<div class="rd-item" style="border-left-color:var(--border2);opacity:.55">
+        <div class="rd-row">
+          <span class="rd-nm">${j.nombre}</span>
+          <span style="text-align:center">${chips||'<span style="color:rgba(255,255,255,.15);font-size:11px">—</span>'}</span>
+          <span style="text-align:center;font-size:12px;color:var(--muted)">sin responder</span>
+          <span></span><span></span><span></span><span></span>
+        </div>
+        ${motivos?`<div class="rd-motivos">${motivos}</div>`:''}
       </div>`;
     }
-    return `<div class="rd-row" style="border-left-color:${borde};background:${fondo}">
-      <span class="rd-nm">${j.nombre}</span>
-      <span style="text-align:center">${chips||'<span style="color:rgba(255,255,255,.15);font-size:11px">—</span>'}</span>
-      <span style="text-align:center;font-size:15px;font-weight:700;color:${_rdColScore(j.score)}">${j.score!=null?j.score:'—'}</span>
-      <span>${item(j.ganas)}</span><span>${item(j.dolor)}</span><span>${item(j.fatiga)}</span><span>${item(j.sueno)}</span>
+    return `<div class="rd-item" style="border-left-color:${borde};background:${fondo}">
+      <div class="rd-row">
+        <span class="rd-nm">${j.nombre}</span>
+        <span style="text-align:center">${chips||'<span style="color:rgba(255,255,255,.15);font-size:11px">—</span>'}</span>
+        <span style="text-align:center;font-size:19px;font-weight:700;color:${_rdColScore(j.score)}">${j.score!=null?j.score:'—'}</span>
+        <span>${item(j.ganas)}</span><span>${item(j.dolor)}</span><span>${item(j.fatiga)}</span><span>${item(j.sueno)}</span>
+      </div>
+      ${motivos?`<div class="rd-motivos">${motivos}</div>`:''}
     </div>`;
   }).join('');
 
@@ -10478,9 +10751,9 @@ function _rdTabla(r){
     ${filas || '<div class="pevo-empty">Nadie con avisos hoy.</div>'}
     <div class="rd-leyenda">
       <span>⚡ carga · ACWR fuera de zona</span>
-      <span>⚠ wellness · score o ítem bajo</span>
+      <span>⚠ readiness bajo</span>
+      <span>📍 dolor alto</span>
       <span>🩹 lesión abierta</span>
-      <span style="opacity:.6">pasa el cursor para ver el motivo</span>
     </div>
   </div>`;
 }
