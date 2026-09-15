@@ -20,6 +20,7 @@
   --accent2:   #00e5a0;
   --text:      #f0f2f5;
   --muted:     #7a8494;
+  --text-secondary: #a8b0bc;
   --danger:    #ff4d4d;
   --font-head: 'Bebas Neue', sans-serif;
   --font-body: 'DM Sans', sans-serif;
@@ -37,6 +38,7 @@ body.light-mode {
   --accent2:   #009e70;
   --text:      #111318;
   --muted:     #5a6475;
+  --text-secondary: #46505f;
   --danger:    #d93030;
 }
 /* Light mode: topbar */
@@ -1251,7 +1253,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); fo
   body.staff-desktop .bottom-nav .bn-item:hover .bn-lbl{ color:#fff; }
   body.staff-desktop .bottom-nav .bn-item.active .bn-icon,
   body.staff-desktop .bottom-nav .bn-item.active .bn-lbl{ color:#ff4757; }
-  body.light-mode.staff-desktop .bottom-nav .bn-icon{ color:rgba(0,0,0,.55); }
+  /* Modo claro: la barra lateral quedaba casi invisible */
+  body.light-mode.staff-desktop .bottom-nav{ background:#fff; border-right:1px solid rgba(0,0,0,.09); }
+  body.light-mode.staff-desktop .bottom-nav .bn-item.active{ background:rgba(232,20,42,.07); }
+  body.light-mode.staff-desktop .bottom-nav .bn-item.active .bn-icon,
+  body.light-mode.staff-desktop .bottom-nav .bn-item.active .bn-lbl{ color:#c0101f; }
+  body.light-mode.staff-desktop .bottom-nav .bn-icon{ color:rgba(0,0,0,.62); }
   body.light-mode.staff-desktop .bottom-nav .bn-lbl { color:rgba(0,0,0,.75); }
   body.light-mode.staff-desktop .bottom-nav::before { color:rgba(0,0,0,.45); }
   body.light-mode.staff-desktop .bottom-nav .bn-item:hover .bn-icon,
@@ -1795,6 +1802,10 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
   .ct-head,.ct-row{grid-template-columns:24px 1.4fr .9fr .7fr}
   .ct-barwrap{display:none}
 }
+
+/* Barra de herramientas de la tabla de readiness */
+.rd-toolbar{display:flex;gap:9px;align-items:center;margin-bottom:8px}
+.rd-filtro{font-size:11px;border-radius:12px;padding:5px 12px;cursor:pointer}
 
 /* ── PRINT / PDF ── */
 @media print {
@@ -10725,14 +10736,29 @@ function _rdTabla(r){
       <div class="rd-row">
         <span class="rd-nm">${j.nombre}</span>
         <span style="text-align:center">${chips||'<span style="color:rgba(255,255,255,.15);font-size:11px">—</span>'}</span>
-        <span style="text-align:center;font-size:19px;font-weight:700;color:${_rdColScore(j.score)}">${j.score!=null?j.score:'—'}</span>
+        <span style="text-align:center">
+          <span style="display:block;font-size:19px;font-weight:700;color:${_rdColScore(j.score)}">${j.score!=null?j.score:'—'}</span>
+          ${j.cambioPct!=null?`<span style="display:block;font-size:10px;font-weight:600;margin-top:2px;
+            color:${j.cambioPct>0?'#00e5a0':(j.cambioPct<0?'#ff7070':'var(--muted)')}"
+            title="anterior ${j.scorePrev} el ${j.fechaPrev||''}">${j.cambioPct>0?'+':''}${j.cambioPct}%</span>`:''}
+        </span>
         <span>${item(j.ganas)}</span><span>${item(j.dolor)}</span><span>${item(j.fatiga)}</span><span>${item(j.sueno)}</span>
       </div>
       ${motivos?`<div class="rd-motivos">${motivos}</div>`:''}
     </div>`;
   }).join('');
 
-  return `<div class="rd-tabla">
+  const conAviso = r.jugadores.filter(j=>j.avisos.length).length;
+  const toolbar = `<div class="rd-toolbar">
+      <span onclick="rdToggleFiltro()" class="rd-filtro" style="
+        background:${_rd.soloAlerta?'rgba(255,112,112,.16)':'transparent'};
+        color:${_rd.soloAlerta?'#ff7070':'var(--muted)'};
+        border:1px solid ${_rd.soloAlerta?'rgba(255,112,112,.4)':'var(--border2)'}">
+        ${_rd.soloAlerta?'✓ ':''}solo con aviso (${conAviso})</span>
+      <span style="font-size:10px;color:var(--muted)">${lista.length} de ${r.jugadores.length} jugadores</span>
+    </div>`;
+
+  return toolbar + `<div class="rd-tabla">
     <div class="rd-head">
       <span class="rd-nm" style="color:var(--muted);font-size:9px;letter-spacing:.05em">JUGADOR</span>
       <span style="text-align:center;font-size:9px;color:var(--muted)">⚠</span>
@@ -10742,12 +10768,7 @@ function _rdTabla(r){
       <span style="text-align:center;font-size:9px;color:var(--muted);letter-spacing:.05em">FATIGA</span>
       <span style="text-align:center;font-size:9px;color:var(--muted);letter-spacing:.05em">SUEÑO</span>
     </div>
-    <div style="padding:7px 12px;display:flex;gap:6px;align-items:center;background:var(--surface2)">
-      <span onclick="rdToggleFiltro()" style="font-size:10px;padding:3px 10px;border-radius:11px;cursor:pointer;
-        background:${_rd.soloAlerta?'rgba(255,112,112,.16)':'transparent'};
-        color:${_rd.soloAlerta?'#ff7070':'var(--muted)'};border:1px solid ${_rd.soloAlerta?'rgba(255,112,112,.4)':'var(--border2)'}">solo con aviso</span>
-      <span style="font-size:10px;color:var(--muted)">${lista.length} jugadores</span>
-    </div>
+
     ${filas || '<div class="pevo-empty">Nadie con avisos hoy.</div>'}
     <div class="rd-leyenda">
       <span>⚡ carga · ACWR fuera de zona</span>
