@@ -3988,12 +3988,7 @@ function renderCard(e) {
     <div class="exn-nota">
       <span class="exn-nota-ic">ℹ</span>
       <span class="exn-nota-txt">${e.notas}</span>
-    </div>` : `
-    <div style="background:var(--surface2);border-radius:9px;padding:9px 12px;margin-bottom:10px;
-                font-size:10px;color:var(--muted);line-height:1.5">
-      El momentum no se puede calcular en este test: hace falta que la unidad sea de tiempo (s) con la
-      distancia en el nombre («10 metres»), o que el resultado ya venga en m/s o km/h.
-    </div>`;
+    </div>` : '';
 
   const videoBtn = hasVideo
     ? `<span class="exn-ic exn-ic-vid" title="Ver vídeo" onclick="openVideoModal('${nombreEsc}','${videoEsc}')">▶</span>`
@@ -5610,7 +5605,12 @@ function _informeAplicarModo(){
         Velocidad media sobre ${_informeDistancia(test.nombre)||'?'} m · peso corporal más reciente del wellness, con su fecha entre paréntesis.
         ${sinPeso?`<b style="color:#e6a817">${sinPeso} sin peso</b>: escríbelo a mano en la columna PESO.`:''}
       </div>`:''}
-    </div>` : '';
+    </div>` : `
+    <div style="background:var(--surface2);border-radius:9px;padding:9px 12px;margin-bottom:10px;
+                font-size:10px;color:var(--muted);line-height:1.5">
+      El momentum no se puede calcular en este test: hace falta que la unidad sea de tiempo (s)
+      con la distancia en el nombre («10 metres»), o que el resultado venga ya en m/s o km/h.
+    </div>`;
 
   const selector = variasCols ? `
     <div style="background:var(--surface2);border-radius:9px;padding:11px 13px;margin:12px 0">
