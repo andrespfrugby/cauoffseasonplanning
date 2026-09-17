@@ -2624,7 +2624,6 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
             <option value="">Todos los squads</option>
             <option value="men's xv">Men's XV</option>
             <option value="women's">Women's</option>
-            <option value="academy">Academy</option>
           </select>
           <span class="coach-badge">Coach</span>
         </div>
@@ -2668,7 +2667,6 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
             <option value="">Todos los squads</option>
             <option value="men's xv">Men's XV</option>
             <option value="women's">Women's</option>
-            <option value="academy">Academy</option>
           </select>
           <button class="test-pdf-btn" onclick="exportLoadPDF()" title="Exportar esta vista a PDF">⭳ PDF</button>
           <span class="coach-badge">Coach</span>
@@ -2732,7 +2730,6 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
             <option value="">Todos los squads</option>
             <option value="men's xv">Men's XV</option>
             <option value="women's">Women's</option>
-            <option value="academy">Academy</option>
           </select>
           <span class="coach-badge">Coach</span>
         </div>
@@ -2799,7 +2796,6 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
             <option value="">Todos los squads</option>
             <option value="men's xv">Men's XV</option>
             <option value="women's">Women's</option>
-            <option value="academy">Academy</option>
           </select>
           <span class="coach-badge">Coach</span>
         </div>
@@ -5275,7 +5271,7 @@ async function renderInformeTesting(){
   if(!_informeFecha) _informeFecha = hoy;
   const testOpts = ['<option value="">— Elige un test —</option>']
     .concat(_informeCatalogo.map(t=>`<option value="${t.id}"${t.id===_informeTestSel?' selected':''}>${t.nombre} (${t.unidad})</option>`)).join('');
-  const squadOpts = [["men's xv","Men's XV"],["women's","Women's"],["academy","Academy"]]
+  const squadOpts = [["men's xv","Men's XV"],["women's","Women's"]]
     .map(([v,l])=>`<option value="${v}"${v===_informeSquad?' selected':''}>${l}</option>`).join('');
   c.innerHTML = `
     <div class="test-hd-row"><div class="test-hd">Informe de testing</div></div>
@@ -6493,6 +6489,11 @@ function initNav() {
     // El jugador no usa el selector de semana ni los Day 1..5: su vista
     // es la agenda por fechas. Se ocultan de entrada para que ninguna
     // carga tardía los deje visibles bajo el calendario.
+    // Squads sin wellness activo: se oculta su pestaña
+    if (!puedeVer('wellness')) {
+      const bw = document.getElementById('bn-wellness');
+      if (bw) bw.style.display = 'none';
+    }
     ['week-dropdown-btn','day-cards-row'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
@@ -6555,6 +6556,7 @@ function switchTab(tab) {
   if (activeBtn) activeBtn.classList.add('active');
 
   // Load content on demand
+  if (tab === 'wellness' && !state.isCoach && !puedeVer('wellness')) { switchTab('sesion'); return; }
   if (tab === 'sesion' && !state.isCoach) {
     // El jugador ve la agenda por fechas; el selector de semana antiguo se oculta.
     const aw = document.getElementById('agenda-wrap');
@@ -6737,6 +6739,9 @@ document.addEventListener('touchstart', function(e){
     document.querySelectorAll('.cd-uadot.active').forEach(d=>cdDotHide(d));
   }
 }, true);
+
+// En los squads sin RPE de campo, Load muestra únicamente gimnasio.
+function _soloGym(){ return !squadTiene('fieldLoad', state.coachSquadFilter || ''); }
 
 async function renderCargaDiaria() {
   const c = document.getElementById('carga-diaria-content');
@@ -6925,23 +6930,25 @@ async function renderCargaDiaria() {
       <span style="font-size:11px;color:var(--muted)">${esHoy?'Hoy':''}</span>
     </div>
 
-    <div class="cd-kpis">
+    <div class="cd-kpis"${_soloGym()?' style="grid-template-columns:1fr;max-width:260px"':''}>
       <div class="cd-kpi" style="border-top-color:#4a90c2"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_gym)}">${fmtN(pr.rpe_gym)}</div><div class="cd-kpi-lbl">Gym</div></div>
+      ${_soloGym()?'':`
       <div class="cd-kpi" style="border-top-color:#ffc04d"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_campo)}">${fmtN(pr.rpe_campo)}</div><div class="cd-kpi-lbl">Entren.</div></div>
-      <div class="cd-kpi" style="border-top-color:#ff7a70"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_partido)}">${fmtN(pr.rpe_partido)}</div><div class="cd-kpi-lbl">Partido</div></div>
+      <div class="cd-kpi" style="border-top-color:#ff7a70"><div class="cd-kpi-num" style="color:${rpeCol(pr.rpe_partido)}">${fmtN(pr.rpe_partido)}</div><div class="cd-kpi-lbl">Partido</div></div>`}
     </div>
 
     <div class="cd-chart-title">RPE Gym <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA</span></div>
     ${barSet(j => j.rpe_gym, j => j.ua_gym)}
 
+    ${_soloGym()?'':`
     <div class="cd-chart-title">RPE Entrenamiento de campo <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA</span></div>
     ${barSet(j => j.rpe_campo, j => j.ua_campo)}
 
     <div class="cd-chart-title">RPE Partido <span style="font-weight:400;color:var(--muted);font-size:9px">· barras RPE · línea UA</span></div>
-    ${barSet(j => j.rpe_partido, j => j.ua_partido)}
+    ${barSet(j => j.rpe_partido, j => j.ua_partido)}`}
 
-    <div class="cd-chart-title">Carga total (UA) <span style="font-weight:400;color:var(--muted);font-size:9px">· gym + campo + partido</span></div>
-    ${uaBarSet(j => j.ua_total)}`;
+    <div class="cd-chart-title">Carga total (UA) <span style="font-weight:400;color:var(--muted);font-size:9px">· ${_soloGym()?'gimnasio':'gym + campo + partido'}</span></div>
+    ${uaBarSet(j => _soloGym() ? j.ua_gym : j.ua_total)}`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -7054,7 +7061,8 @@ async function renderControlCargas() {
   const semanas = [];
   for (let i=0;i<celdas.length;i+=7) semanas.push(celdas.slice(i,i+7));
 
-  const modoBtns = ['gym','campo','total'].map(m=>{
+  if (_soloGym()) _ccModo = 'gym';
+  const modoBtns = (_soloGym() ? ['gym'] : ['gym','campo','total']).map(m=>{
     const lbl = m==='gym'?'Gym':m==='campo'?'Campo':'Total';
     const act = _ccModo===m;
     return `<button onclick="ccSetModo('${m}')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:none;cursor:pointer;background:${act?'var(--surface)':'transparent'};color:${act?'var(--text)':'var(--muted)'};font-weight:${act?'600':'400'}">${lbl}</button>`;
@@ -7089,12 +7097,12 @@ async function renderControlCargas() {
   c.innerHTML = `
     <!-- Selector de contenido -->
     <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:14px">
-      <div style="display:flex;gap:3px;background:var(--surface2);padding:3px;border-radius:9px">${modoBtns}</div>
+      ${_soloGym()?'':`<div style="display:flex;gap:3px;background:var(--surface2);padding:3px;border-radius:9px">${modoBtns}</div>`}
     </div>
 
     <!-- ACWR total -->
     <div style="display:flex;align-items:center;gap:8px;margin:0 0 4px">
-      <span style="font-size:15px;font-weight:700">⚖️ Control de carga · ACWR</span>
+      <span style="font-size:15px;font-weight:700">⚖️ Control de carga · ACWR${_soloGym()?' gimnasio':''}</span>
     </div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Ratio agudo:crónico — carga ${_ccModo==='gym'?'de gimnasio':_ccModo==='campo'?'de campo':'total (gym+campo+partido)'} · cada jugador vs. su base</div>
 
@@ -8495,7 +8503,8 @@ async function renderTendencia(){
   if (!res || !res.ok) { c.innerHTML = '<div class="cd-empty">Error cargando la tendencia.</div>'; return; }
 
   const pts = res.puntos || [];
-  const chips = [['todo','Todo'],['gym','Gym'],['campo','Campo']].map(([v,l])=>{
+  if (_soloGym()) _tend.contenido = 'gym';
+  const chips = (_soloGym() ? [] : [['todo','Todo'],['gym','Gym'],['campo','Campo']]).map(([v,l])=>{
     const on = _tend.contenido===v;
     return `<span onclick="tendSetContenido('${v}')" style="font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;background:${on?'rgba(232,20,42,.12)':'var(--surface2)'};color:${on?'var(--accent)':'var(--muted)'};border:1px solid ${on?'rgba(232,20,42,.35)':'var(--border2)'}">${l}</span>`;
   }).join('');
@@ -11952,7 +11961,27 @@ var PLAN_CATS = [
   { key:'contraction', list:'Contraction Type', lbl:'Contraction' }
 ];
 
-var SQUADS = ["men's xv","women's","academy"];
+// ══ CONFIGURACIÓN DE FUNCIONALIDADES ════════════════════════
+// Qué squads usan cada módulo. El wellness y el RPE de campo/partido
+// quedan activos solo para women's. Nada se borra: el código y los
+// datos siguen intactos, así que basta con volver a añadir un squad
+// a estas listas para recuperarlo todo tal y como estaba.
+var FEATURES = {
+  wellness:  ["women's"],   // pestaña Readiness (wellness, recuperación, dolor)
+  fieldLoad: ["women's"]    // RPE de entreno de campo y partido
+};
+function squadTiene(f, squad){
+  const lista = FEATURES[f] || [];
+  return lista.indexOf(String(squad||'').trim().toLowerCase()) !== -1;
+}
+// ¿Debe verlo este usuario? El jugador, según su squad. El staff, si
+// algún squad de los que gestiona lo tiene activo.
+function puedeVer(f){
+  if (state.isCoach) return (FEATURES[f] || []).length > 0;
+  return squadTiene(f, state.squad);
+}
+
+var SQUADS = ["men's xv","women's"];
 
 function ytThumb(url){
   if(!url) return '';
@@ -12200,8 +12229,10 @@ function calPintarPaso(){
       `<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Añadir</div>` +
       op('🏋️','Sesión de gym','Crear una sesión nueva desde cero',"calPaso('gym')",'var(--accent2)') +
       op('📋','Programa de entrenamiento','Aplicar un programa ya creado',"calPaso('programa')",'var(--accent2)') +
-      op('🏃','Entreno de campo','Título, intensidad y duración',"calPaso('campo')",'#ffa040') +
-      op('🏉','Partido','Rival, hora y duración',"calPaso('partido')",'#ff7070') +
+      (squadTiene('fieldLoad', _cal.squad)
+        ? op('🏃','Entreno de campo','Título, intensidad y duración',"calPaso('campo')",'#ffa040') +
+          op('🏉','Partido','Rival, hora y duración',"calPaso('partido')",'#ff7070')
+        : '') +
       `<button class="doc-cancel-btn" onclick="calCerrar()">Cerrar</button>`;
     return;
   }
@@ -12765,7 +12796,7 @@ async function renderIndividuales(){
   _indivJugadores = jugadores;
   const semanas = (resSem.ok && resSem.semanas) ? resSem.semanas : [];
 
-  const squadOpts = [["men's xv","Men's XV"],["women's","Women's"],["academy","Academy"]]
+  const squadOpts = [["men's xv","Men's XV"],["women's","Women's"]]
     .map(([v,l])=>`<option value="${v}"${v===squad?' selected':''}>${l}</option>`).join('');
 
   let extrasHTML = extras.length ? extras.map(e=>{
