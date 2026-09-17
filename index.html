@@ -6492,11 +6492,6 @@ function initNav() {
     // El jugador no usa el selector de semana ni los Day 1..5: su vista
     // es la agenda por fechas. Se ocultan de entrada para que ninguna
     // carga tardía los deje visibles bajo el calendario.
-    // Squads sin wellness activo: se oculta su pestaña
-    if (!puedeVer('wellness')) {
-      const bw = document.getElementById('bn-wellness');
-      if (bw) bw.style.display = 'none';
-    }
     ['week-dropdown-btn','day-cards-row'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
@@ -6507,11 +6502,19 @@ function initNav() {
     if (aw0) aw0.style.display = '';
 
     // Field Load deja de ser pestaña: el RPE de campo se registra desde el día en Session
-    ['bn-wellness','bn-sesion','bn-misemana','bn-scdocs'].forEach(id => {
+    // El wellness solo existe para los squads que lo tienen activo.
+    // Se decide aquí, después de ocultarlo todo, para que ningún bucle
+    // posterior lo vuelva a mostrar.
+    const conWellness = puedeVer('wellness');
+    const visibles = (conWellness ? ['bn-wellness'] : [])
+      .concat(['bn-sesion','bn-misemana','bn-scdocs']);
+    visibles.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = '';
     });
-    switchTab('wellness');
+    const bw = document.getElementById('bn-wellness');
+    if (bw && !conWellness) bw.style.display = 'none';
+    switchTab(conWellness ? 'wellness' : 'sesion');
   }
 }
 
