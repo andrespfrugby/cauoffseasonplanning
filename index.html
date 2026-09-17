@@ -12720,6 +12720,93 @@ async function renderDocsManager(){
 var _docJugTodos=[];
 function _docSquadLabel(s){ s=String(s).trim().toLowerCase(); return s==="men's xv"?"Men's XV":s==="women's"?"Women's":s==="academy"?"Academy":s; }
 function _docRolLabel(r){ r=String(r).trim().toLowerCase(); return r==='coach'?'Coaches':r==='fisio'?'Fisios':r==='s&c'?'S&C':r; }
+// ── Asignar un programa individual a otros jugadores ─────────
+// Copia el extra tal cual (mismo nombre y mismos ejercicios) al
+// jugador o jugadores elegidos, con las fechas que se indiquen.
+// Cada copia es independiente: editar una no toca las demás.
+var _asigExtra = null;
+
+function asignarExtraAbrir(id){
+  const ex = (_indivExtras||[]).find(x=>String(x.id)===String(id));
+  if (!ex){ alert('No se encontró el programa'); return; }
+  _asigExtra = { origen:ex, usuarios:[], fechas:(ex.dias||[]).map(d=>d.fecha||'') };
+
+  const opts = (_indivJugadores||[])
+    .filter(j=>j.usuario !== ex.usuario)
+    .map(j=>`<label style="display:flex;align-items:center;gap:9px;padding:7px 4px;cursor:pointer;font-size:13px;color:var(--text)">
+        <input type="checkbox" value="${j.usuario}" onchange="asignarExtraJug('${j.usuario}',this.checked)"
+               style="width:16px;height:16px;accent-color:var(--accent2)">
+        ${j.nombre}${j.rugbyposition?` <span style="font-size:10px;color:var(--muted)">${j.rugbyposition}</span>`:''}
+      </label>`).join('');
+
+  const fechasHTML = (ex.dias||[]).map((d,i)=>`
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px">
+      <span style="font-size:11px;color:var(--muted);width:92px">${d.titulo||('Día '+(i+1))}</span>
+      <input type="date" class="pe-addinput" style="flex:1" value="${d.fecha||''}"
+             onchange="asignarExtraFecha(${i},this.value)">
+    </div>`).join('');
+
+  const ov = document.createElement('div');
+  ov.className = 'picker-backdrop';
+  ov.id = 'asig-modal';
+  ov.innerHTML = `
+    <div class="fields-box" onclick="event.stopPropagation()">
+      <div style="font-size:16px;font-weight:700;margin-bottom:2px">Asignar programa</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
+        <b style="color:var(--text)">${ex.nombre||'Individual'}</b> · ${(ex.dias||[]).length} día${(ex.dias||[]).length!==1?'s':''}
+        · original de ${_nombreJug(ex.usuario)}
+      </div>
+
+      <label class="indiv-lbl">Nombre del programa</label>
+      <input id="asig-nombre" class="pe-addinput" style="margin-bottom:12px" value="${(ex.nombre||'').replace(/"/g,'&quot;')}">
+
+      <label class="indiv-lbl">Fechas de cada día</label>
+      <div style="margin-bottom:12px">${fechasHTML||'<div style="font-size:11px;color:var(--muted)">Este programa no tiene días.</div>'}</div>
+
+      <label class="indiv-lbl">Asignar a</label>
+      <div style="background:var(--surface2);border-radius:8px;padding:6px 11px;max-height:230px;overflow-y:auto;margin-bottom:6px">
+        ${opts||'<div style="font-size:11px;color:var(--muted);padding:8px 0">No hay otros jugadores en este squad.</div>'}
+      </div>
+      <div id="asig-cuenta" style="font-size:11px;color:var(--muted);margin-bottom:12px">Ninguno seleccionado</div>
+
+      <button class="pe-save" style="margin-top:0" onclick="conBoton(this,'Asignando...',asignarExtraGuardar)">Asignar</button>
+      <button class="doc-cancel-btn" onclick="asignarExtraCerrar()">Cancelar</button>
+    </div>`;
+  ov.addEventListener('click', e=>{ if(e.target===ov) asignarExtraCerrar(); });
+  document.body.appendChild(ov);
+}
+
+function asignarExtraCerrar(){
+  const m = document.getElementById('asig-modal');
+  if (m) m.remove();
+  _asigExtra = null;
+}
+function asignarExtraJug(u, on){
+  if (!_asigExtra) return;
+  const i = _asigExtra.usuarios.indexOf(u);
+  if (on && i===-1) _asigExtra.usuarios.push(u);
+  if (!on && i!==-1) _asigExtra.usuarios.splice(i,1);
+  const el = document.getElementById('asig-cuenta');
+  const n = _asigExtra.usuarios.length;
+  if (el) el.textContent = n ? (n+' jugador'+(n!==1?'es':'')+' seleccionado'+(n!==1?'s':'')) : 'Ninguno seleccionado';
+}
+function asignarExtraFecha(i, v){ if (_asigExtra) _asigExtra.fechas[i] = v; }
+
+async function asignarExtraGuardar(){
+  if (!_asigExtra) return;
+  if (!_asigExtra.usuarios.length){ alert('Elige al menos un jugador'); return; }
+  const nombre = (document.getElementById('asig-nombre')||{}).value || _asigExtra.origen.nombre || '';
+  const res = await api({ action:'asignarExtra', id:_asigExtra.origen.id,
+    usuarios:_asigExtra.usuarios, fechas:_asigExtra.fechas, nombre:nombre,
+    creado_por:(state.user&&state.user.usuario)||'' });
+  if (res && res.ok){
+    const n = res.creados;
+    asignarExtraCerrar();
+    alert('Programa asignado a '+n+' jugador'+(n!==1?'es':'')+'.');
+    renderIndividuales();
+  } else alert('No se pudo asignar: '+((res&&res.error)||''));
+}
+
 function _nombreJug(usuario){
   const j=(_indivJugadores||[]).find(x=>x.usuario===usuario);
   return j?j.nombre:usuario;
@@ -12778,6 +12865,7 @@ async function delDoc(id){
 
 // ============ INDIVIDUALES (extras por jugador) ============
 var _extraEdit = null;
+var _indivExtras = [];
 var _indivJugadores = [];
 var _indivSquad = '';
 function _indivSetSquad(sq){
@@ -12800,6 +12888,7 @@ async function renderIndividuales(){
   const jugadores = (resJug.equipo||[]).filter(j=>!j.esCoach && (!j.squad || String(j.squad).toLowerCase()===squad.toLowerCase()));
   const extras = (resEx.extras||[]);
   _indivJugadores = jugadores;
+  _indivExtras = extras;
   const semanas = (resSem.ok && resSem.semanas) ? resSem.semanas : [];
 
   const squadOpts = [["men's xv","Men's XV"],["women's","Women's"]]
@@ -12812,8 +12901,9 @@ async function renderIndividuales(){
         <div class="indiv-row-nm">${_nombreJug(e.usuario)} · ${e.semanaNombre}</div>
         <div class="indiv-row-sub">${e.nombre||'Extra'} · ${nDias} día${nDias!==1?'s':''}</div>
       </div>
-      <span class="indiv-edit" onclick="editExtra('${e.id}')">&#9998;</span>
-      <span class="indiv-del" onclick="delExtra('${e.id}')">&#128465;</span>
+      <span class="indiv-edit" title="Asignar a otro jugador" onclick="asignarExtraAbrir('${e.id}')">&#10697;</span>
+      <span class="indiv-edit" title="Editar" onclick="editExtra('${e.id}')">&#9998;</span>
+      <span class="indiv-del" title="Borrar" onclick="delExtra('${e.id}')">&#128465;</span>
     </div>`;
   }).join('') : '<div class="pevo-empty">Aún no has creado extras individuales.</div>';
 
