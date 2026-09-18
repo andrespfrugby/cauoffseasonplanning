@@ -3255,20 +3255,6 @@ function buildWellnessCalendar(history, interactive) {
 
 // ── WELLNESS SELECT DATE (fill past day) ────────────────────
 function wellnessSelectDate(dateStr) {
-  _wellnessState = { cur:1, vals:{1:null,2:null,3:null,4:null}, hrs:null, peso:'', _targetDate: dateStr };
-  const content = document.getElementById('wellness-content');
-  if (!content) return;
-  const d = dateStr.split('-');
-  content.innerHTML = `<div style="background:rgba(232,20,42,.08);border:0.5px solid rgba(232,20,42,.25);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--accent);display:flex;align-items:center;gap:8px">
-    <span>&#128197;</span><span>Registrando readiness del <strong>${d[2]}/${d[1]}/${d[0]}</strong></span>
-  </div>`;
-  const formWrap = document.createElement('div');
-  content.appendChild(formWrap);
-  renderWellnessQuestion(formWrap, 1);
-}
-
-
-function wellnessSelectDate(dateStr) {
   _wellnessState = { cur:1, vals:{1:null,2:null,3:null,4:null}, hrs:null, peso:'', targetDate: dateStr };
   const content = document.getElementById('wellness-content');
   if (content) {
@@ -3472,7 +3458,8 @@ function buildWeightChart(pesoData, W=260, H=52) {
     await loadSemanas();
     loadRutina();
     initNav();
-    if (!state.isCoach) markCompletedDaysFromHistory();
+    // markCompletedDaysFromHistory() marcaba las tarjetas Day 1..5, que
+    // el jugador ya no usa: era una llamada más sin efecto visible.
   }
 })();
 
@@ -3557,9 +3544,8 @@ async function doLogin() {
     await loadSemanas();
     loadRutina();
     initNav();
-    if (!state.isCoach) {
-      markCompletedDaysFromHistory();
-    }
+    // Las tarjetas Day 1..5 ya no se muestran al jugador: no hace falta
+    // pedir su historial al entrar.
   } else {
     errEl.textContent = res.error||'Error al iniciar sesión';
     btn.disabled=false; btn.textContent='Entrar';
@@ -3596,7 +3582,10 @@ function realSemanaIdx() {
 }
 
 async function renderDayCards() {
-  const squad = state.isCoach ? (state.coachSquadFilter || "men's xv") : state.squad;
+  // El jugador usa la agenda por fechas: estas tarjetas son solo del
+  // coach. Saltarlas evita hasta 6 llamadas al servidor en cada entrada.
+  if (!state.isCoach) return;
+  const squad = state.coachSquadFilter || "men's xv";
   const row = document.getElementById('day-cards-row');
   if (!row) return;
 
@@ -3609,8 +3598,10 @@ async function renderDayCards() {
   if (res.ok && res.diasActivos && res.diasActivos.length) {
     dias        = res.diasActivos;
     diasTitles  = res.diasTitles || {};
-  } else {
-    // Fallback: check each day individually via getRutina
+  } else if (res.diasActivos === undefined) {
+    // Respaldo solo si el backend es antiguo y no conoce getDiasActivos.
+    // Si responde con una lista vacía, es que no hay días: no se pregunta
+    // cinco veces más.
     const checks = await Promise.all(
       [1,2,3,4,5].map(d => api({ action:'getRutina', semana, dia:d, squad }))
     );
@@ -3771,7 +3762,6 @@ function onSemanaChange() {
       const wb = document.getElementById('week-summary-box');
       if (wb) wb.innerHTML = '';
       if (state.activeTab === 'misemana') renderWeekSummary();
-      markCompletedDaysFromHistory();
     }
     if (state.isCoach) {
       const active = state.activeTab || 'jugadores';
@@ -4374,6 +4364,9 @@ async function saveSession(){
     _savingSession = false;
     state.guardado=true;
     progressClear();
+    // La agenda cambia (el día pasa a registrado): se limpia su caché
+    if (typeof _agInvalidar === 'function') _agInvalidar();
+    _wsummCache = null;
     // 1. Tick en el selector de días
     markDayDone(state.dia);
     // 2. Confirmación en el panel de sesión
@@ -4411,7 +4404,9 @@ function statsSub(sub, force){
   if(sub==='stats'){
     if(wb) wb.style.display='';
     if(tc) tc.style.display='none';
-    renderWeekSummary();
+    // Con caché: alternar entre Stats y Testing no vuelve a pedir
+    // los cuatro bloques de datos al servidor.
+    renderWeekSummary(true);
   } else {
     if(wb) wb.style.display='none';
     if(tc) tc.style.display='';
@@ -4421,12 +4416,18 @@ function statsSub(sub, force){
 
 // ══════════════ TESTING (jugador) ══════════════
 var _testingData = null;
+var _testingCacheT = 0;      // momento de la última carga
 var _testRankScope = 'pos'; // 'pos' | 'eq'
 var _testActualId = null;
 
-async function renderTesting(){
+async function renderTesting(forzar){
   const cont = document.getElementById('testing-content');
   if(!cont) return;
+  // Si ya se cargó hace poco, se repinta sin volver al servidor
+  if(!forzar && _testingData && (Date.now()-_testingCacheT) < 120000){
+    if(_testingData.tests && _testingData.tests.length) renderTestingList();
+    return;
+  }
   cont.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
   const usuarioEnv = (state.user&&state.user.usuario)||'';
   const squadEnv = (state.user&&state.user.squad)||state.squad||'';
@@ -4434,6 +4435,7 @@ async function renderTesting(){
   if(!res || !res.ok){ cont.innerHTML = '<div class="pevo-empty">No se pudieron cargar los tests.</div>'; return; }
   if(res.aviso){ cont.innerHTML = `<div class="pevo-empty">${res.aviso}</div>`; return; }
   _testingData = res;
+  _testingCacheT = Date.now();
   if(!res.tests || !res.tests.length){
     cont.innerHTML = '<div class="test-hd">Testing</div><div class="pevo-empty">Aún no tienes resultados de tests registrados.</div>';
     return;
@@ -6150,6 +6152,11 @@ async function renderWeekSummary(useCache) {
 //  campo o partido. El readiness NO aparece: tiene su pestaña.
 // ═══════════════════════════════════════════════════════════════
 var _ag = { lunes:null, sel:null, data:null, abierta:null };
+// Semanas ya cargadas: moverse adelante y atrás no vuelve a pedirlas.
+var _agCache = {};
+// Sesiones ya abiertas: plegarlas y volver a abrirlas es instantáneo.
+var _agSesionCache = {};
+function _agInvalidar(){ _agCache = {}; _agSesionCache = {}; }
 
 function _agLunesDe(d){
   const x = new Date(d); const dow = x.getDay();
@@ -6191,10 +6198,16 @@ async function renderAgenda(){
     _ag.sel = (hoyStr >= desde && hoyStr <= hasta) ? hoyStr : desde;
   }
 
-  wrap.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando semana...</div>';
-  const res = await api({ action:'getAgenda', usuario:(state.user&&state.user.usuario)||'',
-                          squad: state.squad||'', desde, hasta });
-  _ag.data = (res && res.ok) ? res : { dias:{}, hecho:{} };
+  const cacheado = _agCache[desde];
+  if (cacheado) {
+    _ag.data = cacheado;
+  } else {
+    wrap.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando semana...</div>';
+    const res = await api({ action:'getAgenda', usuario:(state.user&&state.user.usuario)||'',
+                            squad: state.squad||'', desde, hasta });
+    _ag.data = (res && res.ok) ? res : { dias:{}, hecho:{} };
+    if (res && res.ok) _agCache[desde] = _ag.data;
+  }
 
   const DL = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
   let strip = '';
@@ -6337,11 +6350,16 @@ async function agToggleSesion(key, weekId, semanaIdx, dia, extraId){
   if (!cont) return;
   // Por id: los índices de la lista de semanas cambian según el filtro
   // de visibles, y eso hacía que se abriera una sesión distinta.
-  const res = extraId
-    ? await api({ action:'getRutinaDia', extraId:extraId, dia:dia, usuario:(state.user&&state.user.usuario)||'' })
-    : weekId
-      ? await api({ action:'getRutinaDia', weekId:weekId, dia:dia, squad: state.squad||'' })
-      : await api({ action:'getRutina', semana:semanaIdx, dia:dia, squad: state.squad||'' });
+  const ck = (extraId||weekId||semanaIdx)+'|'+dia;
+  let res = _agSesionCache[ck];
+  if (!res) {
+    res = extraId
+      ? await api({ action:'getRutinaDia', extraId:extraId, dia:dia, usuario:(state.user&&state.user.usuario)||'' })
+      : weekId
+        ? await api({ action:'getRutinaDia', weekId:weekId, dia:dia, squad: state.squad||'' })
+        : await api({ action:'getRutina', semana:semanaIdx, dia:dia, squad: state.squad||'' });
+    if (res && res.ok) _agSesionCache[ck] = res;
+  }
   if (!res.ok || !res.ejercicios || !res.ejercicios.length) {
     cont.innerHTML = '<div class="ag-empty">No hay ejercicios en esta sesión.</div>';
     return;
@@ -6448,7 +6466,7 @@ async function agGuardarRpe(){
     idEvento:_agRpe.idEvento||'', semana:'', dia:''
   });
   _agRpe.guardando = false;
-  if (res && res.ok) { _ag.abierta = null; renderAgenda(); }
+  if (res && res.ok) { _ag.abierta = null; _agInvalidar(); renderAgenda(); }
   else {
     alert('No se pudo guardar: '+((res&&res.error)||''));
     agPintarRpe();
@@ -10104,6 +10122,9 @@ async function openPlayerModalWithSemana(usuario, nombre, forceSemana) {
 // Consulta el historial de RPE_GLOBAL y marca los days cards
 // que ya tienen sesión guardada esta semana
 async function markCompletedDaysFromHistory() {
+  // Solo tiene sentido con las tarjetas Day 1..5, que hoy únicamente
+  // ve el coach. Para el jugador sería una llamada sin efecto.
+  if (!state.isCoach) return;
   const res = await api({ action:'getHistorial', usuario:state.user.usuario, ejercicio:'RPE_GLOBAL' });
   if (!res.ok || !res.historial) return;
   const semStr = String(realSemanaIdx());
@@ -12895,11 +12916,18 @@ async function renderIndividuales(){
     .map(([v,l])=>`<option value="${v}"${v===squad?' selected':''}>${l}</option>`).join('');
 
   let extrasHTML = extras.length ? extras.map(e=>{
-    const nDias=(e.dias||[]).length;
+    const dias = e.dias || [];
+    const nDias = dias.length;
+    // Las fechas son lo que decide qué ve el jugador: si un día no
+    // tiene fecha, no le aparece en su calendario.
+    const conFecha = dias.filter(d=>d.fecha);
+    const fechasTxt = conFecha.length
+      ? conFecha.map(d=>d.fecha.slice(8,10)+'/'+d.fecha.slice(5,7)).join(' · ')
+      : '<span style="color:#e6a817">sin fecha · no le aparece</span>';
     return `<div class="indiv-row">
       <div class="indiv-row-info">
-        <div class="indiv-row-nm">${_nombreJug(e.usuario)} · ${e.semanaNombre}</div>
-        <div class="indiv-row-sub">${e.nombre||'Extra'} · ${nDias} día${nDias!==1?'s':''}</div>
+        <div class="indiv-row-nm">${_nombreJug(e.usuario)} · ${e.nombre||'Extra'}</div>
+        <div class="indiv-row-sub">${nDias} día${nDias!==1?'s':''} · ${fechasTxt}</div>
       </div>
       <span class="indiv-edit" title="Asignar a otro jugador" onclick="asignarExtraAbrir('${e.id}')">&#10697;</span>
       <span class="indiv-edit" title="Editar" onclick="editExtra('${e.id}')">&#9998;</span>
