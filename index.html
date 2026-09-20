@@ -1814,34 +1814,35 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 .cw-grid{display:grid;grid-template-columns:1fr;gap:8px}
 @media (min-width:700px){ .cw-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
 @media (min-width:1100px){ .cw-grid{grid-template-columns:repeat(4,minmax(0,1fr))} }
-@media (min-width:1600px){ .cw-grid{grid-template-columns:repeat(7,minmax(0,1fr))} }
+@media (min-width:1900px){ .cw-grid{grid-template-columns:repeat(7,minmax(0,1fr))} }
 .cw-col{background:var(--surface);border:1px solid var(--border2);border-radius:9px;overflow:hidden;
   align-self:start}
 .cw-hoy{border-color:var(--accent)}
 .cw-vacia{border-style:dashed;cursor:pointer}
 .cw-vacia:hover{border-color:var(--border-strong)}
-.cw-hd{display:flex;align-items:center;gap:6px;padding:9px 11px;border-bottom:1px solid var(--border)}
-.cw-fecha{font-size:10px;color:var(--muted);letter-spacing:.06em;font-weight:600;flex:1}
+.cw-hd{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.cw-fecha{font-size:12px;color:var(--muted);letter-spacing:.06em;font-weight:700;flex:1}
 .cw-hoy .cw-fecha{color:var(--accent)}
-.cw-plus{font-size:14px;color:var(--muted)}
-.cw-add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  padding:30px 10px;color:var(--muted);font-size:10px}
+.cw-plus{font-size:14px;color:var(--muted);padding:0 2px}
+.cw-plus:hover{color:var(--text)}
+.cw-add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  padding:34px 10px;color:var(--muted);font-size:12px}
 .cw-ses{border-bottom:1px solid var(--border)}
 .cw-ses:last-child{border-bottom:none}
 .cw-ses-hd{display:flex;align-items:center;gap:6px;padding:8px 10px 4px}
-.cw-ses-t{font-size:11px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cw-vis{font-size:8px;font-weight:700;border-radius:9px;padding:2px 7px;cursor:pointer;flex-shrink:0}
-.cw-kpis{display:flex;gap:10px;padding:0 10px 7px;font-size:9px;color:var(--muted)}
-.cw-kpis b{color:var(--text);font-size:11px}
-.cw-ejs{padding:0 10px 8px}
-.cw-ej{display:flex;gap:6px;margin-bottom:5px}
-.cw-ord{font-size:8px;font-weight:700;color:var(--accent);background:rgba(232,20,42,.13);
-  border-radius:3px;padding:2px 5px;height:fit-content;flex-shrink:0;min-width:18px;text-align:center}
-.cw-nm{display:block;font-size:11px;color:var(--text);line-height:1.3}
-.cw-pr{display:block;font-size:10px;color:var(--muted);margin-top:1px}
-.cw-mas{font-size:9px;color:var(--text-muted);opacity:.6;margin-top:4px}
+.cw-ses-t{font-size:13px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cw-vis{font-size:10px;font-weight:700;border-radius:9px;padding:3px 9px;cursor:pointer;flex-shrink:0}
+.cw-kpis{display:flex;gap:11px;padding:0 12px 8px;font-size:11px;color:var(--muted)}
+.cw-kpis b{color:var(--text);font-size:13px}
+.cw-ejs{padding:0 12px 9px}
+.cw-ej{display:flex;gap:7px;margin-bottom:7px}
+.cw-ord{font-size:10px;font-weight:700;color:var(--accent);background:rgba(232,20,42,.13);
+  border-radius:4px;padding:3px 6px;height:fit-content;flex-shrink:0;min-width:22px;text-align:center}
+.cw-nm{display:block;font-size:13px;color:var(--text);line-height:1.35;font-weight:500}
+.cw-pr{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.cw-mas{font-size:11px;color:var(--muted);opacity:.75;margin-top:6px}
 .cw-acts{display:flex;border-top:1px solid var(--border)}
-.cw-acts span{flex:1;text-align:center;padding:7px;font-size:10px;color:var(--muted);cursor:pointer}
+.cw-acts span{flex:1;text-align:center;padding:9px;font-size:12px;color:var(--muted);cursor:pointer}
 .cw-acts span:hover{color:var(--text);background:var(--surface2)}
 .cw-acts span+span{border-left:1px solid var(--border)}
 
@@ -12300,7 +12301,8 @@ function _calColumnaDia(f, etiqueta){
         <div class="cw-ejs">${vistos}${resto}</div>
         <div class="cw-acts">
           <span onclick="event.stopPropagation();calEditarDesdeSemana('${g.weekId||''}',${g.dia},'${f}')">Editar</span>
-          <span onclick="event.stopPropagation();calBorrarGym('${g.weekId||''}',${g.dia})" style="color:#ff7070">Quitar</span>
+          <span onclick="event.stopPropagation();calCopiarAbrir('${g.weekId||''}',${g.dia},'${f}')" title="Duplicar">⧉</span>
+          <span onclick="event.stopPropagation();calBorrarGym('${g.weekId||''}',${g.dia})" style="color:#ff7070">🗑</span>
         </div>
       </div>`;
   });
@@ -12315,13 +12317,18 @@ function _calColumnaDia(f, etiqueta){
         <div class="cw-ses-hd"><span class="cw-ses-t" style="color:${c}">${esP?'PARTIDO':'CAMPO'}${hh?' · '+hh:''}</span></div>
         <div style="padding:8px 10px;font-size:11px;color:var(--text)">${et}</div>
         ${e.duracion?`<div style="padding:0 10px 8px;font-size:10px;color:var(--muted)">${e.duracion} min${e.intensidad?' · '+e.intensidad:''}</div>`:''}
-        <div class="cw-acts"><span onclick="event.stopPropagation();calEditarEventoDesdeSemana('${f}','${e.id}')">Editar</span></div>
+        <div class="cw-acts">
+          <span onclick="event.stopPropagation();calEditarEventoDesdeSemana('${f}','${e.id}')">Editar</span>
+          <span onclick="event.stopPropagation();calBorrarEvento('${e.id}')" style="color:#ff7070">🗑</span>
+        </div>
       </div>`;
   });
 
   return `<div class="cw-col${f===hoy?' cw-hoy':''}">
-      <div class="cw-hd" onclick="calAbrirDia('${f}')" style="cursor:pointer">
-        <span class="cw-fecha">${etiqueta}</span><span class="cw-plus">+</span>
+      <div class="cw-hd">
+        <span class="cw-fecha" onclick="calAbrirDia('${f}')" style="cursor:pointer">${etiqueta}</span>
+        <span class="cw-plus" onclick="calAbrirDia('${f}')" style="cursor:pointer" title="Añadir">+</span>
+        ${(info.gym.length+info.eventos.length)>1?`<span class="cw-plus" onclick="calVaciarDiaRapido('${f}')" style="cursor:pointer;color:#ff7070;font-size:11px" title="Vaciar el día entero">🗑</span>`:''}
       </div>
       ${cuerpo}
     </div>`;
@@ -12335,6 +12342,101 @@ function calEditarDesdeSemana(weekId, dia, fecha){
 function calEditarEventoDesdeSemana(fecha, idEvento){
   calAbrirDia(fecha);
   setTimeout(()=>{ calEditarEvento(idEvento); }, 60);
+}
+
+// ── Duplicar una sesión a otra fecha ─────────────────────────
+var _calCopia = null;
+
+function calCopiarAbrir(weekId, dia, fecha){
+  if (!weekId){ alert('Esta sesión no se puede duplicar desde aquí.'); return; }
+  const base = new Date(fecha+'T12:00:00');
+  const mas = n => { const d=new Date(base); d.setDate(d.getDate()+n*7); return _agISO(d); };
+  _calCopia = { weekId, dia, fecha, destino: mas(1) };
+
+  const DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const nom = DIAS[base.getDay()];
+
+  const ov = document.createElement('div');
+  ov.className = 'picker-backdrop';
+  ov.id = 'copia-modal';
+  ov.innerHTML = `
+    <div class="fields-box" onclick="event.stopPropagation()">
+      <div style="font-size:16px;font-weight:700;margin-bottom:3px">Duplicar sesión</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
+        Del ${nom} ${fecha.slice(8,10)}/${fecha.slice(5,7)} · la copia queda oculta hasta que la publiques
+      </div>
+
+      <label class="indiv-lbl">Semanas después (mismo día)</label>
+      <div style="display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap">
+        ${[1,2,3,4].map(n=>`<span onclick="calCopiarFecha('${mas(n)}')" id="copia-op-${n}"
+            style="flex:1;min-width:62px;text-align:center;padding:9px 6px;border-radius:8px;cursor:pointer;font-size:12px;
+            background:var(--surface2);border:1px solid var(--border2);color:var(--muted)">+${n}</span>`).join('')}
+      </div>
+
+      <label class="indiv-lbl">O elige la fecha</label>
+      <input type="date" id="copia-fecha" class="pe-addinput" style="margin-bottom:14px"
+             value="${_calCopia.destino}" onchange="calCopiarFecha(this.value)">
+
+      <div id="copia-resumen" style="font-size:12px;color:var(--accent2);margin-bottom:12px"></div>
+
+      <button class="pe-save" style="margin-top:0" onclick="conBoton(this,'Duplicando...',calCopiarGuardar)">Duplicar</button>
+      <button class="doc-cancel-btn" onclick="calCopiarCerrar()">Cancelar</button>
+    </div>`;
+  ov.addEventListener('click', e=>{ if(e.target===ov) calCopiarCerrar(); });
+  document.body.appendChild(ov);
+  calCopiarFecha(_calCopia.destino);
+}
+
+function calCopiarFecha(f){
+  if (!_calCopia) return;
+  _calCopia.destino = f;
+  const inp = document.getElementById('copia-fecha');
+  if (inp && inp.value !== f) inp.value = f;
+  // marcar el atajo que coincida
+  const base = new Date(_calCopia.fecha+'T12:00:00');
+  [1,2,3,4].forEach(n=>{
+    const d=new Date(base); d.setDate(d.getDate()+n*7);
+    const el=document.getElementById('copia-op-'+n);
+    if(!el) return;
+    const on = _agISO(d)===f;
+    el.style.background = on?'rgba(0,229,160,.13)':'var(--surface2)';
+    el.style.borderColor = on?'rgba(0,229,160,.4)':'var(--border2)';
+    el.style.color = on?'var(--accent2)':'var(--muted)';
+  });
+  const r = document.getElementById('copia-resumen');
+  if (r && f){
+    const d = new Date(f+'T12:00:00');
+    const DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    r.textContent = 'Se creará el '+DIAS[d.getDay()]+' '+f.slice(8,10)+'/'+f.slice(5,7);
+  }
+}
+function calCopiarCerrar(){
+  const m=document.getElementById('copia-modal'); if(m) m.remove();
+  _calCopia = null;
+}
+async function calCopiarGuardar(){
+  if (!_calCopia || !_calCopia.destino){ alert('Elige una fecha'); return; }
+  const res = await api({ action:'copiarSesion', weekId:_calCopia.weekId,
+    dia:_calCopia.dia, squad:_cal.squad, fecha:_calCopia.destino });
+  if (res && res.ok){
+    const f = _calCopia.destino;
+    calCopiarCerrar();
+    // Si la copia cae en otra semana, se salta a ella para verla
+    const lunesCopia = _agLunesDe(new Date(f+'T12:00:00'));
+    if (_cal.vista==='semana') _cal.lunes = lunesCopia;
+    renderCalendarioCoach();
+  } else alert('No se pudo duplicar: '+((res&&res.error)||''));
+}
+
+// Vacía un día entero desde la propia columna, sin abrir el panel
+async function calVaciarDiaRapido(fecha){
+  const info = (_cal.data && _cal.data.dias[fecha]) || { gym:[], eventos:[] };
+  const total = info.gym.length + info.eventos.length;
+  if (!total) return;
+  if (!confirm('¿Vaciar el '+fecha.slice(8,10)+'/'+fecha.slice(5,7)+'? Se borran '+total+' elemento'+(total>1?'s':'')+'.')) return;
+  const res = await api({ action:'vaciarDia', squad:_cal.squad, fecha });
+  if (res && res.ok) renderCalendarioCoach();
+  else alert('No se pudo vaciar: '+((res&&res.error)||''));
 }
 
 // Publica de golpe todas las sesiones ocultas de la semana
@@ -12798,8 +12900,10 @@ function calEditarEvento(id){
 
 async function calBorrarEvento(id){
   if (!confirm('¿Borrar este evento?')) return;
-  await api({ action:'deleteEvento', id });
-  calCerrar(); renderCalendarioCoach();
+  const res = await api({ action:'deleteEvento', id });
+  if (!res || !res.ok){ alert('No se pudo borrar: '+((res&&res.error)||'')); return; }
+  calCerrar();              // inofensivo si no hay panel abierto
+  renderCalendarioCoach();
 }
 
 async function calAplicarPrograma(){
