@@ -1810,6 +1810,41 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 .rd-toolbar{display:flex;gap:9px;align-items:center;margin-bottom:8px}
 .rd-filtro{font-size:11px;border-radius:12px;padding:5px 12px;cursor:pointer}
 
+/* ══ CALENDARIO · VISTA DE SEMANA ════════════════════════════ */
+.cw-grid{display:grid;grid-template-columns:1fr;gap:8px}
+@media (min-width:700px){ .cw-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (min-width:1100px){ .cw-grid{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@media (min-width:1600px){ .cw-grid{grid-template-columns:repeat(7,minmax(0,1fr))} }
+.cw-col{background:var(--surface);border:1px solid var(--border2);border-radius:9px;overflow:hidden;
+  align-self:start}
+.cw-hoy{border-color:var(--accent)}
+.cw-vacia{border-style:dashed;cursor:pointer}
+.cw-vacia:hover{border-color:var(--border-strong)}
+.cw-hd{display:flex;align-items:center;gap:6px;padding:9px 11px;border-bottom:1px solid var(--border)}
+.cw-fecha{font-size:10px;color:var(--muted);letter-spacing:.06em;font-weight:600;flex:1}
+.cw-hoy .cw-fecha{color:var(--accent)}
+.cw-plus{font-size:14px;color:var(--muted)}
+.cw-add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  padding:30px 10px;color:var(--muted);font-size:10px}
+.cw-ses{border-bottom:1px solid var(--border)}
+.cw-ses:last-child{border-bottom:none}
+.cw-ses-hd{display:flex;align-items:center;gap:6px;padding:8px 10px 4px}
+.cw-ses-t{font-size:11px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cw-vis{font-size:8px;font-weight:700;border-radius:9px;padding:2px 7px;cursor:pointer;flex-shrink:0}
+.cw-kpis{display:flex;gap:10px;padding:0 10px 7px;font-size:9px;color:var(--muted)}
+.cw-kpis b{color:var(--text);font-size:11px}
+.cw-ejs{padding:0 10px 8px}
+.cw-ej{display:flex;gap:6px;margin-bottom:5px}
+.cw-ord{font-size:8px;font-weight:700;color:var(--accent);background:rgba(232,20,42,.13);
+  border-radius:3px;padding:2px 5px;height:fit-content;flex-shrink:0;min-width:18px;text-align:center}
+.cw-nm{display:block;font-size:11px;color:var(--text);line-height:1.3}
+.cw-pr{display:block;font-size:10px;color:var(--muted);margin-top:1px}
+.cw-mas{font-size:9px;color:var(--text-muted);opacity:.6;margin-top:4px}
+.cw-acts{display:flex;border-top:1px solid var(--border)}
+.cw-acts span{flex:1;text-align:center;padding:7px;font-size:10px;color:var(--muted);cursor:pointer}
+.cw-acts span:hover{color:var(--text);background:var(--surface2)}
+.cw-acts span+span{border-left:1px solid var(--border)}
+
 /* ── PRINT / PDF ── */
 @media print {
   * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -12073,7 +12108,17 @@ function plannerSub(sub){
 //  planner + eventos de campo/partido). Al pinchar un día se abre
 //  un panel para crear evento o aplicar un programa ya creado.
 // ═══════════════════════════════════════════════════════════════
-var _cal = { mes:null, squad:null, data:null, diaSel:null };
+var _cal = { mes:null, squad:null, data:null, diaSel:null, vista:'mes', lunes:null };
+function calVista(v){
+  _cal.vista = v;
+  if (v==='semana' && !_cal.lunes) _cal.lunes = _agLunesDe(new Date());
+  renderCalendarioCoach();
+}
+function calSemana(dir){
+  if (!_cal.lunes) _cal.lunes = _agLunesDe(new Date());
+  _cal.lunes.setDate(_cal.lunes.getDate() + dir*7);
+  renderCalendarioCoach();
+}
 
 function calMes(dir){
   const b = _cal.mes ? new Date(_cal.mes+'-01T12:00:00') : new Date();
@@ -12084,6 +12129,7 @@ function calMes(dir){
 function calSetSquad(sq){ _cal.squad = sq; renderCalendarioCoach(); }
 
 async function renderCalendarioCoach(){
+  if (_cal.vista === 'semana') return renderCalSemana();
   const c = document.getElementById('planner-content');
   if (!c) return;
   const hoy = new Date();
@@ -12152,11 +12198,157 @@ async function renderCalendarioCoach(){
       <button class="quad-navbtn" onclick="calMes(-1)">&#8249;</button>
       <span style="font-size:15px;font-weight:600;min-width:140px">${MESES[mm-1]} ${yy}</span>
       <button class="quad-navbtn" onclick="calMes(1)">&#8250;</button>
+      <span style="display:flex;gap:4px;margin-left:8px">
+        <span onclick="calVista('semana')" style="font-size:11px;padding:6px 12px;border-radius:7px;cursor:pointer;color:var(--muted);border:1px solid var(--border2)">Semana</span>
+        <span style="font-size:11px;padding:6px 12px;border-radius:7px;background:var(--surface2);color:var(--text);border:1px solid var(--border-strong)">Mes</span>
+      </span>
       <span style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">${squadBtns}</span>
     </div>
     <div class="cal-grid">${cabeceras}${cuerpo}</div>
     <div style="font-size:10px;color:var(--muted);margin-top:10px">Pincha un día para añadir una sesión de gym, un entreno de campo o un partido.</div>
     <div id="cal-panel"></div>`;
+}
+
+// ── Vista de semana: cada día con su sesión completa ──────────
+async function renderCalSemana(){
+  const c = document.getElementById('planner-content');
+  if (!c) return;
+  if (!_cal.lunes) _cal.lunes = _agLunesDe(new Date());
+  if (_cal.squad === null) _cal.squad = state.squadFijo || state.coachSquadFilter || SQUADS[0];
+  c.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  const desde = _agISO(_cal.lunes);
+  const dom   = new Date(_cal.lunes); dom.setDate(dom.getDate()+6);
+  const hasta = _agISO(dom);
+
+  const res = await api({ action:'getAgenda', squad:_cal.squad, desde, hasta,
+                          soloVisibles:false, detalle:true });
+  _cal.data = (res && res.ok) ? res : { dias:{} };
+
+  const squadBtns = SQUADS.map(sq=>{
+    const on = _cal.squad===sq;
+    return `<span onclick="calSetSquad('${sq.replace(/'/g,"\\'")}')" style="font-size:11px;padding:6px 12px;border-radius:7px;cursor:pointer;background:${on?'rgba(232,20,42,.12)':'var(--surface2)'};color:${on?'var(--accent)':'var(--muted)'};border:1px solid ${on?'rgba(232,20,42,.35)':'var(--border2)'}">${sq}</span>`;
+  }).join('');
+
+  const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const rango = `${_cal.lunes.getDate()}–${dom.getDate()} ${MESES[dom.getMonth()]}`;
+
+  // ¿Hay algo oculto esta semana?
+  let ocultas = 0;
+  Object.keys(_cal.data.dias||{}).forEach(f=>{
+    (_cal.data.dias[f].gym||[]).forEach(g=>{ if(g.visible===false) ocultas++; });
+  });
+
+  const DL=['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+  let cols = '';
+  for (let i=0;i<7;i++){
+    const d = new Date(_cal.lunes); d.setDate(d.getDate()+i);
+    cols += _calColumnaDia(_agISO(d), DL[i]+' '+d.getDate()+'/'+String(d.getMonth()+1).padStart(2,'0'));
+  }
+
+  c.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px;flex-wrap:wrap">
+      <button class="quad-navbtn" onclick="calSemana(-1)">&#8249;</button>
+      <span style="font-size:15px;font-weight:600;min-width:150px">${rango}</span>
+      <button class="quad-navbtn" onclick="calSemana(1)">&#8250;</button>
+      <span style="display:flex;gap:4px;margin-left:8px">
+        <span style="font-size:11px;padding:6px 12px;border-radius:7px;background:var(--surface2);color:var(--text);border:1px solid var(--border-strong)">Semana</span>
+        <span onclick="calVista('mes')" style="font-size:11px;padding:6px 12px;border-radius:7px;cursor:pointer;color:var(--muted);border:1px solid var(--border2)">Mes</span>
+      </span>
+      <span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        ${squadBtns}
+        ${ocultas?`<span onclick="calPublicarSemana()" style="font-size:11px;padding:7px 14px;border-radius:7px;cursor:pointer;background:var(--accent2);color:#0d0f12;font-weight:600">Publicar todo (${ocultas})</span>`:''}
+      </span>
+    </div>
+    <div class="cw-grid">${cols}</div>`;
+}
+
+function _calColumnaDia(f, etiqueta){
+  const info = (_cal.data && _cal.data.dias[f]) || { gym:[], eventos:[] };
+  const hoy  = _agISO(new Date());
+  if (!info.gym.length && !info.eventos.length){
+    return `<div class="cw-col cw-vacia${f===hoy?' cw-hoy':''}" onclick="calAbrirDia('${f}')">
+        <div class="cw-hd"><span class="cw-fecha">${etiqueta}</span></div>
+        <div class="cw-add"><span style="font-size:20px">+</span><span>añadir sesión</span></div>
+      </div>`;
+  }
+
+  let cuerpo = '';
+  info.gym.forEach((g,gi)=>{
+    const col = _agColorTipo(g.titulo);
+    const ejs = (g.ejercicios||[]);
+    const vistos = ejs.slice(0,6).map(e=>`
+      <div class="cw-ej">
+        <span class="cw-ord">${e.orden||''}</span>
+        <span style="flex:1;min-width:0">
+          <span class="cw-nm">${e.nombre}</span>
+          ${e.presc?`<span class="cw-pr">${e.presc}</span>`:''}
+        </span>
+      </div>`).join('');
+    const resto = ejs.length>6 ? `<div class="cw-mas">⋯ ${ejs.length-6} ejercicio${ejs.length-6!==1?'s':''} más</div>` : '';
+    cuerpo += `
+      <div class="cw-ses" style="border-top:2px solid ${col.txt}">
+        <div class="cw-ses-hd">
+          <span class="cw-ses-t" style="color:${col.txt}">${g.titulo||'Gym'}</span>
+          <span class="cw-vis" onclick="event.stopPropagation();calPublicar('${g.weekId||''}',${g.visible===true?'false':'true'})"
+            style="background:${g.visible===true?'rgba(0,229,160,.14)':'rgba(255,255,255,.07)'};color:${g.visible===true?'var(--accent2)':'var(--muted)'}">
+            ${g.visible===true?'visible':'oculta'}</span>
+        </div>
+        <div class="cw-kpis">
+          <span><b>${g.nEj}</b> ej.</span><span><b>${g.nBloques}</b> bloques</span>
+        </div>
+        <div class="cw-ejs">${vistos}${resto}</div>
+        <div class="cw-acts">
+          <span onclick="event.stopPropagation();calEditarDesdeSemana('${g.weekId||''}',${g.dia},'${f}')">Editar</span>
+          <span onclick="event.stopPropagation();calBorrarGym('${g.weekId||''}',${g.dia})" style="color:#ff7070">Quitar</span>
+        </div>
+      </div>`;
+  });
+
+  info.eventos.forEach(e=>{
+    const esP = e.tipo==='partido';
+    const c   = esP ? '#ff7070' : '#ffa040';
+    const hh  = /^\d{1,2}:\d{2}$/.test(String(e.hora||'')) ? e.hora : '';
+    const et  = esP ? (e.rival?'vs '+e.rival:'Partido') : (e.titulo||'Campo');
+    cuerpo += `
+      <div class="cw-ses" style="border-top:2px solid ${c}">
+        <div class="cw-ses-hd"><span class="cw-ses-t" style="color:${c}">${esP?'PARTIDO':'CAMPO'}${hh?' · '+hh:''}</span></div>
+        <div style="padding:8px 10px;font-size:11px;color:var(--text)">${et}</div>
+        ${e.duracion?`<div style="padding:0 10px 8px;font-size:10px;color:var(--muted)">${e.duracion} min${e.intensidad?' · '+e.intensidad:''}</div>`:''}
+        <div class="cw-acts"><span onclick="event.stopPropagation();calEditarEventoDesdeSemana('${f}','${e.id}')">Editar</span></div>
+      </div>`;
+  });
+
+  return `<div class="cw-col${f===hoy?' cw-hoy':''}">
+      <div class="cw-hd" onclick="calAbrirDia('${f}')" style="cursor:pointer">
+        <span class="cw-fecha">${etiqueta}</span><span class="cw-plus">+</span>
+      </div>
+      ${cuerpo}
+    </div>`;
+}
+
+// Abre el editor de esa sesión en el panel del día
+function calEditarDesdeSemana(weekId, dia, fecha){
+  calAbrirDia(fecha);
+  setTimeout(()=>{ calToggleGym(0, weekId, dia); }, 60);
+}
+function calEditarEventoDesdeSemana(fecha, idEvento){
+  calAbrirDia(fecha);
+  setTimeout(()=>{ calEditarEvento(idEvento); }, 60);
+}
+
+// Publica de golpe todas las sesiones ocultas de la semana
+async function calPublicarSemana(){
+  const ids = [];
+  Object.keys(_cal.data.dias||{}).forEach(f=>{
+    (_cal.data.dias[f].gym||[]).forEach(g=>{
+      if (g.visible===false && g.weekId && ids.indexOf(g.weekId)===-1) ids.push(g.weekId);
+    });
+  });
+  if (!ids.length) return;
+  if (!confirm('¿Publicar '+ids.length+' sesión'+(ids.length!==1?'es':'')+'? Los jugadores podrán verlas.')) return;
+  for (const id of ids) await api({ action:'publishWeek', id, visible:true });
+  renderCalendarioCoach();
 }
 
 // ── Panel al pinchar un día ──
@@ -13145,16 +13337,74 @@ async function saveExerciseEdits(){
 }
 
 // ============ SEMANAS: LISTA ============
+// Filtros de la lista de semanas. Un "programa" es un bloque
+// reutilizable (varios días o sin fechas); una "sesión" es un día
+// suelto creado desde el calendario. Mezclarlos hacía la lista
+// inmanejable.
+var _wkFiltro = { tipo:'programas', squad:'', texto:'' };
+function wkSetFiltro(campo, valor){ _wkFiltro[campo] = valor; renderWeeksList(); }
+function _wkEsPrograma(w){
+  const dias = (w.data && w.data.dias) || [];
+  if (dias.length > 1) return true;              // varios días → programa
+  if (!w.fecha_inicio && !w.fecha_fin) return true;  // sin fechas → plantilla
+  return false;                                  // un día con fecha → sesión
+}
+
 async function renderWeeksList(){
   const c=document.getElementById('planner-content');
   c.innerHTML='<div class="loader"><div class="spinner"></div></div>';
   const res=await api({ action:'getWeeks' });
   _plan.weeks=res.ok?(res.weeks||[]):[];
-  let html=`<button class="pw-new" onclick="newWeek()">&#43; crear semana nueva</button>`;
-  if(!_plan.weeks.length){
-    html+='<div class="hist-empty" style="text-align:center;padding:20px">Aun no hay semanas. Crea la primera.</div>';
+
+  const todas = _plan.weeks;
+  const nProg = todas.filter(_wkEsPrograma).length;
+  const nSes  = todas.length - nProg;
+
+  let lista = todas;
+  if (_wkFiltro.tipo === 'programas') lista = todas.filter(_wkEsPrograma);
+  else if (_wkFiltro.tipo === 'sesiones') lista = todas.filter(w=>!_wkEsPrograma(w));
+  if (_wkFiltro.squad) lista = lista.filter(w=>String(w.squad||'').toLowerCase()===_wkFiltro.squad);
+  if (_wkFiltro.texto){
+    const t = _wkFiltro.texto.toLowerCase();
+    lista = lista.filter(w=>String(w.nombre||'').toLowerCase().indexOf(t)!==-1);
+  }
+  // Más recientes primero; las que no tienen fecha, al final
+  lista = lista.slice().sort((a,b)=>{
+    const fa=a.fecha_inicio||'', fb=b.fecha_inicio||'';
+    if(!fa && !fb) return String(a.nombre).localeCompare(String(b.nombre),'es');
+    if(!fa) return 1; if(!fb) return -1;
+    return fa<fb?1:fa>fb?-1:0;
+  });
+
+  const pill = (v,l,n) => {
+    const on=_wkFiltro.tipo===v;
+    return `<span onclick="wkSetFiltro('tipo','${v}')" style="font-size:12px;padding:7px 14px;border-radius:8px;cursor:pointer;font-weight:${on?'600':'400'};
+      background:${on?'rgba(232,20,42,.13)':'var(--surface2)'};color:${on?'var(--accent)':'var(--muted)'};
+      border:1px solid ${on?'rgba(232,20,42,.4)':'var(--border2)'}">${l} <span style="opacity:.7">${n}</span></span>`;
+  };
+  const sqPill = sq => {
+    const on=_wkFiltro.squad===sq;
+    return `<span onclick="wkSetFiltro('squad','${on?'':sq}')" style="font-size:11px;padding:6px 12px;border-radius:7px;cursor:pointer;
+      background:${on?'var(--surface2)':'transparent'};color:${on?'var(--text)':'var(--muted)'};
+      border:1px solid ${on?'var(--border-strong)':'var(--border2)'}">${sq}</span>`;
+  };
+
+  let html = `<button class="pw-new" onclick="newWeek()">&#43; crear semana nueva</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">
+      ${pill('programas','Programas',nProg)}
+      ${pill('sesiones','Sesiones sueltas',nSes)}
+      ${pill('todas','Todas',todas.length)}
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      ${SQUADS.map(sqPill).join('')}
+      <input class="pe-addinput" style="flex:1;min-width:150px;margin:0" placeholder="Buscar por nombre..."
+             value="${_wkFiltro.texto}" oninput="_wkFiltro.texto=this.value" onchange="renderWeeksList()">
+    </div>`;
+
+  if(!lista.length){
+    html+='<div class="hist-empty" style="text-align:center;padding:20px">No hay nada con este filtro.</div>';
   } else {
-    html+=_plan.weeks.map(w=>{
+    html+=lista.map(w=>{
       const dias=(w.data&&w.data.dias)||[];
       const totalEj=dias.reduce((s,d)=>s+(d.bloques||[]).reduce((ss,b)=>ss+(b.ejercicios||[]).length,0),0);
       const daysHtml=dias.map((d,di)=>{
@@ -13166,7 +13416,12 @@ async function renderWeeksList(){
         <div class="wk-head" onclick="editWeek('${w.id}')" style="cursor:pointer">
           <div style="flex:1;min-width:0">
             <div class="wk-name">${w.nombre}</div>
-            <div class="wk-meta">${w.squad} · ${fmtRange(w.fecha_inicio,w.fecha_fin)} · ${dias.length} dias · ${totalEj} ej.</div>
+            <div class="wk-meta">
+              <span style="display:inline-block;font-size:9px;font-weight:700;letter-spacing:.05em;border-radius:4px;padding:1px 6px;margin-right:6px;
+                background:${_wkEsPrograma(w)?'rgba(169,159,245,.16)':'rgba(123,184,255,.16)'};
+                color:${_wkEsPrograma(w)?'#a99ff5':'#7bb8ff'}">${_wkEsPrograma(w)?'PROGRAMA':'SESIÓN'}</span>
+              ${w.squad} · ${fmtRange(w.fecha_inicio,w.fecha_fin)} · ${dias.length} día${dias.length!==1?'s':''} · ${totalEj} ej.
+            </div>
           </div>
           <span class="pub ${w.visible?'on':''}" title="Se gestiona en Settings">${w.visible?'&#128065; Visible':'&#128064; Oculta'}</span>
           <span class="wk-dup" onclick="event.stopPropagation();duplicarSemana('${w.id}')" title="Duplicar semana">&#10697;</span>
