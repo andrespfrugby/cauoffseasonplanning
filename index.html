@@ -12836,35 +12836,30 @@ async function calCrearSesionGym(){
   // Antes se cambiaba a la pestaña Semanas, cuya lista cargaba después
   // y se pintaba ENCIMA del editor recién abierto. Ahora se queda en el
   // calendario y abre la sesión en el panel del día.
-  await calAbrirSesionEnDia(f, res.id);
+  await calAbrirSesionEnDia(f, res.id, titulo);
 }
 
 // Recarga el calendario y despliega en su día la sesión indicada
-async function calAbrirSesionEnDia(fecha, weekId){
+async function calAbrirSesionEnDia(fecha, weekId, titulo){
   await renderCalendarioCoach();
   calAbrirDia(fecha);
-  let info = (_cal.data && _cal.data.dias[fecha]) || { gym:[] };
-  let gi = (info.gym||[]).findIndex(g=>String(g.weekId)===String(weekId));
-  // A veces la hoja todavia no ha devuelto la fila recien escrita. Un solo
-  // reintento evita que el panel se quede en el menu sin abrir nada.
+  if (!_cal.data) _cal.data = { dias:{} };
+  if (!_cal.data.dias) _cal.data.dias = {};
+  if (!_cal.data.dias[fecha]) _cal.data.dias[fecha] = { gym:[], eventos:[] };
+  const info = _cal.data.dias[fecha];
+  if (!info.gym) info.gym = [];
+  let gi = info.gym.findIndex(g=>String(g.weekId)===String(weekId));
+  // Una sesion recien creada esta vacia y la agenda no devuelve dias sin
+  // ejercicios, asi que nunca la encontraba y el panel se quedaba en el menu.
+  // Se anade aqui a mano para poder abrir el editor en el acto.
   if (gi === -1){
-    const ag = await api({ action:'getAgenda', squad:_cal.squad,
-      desde: fecha, hasta: fecha, soloVisibles:false });
-    if (ag && ag.ok && ag.dias && ag.dias[fecha]){
-      if (!_cal.data) _cal.data = { dias:{} };
-      if (!_cal.data.dias) _cal.data.dias = {};
-      _cal.data.dias[fecha] = ag.dias[fecha];
-      info = ag.dias[fecha];
-      gi = (info.gym||[]).findIndex(g=>String(g.weekId)===String(weekId));
-      calPintarPaso();
-    }
+    info.gym.push({ weekId: weekId, dia: 1, visible: false,
+      semanaNombre: titulo || 'Sesión', titulo: titulo || 'Sesión',
+      nEj: 0, nBloques: 0 });
+    gi = info.gym.length - 1;
+    calPintarPaso();
   }
-  if (gi !== -1) {
-    const g = info.gym[gi];
-    await calToggleGym(gi, weekId, g.dia);
-  } else {
-    alert('La sesion se ha creado, pero el calendario aun no la muestra.\nCierra y vuelve a abrir el dia.');
-  }
+  await calToggleGym(gi, weekId, info.gym[gi].dia);
 }
 
 // Quita una sesión de gym de este día. Si era el único día de su
