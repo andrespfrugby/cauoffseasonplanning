@@ -12168,14 +12168,20 @@ async function renderPlanner(){
     if(c) c.innerHTML='<div class="pe-box" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">&#128295;</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">Backend pendiente de desplegar</div><div style="font-size:12px;color:var(--muted);line-height:1.6">El Planner ya está integrado en la app, pero necesita las acciones nuevas en tu Apps Script para leer los ejercicios y guardar semanas.<br><br>Sigue el archivo <b>1_BACKEND_appscript.md</b> (añadir columnas al Sheet + pegar las funciones + desplegar nueva versión). El resto de la app funciona con normalidad mientras tanto.</div></div>';
     return;
   }
-  // Recuperar borrador no guardado (si recargó sin querer)
+  // Recuperar borrador no guardado (si recargó sin querer).
+  // Solo se recupera una semana NUEVA que nunca llego a guardarse (sin id)
+  // y de hace menos de 12 h. Las sesiones creadas desde el calendario SIEMPRE
+  // tienen id, asi que ya no pueden secuestrar la entrada al Planner
+  // abriendo el editor de semana en lugar del calendario.
   if(!_plan.week){
     const draft=recuperarBorrador();
-    if(draft && draft.data && (draft.data.dias||[]).length){
+    const fresco=_borradorReciente();
+    if(draft && !draft.id && fresco && draft.data && (draft.data.dias||[]).length){
       _plan.week=draft;
       renderWeekEditor();
       return;
     }
+    if(draft && (draft.id || !fresco)) limpiarBorrador();
   }
   plannerSub(_plan.sub);
 }
@@ -12574,6 +12580,9 @@ async function calAbrirDia(fecha){
 function calCerrar(){
   const m=document.getElementById('cal-modal'); if(m) m.remove();
   _cal.editGym = null; _plan.inlineDia = null;
+  // Por si quedo un borrador de una version anterior de la app: al cerrar el
+  // calendario nunca debe quedar uno que luego secuestre la entrada al Planner.
+  try{ if(_plan && !_plan.week) limpiarBorrador(); }catch(e){}
 }
 
 function calPaso(p){ _cal.paso = p; if (p==='menu') { _cal.edit = null; _cal.intensidad = null; } calPintarPaso(); }
@@ -12834,11 +12843,27 @@ async function calCrearSesionGym(){
 async function calAbrirSesionEnDia(fecha, weekId){
   await renderCalendarioCoach();
   calAbrirDia(fecha);
-  const info = (_cal.data && _cal.data.dias[fecha]) || { gym:[] };
-  const gi = (info.gym||[]).findIndex(g=>String(g.weekId)===String(weekId));
+  let info = (_cal.data && _cal.data.dias[fecha]) || { gym:[] };
+  let gi = (info.gym||[]).findIndex(g=>String(g.weekId)===String(weekId));
+  // A veces la hoja todavia no ha devuelto la fila recien escrita. Un solo
+  // reintento evita que el panel se quede en el menu sin abrir nada.
+  if (gi === -1){
+    const ag = await api({ action:'getAgenda', squad:_cal.squad,
+      desde: fecha, hasta: fecha, soloVisibles:false });
+    if (ag && ag.ok && ag.dias && ag.dias[fecha]){
+      if (!_cal.data) _cal.data = { dias:{} };
+      if (!_cal.data.dias) _cal.data.dias = {};
+      _cal.data.dias[fecha] = ag.dias[fecha];
+      info = ag.dias[fecha];
+      gi = (info.gym||[]).findIndex(g=>String(g.weekId)===String(weekId));
+      calPintarPaso();
+    }
+  }
   if (gi !== -1) {
     const g = info.gym[gi];
     await calToggleGym(gi, weekId, g.dia);
+  } else {
+    alert('La sesion se ha creado, pero el calendario aun no la muestra.\nCierra y vuelve a abrir el dia.');
   }
 }
 
@@ -14587,6 +14612,10 @@ let _lastServerSave = 0;
 function autosaveLocal(){
   try{
     if(!_plan || !_plan.week) return;
+    // Al editar una sesion DENTRO del calendario no se guarda borrador:
+    // ese borrador hacia que la siguiente entrada al Planner abriera el
+    // editor de semana en vez del calendario ("se va a semanas").
+    if(_plan.inlineDia != null) return;
     localStorage.setItem(PLAN_DRAFT_KEY, JSON.stringify({ week:_plan.week, ts:Date.now() }));
     _mostrarAutosaveEstado('local');
   }catch(e){}
@@ -14595,6 +14624,9 @@ function autosaveLocal(){
 function scheduleAutosaveServer(){
   // Guarda en servidor como máximo cada 20s, solo si la semana ya tiene título
   if(!_plan || !_plan.week || !_plan.week.nombre || !_plan.week.nombre.trim()) return;
+  // Desde el calendario se guarda con el boton "Guardar sesion": si ademas
+  // autoguardara, dos saveWeek de la misma semana se pisaban entre si.
+  if(_plan.inlineDia != null) return;
   clearTimeout(_autosaveServerTO);
   _autosaveServerTO = setTimeout(async ()=>{
     await autosaveServer();
@@ -14637,6 +14669,17 @@ function recuperarBorrador(){
 
 function limpiarBorrador(){
   try{ localStorage.removeItem(PLAN_DRAFT_KEY); }catch(e){}
+}
+
+// Un borrador de hace dias ya no sirve para nada y solo estorba.
+function _borradorReciente(){
+  try{
+    const raw=localStorage.getItem(PLAN_DRAFT_KEY);
+    if(!raw) return false;
+    const d=JSON.parse(raw);
+    if(!d || !d.ts) return false;
+    return (Date.now() - d.ts) < 12*60*60*1000;
+  }catch(e){ return false; }
 }
 
 // ── EXPORTAR SEMANA ───────────────────────────────────────
