@@ -1867,6 +1867,21 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 .cw-acts span:hover{color:var(--text);background:var(--surface2)}
 .cw-acts span+span{border-left:1px solid var(--border)}
 
+/* Bloques dentro de la sesion, en la columna del dia */
+.cw-blk{border-left:2px solid var(--border-strong);padding-left:9px;margin-bottom:10px}
+.cw-blk:last-child{margin-bottom:2px}
+.cw-blk-hd{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.cw-blk-l{font-size:13px;font-weight:800;line-height:1;letter-spacing:.04em}
+.cw-blk-n{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+  flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cw-blk-c{font-size:10px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
+
+/* Arrastrar una sesion de un dia a otro */
+.cw-ses[draggable="true"]{cursor:grab}
+.cw-ses.cw-arrastrando{opacity:.4}
+.cw-col.cw-drop{border-color:var(--accent2);box-shadow:0 0 0 2px rgba(0,229,160,.18) inset}
+.cw-col.cw-drop .cw-hd{background:rgba(0,229,160,.08)}
+
 /* ── PRINT / PDF ── */
 @media print {
   * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -2436,11 +2451,48 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 .blk-title-player{display:flex;align-items:center;gap:9px;margin:14px 0 8px;padding:0 2px}
 .blk-title-letra{width:22px;height:22px;border-radius:6px;background:rgba(232,20,42,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
 .blk-title-txt{font-size:13px;font-weight:600;color:var(--text);letter-spacing:.01em}
+/* Bloques de la sesion del jugador */
+.pblk{border-left:2px solid var(--border-strong);padding-left:11px;margin:16px 0 4px}
+.pblk:first-child{margin-top:6px}
+.pblk-hd{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.pblk-l{min-width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;flex-shrink:0;padding:0 5px}
+.pblk-n{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text);
+  flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pblk-c{font-size:11px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
 .single-wrap{margin-bottom:6px}
 .brow{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;cursor:pointer;position:relative}
 .brow-handle{font-size:14px;color:var(--muted);flex-shrink:0;cursor:pointer;padding:0 2px;line-height:1;letter-spacing:-1px}
 .brow-handle:hover{color:var(--text)}
 .brow-menu{display:none;position:absolute;left:6px;top:100%;margin-top:2px;z-index:50;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:4px;box-shadow:0 4px 16px rgba(0,0,0,.4);min-width:90px}
+
+/* Arrastrar ejercicios dentro del dia */
+.brow-grip{font-size:12px;color:var(--muted);flex-shrink:0;cursor:grab;padding:0 1px;line-height:1;opacity:.55}
+.brow-grip:active{cursor:grabbing}
+.brow:hover .brow-grip{opacity:1}
+.brow-arr{opacity:.4}
+.brow-sobre{box-shadow:0 -2px 0 0 var(--accent2) inset,0 2px 0 0 var(--accent2)}
+.brow-drop{height:14px;border-radius:5px}
+.brow-drop.brow-sobre{box-shadow:none;background:rgba(0,229,160,.14);border:1px dashed var(--accent2)}
+
+/* Modal "Mover a..." */
+.mv-hd{font-size:14px;margin-bottom:12px;line-height:1.4}
+.mv-hd b{color:var(--accent)}
+.mv-lista{max-height:52vh;overflow-y:auto;margin-bottom:12px}
+.mv-dia{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.mv-lista>.mv-dia:first-child{margin-top:0}
+.mv-op{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:8px;padding:10px 11px;margin-bottom:5px;
+  color:var(--text);font:inherit;font-size:13px;cursor:pointer}
+.mv-op:hover{border-color:var(--accent2)}
+.mv-l{min-width:22px;height:22px;border-radius:6px;background:rgba(232,20,42,.13);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.mv-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mv-c{font-size:11px;color:var(--muted);flex-shrink:0}
+.mv-vacio{font-size:11px;color:var(--muted);padding:2px 0 6px}
+.mv-cerrar{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;
+  padding:11px;color:var(--text);font:inherit;font-size:13px;cursor:pointer}
 .brow-menu.open{display:block}
 .brow-menu button{display:flex;align-items:center;gap:7px;width:100%;padding:7px 10px;background:transparent;border:none;color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font-body);border-radius:5px;text-align:left}
 .brow-menu button:hover{background:var(--surface2)}
@@ -4210,28 +4262,43 @@ function renderSession(ejercicios, nombreSemana, sessionNotes, dayTitle) {
     ${headerHtml}
     ${notaBtnHtml}
     ${notesHtml}
-    ${prep.length ? `<div class="phase-header" style="color:rgba(160,200,255,.7);border-bottom:0">🧱 Prep</div>${prep.map(renderCard).join('')}` : ''}
-    <div class="phase-header" style="margin-top:${prep.length?'1.25rem':'0'}">💥 Main Block</div>
+    ${prep.length ? `<div class="pblk" style="border-left-color:#7a8494">
+        <div class="pblk-hd"><span class="pblk-l" style="background:rgba(122,132,148,.14);color:#7a8494">🧱</span>
+        <span class="pblk-n">Prep</span><span class="pblk-c">${prep.length} ej.</span></div>
+        ${prep.map(renderCard).join('')}</div>` : ''}
     ${renderMainWithBlocks(main)}
     ${renderSessionPanel()}`;
 }
 
-// Renderiza los ejercicios main insertando un título de bloque cuando cambia de bloque
+// Los ejercicios agrupados por bloque, con su cabecera y su barra de color.
+// Antes solo se colaba un titulillo cuando cambiaba de letra, y solo si el
+// bloque tenía nombre: el jugador veía una lista larga sin estructura.
 function renderMainWithBlocks(main){
-  let html='', lastLetra=null;
-  main.forEach(e=>{
+  const grupos = [];
+  (main||[]).forEach(e=>{
     const letra = blockLetter(e.bloque);
-    if(letra!==lastLetra){
-      lastLetra=letra;
-      // nombre del bloque (si el backend lo trae en e.bloque_nombre)
-      const nombre = (e.bloque_nombre||'').trim();
-      if(nombre){
-        html += `<div class="blk-title-player"><span class="blk-title-letra">${letra}</span><span class="blk-title-txt">${nombre}</span></div>`;
-      }
+    const nombre = (e.bloque_nombre||'').trim();
+    const ult = grupos[grupos.length-1];
+    if (!ult || ult.letra !== letra){
+      grupos.push({ letra: letra, nombre: nombre, ejercicios: [e] });
+    } else {
+      if (!ult.nombre && nombre) ult.nombre = nombre;
+      ult.ejercicios.push(e);
     }
-    html += renderCard(e);
   });
-  return html;
+  return grupos.map((g,i)=>{
+    const c   = _cwColorBloque(g.nombre, i);
+    const nom = g.nombre || 'Bloque';
+    const n   = g.ejercicios.length;
+    return `<div class="pblk" style="border-left-color:${c}">
+        <div class="pblk-hd">
+          <span class="pblk-l" style="background:${c}1f;color:${c}">${g.letra||''}</span>
+          <span class="pblk-n">${nom}</span>
+          <span class="pblk-c">${n} ej.</span>
+        </div>
+        ${g.ejercicios.map(renderCard).join('')}
+      </div>`;
+  }).join('');
 }
 
 // ── SESSION PANEL ─────────────────────────────────────────────
@@ -6497,8 +6564,11 @@ function agRealizarSesion(){
   const main = res.ejercicios.filter(e=>e.fase!=='prep');
   cont.innerHTML = nota +
     `<div class="ag-volver" onclick="agVolverResumen()">‹ ver resumen</div>` +
-    (prep.length?`<div class="phase-header" style="margin-top:4px">🧱 Prep</div>${prep.map(renderCard).join('')}`:'') +
-    `<div class="phase-header">💥 Main Block</div>${renderMainWithBlocks(main)}` +
+    (prep.length?`<div class="pblk" style="border-left-color:#7a8494;margin-top:4px">
+        <div class="pblk-hd"><span class="pblk-l" style="background:rgba(122,132,148,.14);color:#7a8494">🧱</span>
+        <span class="pblk-n">Prep</span><span class="pblk-c">${prep.length} ej.</span></div>
+        ${prep.map(renderCard).join('')}</div>`:'') +
+    renderMainWithBlocks(main) +
     renderSessionPanel();
   cont.scrollIntoView({ behavior:'smooth', block:'start' });
 }
@@ -12418,11 +12488,54 @@ async function renderCalSemana(){
     <div class="cw-grid">${cols}</div>`;
 }
 
+// Colores de la barra de cada bloque, por lo que hace. Si el bloque no tiene
+// nombre, se reparten por orden para que al menos se distingan entre sí.
+var _CW_BLKCOL = ['#7a8494','#a99ff5','#5aa9e6','#ffa040','#00e5a0','#e86ab0'];
+function _cwColorBloque(nombre, i){
+  const n = String(nombre||'').toLowerCase();
+  if (/prep|activ|calent|warm|reset|movil/.test(n)) return '#7a8494';
+  if (/plyo|throw|salto|jump|pogo|balis/.test(n))   return '#a99ff5';
+  if (/sq|squat|hinge|pull|remo|row/.test(n))       return '#5aa9e6';
+  if (/push|press|empuj/.test(n))                   return '#ffa040';
+  if (/estruct|access|aux|core|neck|cuello/.test(n))return '#00e5a0';
+  return _CW_BLKCOL[i % _CW_BLKCOL.length];
+}
+
+// Ejercicios agrupados por bloque. Si el servidor todavía no manda
+// `bloquesDet` (backend sin desplegar), se cae a la lista plana de antes.
+function _cwBloquesHTML(g){
+  const fila = e => `
+      <div class="cw-ej">
+        <span class="cw-ord">${e.orden||''}</span>
+        <span style="flex:1;min-width:0">
+          <span class="cw-nm">${e.nombre}</span>
+          ${e.presc?`<span class="cw-pr">${e.presc}</span>`:''}
+        </span>
+      </div>`;
+  const blq = g && g.bloquesDet;
+  if (!blq || !blq.length) return ((g && g.ejercicios) || []).map(fila).join('');
+  return blq.map((b,i)=>{
+    const ejs = b.ejercicios || [];
+    if (!ejs.length) return '';
+    const c   = _cwColorBloque(b.nombre, i);
+    const nom = (b.nombre||'').trim() || (b.tipo==='superserie' ? 'Superserie' : 'Bloque');
+    return `<div class="cw-blk" style="border-left-color:${c}">
+        <div class="cw-blk-hd">
+          <span class="cw-blk-l" style="color:${c}">${b.letra||''}</span>
+          <span class="cw-blk-n">${nom}</span>
+          <span class="cw-blk-c">${ejs.length} ej</span>
+        </div>
+        ${ejs.map(fila).join('')}
+      </div>`;
+  }).join('');
+}
+
 function _calColumnaDia(f, etiqueta){
   const info = (_cal.data && _cal.data.dias[f]) || { gym:[], eventos:[] };
   const hoy  = _agISO(new Date());
+  const dropAttrs = `ondragover="calDragSobre(event,'${f}')" ondragleave="calDragSale(event)" ondrop="calSoltar(event,'${f}')"`;
   if (!info.gym.length && !info.eventos.length){
-    return `<div class="cw-col cw-vacia${f===hoy?' cw-hoy':''}" onclick="calAbrirDia('${f}')">
+    return `<div class="cw-col cw-vacia${f===hoy?' cw-hoy':''}" data-col="${f}" ${dropAttrs} onclick="calAbrirDia('${f}')">
         <div class="cw-hd"><span class="cw-fecha">${etiqueta}</span></div>
         <div class="cw-add"><span style="font-size:20px">+</span><span>añadir sesión</span></div>
       </div>`;
@@ -12431,18 +12544,12 @@ function _calColumnaDia(f, etiqueta){
   let cuerpo = '';
   info.gym.forEach((g,gi)=>{
     const col = _agColorTipo(g.titulo);
-    const ejs = (g.ejercicios||[]);
-    const vistos = ejs.map(e=>`
-      <div class="cw-ej">
-        <span class="cw-ord">${e.orden||''}</span>
-        <span style="flex:1;min-width:0">
-          <span class="cw-nm">${e.nombre}</span>
-          ${e.presc?`<span class="cw-pr">${e.presc}</span>`:''}
-        </span>
-      </div>`).join('');
+    const vistos = _cwBloquesHTML(g);
     const resto = '';   // se muestran todos los ejercicios
     cuerpo += `
-      <div class="cw-ses" style="border-top:2px solid ${col.txt}">
+      <div class="cw-ses" draggable="true" data-wid="${g.weekId||''}" data-dia="${g.dia}" data-f="${f}"
+        ondragstart="calDragIni(event,'${g.weekId||''}',${g.dia},'${f}')" ondragend="calDragFin()"
+        style="border-top:2px solid ${col.txt}">
         <div class="cw-ses-hd">
           <span class="cw-ses-t" style="color:${col.txt}">${g.titulo||'Gym'}</span>
           <span class="cw-vis" onclick="event.stopPropagation();calPublicar('${g.weekId||''}',${g.visible===true?'false':'true'})"
@@ -12478,7 +12585,7 @@ function _calColumnaDia(f, etiqueta){
       </div>`;
   });
 
-  return `<div class="cw-col${f===hoy?' cw-hoy':''}">
+  return `<div class="cw-col${f===hoy?' cw-hoy':''}" data-col="${f}" ${dropAttrs}>
       <div class="cw-hd">
         <span class="cw-fecha" onclick="calAbrirDia('${f}')" style="cursor:pointer">${etiqueta}</span>
         <span class="cw-plus" onclick="calAbrirDia('${f}')" style="cursor:pointer" title="Añadir">+</span>
@@ -12486,6 +12593,86 @@ function _calColumnaDia(f, etiqueta){
       </div>
       ${cuerpo}
     </div>`;
+}
+
+// Repinta solo las 7 columnas con los datos que ya hay en memoria.
+// Sirve para que al soltar una sesión se vea en su sitio al instante,
+// sin esperar a que el servidor conteste.
+function renderCalSemanaPintar(){
+  const grid = document.querySelector('.cw-grid');
+  if (!grid || !_cal.lunes) return;
+  const DL = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+  let cols = '';
+  for (let i=0;i<7;i++){
+    const d = new Date(_cal.lunes); d.setDate(d.getDate()+i);
+    cols += _calColumnaDia(_agISO(d), DL[i]+' '+d.getDate()+'/'+String(d.getMonth()+1).padStart(2,'0'));
+  }
+  grid.innerHTML = cols;
+}
+
+// ── Arrastrar una sesión de un día a otro ─────────────────────
+// Se mueve, no se copia: para copiar sigue estando el botón ⧉.
+var _calArr = null;
+
+function calDragIni(ev, weekId, dia, fecha){
+  if (!weekId){ ev.preventDefault(); return; }
+  _calArr = { weekId: String(weekId), dia: dia, fecha: fecha };
+  try{
+    ev.dataTransfer.effectAllowed = 'move';
+    ev.dataTransfer.setData('text/plain', String(weekId));
+  }catch(e){}
+  const el = ev.currentTarget;
+  if (el) setTimeout(()=>el.classList.add('cw-arrastrando'), 0);
+}
+
+function calDragFin(){
+  _calArr = null;
+  document.querySelectorAll('.cw-arrastrando').forEach(el=>el.classList.remove('cw-arrastrando'));
+  document.querySelectorAll('.cw-drop').forEach(el=>el.classList.remove('cw-drop'));
+}
+
+function calDragSobre(ev, fecha){
+  if (!_calArr || _calArr.fecha === fecha) return;   // sobre su propio día no hace nada
+  ev.preventDefault();
+  try{ ev.dataTransfer.dropEffect = 'move'; }catch(e){}
+  const col = ev.currentTarget;
+  if (col) col.classList.add('cw-drop');
+}
+
+function calDragSale(ev){
+  const col = ev.currentTarget;
+  // relatedTarget vacío o fuera de la columna: se ha salido de verdad
+  if (col && !col.contains(ev.relatedTarget)) col.classList.remove('cw-drop');
+}
+
+async function calSoltar(ev, fecha){
+  ev.preventDefault();
+  const mov = _calArr;
+  calDragFin();
+  if (!mov || mov.fecha === fecha) return;
+  if (_cal.moviendo) return;
+  _cal.moviendo = true;
+
+  // Se pinta ya en el sitio nuevo; si el servidor falla, se recarga y vuelve.
+  try{
+    const oNombre = (_cal.data.dias[mov.fecha].gym||[]).find(g=>String(g.weekId)===mov.weekId && String(g.dia)===String(mov.dia));
+    if (oNombre){
+      _cal.data.dias[mov.fecha].gym = (_cal.data.dias[mov.fecha].gym||[])
+        .filter(g=>!(String(g.weekId)===mov.weekId && String(g.dia)===String(mov.dia)));
+      if (!_cal.data.dias[fecha]) _cal.data.dias[fecha] = { gym:[], eventos:[] };
+      if (!_cal.data.dias[fecha].gym) _cal.data.dias[fecha].gym = [];
+      _cal.data.dias[fecha].gym.push(oNombre);
+      if (_cal.vista === 'semana') renderCalSemanaPintar();
+    }
+  }catch(e){}
+
+  const res = await api({ action:'moverSesion', weekId: mov.weekId, dia: mov.dia, fecha: fecha });
+  _cal.moviendo = false;
+  if (!res || !res.ok){
+    alert('No se pudo mover la sesión: '+((res&&res.error)||''));
+  }
+  await _calRecargarDatos();
+  renderCalendarioCoach();
 }
 
 // Abre el editor de esa sesión en el panel del día
@@ -13899,8 +14086,12 @@ function renderBlockRow(b,dayIdx,blockIdx){
     const th=ytThumb(it.video);
     const presc=[it.sets?it.sets+'x':'',it.reps||'',it.carga||''].filter(Boolean).join(' ');
     const canUp = ei>0, canDown = ei<nEj-1;
-    return `<div class="brow" onclick="openExerciseFields(${dayIdx},${blockIdx},${ei})">
-      <span class="brow-handle" onclick="event.stopPropagation();toggleRowMenu('${dayIdx}_${blockIdx}_${ei}')" title="Reordenar">&#8942;</span>
+    return `<div class="brow" draggable="true"
+      ondragstart="ejDragIni(event,${dayIdx},${blockIdx},${ei})" ondragend="ejDragFin()"
+      ondragover="ejDragSobre(event,${dayIdx},${blockIdx},${ei})" ondrop="ejSoltar(event,${dayIdx},${blockIdx},${ei})"
+      onclick="openExerciseFields(${dayIdx},${blockIdx},${ei})">
+      <span class="brow-grip" title="Arrastrar para reordenar" onclick="event.stopPropagation()">&#10303;</span>
+      <span class="brow-handle" onclick="event.stopPropagation();toggleRowMenu('${dayIdx}_${blockIdx}_${ei}')" title="Opciones">&#8942;</span>
       <span class="bl">${it.orden||''}</span>
       <div class="bth">${th?`<img src="${th}" style="width:100%;height:100%;object-fit:cover">`:'&#9654;'}</div>
       <span class="bnm">${it.ejercicio||'<i style=color:var(--muted)>elegir ejercicio</i>'}</span>
@@ -13910,9 +14101,12 @@ function renderBlockRow(b,dayIdx,blockIdx){
         ${canUp?`<button onclick="event.stopPropagation();moveExercise(${dayIdx},${blockIdx},${ei},-1)"><span>&#8593;</span> Subir</button>`:''}
         ${canDown?`<button onclick="event.stopPropagation();moveExercise(${dayIdx},${blockIdx},${ei},1)"><span>&#8595;</span> Bajar</button>`:''}
         <button onclick="event.stopPropagation();switchExercise(${dayIdx},${blockIdx},${ei})"><span>&#8646;</span> Cambiar ejercicio</button>
+        <button onclick="event.stopPropagation();ejMoverAbrir(${dayIdx},${blockIdx},${ei})"><span>&#8644;</span> Mover a...</button>
       </div>
     </div>`;
   }).join('');
+  const zonaFin = `<div class="brow-drop" ondragover="ejDragSobre(event,${dayIdx},${blockIdx},${nEj})"
+      ondrop="ejSoltar(event,${dayIdx},${blockIdx},${nEj})"></div>`;
   const addMore=isSuper?`<button class="ss-add" onclick="addExerciseToBlock(${dayIdx},${blockIdx})">&#43; anadir a superserie</button>`:'';
   // Nombre editable del bloque
   const nombrePh = isSuper ? `Superserie ${b.letra||''}` : (b.letra?`Bloque ${b.letra}`:'Bloque');
@@ -13929,11 +14123,11 @@ function renderBlockRow(b,dayIdx,blockIdx){
   if(isSuper){
     return `<div class="superblk">
       <div class="sslabel-row"><span class="blk-handle-wrap">${blkHandle}</span>${nameInput}<span class="sslabel-tag">SS ${b.letra||''}</span></div>
-      <div class="ss-inner">${rows}</div>
+      <div class="ss-inner">${rows}${zonaFin}</div>
       ${addMore}
     </div>`;
   }
-  return `<div class="single-wrap"><div class="blk-name-row" style="display:flex;align-items:center;gap:6px"><span class="blk-handle-wrap">${blkHandle}</span>${nameInput}</div>${rows}</div>`;
+  return `<div class="single-wrap"><div class="blk-name-row" style="display:flex;align-items:center;gap:6px"><span class="blk-handle-wrap">${blkHandle}</span>${nameInput}</div>${rows}${zonaFin}</div>`;
 }
 function setBlockName(dayIdx,blockIdx,val){
   _plan.week.data.dias[dayIdx].bloques[blockIdx].nombre=val;
@@ -14085,6 +14279,119 @@ function addExerciseToBlock(dayIdx,blockIdx){
   _plan.picker={ dayIdx, blockIdx, q:'', filters:{} };
   renderExercisePicker();
 }
+// ── Arrastrar un ejercicio dentro del día ─────────────────────
+// Se puede soltar en otra posición del mismo bloque o en otro bloque.
+var _ejArr = null;
+
+function ejDragIni(ev, d, b, i){
+  _ejArr = { d:d, b:b, i:i };
+  try{ ev.dataTransfer.effectAllowed='move'; ev.dataTransfer.setData('text/plain','ej'); }catch(e){}
+  const el = ev.currentTarget;
+  if (el) setTimeout(()=>el.classList.add('brow-arr'), 0);
+  ev.stopPropagation();
+}
+function ejDragFin(){
+  _ejArr = null;
+  document.querySelectorAll('.brow-arr').forEach(el=>el.classList.remove('brow-arr'));
+  document.querySelectorAll('.brow-sobre').forEach(el=>el.classList.remove('brow-sobre'));
+}
+function ejDragSobre(ev, d, b, i){
+  if (!_ejArr || _ejArr.d !== d) return;   // solo dentro del mismo día
+  ev.preventDefault();
+  ev.stopPropagation();
+  try{ ev.dataTransfer.dropEffect='move'; }catch(e){}
+  document.querySelectorAll('.brow-sobre').forEach(el=>el.classList.remove('brow-sobre'));
+  if (ev.currentTarget) ev.currentTarget.classList.add('brow-sobre');
+}
+function ejSoltar(ev, d, b, i){
+  ev.preventDefault();
+  ev.stopPropagation();
+  const o = _ejArr;
+  ejDragFin();
+  if (!o || o.d !== d) return;
+  if (o.b === b && (o.i === i || o.i === i-1)) return;   // al mismo sitio
+  _ejMover(o.d, o.b, o.i, b, i);
+}
+
+// Saca el ejercicio de su bloque y lo mete en el destino, en la posición
+// indicada. Si el bloque de origen se queda vacío, desaparece.
+function _ejMover(dO, bO, iO, bD, iD, dD){
+  const dias = _plan.week.data.dias;
+  const diaD = (dD === undefined || dD === null) ? dO : dD;
+  const origen = dias[dO] && dias[dO].bloques && dias[dO].bloques[bO];
+  const dest   = dias[diaD] && dias[diaD].bloques && dias[diaD].bloques[bD];
+  if (!origen || !dest) return;
+  const it = (origen.ejercicios||[])[iO];
+  if (!it) return;
+
+  origen.ejercicios.splice(iO, 1);
+  // Si se mueve hacia abajo dentro del MISMO bloque, al haber quitado uno
+  // los índices posteriores bajan una posición.
+  let pos = iD;
+  if (origen === dest && iO < iD) pos--;
+  if (pos < 0) pos = 0;
+  if (pos > dest.ejercicios.length) pos = dest.ejercicios.length;
+  dest.ejercicios.splice(pos, 0, it);
+
+  // Un bloque sin ejercicios no pinta nada
+  if (!origen.ejercicios.length){
+    const bloques = dias[dO].bloques;
+    const k = bloques.indexOf(origen);
+    if (k !== -1) bloques.splice(k, 1);
+  }
+  reasignarLetras(dO);
+  if (diaD !== dO) reasignarLetras(diaD);
+  renderWeekEditor();
+  if (typeof autosaveLocal === 'function') autosaveLocal();
+  if (typeof scheduleAutosaveServer === 'function') scheduleAutosaveServer();
+}
+
+// ── Mover a... ────────────────────────────────────────────────
+// Lista los bloques del día y los demás días de la semana.
+function ejMoverAbrir(d, b, i){
+  document.querySelectorAll('.brow-menu.open').forEach(m=>m.classList.remove('open'));
+  const dias = _plan.week.data.dias || [];
+  const it = dias[d] && dias[d].bloques[b] && dias[d].bloques[b].ejercicios[i];
+  if (!it) return;
+
+  let html = '';
+  dias.forEach((dia, di)=>{
+    const esteDia = di === d;
+    const tit = (dia.titulo||'').trim() || ('Día '+(di+1));
+    const fec = dia.fecha ? ' · '+dia.fecha : '';
+    html += `<div class="mv-dia">${tit}${fec}${esteDia?' <span style="color:var(--muted)">(este día)</span>':''}</div>`;
+    (dia.bloques||[]).forEach((bl, bi)=>{
+      if (esteDia && bi === b) return;   // su propio bloque no
+      const nom = (bl.nombre||'').trim() || ('Bloque '+(bl.letra||''));
+      html += `<button class="mv-op" onclick="ejMoverA(${d},${b},${i},${di},${bi})">
+          <span class="mv-l">${bl.letra||''}</span><span class="mv-n">${nom}</span>
+          <span class="mv-c">${(bl.ejercicios||[]).length} ej.</span></button>`;
+    });
+    if (!(dia.bloques||[]).length) html += `<div class="mv-vacio">sin bloques</div>`;
+  });
+
+  const ov = document.createElement('div');
+  ov.className = 'picker-backdrop';
+  ov.id = 'mv-modal';
+  ov.innerHTML = `<div class="fields-box" onclick="event.stopPropagation()">
+      <div class="mv-hd">Mover <b>${(it.ejercicio||'este ejercicio').replace(/</g,'&lt;')}</b> a:</div>
+      <div class="mv-lista">${html}</div>
+      <button class="mv-cerrar" onclick="ejMoverCerrar()">Cancelar</button>
+    </div>`;
+  ov.addEventListener('click', e=>{ if(e.target===ov) ejMoverCerrar(); });
+  document.body.appendChild(ov);
+}
+function ejMoverCerrar(){
+  const m = document.getElementById('mv-modal');
+  if (m) m.remove();
+}
+function ejMoverA(dO, bO, iO, dD, bD){
+  ejMoverCerrar();
+  const dest = _plan.week.data.dias[dD] && _plan.week.data.dias[dD].bloques[bD];
+  const fin  = dest ? (dest.ejercicios||[]).length : 0;
+  _ejMover(dO, bO, iO, bD, fin, dD);
+}
+
 function switchExercise(dayIdx,blockIdx,ei){
   // abre la galería en modo "reemplazar": mantiene la prescripción, cambia solo el ejercicio
   document.querySelectorAll('.brow-menu.open').forEach(m=>m.classList.remove('open'));
