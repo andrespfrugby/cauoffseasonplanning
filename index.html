@@ -12583,6 +12583,9 @@ function calCerrar(){
   // Por si quedo un borrador de una version anterior de la app: al cerrar el
   // calendario nunca debe quedar uno que luego secuestre la entrada al Planner.
   try{ if(_plan && !_plan.week) limpiarBorrador(); }catch(e){}
+  // Si se guardo algo mientras estaba abierto, el numero de ejercicios del dia
+  // que hay detras esta desfasado. Antes habia que recargar la pagina.
+  if (_cal.sucio){ _cal.sucio = false; renderCalendarioCoach(); }
 }
 
 function calPaso(p){ _cal.paso = p; if (p==='menu') { _cal.edit = null; _cal.intensidad = null; } calPintarPaso(); }
@@ -12910,6 +12913,11 @@ async function calToggleGym(gi, weekId, dia){
   const d = _plan.week.data.dias[_plan.inlineDia];
   if (d) d._open = true;
   renderInlineDia();
+  // Abrir una sesion no es editarla: se cancela el guardado que acaba de
+  // programar el repintado inicial.
+  clearTimeout(_autosaveServerTO);
+  const est0 = document.getElementById('cal-dia-estado');
+  if (est0) est0.textContent = '';
 }
 
 // Pinta solo el día que se está editando, dentro del panel del calendario.
@@ -12920,6 +12928,11 @@ function renderInlineDia(){
   if (!c || _plan.inlineDia == null) return;
   const d = _plan.week.data.dias[_plan.inlineDia];
   if (!d){ c.innerHTML = ''; return; }
+  // Cada repintado del dia es una edicion: se programa el guardado en
+  // servidor, igual que en el editor de semana. Sin esto habia que pulsar
+  // el boton (o recargar la pagina) para que lo anadido se quedara.
+  scheduleAutosaveServer();
+  _mostrarAutosaveEstado('local');
   c.innerHTML = renderDayCard(d, _plan.inlineDia) +
     `<div id="cal-dia-guardar" style="display:flex;gap:7px;margin-top:8px">
        <button class="pw-publish" style="flex:1" onclick="calGuardarDia()">Guardar sesión</button>
@@ -12929,8 +12942,10 @@ function renderInlineDia(){
 
 var _diaGuardando = false;
 async function calGuardarDia(){
-  if (_diaGuardando) return;
+  if (_diaGuardando || _guardandoSemana) return;
+  clearTimeout(_autosaveServerTO);   // que no se dispare encima
   _diaGuardando = true;
+  _guardandoSemana = true;
   const est = document.getElementById('cal-dia-estado');
   const btn = document.querySelector('#cal-dia-guardar .pw-publish');
   if (btn){ btn.disabled = true; btn.textContent = 'Guardando...'; }
@@ -12941,6 +12956,7 @@ async function calGuardarDia(){
     fecha_inicio:w.fecha_inicio, fecha_fin:w.fecha_fin, data:clean,
     visible: w.visible===true, creado_por:(state.user&&state.user.usuario)||'' });
   _diaGuardando = false;
+  _guardandoSemana = false;
   if (res && res.ok){
     if (est){ est.textContent = '✓ Guardado'; est.style.color = 'var(--accent2)'; }
     if (btn){ btn.disabled = false; btn.textContent = 'Guardar sesión'; }
@@ -12950,8 +12966,10 @@ async function calGuardarDia(){
     const desde=_agISO(new Date(yy,mm-1,1)), hasta=_agISO(new Date(yy,mm,0));
     const ag = await api({ action:'getAgenda', squad, desde, hasta, soloVisibles:false });
     if (ag && ag.ok) _cal.data = ag;
+    _cal.sucio = false;
   } else {
     _diaGuardando = false;
+    _guardandoSemana = false;
     if (btn){ btn.disabled = false; btn.textContent = 'Guardar sesión'; }
     alert('No se pudo guardar: '+((res&&res.error)||''));
   }
@@ -14617,20 +14635,23 @@ function autosaveLocal(){
 }
 
 function scheduleAutosaveServer(){
-  // Guarda en servidor como máximo cada 20s, solo si la semana ya tiene título
+  // Guarda en servidor como máximo cada 20s, solo si la semana ya tiene título.
+  // Tambien funciona editando desde el calendario: si no, lo que anades solo
+  // se guardaba al pulsar el boton y al reabrir la sesion salia la version vieja.
   if(!_plan || !_plan.week || !_plan.week.nombre || !_plan.week.nombre.trim()) return;
-  // Desde el calendario se guarda con el boton "Guardar sesion": si ademas
-  // autoguardara, dos saveWeek de la misma semana se pisaban entre si.
-  if(_plan.inlineDia != null) return;
   clearTimeout(_autosaveServerTO);
   _autosaveServerTO = setTimeout(async ()=>{
     await autosaveServer();
-  }, 4000); // 4s tras el último cambio
+  }, 2500); // 2,5s tras el último cambio
 }
+
+var _guardandoSemana = false;   // cerrojo compartido con calGuardarDia
 
 async function autosaveServer(){
   const w=_plan && _plan.week;
   if(!w || !w.nombre || !w.nombre.trim()) return;
+  if(_guardandoSemana){ scheduleAutosaveServer(); return; }  // reintenta luego
+  _guardandoSemana = true;
   try{
     const clean=JSON.parse(JSON.stringify(w.data||{dias:[]}));
     (clean.dias||[]).forEach(d=>{ delete d._open; });
@@ -14641,13 +14662,17 @@ async function autosaveServer(){
     if(res.ok){
       if(res.id && !w.id) w.id=res.id; // adopta el id generado para futuros guardados
       _lastServerSave=Date.now();
+      _cal.sucio = true;              // el calendario de detras ya no esta al dia
       _mostrarAutosaveEstado('server');
     }
   }catch(e){}
+  finally{ _guardandoSemana = false; }
 }
 
 function _mostrarAutosaveEstado(tipo){
-  const el=document.getElementById('autosave-estado');
+  // En el editor de semana el aviso va arriba; editando desde el calendario,
+  // debajo del boton de guardar.
+  const el=document.getElementById('autosave-estado') || document.getElementById('cal-dia-estado');
   if(!el) return;
   if(tipo==='server'){ el.textContent='✓ Guardado'; el.style.color='var(--accent2)'; }
   else { el.textContent='guardando…'; el.style.color='var(--muted)'; }
