@@ -3600,6 +3600,10 @@ async function doLogin() {
     state.rol   = _detectarRol(res.posicion);
     state.isCoach = (state.rol !== '');
     _setSquadFijo(res.squad);
+    // Cache limpia en cada entrada: si antes se habia usado este movil con
+    // otra cuenta, no puede quedar nada de la sesion anterior.
+    if (typeof limpiarCacheRutinas === 'function') limpiarCacheRutinas();
+    if (typeof _agInvalidar === 'function') _agInvalidar();
     sessionSave(res); // persist across reloads
     document.getElementById('player-name').textContent = res.nombre;
     document.getElementById('avatar-initials').textContent =
@@ -3672,7 +3676,8 @@ async function renderDayCards() {
     // Si responde con una lista vacía, es que no hay días: no se pregunta
     // cinco veces más.
     const checks = await Promise.all(
-      [1,2,3,4,5].map(d => api({ action:'getRutina', semana, dia:d, squad }))
+      [1,2,3,4,5].map(d => api({ action:'getRutina', semana, dia:d, squad,
+                                 usuario:(state.user&&state.user.usuario)||'' }))
     );
     checks.forEach((r, idx) => {
       const d = idx + 1;
@@ -3925,7 +3930,8 @@ async function loadRutina() {
     _aplicarNombresBloque(cached.ejercicios, semana, state.dia, squad, cached.nombreSemana).then(()=>{
       renderSession(cached.ejercicios, cached.nombreSemana, cached.sessionNotes||'', cached.dayTitle||'');
     });
-    api({ action:'getRutina', semana, dia:state.dia, squad }).then(res => {
+    api({ action:'getRutina', semana, dia:state.dia, squad,
+          usuario:(state.user&&state.user.usuario)||'' }).then(res => {
       if (res.ok && res.ejercicios && res.ejercicios.length) {
         cacheSet(semana, state.dia, squad, res);
       }
@@ -3934,7 +3940,8 @@ async function loadRutina() {
   }
 
   container.innerHTML = '<div class="loader"><div class="spinner"></div>Cargando sesión...</div>';
-  const res = await api({ action:'getRutina', semana, dia:state.dia, squad });
+  const res = await api({ action:'getRutina', semana, dia:state.dia, squad,
+                          usuario:(state.user&&state.user.usuario)||'' });
   if (!res.ok) {
     container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${res.error||'Error al cargar. Comprueba tu conexión.'}</div>`;
     return;
@@ -6425,8 +6432,10 @@ async function agToggleSesion(key, weekId, semanaIdx, dia, extraId){
     res = extraId
       ? await api({ action:'getRutinaDia', extraId:extraId, dia:dia, usuario:(state.user&&state.user.usuario)||'' })
       : weekId
-        ? await api({ action:'getRutinaDia', weekId:weekId, dia:dia, squad: state.squad||'' })
-        : await api({ action:'getRutina', semana:semanaIdx, dia:dia, squad: state.squad||'' });
+        ? await api({ action:'getRutinaDia', weekId:weekId, dia:dia, squad: state.squad||'',
+                      usuario:(state.user&&state.user.usuario)||'' })
+        : await api({ action:'getRutina', semana:semanaIdx, dia:dia, squad: state.squad||'',
+                      usuario:(state.user&&state.user.usuario)||'' });
     if (res && res.ok) _agSesionCache[ck] = res;
   }
   if (!res.ok || !res.ejercicios || !res.ejercicios.length) {
@@ -10285,7 +10294,22 @@ const CACHE_KEY_PREFIX = 'cau_rutina_';
 const CACHE_TTL_MS     = 7 * 24 * 3600 * 1000; // 7 días
 
 function cacheKey(semana, dia, squad) {
-  return `${CACHE_KEY_PREFIX}${squad}_s${semana}_d${dia}`;
+  // El usuario entra en la clave: si dos jugadores de squads distintos usan
+  // el mismo movil y uno de ellos tenia el squad vacio, compartian cache.
+  const u = (state.user && state.user.usuario) || '';
+  return `${CACHE_KEY_PREFIX}${u}_${squad}_s${semana}_d${dia}`;
+}
+
+// Borra TODA la cache local de rutinas. Se llama al entrar y al salir.
+function limpiarCacheRutinas(){
+  try{
+    const fuera = [];
+    for (let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (k && k.indexOf(CACHE_KEY_PREFIX) === 0) fuera.push(k);
+    }
+    fuera.forEach(k => localStorage.removeItem(k));
+  }catch(e){}
 }
 
 function cacheSet(semana, dia, squad, data) {
@@ -12076,6 +12100,9 @@ async function saveFieldLoad(){
 // ── LOGOUT ────────────────────────────────────────────────────
 function logout() {
   sessionClear();
+  if (typeof limpiarCacheRutinas === 'function') limpiarCacheRutinas();
+  if (typeof _agInvalidar === 'function') _agInvalidar();
+  try{ if (typeof limpiarBorrador === 'function') limpiarBorrador(); }catch(e){}
   state = {user:null,dia:1,semana:1,semanas:[],rpeSession:null,tiempoSesion:'',guardado:false,isCoach:false,cards:{},coachEquipo:[],coachRpeChart:[],coachRpeBySquad:{},coachSquadFilter:'',squad:'',activeTab:''};
   // Hide all tabs
   ['tab-sesion','tab-misemana','tab-fieldload','tab-coach-jugadores','tab-coach-rpe','tab-coach-reports'].forEach(id => {
@@ -12210,6 +12237,33 @@ function plannerSub(sub){
 //  un panel para crear evento o aplicar un programa ya creado.
 // ═══════════════════════════════════════════════════════════════
 var _cal = { mes:null, squad:null, data:null, diaSel:null, vista:'mes', lunes:null };
+// El rango que toca pedir segun la vista activa. Antes cada sitio lo
+// recalculaba a mano con _cal.mes, y en la vista de SEMANA eso se cargaba
+// los dias del mes siguiente: al pulsar Editar en uno de ellos ya no estaba
+// en _cal.data y solo salia el menu de anadir, hasta recargar la pagina.
+function _calRango(){
+  if (_cal.vista === 'semana'){
+    if (!_cal.lunes) _cal.lunes = _agLunesDe(new Date());
+    const dom = new Date(_cal.lunes); dom.setDate(dom.getDate()+6);
+    return { desde:_agISO(_cal.lunes), hasta:_agISO(dom), detalle:true };
+  }
+  const p = String(_cal.mes||'').split('-').map(Number);
+  const base = (p[0] && p[1]) ? new Date(p[0], p[1]-1, 1) : new Date();
+  return {
+    desde: _agISO(new Date(base.getFullYear(), base.getMonth(), 1)),
+    hasta: _agISO(new Date(base.getFullYear(), base.getMonth()+1, 0)),
+    detalle: false
+  };
+}
+
+async function _calRecargarDatos(){
+  const r = _calRango();
+  const ag = await api({ action:'getAgenda', squad:_cal.squad, desde:r.desde,
+                         hasta:r.hasta, soloVisibles:false, detalle:r.detalle });
+  if (ag && ag.ok) _cal.data = ag;
+  return ag;
+}
+
 function calVista(v){
   _cal.vista = v;
   if (v==='semana' && !_cal.lunes) _cal.lunes = _agLunesDe(new Date());
@@ -12435,14 +12489,25 @@ function _calColumnaDia(f, etiqueta){
 }
 
 // Abre el editor de esa sesión en el panel del día
-function calEditarDesdeSemana(weekId, dia, fecha){
+async function calEditarDesdeSemana(weekId, dia, fecha){
   calAbrirDia(fecha);
-  // Buscar qué sesión es: antes se abría siempre la primera del día,
-  // aunque se hubiera pulsado «Editar» en la segunda.
-  const info = (_cal.data && _cal.data.dias[fecha]) || { gym:[] };
-  let gi = (info.gym||[]).findIndex(g=>String(g.weekId)===String(weekId) && String(g.dia)===String(dia));
-  if (gi === -1) gi = 0;
-  calToggleGym(gi, weekId, dia);
+  const buscar = () => {
+    const info = (_cal.data && _cal.data.dias && _cal.data.dias[fecha]) || { gym:[] };
+    return (info.gym||[]).findIndex(g=>String(g.weekId)===String(weekId) && String(g.dia)===String(dia));
+  };
+  let gi = buscar();
+  // Si el dia no esta en los datos cargados, se recargan y se reintenta en vez
+  // de abrir la primera sesion del dia (o ninguna, que era lo que pasaba).
+  if (gi === -1){
+    await _calRecargarDatos();
+    calPintarPaso();
+    gi = buscar();
+  }
+  if (gi === -1){
+    alert('No se encuentra esa sesion en el dia. Prueba a cambiar de semana y volver.');
+    return;
+  }
+  await calToggleGym(gi, weekId, dia);
 }
 function calEditarEventoDesdeSemana(fecha, idEvento){
   calAbrirDia(fecha);
@@ -12961,11 +13026,7 @@ async function calGuardarDia(){
     if (est){ est.textContent = '✓ Guardado'; est.style.color = 'var(--accent2)'; }
     if (btn){ btn.disabled = false; btn.textContent = 'Guardar sesión'; }
     // refrescar el calendario de fondo sin cerrar el panel
-    const squad=_cal.squad, mes=_cal.mes;
-    const [yy,mm]=mes.split('-').map(Number);
-    const desde=_agISO(new Date(yy,mm-1,1)), hasta=_agISO(new Date(yy,mm,0));
-    const ag = await api({ action:'getAgenda', squad, desde, hasta, soloVisibles:false });
-    if (ag && ag.ok) _cal.data = ag;
+    await _calRecargarDatos();
     _cal.sucio = false;
   } else {
     _diaGuardando = false;
@@ -13006,11 +13067,7 @@ async function calPublicar(weekId, visible){
   if (!weekId) return;
   const res = await api({ action:'publishWeek', id:weekId, visible: visible===true || visible==='true' });
   if (!res || !res.ok){ alert('No se pudo cambiar la visibilidad'); return; }
-  const squad=_cal.squad, mes=_cal.mes;
-  const [yy,mm]=mes.split('-').map(Number);
-  const ag = await api({ action:'getAgenda', squad,
-    desde:_agISO(new Date(yy,mm-1,1)), hasta:_agISO(new Date(yy,mm,0)), soloVisibles:false });
-  if (ag && ag.ok) _cal.data = ag;
+  await _calRecargarDatos();
   calPintarPaso();
   renderCalendarioCoach();
 }
