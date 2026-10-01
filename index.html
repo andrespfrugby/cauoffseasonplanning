@@ -6413,6 +6413,15 @@ function renderAgendaDia(){
   const cab = `<div class="ag-fecha-lbl">${nombreDia.charAt(0).toUpperCase()+nombreDia.slice(1)} ${d.getDate()} de ${_agMesNombre(d).toLowerCase()}</div>`;
 
   if (!info.gym.length && !info.eventos.length) {
+    // Si su ficha no tiene equipo asignado, el servidor no le manda nada.
+    // Antes salía "día de descanso" y nadie se enteraba de que era un fallo.
+    if (_ag.data && _ag.data.sinSquad === true){
+      cont.innerHTML = cab + `<div class="ag-empty" style="color:#ffa040">
+        <div style="font-size:28px;margin-bottom:8px">⚠️</div>
+        Tu ficha no tiene equipo asignado, por eso no te aparecen las sesiones.<br>
+        Díselo al preparador y lo arregla en un minuto.</div>`;
+      return;
+    }
     cont.innerHTML = cab + `<div class="ag-empty"><div style="font-size:28px;margin-bottom:8px">🌴</div>Día de descanso — nada programado.</div>`;
     return;
   }
@@ -12595,6 +12604,19 @@ function _calColumnaDia(f, etiqueta){
     </div>`;
 }
 
+// Pide UNA semana. Antes se pedían todas y se buscaba la buena en el
+// navegador: con quince semanas eso era casi un mega por cada clic.
+// Si el servidor todavía no conoce getWeek, se cae al método de antes.
+async function _pedirSemana(weekId){
+  const r = await api({ action:'getWeek', id:weekId });
+  if (r && r.ok && r.week) return r.week;
+  if (r && r.ok === false && /Acci[oó]n desconocida/i.test(String(r.error||''))){
+    const wk = await api({ action:'getWeeks' });
+    return (wk.ok && wk.weeks) ? wk.weeks.find(x=>String(x.id)===String(weekId)) : null;
+  }
+  return null;
+}
+
 // Repinta solo las 7 columnas con los datos que ya hay en memoria.
 // Sirve para que al soltar una sesión se vea en su sitio al instante,
 // sin esperar a que el servidor conteste.
@@ -12974,7 +12996,11 @@ function calPintarPaso(){
          ${DOWS.map(([v,l])=>`<span id="cal-dow-${v}" onclick="calToggleDow('${v}')" style="width:38px;text-align:center;padding:9px 0;border-radius:8px;cursor:pointer;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-size:13px">${l}</span>`).join('')}
        </div>
        <button class="pe-save" style="margin-top:0" onclick="calAplicarPrograma()">Aplicar desde este día</button>`;
-    api({ action:'getWeeks' }).then(wk=>{
+    api({ action:'getWeeksLite' }).then(wk=>{
+      if (!wk || wk.ok===false) return api({ action:'getWeeks' }).then(w2=>_calPintarProgramas(w2));
+      return _calPintarProgramas(wk);
+    });
+    function _calPintarProgramas(wk){
       const sel = document.getElementById('cal-programa');
       if (!sel) return;
       const ws = (wk.ok && wk.weeks) ? wk.weeks : [];
@@ -12983,7 +13009,7 @@ function calPintarPaso(){
           const nd = ((w.data&&w.data.dias)||[]).length;
           return `<option value="${w.id}">${w.nombre} (${nd} días · ${w.squad})</option>`;
         }).join('');
-    });
+    }
     (_cal.dows||[]).forEach(v=>{
       const el=document.getElementById('cal-dow-'+v);
       if(el){ el.style.background='rgba(0,229,160,.12)'; el.style.borderColor='rgba(0,229,160,.4)'; el.style.color='var(--accent2)'; }
@@ -13156,8 +13182,7 @@ async function calToggleGym(gi, weekId, dia){
     return;
   }
   await ensurePlannerData();
-  const wk = await api({ action:'getWeeks' });
-  const w = (wk.ok && wk.weeks) ? wk.weeks.find(x=>String(x.id)===String(weekId)) : null;
+  const w = await _pedirSemana(weekId);
   if (!w){ const c=document.getElementById('cal-dia-editor'); if(c) c.innerHTML='<div style="font-size:12px;color:#ff7070;padding:8px">No se encontró la sesión.</div>'; return; }
   _plan.week = JSON.parse(JSON.stringify(w));
   if (!_plan.week.data) _plan.week.data = { dias:[] };
@@ -13270,8 +13295,7 @@ async function calBorrarGym(weekId, dia){
 // Abre el editor de la semana a la que pertenece esta sesión
 async function calEditarGym(weekId){
   if (!weekId) return;
-  const wk = await api({ action:'getWeeks' });
-  const w = (wk.ok && wk.weeks) ? wk.weeks.find(x=>String(x.id)===String(weekId)) : null;
+  const w = await _pedirSemana(weekId);
   if (!w){ alert('No se encontró la semana'); return; }
   calCerrar();
   _plan.week = JSON.parse(JSON.stringify(w));
@@ -13852,10 +13876,21 @@ function _wkEsPrograma(w){
   return false;                                  // un día con fecha → sesión
 }
 
+// Ejercicios de un día: la lista ligera ya trae el número hecho; la completa
+// hay que contarlo sumando los bloques.
+function _nEjDia(d){
+  if (!d) return 0;
+  if (typeof d.nEj === 'number') return d.nEj;
+  return (d.bloques||[]).reduce((s,b)=>s+((b.ejercicios||[]).length),0);
+}
+
 async function renderWeeksList(){
   const c=document.getElementById('planner-content');
   c.innerHTML='<div class="loader"><div class="spinner"></div></div>';
-  const res=await api({ action:'getWeeks' });
+  // Ligera: aquí solo se enseñan nombres, fechas y cuántos ejercicios tiene
+  // cada día. Traer los ejercicios enteros era casi todo el peso.
+  let res=await api({ action:'getWeeksLite' });
+  if (!res || res.ok===false) res=await api({ action:'getWeeks' });
   _plan.weeks=res.ok?(res.weeks||[]):[];
 
   const todas = _plan.weeks;
@@ -13908,9 +13943,9 @@ async function renderWeeksList(){
   } else {
     html+=lista.map(w=>{
       const dias=(w.data&&w.data.dias)||[];
-      const totalEj=dias.reduce((s,d)=>s+(d.bloques||[]).reduce((ss,b)=>ss+(b.ejercicios||[]).length,0),0);
+      const totalEj=dias.reduce((s,d)=>s+_nEjDia(d),0);
       const daysHtml=dias.map((d,di)=>{
-        const nej=(d.bloques||[]).reduce((s,b)=>s+(b.ejercicios||[]).length,0);
+        const nej=_nEjDia(d);
         const sem=daySemaforoMini(d.titulo||'');
         return `<div class="day" onclick="editWeek('${w.id}')">${sem}<span style="flex:1">${d.titulo||'Dia '+(di+1)}</span><span class="dblk">${fmtDateShort(d.fecha)} · ${nej} ej.</span></div>`;
       }).join('');
@@ -13963,8 +13998,10 @@ function newWeek(){
   renderWeekEditor();
 }
 // Duplica una semana: copia toda la estructura con nombre nuevo y la abre para editar
-function duplicarSemana(id){
-  const orig=_plan.weeks.find(w=>String(w.id)===String(id));
+async function duplicarSemana(id){
+  // También con la semana completa: duplicar desde la lista ligera habría
+  // creado una copia sin un solo ejercicio.
+  const orig = await _pedirSemana(id);
   if(!orig){ alert('No se encontró la semana'); return; }
   // Sugerir nombre incrementando el número final si lo hay
   let nuevoNombre=orig.nombre;
@@ -13973,6 +14010,7 @@ function duplicarSemana(id){
   else { nuevoNombre=orig.nombre+' (copia)'; }
   // Copia profunda, sin id (para que se cree como nueva)
   const copia=JSON.parse(JSON.stringify(orig));
+  delete copia.lite;
   copia.id='';
   copia.nombre=nuevoNombre;
   copia.visible=false;
@@ -13987,9 +14025,16 @@ function _sumarDias(fecha,n){
   if(!fecha) return fecha;
   try{ const d=new Date(fecha+'T00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }catch(e){ return fecha; }
 }
-function editWeek(id){
-  const w=_plan.weeks.find(x=>String(x.id)===String(id)); if(!w) return;
+async function editWeek(id){
+  // OJO: la lista de semanas es LIGERA (sin ejercicios). Abrir el editor con
+  // ese objeto y dejar que el autoguardado lo escribiera habría borrado los
+  // ejercicios de la semana entera. Aquí se pide siempre la versión completa.
+  const c=document.getElementById('planner-content');
+  if(c) c.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  const w = await _pedirSemana(id);
+  if(!w){ alert('No se pudo abrir la semana'); renderWeeksList(); return; }
   _plan.week=JSON.parse(JSON.stringify(w));
+  delete _plan.week.lite;
   if(!_plan.week.data) _plan.week.data={dias:[]};
   if(!_plan.week.data.dias) _plan.week.data.dias=[];
   renderWeekEditor();
@@ -15100,44 +15145,196 @@ function exportWeekCSV(){
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+function _pdfEsc(v){
+  return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Prescripción completa en una línea: "3 × 8 8 8 @ 75%  ·  tempo 3010"
+function _pdfPresc(it){
+  const sets = String(it.sets||'').trim();
+  const reps = String(it.reps||'').trim();
+  let carga  = String(it.carga||'').trim();
+  const tc   = it.tipo_carga || '%';
+  if (/^BW$/i.test(carga)) carga = 'BW';
+  else if (carga){
+    if (tc === '%') { if (!/%/.test(carga)) carga = carga + '%'; }
+    else carga = tc + ' ' + carga;
+  }
+  let t = '';
+  if (sets) t += sets;
+  if (sets && reps) t += ' &times; ';
+  if (reps) t += reps;
+  if (carga) t += (t ? ' @ ' : '') + carga;
+  return t;
+}
+
+// Franja de color del día según su tipo, igual que el semáforo de la app
+function _pdfColorDia(titulo){
+  const t = dayType(titulo||'');
+  if (t==='high') return '#c0101f';
+  if (t==='mid')  return '#c47510';
+  if (t==='low')  return '#00875a';
+  return '#9aa3b0';
+}
+
+// Exportar la semana a PDF con la misma cara que la app: bloques con su
+// barra de color, miniatura del vídeo (que al pincharla lo abre) y la
+// prescripción entera. Antes salía una tabla de Excel en blanco y negro.
 function exportWeekPDF(){
-  const w=_plan.week;
-  const rows=_weekRows();
-  if(!rows.length){ alert('No hay ejercicios para exportar'); return; }
-  // Agrupar por día → bloque
-  const dias={};
-  rows.forEach(r=>{ (dias[r.dia]=dias[r.dia]||{})[r.bloque]=(dias[r.dia][r.bloque]||[]); dias[r.dia][r.bloque].push(r); });
-  let cuerpo='';
-  Object.keys(dias).forEach(dia=>{
-    const fecha=(_plan.week.data.dias.find(d=>(d.titulo||'')===dia)||{}).fecha||'';
-    cuerpo+=`<h2>${dia}${fecha?` <span class="f">${fecha}</span>`:''}</h2>`;
-    Object.keys(dias[dia]).forEach(blk=>{
-      cuerpo+=`<h3>${blk}</h3><table><thead><tr><th>#</th><th>Ejercicio</th><th>Series</th><th>Reps</th><th>Intensidad</th><th>Tempo</th><th>Nota</th></tr></thead><tbody>`;
-      dias[dia][blk].forEach(r=>{
-        cuerpo+=`<tr><td>${r.orden}</td><td>${r.ejercicio}</td><td>${r.series}</td><td>${r.reps}</td><td>${r.intensidad}${r.tipo&&r.tipo!=='%'?' '+r.tipo:''}</td><td>${r.tempo}</td><td>${r.nota}</td></tr>`;
+  const w = _plan.week;
+  if (!w){ alert('No hay ninguna semana abierta'); return; }
+  const dias = (w.data && w.data.dias) || [];
+  const totalEj = dias.reduce((s,d)=>s+(d.bloques||[]).reduce((ss,b)=>ss+((b.ejercicios||[]).length),0),0);
+  if (!totalEj){ alert('No hay ejercicios para exportar'); return; }
+
+  let cuerpo = '';
+  dias.forEach((d, di)=>{
+    const nEjDia = (d.bloques||[]).reduce((s,b)=>s+((b.ejercicios||[]).length),0);
+    if (!nEjDia) return;
+    const col = _pdfColorDia(d.titulo||'');
+    const fecha = d.fecha ? fmtDateShort(d.fecha) : '';
+
+    let bloquesHtml = '';
+    (d.bloques||[]).forEach((b, bi)=>{
+      const ejs = b.ejercicios || [];
+      if (!ejs.length) return;
+      const cb  = _cwColorBloque(b.nombre, bi);
+      const nom = (b.nombre||'').trim() || (b.tipo==='superserie' ? 'Superserie '+(b.letra||'') : 'Bloque '+(b.letra||''));
+      let filas = '';
+      ejs.forEach(it=>{
+        const th    = ytThumb(it.video);
+        const vid   = String(it.video||'').trim();
+        const presc = _pdfPresc(it);
+        const tempo = String(it.tempo||'').trim();
+        const nota  = String(it.nota||'').trim();
+        const miniatura = th
+          ? `<img class="pdf-th" src="${_pdfEsc(th)}" alt="">`
+          : `<span class="pdf-th pdf-th-no">&#9654;</span>`;
+        const mini = vid
+          ? `<a class="pdf-vlink" href="${_pdfEsc(vid)}" target="_blank" rel="noopener">${miniatura}<span class="pdf-ver">ver v&iacute;deo</span></a>`
+          : miniatura;
+        const nombre = vid
+          ? `<a class="pdf-nm pdf-nm-link" href="${_pdfEsc(vid)}" target="_blank" rel="noopener">${_pdfEsc(it.ejercicio||'')}</a>`
+          : `<span class="pdf-nm">${_pdfEsc(it.ejercicio||'')}</span>`;
+        filas += `<div class="pdf-ej">
+            ${mini}
+            <span class="pdf-ord" style="color:${cb};border-color:${cb}">${_pdfEsc(it.orden||'')}</span>
+            <span class="pdf-ejtxt">
+              ${nombre}
+              ${presc?`<span class="pdf-pr">${presc}</span>`:''}
+              ${tempo?`<span class="pdf-tempo">tempo ${_pdfEsc(tempo)}</span>`:''}
+              ${nota?`<span class="pdf-nota">${_pdfEsc(nota)}</span>`:''}
+            </span>
+          </div>`;
       });
-      cuerpo+=`</tbody></table>`;
+      bloquesHtml += `<div class="pdf-blk" style="border-left-color:${cb}">
+          <div class="pdf-blk-hd">
+            <span class="pdf-blk-l" style="background:${cb};">${_pdfEsc(b.letra||'')}</span>
+            <span class="pdf-blk-n">${_pdfEsc(nom)}</span>
+            <span class="pdf-blk-c">${ejs.length} ej.</span>
+          </div>
+          ${filas}
+        </div>`;
     });
+
+    cuerpo += `<section class="pdf-dia">
+        <div class="pdf-dia-hd" style="border-left-color:${col}">
+          <span class="pdf-dia-t" style="color:${col}">${_pdfEsc(d.titulo||('Día '+(di+1)))}</span>
+          ${fecha?`<span class="pdf-dia-f">${_pdfEsc(fecha)}</span>`:''}
+          <span class="pdf-dia-n">${nEjDia} ejercicios</span>
+        </div>
+        ${d.nota?`<div class="pdf-dia-nota">${_pdfEsc(d.nota)}</div>`:''}
+        ${bloquesHtml}
+      </section>`;
   });
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${w.nombre||'Semana'}</title>
-  <style>
-    body{font-family:Arial,sans-serif;color:#222;padding:24px;max-width:900px;margin:0 auto}
-    h1{color:#e8142a;border-bottom:2px solid #e8142a;padding-bottom:6px;font-size:22px}
-    .sub{color:#666;font-size:13px;margin:4px 0 18px}
-    h2{font-size:17px;margin:22px 0 4px;color:#111}
-    h2 .f{font-weight:normal;color:#888;font-size:13px}
-    h3{font-size:13px;color:#e8142a;margin:12px 0 4px;text-transform:uppercase;letter-spacing:.03em}
-    table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
-    th{background:#f4f4f6;text-align:left;padding:5px 7px;border:1px solid #ddd;font-size:11px}
-    td{padding:5px 7px;border:1px solid #e2e2e6;vertical-align:top}
-    @media print{ h2{page-break-after:avoid} table{page-break-inside:avoid} }
-  </style></head><body>
-    <h1>${w.nombre||'Semana'}</h1>
-    <div class="sub">${w.squad||''} · ${w.fecha_inicio||''}${w.fecha_fin?' a '+w.fecha_fin:''}</div>
-    ${cuerpo}
-    <script>window.onload=function(){window.print();}<\/script>
-  </body></html>`;
-  const vent=window.open('','_blank');
+
+  const hoy = new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'});
+  const rango = w.fecha_inicio ? (fmtDateShort(w.fecha_inicio) + (w.fecha_fin && w.fecha_fin!==w.fecha_inicio ? ' &ndash; '+fmtDateShort(w.fecha_fin) : '')) : '';
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<title>${_pdfEsc(w.nombre||'Semana')}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root{ --rojo:#c0101f; --tinta:#14171c; --suave:#6b7482; --linea:#e3e5ea; --fondo:#f7f8fa; }
+  *{box-sizing:border-box}
+  body{font-family:'DM Sans',-apple-system,Segoe UI,Roboto,sans-serif;color:var(--tinta);
+    margin:0;padding:26px 30px 34px;background:#fff;font-size:12px;line-height:1.45}
+  .pdf-head{display:flex;align-items:flex-end;gap:16px;border-bottom:3px solid var(--rojo);
+    padding-bottom:9px;margin-bottom:4px}
+  .pdf-h1{font-family:'Bebas Neue',Impact,sans-serif;font-size:31px;line-height:1;letter-spacing:.5px;flex:1;min-width:0}
+  .pdf-marca{font-family:'Bebas Neue',Impact,sans-serif;font-size:17px;letter-spacing:1px;color:var(--rojo);white-space:nowrap}
+  .pdf-sub{color:var(--suave);font-size:11px;margin-bottom:20px}
+  .pdf-dia{margin-bottom:22px;break-inside:avoid-page}
+  .pdf-dia-hd{display:flex;align-items:baseline;gap:11px;border-left:4px solid;padding:3px 0 3px 10px;margin-bottom:9px}
+  .pdf-dia-t{font-family:'Bebas Neue',Impact,sans-serif;font-size:21px;line-height:1.1;letter-spacing:.5px}
+  .pdf-dia-f{font-size:11px;color:var(--suave)}
+  .pdf-dia-n{margin-left:auto;font-size:10px;color:var(--suave)}
+  .pdf-dia-nota{background:var(--fondo);border:1px solid var(--linea);border-radius:7px;
+    padding:8px 11px;font-size:11px;color:#3d434d;margin:0 0 11px 14px;white-space:pre-line}
+  .pdf-blk{border-left:2px solid var(--linea);padding-left:11px;margin:0 0 13px 14px;break-inside:avoid-page}
+  .pdf-blk-hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .pdf-blk-l{min-width:19px;height:19px;border-radius:5px;color:#fff;display:inline-flex;
+    align-items:center;justify-content:center;font-size:11px;font-weight:700;padding:0 5px}
+  .pdf-blk-n{font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#3d434d}
+  .pdf-blk-c{margin-left:auto;font-size:10px;color:var(--suave)}
+  .pdf-ej{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid #f0f1f4;break-inside:avoid}
+  .pdf-ej:last-child{border-bottom:none}
+  .pdf-vlink{display:block;text-decoration:none;flex:0 0 84px;width:84px}
+  .pdf-th{width:84px;height:56px;object-fit:cover;border-radius:5px;border:1px solid var(--linea);display:block;background:var(--fondo)}
+  .pdf-th-no{width:84px;height:56px;border-radius:5px;border:1px solid var(--linea);background:var(--fondo);
+    display:flex;align-items:center;justify-content:center;color:#c3c8d0;font-size:16px}
+  .pdf-ver{display:block;text-align:center;font-size:8px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--rojo);margin-top:3px;line-height:1}
+  .pdf-ord{flex:0 0 auto;min-width:25px;text-align:center;font-size:10px;font-weight:700;
+    border:1px solid;border-radius:4px;padding:2px 5px;margin-top:2px}
+  .pdf-ejtxt{flex:1;min-width:0}
+  .pdf-nm{display:block;font-size:12.5px;font-weight:600;line-height:1.3;color:var(--tinta);text-decoration:none}
+  .pdf-nm-link{text-decoration:underline;text-decoration-color:rgba(192,16,31,.4);text-underline-offset:2px}
+  .pdf-pr{display:block;font-size:12px;color:#3d434d;margin-top:2px;font-variant-numeric:tabular-nums}
+  .pdf-tempo{display:inline-block;font-size:10px;color:var(--suave);margin-top:2px;margin-right:9px}
+  .pdf-nota{display:block;font-size:10.5px;color:var(--suave);margin-top:2px;font-style:italic}
+  .pdf-pie{margin-top:18px;border-top:1px solid var(--linea);padding-top:7px;font-size:9.5px;color:var(--suave);
+    display:flex;justify-content:space-between;gap:10px}
+  @page{ margin:12mm 10mm; }
+  @media print{
+    body{padding:0}
+    .pdf-head{position:running(x)}
+    a{color:inherit}
+  }
+</style></head><body>
+  <div class="pdf-head">
+    <div class="pdf-h1">${_pdfEsc(w.nombre||'Semana')}</div>
+    <div class="pdf-marca">CAU RUGBY</div>
+  </div>
+  <div class="pdf-sub">${_pdfEsc(w.squad||'')}${rango?' &middot; '+rango:''} &middot; ${dias.length} d&iacute;a${dias.length!==1?'s':''} &middot; ${totalEj} ejercicios</div>
+  ${cuerpo}
+  <div class="pdf-pie"><span>Pincha en la miniatura o en el nombre para ver el v&iacute;deo del ejercicio.</span><span>${hoy}</span></div>
+  <script>
+    (function(){
+      // Esperar a que carguen las miniaturas antes de abrir el dialogo de
+      // impresion; si alguna tarda, se imprime igual a los 3 segundos.
+      var imgs = Array.prototype.slice.call(document.images);
+      var quedan = imgs.length, listo = false;
+      function lanzar(){ if(listo) return; listo = true; setTimeout(function(){ window.print(); }, 120); }
+      if (!quedan) lanzar();
+      imgs.forEach(function(im){
+        if (im.complete) { if(--quedan<=0) lanzar(); return; }
+        im.addEventListener('load', function(){ if(--quedan<=0) lanzar(); });
+        im.addEventListener('error', function(){
+          // Vídeo borrado o sin conexión: se deja el recuadro gris, no un hueco
+          var hueco = document.createElement('span');
+          hueco.className = 'pdf-th pdf-th-no';
+          hueco.innerHTML = '\u25B6';
+          if (im.parentNode) im.parentNode.replaceChild(hueco, im);
+          if(--quedan<=0) lanzar();
+        });
+      });
+      setTimeout(lanzar, 3000);
+    })();
+  <\/script>
+</body></html>`;
+
+  const vent = window.open('','_blank');
   if(!vent){ alert('Permite las ventanas emergentes para exportar el PDF'); return; }
   vent.document.write(html); vent.document.close();
 }
