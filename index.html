@@ -2304,6 +2304,77 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 .doc-chk{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;cursor:pointer;font-size:12px;color:var(--text)}
 .doc-chk input{width:16px;height:16px;accent-color:var(--accent)}
 .doc-cancel-btn{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;margin-top:8px}
+/* ── INDIVIDUALES POR JUGADOR ── */
+.ind-busca{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:9px;
+  padding:10px 13px;color:var(--text);font:inherit;font-size:13px;margin-bottom:11px}
+.ind-aviso{background:rgba(255,160,64,.1);border:1px solid rgba(255,160,64,.3);border-radius:9px;
+  padding:9px 12px;font-size:12px;color:#ffa040;margin-bottom:11px;line-height:1.5}
+.ind-lista{display:flex;flex-direction:column;gap:5px}
+.ind-jug{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:9px;
+  background:var(--surface1);border:1px solid transparent;cursor:pointer}
+.ind-jug:hover{border-color:var(--border-strong)}
+.ind-ini{width:31px;height:31px;border-radius:50%;background:var(--surface2);color:var(--text2);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.ind-jug-nm{flex:1;min-width:0;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ind-jug-pos{display:block;font-size:10px;color:var(--muted);font-weight:400}
+.ind-jug-n{font-size:10.5px;padding:4px 9px;border-radius:20px;flex-shrink:0;
+  background:rgba(169,159,245,.14);color:#a99ff5}
+.ind-jug-n.cero{background:var(--surface2);color:var(--muted)}
+.ind-cab{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+.ind-cab-nm{font-size:17px;font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ind-hoybtn{font-size:11px;padding:6px 12px;border-radius:7px;cursor:pointer;
+  background:var(--surface2);color:var(--muted);border:1px solid var(--border2)}
+.ind-sem{display:grid;grid-template-columns:1fr;gap:7px}
+@media (min-width:560px){ .ind-sem{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (min-width:900px){ .ind-sem{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@media (min-width:1250px){ .ind-sem{grid-template-columns:repeat(7,minmax(0,1fr))} }
+.ind-d{background:var(--surface1);border:1px solid var(--border2);border-radius:9px;padding:9px 9px 8px;
+  min-height:112px;display:flex;flex-direction:column;gap:5px;align-self:start}
+.ind-d-hoy{border-color:var(--accent)}
+.ind-d-f{font-size:10.5px;color:var(--muted);letter-spacing:.06em;font-weight:700}
+.ind-d-hoy .ind-d-f{color:var(--accent)}
+.ind-ses{border-radius:7px;padding:6px 8px;font-size:11px;line-height:1.35;display:block}
+.ind-ses-eq{background:var(--surface2);border-left:2px solid var(--border-strong);color:var(--muted)}
+.ind-ses-in{background:rgba(169,159,245,.14);border-left:2px solid #a99ff5;color:#a99ff5;font-weight:600;cursor:pointer}
+.ind-ses-in:hover{background:rgba(169,159,245,.22)}
+.ind-ses-ca{background:rgba(255,160,64,.12);border-left:2px solid #ffa040;color:#ffa040}
+.ind-ses-n{display:block;font-weight:400;opacity:.85;margin-top:1px;font-size:10px}
+.ind-d-add{margin-top:auto;text-align:center;font-size:17px;line-height:1;color:var(--muted);
+  border:1px dashed var(--border2);border-radius:7px;padding:6px 0;cursor:pointer}
+.ind-d-add:hover{border-color:#a99ff5;color:#a99ff5;background:rgba(169,159,245,.08)}
+.ind-pie{font-size:11.5px;color:var(--muted);margin-top:11px;line-height:1.55}
+.ind-pie b{color:#a99ff5}
+
+/* ── REPETIR EN MÁS DÍAS ── */
+.rep-tit{font-size:17px;font-weight:700;margin-bottom:3px;color:var(--accent2)}
+.rep-sub{font-size:12.5px;color:var(--text2);margin-bottom:13px}
+.rep-sub b{color:var(--text)}
+.rep-preg{font-size:13px;margin-bottom:11px;line-height:1.5}
+.rep-cal{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:12px}
+.rep-cal-hd{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.rep-cal-m{flex:1;text-align:center;font-size:13px;font-weight:600}
+.rep-g{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.rep-dw{text-align:center;font-size:10px;color:var(--muted);padding-bottom:3px}
+.rep-d{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12.5px;
+  border-radius:7px;cursor:pointer;color:var(--text2);border:1px solid transparent}
+.rep-d:hover{background:var(--surface1)}
+.rep-off{cursor:default}
+.rep-off:hover{background:none}
+.rep-eq{border-color:var(--border-strong)}
+.rep-ya{background:rgba(169,159,245,.22);color:#a99ff5;font-weight:700;cursor:not-allowed}
+.rep-sel{background:#a99ff5;color:#15121f;font-weight:700;border-color:#a99ff5}
+.rep-leg{display:flex;flex-wrap:wrap;gap:11px;margin-top:10px;font-size:10px;color:var(--muted)}
+.rep-leg span{display:flex;align-items:center;gap:5px}
+.rep-leg i{width:10px;height:10px;border-radius:3px;display:block;border:1px solid transparent}
+.rep-leg i.l-sel{background:#a99ff5}
+.rep-leg i.l-ya{background:rgba(169,159,245,.22)}
+.rep-leg i.l-eq{border-color:var(--border-strong)}
+.rep-res{font-size:12px;color:#a99ff5;margin-top:11px;line-height:1.5}
+.rep-ok{width:100%;background:#a99ff5;color:#15121f;border:none;border-radius:9px;padding:13px;
+  font:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-top:12px}
+.rep-ok:disabled{background:var(--surface2);color:var(--muted);cursor:default}
+.rep-no{width:100%;background:transparent;border:1px solid var(--border2);border-radius:9px;padding:11px;
+  color:var(--muted);font:inherit;font-size:13px;cursor:pointer;margin-top:7px}
 .indiv-list-title{font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em}
 .indiv-list{display:flex;flex-direction:column;background:var(--surface1);border-radius:12px;overflow:hidden}
 .indiv-row{display:flex;align-items:center;gap:10px;padding:13px 14px;border-bottom:1px solid var(--border2)}
@@ -13607,89 +13678,211 @@ var _extraEdit = null;
 var _indivExtras = [];
 var _indivJugadores = [];
 var _indivSquad = '';
+// Jugador abierto y semana que se mira. Sin jugador, se ve la plantilla.
+var _ind = { usuario:'', lunes:null, data:null };
+var _indFiltro = '';
+
 function _indivSetSquad(sq){
   _indivSquad = sq;
+  _ind.usuario = '';
   renderIndividuales();
 }
+function _indLunesDe(d){
+  const x = new Date(d); const dow = x.getDay();
+  x.setDate(x.getDate() - (dow===0?6:dow-1)); x.setHours(12,0,0,0); return x;
+}
+function _indFechaCorta(f){
+  if(!f) return '';
+  const d = new Date(f+'T12:00:00');
+  return d.getDate()+'/'+(d.getMonth()+1);
+}
+function _indIniciales(nm){
+  return String(nm||'').split(/[\s,]+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+}
+// En la hoja los nombres van "Apellido, Nombre": el de pila es lo de después
+// de la coma. Sin esto, al jugador se le llamaba por el apellido.
+function _indNombrePila(nm){
+  const s=String(nm||'').trim();
+  if(s.indexOf(',')!==-1) return s.split(',')[1].trim().split(/\s+/)[0] || s;
+  return s.split(/\s+/)[0] || s;
+}
+
+// ══ LISTA DE JUGADORES ════════════════════════════════════════
 async function renderIndividuales(){
+  if (_ind.usuario) return renderIndivJugador();
   const c=document.getElementById('planner-content');
   if(!c) return;
   c.innerHTML='<div class="loader"><div class="spinner"></div></div>';
-  // squad seleccionado para individuales (por defecto el filtro del coach o men's xv)
   if(!_indivSquad) _indivSquad = state.coachSquadFilter || "men's xv";
   const squad = _indivSquad;
-  const [resJug, resEx, resSem] = await Promise.all([
+  const [resJug, resEx] = await Promise.all([
     api({ action:'getEquipo', semana: (typeof realSemanaIdx==='function'?realSemanaIdx():6), squad }),
-    api({ action:'getExtras', squad }),
-    api({ action:'getSemanas', squad, isCoach:true })
+    api({ action:'getExtras', squad })
   ]);
-  // filtrar jugadores por squad (por si getEquipo no filtra) y quitar coaches
-  const jugadores = (resJug.equipo||[]).filter(j=>!j.esCoach && (!j.squad || String(j.squad).toLowerCase()===squad.toLowerCase()));
-  const extras = (resEx.extras||[]);
-  _indivJugadores = jugadores;
-  _indivExtras = extras;
-  const semanas = (resSem.ok && resSem.semanas) ? resSem.semanas : [];
+  _indivJugadores = (resJug.equipo||[]).filter(j=>!j.esCoach && (!j.squad || String(j.squad).toLowerCase()===squad.toLowerCase()));
+  _indivExtras = (resEx.extras||[]);
 
-  const squadOpts = [["men's xv","Men's XV"],["women's","Women's"]]
-    .map(([v,l])=>`<option value="${v}"${v===squad?' selected':''}>${l}</option>`).join('');
+  if(!_ind.lunes) _ind.lunes = _indLunesDe(new Date());
+  const dom = new Date(_ind.lunes); dom.setDate(dom.getDate()+6);
+  const desde = _agISO(_ind.lunes), hasta = _agISO(dom);
+  const cuenta = {};
+  _indivExtras.forEach(e=>{
+    (e.dias||[]).forEach(d=>{
+      if(!d.fecha || d.fecha<desde || d.fecha>hasta) return;
+      cuenta[e.usuario]=(cuenta[e.usuario]||0)+1;
+    });
+  });
+  // Un día sin fecha no se lo ve nadie: se avisa arriba
+  const sinFecha = _indivExtras.filter(e=>!(e.dias||[]).some(d=>d.fecha));
 
-  let extrasHTML = extras.length ? extras.map(e=>{
-    const dias = e.dias || [];
-    const nDias = dias.length;
-    // Las fechas son lo que decide qué ve el jugador: si un día no
-    // tiene fecha, no le aparece en su calendario.
-    const conFecha = dias.filter(d=>d.fecha);
-    const fechasTxt = conFecha.length
-      ? conFecha.map(d=>d.fecha.slice(8,10)+'/'+d.fecha.slice(5,7)).join(' · ')
-      : '<span style="color:#e6a817">sin fecha · no le aparece</span>';
+  const squadBtns = SQUADS.map(sq=>{
+    const on = squad===sq;
+    return `<span onclick="_indivSetSquad('${sq.replace(/'/g,"\\'")}')" style="font-size:11px;padding:6px 12px;border-radius:7px;cursor:pointer;
+      background:${on?'rgba(232,20,42,.12)':'var(--surface2)'};color:${on?'var(--accent)':'var(--muted)'};
+      border:1px solid ${on?'rgba(232,20,42,.35)':'var(--border2)'}">${sq}</span>`;
+  }).join('');
+
+  const t=_indFiltro.toLowerCase();
+  const lista=_indivJugadores.filter(j=>!t || String(j.nombre||'').toLowerCase().indexOf(t)!==-1
+                                       || String(j.usuario||'').toLowerCase().indexOf(t)!==-1);
+  const filas = lista.length ? lista.map(j=>{
+    const n=cuenta[j.usuario]||0;
+    return `<div class="ind-jug" onclick="indAbrirJugador('${String(j.usuario).replace(/'/g,"\\'")}')">
+        <span class="ind-ini">${_indIniciales(j.nombre||j.usuario)}</span>
+        <span class="ind-jug-nm">${j.nombre||j.usuario}${j.rugbyposition?`<span class="ind-jug-pos">${j.rugbyposition}</span>`:''}</span>
+        <span class="ind-jug-n${n?'':' cero'}">${n?n+' esta semana':'—'}</span>
+      </div>`;
+  }).join('') : '<div class="pevo-empty">Ningún jugador con ese nombre.</div>';
+
+  const rango=`${_ind.lunes.getDate()}/${_ind.lunes.getMonth()+1} – ${dom.getDate()}/${dom.getMonth()+1}`;
+  c.innerHTML=`
+    <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      ${squadBtns}
+      <span style="margin-left:auto;display:flex;align-items:center;gap:7px">
+        <button class="quad-navbtn" onclick="indSemana(-1)">&#8249;</button>
+        <span style="font-size:12px;color:var(--muted);min-width:94px;text-align:center">${rango}</span>
+        <button class="quad-navbtn" onclick="indSemana(1)">&#8250;</button>
+      </span>
+    </div>
+    <input class="ind-busca" placeholder="Buscar jugador..." value="${_indFiltro.replace(/"/g,'&quot;')}"
+           oninput="_indFiltro=this.value" onchange="renderIndividuales()">
+    ${sinFecha.length?`<div class="ind-aviso">${sinFecha.length} sesi${sinFecha.length!==1?'ones':'ón'} sin fecha: no se la ve nadie.
+       Entra en el jugador y ponle día.</div>`:''}
+    <div class="ind-lista">${filas}</div>`;
+}
+function indSemana(dir){
+  if(!_ind.lunes) _ind.lunes=_indLunesDe(new Date());
+  _ind.lunes.setDate(_ind.lunes.getDate()+dir*7);
+  renderIndividuales();
+}
+function indVolver(){ _ind.usuario=''; _ind.data=null; renderIndividuales(); }
+function indAbrirJugador(u){ _ind.usuario=u; _ind.data=null; renderIndivJugador(); }
+function indSemanaJug(dir){ _ind.lunes.setDate(_ind.lunes.getDate()+dir*7); renderIndivJugador(); }
+function indHoy(){ _ind.lunes=_indLunesDe(new Date()); renderIndivJugador(); }
+
+// ══ LA SEMANA DE UN JUGADOR ═══════════════════════════════════
+// Lo del equipo y lo suyo, en la misma rejilla. Es la misma llamada
+// que usa él para ver su calendario, así que es exactamente lo que ve.
+async function renderIndivJugador(){
+  const c=document.getElementById('planner-content');
+  if(!c) return;
+  c.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  if(!_ind.lunes) _ind.lunes=_indLunesDe(new Date());
+  const dom=new Date(_ind.lunes); dom.setDate(dom.getDate()+6);
+  const desde=_agISO(_ind.lunes), hasta=_agISO(dom);
+
+  const [ag, ex] = await Promise.all([
+    api({ action:'getAgenda', usuario:_ind.usuario, desde, hasta }),
+    api({ action:'getExtras', usuario:_ind.usuario })
+  ]);
+  _ind.data=(ag&&ag.ok)?ag:{ dias:{} };
+  _indivExtras=(ex.ok&&ex.extras)?ex.extras:[];
+
+  const nombre=_nombreJug(_ind.usuario);
+  const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const rango=`${_ind.lunes.getDate()} – ${dom.getDate()} ${MESES[dom.getMonth()]}`;
+  const DL=['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+  const hoyStr=_agISO(new Date());
+
+  let cols='';
+  for(let i=0;i<7;i++){
+    const d=new Date(_ind.lunes); d.setDate(d.getDate()+i);
+    const f=_agISO(d);
+    const info=(_ind.data.dias&&_ind.data.dias[f])||{ gym:[], eventos:[] };
+    let chips='';
+    (info.gym||[]).forEach(g=>{
+      if(g.individual===true){
+        chips+=`<span class="ind-ses ind-ses-in" onclick="event.stopPropagation();indEditarExtra('${g.extraId||''}',${g.dia})">
+            ${g.titulo||'Individual'}<span class="ind-ses-n">${g.nEj} ej · individual</span></span>`;
+      } else {
+        chips+=`<span class="ind-ses ind-ses-eq">${g.titulo||'Gym'}<span class="ind-ses-n">${g.nEj} ej · equipo</span></span>`;
+      }
+    });
+    (info.eventos||[]).forEach(e=>{
+      const esP=e.tipo==='partido';
+      const et=esP?(e.rival?'vs '+e.rival:'Partido'):(e.titulo||'Campo');
+      chips+=`<span class="ind-ses ind-ses-ca">${et}<span class="ind-ses-n">${esP?'partido':(e.duracion?e.duracion+' min':'campo')}</span></span>`;
+    });
+    cols+=`<div class="ind-d${f===hoyStr?' ind-d-hoy':''}">
+        <span class="ind-d-f">${DL[i]} ${d.getDate()}</span>
+        ${chips}
+        <span class="ind-d-add" onclick="indNuevaSesion('${f}')" title="Añadir sesión individual">+</span>
+      </div>`;
+  }
+
+  // Sus sesiones individuales, para editarlas, pasarlas a otro o borrarlas
+  const suyas=_indivExtras.length ? _indivExtras.map(e=>{
+    const dias=e.dias||[];
+    const conF=dias.filter(d=>d.fecha);
+    const txt=conF.length?conF.map(d=>_indFechaCorta(d.fecha)).join(' · ')
+                         :'<span style="color:#e6a817">sin fecha · no la ve</span>';
     return `<div class="indiv-row">
       <div class="indiv-row-info">
-        <div class="indiv-row-nm">${_nombreJug(e.usuario)} · ${e.nombre||'Extra'}</div>
-        <div class="indiv-row-sub">${nDias} día${nDias!==1?'s':''} · ${fechasTxt}</div>
+        <div class="indiv-row-nm">${e.nombre||'Individual'}</div>
+        <div class="indiv-row-sub">${dias.length} día${dias.length!==1?'s':''} · ${txt}</div>
       </div>
-      <span class="indiv-edit" title="Asignar a otro jugador" onclick="asignarExtraAbrir('${e.id}')">&#10697;</span>
+      <span class="indiv-edit" title="Repetir en más días" onclick="indRepetirAbrir('${e.id}','${String(e.usuario).replace(/'/g,"\\'")}','${String(e.nombre||'Individual').replace(/'/g,"\\'")}',null,true)">&#128197;</span>
+      <span class="indiv-edit" title="Pasar a otro jugador" onclick="asignarExtraAbrir('${e.id}')">&#10697;</span>
       <span class="indiv-edit" title="Editar" onclick="editExtra('${e.id}')">&#9998;</span>
       <span class="indiv-del" title="Borrar" onclick="delExtra('${e.id}')">&#128465;</span>
     </div>`;
-  }).join('') : '<div class="pevo-empty">Aún no has creado extras individuales.</div>';
+  }).join('') : '<div class="pevo-empty">Todavía no tiene nada individual.</div>';
 
   c.innerHTML=`
-    <div class="indiv-new-box">
-      <div class="indiv-new-title">Nuevo extra individual</div>
-      <label class="indiv-lbl">Squad</label>
-      <select id="indiv-squad" class="semana-select" style="width:100%;margin-bottom:10px" onchange="_indivSetSquad(this.value)">
-        ${squadOpts}
-      </select>
-      <label class="indiv-lbl">Jugador</label>
-      <select id="indiv-jugador" class="semana-select" style="width:100%;margin-bottom:10px">
-        <option value="">— Selecciona jugador —</option>
-        ${jugadores.map(j=>`<option value="${j.usuario}">${j.nombre}${j.rugbyposition?' ('+j.rugbyposition+')':''}</option>`).join('')}
-      </select>
-      <label class="indiv-lbl">Semana del equipo</label>
-      <select id="indiv-semana" class="semana-select" style="width:100%;margin-bottom:10px">
-        <option value="">— Selecciona semana —</option>
-        ${semanas.map(s=>`<option value="${s}">${s}</option>`).join('')}
-      </select>
-      <label class="indiv-lbl">Nombre del extra (opcional)</label>
-      <input id="indiv-nombre" class="semana-select" style="width:100%;margin-bottom:12px" placeholder="Ej. Prensa + core">
-      <button class="indiv-add-btn" onclick="conBoton(this,'Creando...',crearExtra)">+ Añadir día extra</button>
+    <div class="ind-cab">
+      <button class="pback" style="margin:0" onclick="indVolver()">&#8249; jugadores</button>
+      <span class="ind-ini">${_indIniciales(nombre)}</span>
+      <span class="ind-cab-nm">${nombre}</span>
     </div>
-    <div class="indiv-list-title">Extras creados</div>
-    <div class="indiv-list">${extrasHTML}</div>`;
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px">
+      <button class="quad-navbtn" onclick="indSemanaJug(-1)">&#8249;</button>
+      <span style="font-size:14px;font-weight:600;flex:1">${rango}</span>
+      <button class="quad-navbtn" onclick="indSemanaJug(1)">&#8250;</button>
+      <span class="ind-hoybtn" onclick="indHoy()">hoy</span>
+    </div>
+    <div class="ind-sem">${cols}</div>
+    <div class="ind-pie">Pincha el <b>+</b> del día para crear una sesión solo para ${_indNombrePila(nombre)}.
+      Al guardarla podrás repetirla en más días.</div>
+    <div class="indiv-list-title" style="margin-top:18px">Sus sesiones individuales</div>
+    <div class="indiv-list">${suyas}</div>`;
 }
-function _nombreJug(usuario){
-  const j=(_indivJugadores||[]).find(x=>x.usuario===usuario);
-  return j?j.nombre:usuario;
+
+// ══ CREAR Y EDITAR ════════════════════════════════════════════
+function indNuevaSesion(fecha){
+  const nombre=prompt('Nombre de la sesión para '+_nombreJug(_ind.usuario)+':','Individual');
+  if(nombre===null) return;
+  const nm=(nombre||'').trim()||'Individual';
+  _extraEdit={ id:'', usuario:_ind.usuario, semanaNombre:'Individual', nombre:nm,
+               dias:[{ titulo:nm, fecha:fecha, bloques:[], _open:true }] };
+  renderExtraEditor();
 }
-function crearExtra(){
-  const u=document.getElementById('indiv-jugador').value;
-  const sem=document.getElementById('indiv-semana').value;
-  const nombre=document.getElementById('indiv-nombre').value.trim()||'Extra';
-  if(!u){ alert('Selecciona un jugador'); return; }
-  if(!sem){ alert('Selecciona una semana'); return; }
-  const hoyISO = new Date().toISOString().slice(0,10);
-  _extraEdit={ id:'', usuario:u, semanaNombre:sem, nombre,
-               dias:[{ titulo:'Día extra', fecha:hoyISO, bloques:[], _open:true }] };
+function indEditarExtra(extraId, dia){
+  if(!extraId) return;
+  const e=(_indivExtras||[]).find(x=>String(x.id)===String(extraId));
+  if(!e){ alert('No se encontró la sesión'); return; }
+  _extraEdit={ id:e.id, usuario:e.usuario, semanaNombre:e.semanaNombre, nombre:e.nombre, dias:e.dias||[] };
+  const idx=parseInt(dia)-1;
+  (_extraEdit.dias||[]).forEach((d,k)=>{ d._open=(k===idx); });
   renderExtraEditor();
 }
 function editExtra(id){
@@ -13701,10 +13894,131 @@ function editExtra(id){
   });
 }
 async function delExtra(id){
-  if(!confirm('¿Borrar este extra?')) return;
+  if(!confirm('¿Borrar esta sesión individual entera?')) return;
   await api({ action:'deleteExtra', id });
   renderIndividuales();
 }
+
+// ══ REPETIR EN MÁS DÍAS ═══════════════════════════════════════
+// Sale al guardar una sesión individual, y también desde el icono 📅
+// de la lista. Los días que ya tiene y los que entrena con el equipo
+// salen marcados, para no encajarle dos cosas el mismo día.
+var _rep = { id:null, usuario:'', nombre:'', mes:null, sel:[], ya:[], equipo:[], guardando:false, suelto:false };
+
+async function indRepetirAbrir(extraId, usuario, nombre, dias, suelto){
+  if(!extraId) return;
+  _rep={ id:extraId, usuario:usuario, nombre:nombre||'Individual', mes:null,
+         sel:[], ya:[], equipo:[], guardando:false, suelto:!!suelto };
+  let ds=dias;
+  if(!ds){
+    const e=(_indivExtras||[]).find(x=>String(x.id)===String(extraId));
+    ds=e?(e.dias||[]):[];
+  }
+  (ds||[]).forEach(d=>{ if(d.fecha) _rep.ya.push(d.fecha); });
+  _rep.ya.sort();
+  const base=_rep.ya.length?new Date(_rep.ya[0]+'T12:00:00'):new Date();
+  _rep.mes=base.getFullYear()+'-'+String(base.getMonth()+1).padStart(2,'0');
+
+  const ov=document.createElement('div');
+  ov.className='picker-backdrop'; ov.id='rep-modal';
+  ov.innerHTML='<div class="fields-box" id="rep-box" onclick="event.stopPropagation()"></div>';
+  ov.addEventListener('click', e=>{ if(e.target===ov) indRepetirCerrar(); });
+  document.body.appendChild(ov);
+  indRepetirPintar();
+  _repCargarEquipo();
+}
+function indRepetirCerrar(){
+  const m=document.getElementById('rep-modal'); if(m) m.remove();
+  if(_rep.suelto){ renderIndividuales(); return; }
+  _plan.week=null; _extraEdit=null;
+  plannerSub('indiv');
+}
+async function _repCargarEquipo(){
+  const [yy,mm]=_rep.mes.split('-').map(Number);
+  const desde=_agISO(new Date(yy,mm-1,1)), hasta=_agISO(new Date(yy,mm,0));
+  const ag=await api({ action:'getAgenda', usuario:_rep.usuario, desde, hasta });
+  if(ag&&ag.ok&&ag.dias){
+    _rep.equipo=Object.keys(ag.dias).filter(f=>{
+      const i=ag.dias[f]||{};
+      return ((i.gym||[]).some(g=>g.individual!==true)) || ((i.eventos||[]).length>0);
+    });
+  }
+  indRepetirPintar();
+}
+function repMes(dir){
+  const b=new Date(_rep.mes+'-01T12:00:00');
+  b.setMonth(b.getMonth()+dir);
+  _rep.mes=b.getFullYear()+'-'+String(b.getMonth()+1).padStart(2,'0');
+  indRepetirPintar();
+  _repCargarEquipo();
+}
+function repToggle(f){
+  const i=_rep.sel.indexOf(f);
+  if(i===-1) _rep.sel.push(f); else _rep.sel.splice(i,1);
+  _rep.sel.sort();
+  indRepetirPintar();
+}
+function indRepetirPintar(){
+  const box=document.getElementById('rep-box');
+  if(!box) return;
+  const [yy,mm]=_rep.mes.split('-').map(Number);
+  const primero=new Date(yy,mm-1,1), ultimo=new Date(yy,mm,0);
+  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const offset=(primero.getDay()+6)%7;
+  let celdas='';
+  for(let i=0;i<offset;i++) celdas+='<span class="rep-d rep-off"></span>';
+  for(let d=1; d<=ultimo.getDate(); d++){
+    const f=`${yy}-${String(mm).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ya=_rep.ya.indexOf(f)!==-1;
+    const sel=_rep.sel.indexOf(f)!==-1;
+    const eq=_rep.equipo.indexOf(f)!==-1;
+    const cls='rep-d'+(ya?' rep-ya':'')+(sel?' rep-sel':'')+((eq&&!ya&&!sel)?' rep-eq':'');
+    const tit=ya?'Ya tiene esta sesión este día':(eq?'Entrena con el equipo':'');
+    celdas+=`<span class="${cls}" title="${tit}" ${ya?'':`onclick="repToggle('${f}')"`}>${d}</span>`;
+  }
+  const n=_rep.sel.length;
+  box.innerHTML=`
+    <div class="rep-tit">${_rep.suelto?'Repetir sesión':'Sesión guardada &#10003;'}</div>
+    <div class="rep-sub"><b>${String(_rep.nombre||'').replace(/</g,'&lt;')}</b> &middot; ${_nombreJug(_rep.usuario)}</div>
+    <div class="rep-preg">&iquest;La repites otros d&iacute;as? Marca los que quieras.</div>
+    <div class="rep-cal">
+      <div class="rep-cal-hd">
+        <button class="quad-navbtn" onclick="repMes(-1)">&#8249;</button>
+        <span class="rep-cal-m">${MESES[mm-1]} ${yy}</span>
+        <button class="quad-navbtn" onclick="repMes(1)">&#8250;</button>
+      </div>
+      <div class="rep-g">
+        ${['L','M','X','J','V','S','D'].map(x=>`<span class="rep-dw">${x}</span>`).join('')}
+        ${celdas}
+      </div>
+      <div class="rep-leg">
+        <span><i class="l-sel"></i>elegido</span>
+        <span><i class="l-ya"></i>ya lo tiene</span>
+        <span><i class="l-eq"></i>entrena con el equipo</span>
+      </div>
+    </div>
+    ${n?`<div class="rep-res">${n} d&iacute;a${n!==1?'s':''}: ${_rep.sel.map(_indFechaCorta).join(' &middot; ')}</div>`:''}
+    <button class="rep-ok" ${n?'':'disabled'} onclick="indRepetirGuardar()">
+      ${n?`Repetir el trabajo estos ${n} d&iacute;a${n!==1?'s':''}`:'Marca al menos un d&iacute;a'}</button>
+    <button class="rep-no" onclick="indRepetirCerrar()">${_rep.suelto?'Cancelar':'No, as&iacute; est&aacute; bien'}</button>`;
+}
+async function indRepetirGuardar(){
+  if(_rep.guardando || !_rep.sel.length) return;
+  _rep.guardando=true;
+  const btn=document.querySelector('#rep-box .rep-ok');
+  if(btn){ btn.disabled=true; btn.textContent='Repitiendo...'; }
+  const res=await api({ action:'repetirExtra', id:_rep.id, fechas:_rep.sel, dia:1 });
+  _rep.guardando=false;
+  if(res&&res.ok){
+    const n=(res['a\u00f1adidos']!==undefined)?res['a\u00f1adidos']:_rep.sel.length;
+    indRepetirCerrar();
+    alert('Repetida en '+n+' d\u00eda'+(n!==1?'s':'')+'.\n\nYa le aparece en su calendario.');
+  } else {
+    if(btn){ btn.disabled=false; btn.textContent='Reintentar'; }
+    alert('No se pudo repetir: '+((res&&res.error)||''));
+  }
+}
+
 // Reutiliza el editor de semana del planner, pero marcando que es un extra individual.
 function renderExtraEditor(){
   _plan.week = {
@@ -15347,13 +15661,22 @@ async function saveWeekNow(){
     (clean.dias||[]).forEach(d=>{ delete d._open; });
     const btns=document.querySelectorAll('.pw-draft,.pw-publish');
     btns.forEach(b=>{ b.disabled=true; b.textContent='Guardando...'; });
+    const nombreEx=(_extraEdit&&_extraEdit.nombre)||'Individual';
     const res=await api({ action:'saveExtra', id:w._extraId||'', usuario:w._extraUsuario,
-      squad:w.squad, semanaNombre:w.semanaNombre, dias:clean.dias,
-      nombre:(_extraEdit&&_extraEdit.nombre)||'Extra', creado_por:(state.user&&state.user.usuario)||'' });
+      squad:w.squad, semanaNombre:w.semanaNombre||'Individual', dias:clean.dias,
+      nombre:nombreEx, creado_por:(state.user&&state.user.usuario)||'' });
     if(res.ok){
       limpiarBorrador();
-      alert('Extra guardado ✓\\n\\nSolo lo verá '+w._extraNombreJug+' en su semana '+w.semanaNombre+'.');
-      _plan.week=null; plannerSub('indiv');
+      const idEx=res.id||w._extraId||'';
+      const conFecha=(clean.dias||[]).filter(d=>d.fecha);
+      if(!conFecha.length){
+        _plan.week=null; _extraEdit=null;
+        alert('Guardada, pero ningún día tiene fecha: así no se la ve nadie. Ponles fecha y vuelve a guardar.');
+        plannerSub('indiv');
+        return;
+      }
+      // Guardada y con fecha: se ofrece repetirla en más días
+      indRepetirAbrir(idEx, w._extraUsuario, nombreEx, clean.dias, false);
     } else { btns.forEach(b=>{ b.disabled=false; b.textContent='Guardar'; }); alert('Error: '+(res.error||'')); }
     return;
   }
