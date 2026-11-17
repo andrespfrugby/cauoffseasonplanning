@@ -2086,6 +2086,26 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 .ind-hl{color:var(--accent2);font-weight:700}
 .ind-pick-pie{margin-top:9px;font-size:11px;color:var(--muted);line-height:1.5}
 .day-menu .day-menu-del{color:#ff7070}
+.pasig-nota{font-size:11px;color:var(--text2);line-height:1.55;background:var(--surface2);border-radius:8px;padding:9px 11px;margin-bottom:13px}
+.pj-tit{font-size:13px;font-weight:700;color:var(--text);margin:20px 0 2px}
+.pj-sub{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.pj-card{border:1px solid rgba(169,159,245,.32);border-radius:12px;background:rgba(169,159,245,.05);margin-bottom:10px;overflow:hidden}
+.pj-hd{display:flex;align-items:center;gap:10px;padding:12px 13px;cursor:pointer}
+.pj-nm{flex:1;font-size:14px;font-weight:700;color:var(--text);min-width:0}
+.pj-prog{display:flex;align-items:center;gap:7px;font-size:11px;color:#a99ff5;white-space:nowrap}
+.pj-barra{display:inline-block;width:52px;height:5px;border-radius:3px;background:rgba(169,159,245,.2);overflow:hidden}
+.pj-barra i{display:block;height:100%;background:#a99ff5}
+.pj-chev{font-size:10px;color:var(--muted)}
+.pj-dias{border-top:1px solid rgba(169,159,245,.2)}
+.pj-dia{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:11px 13px}
+.pj-dia + .pj-dia{border-top:1px solid var(--line)}
+.pj-dn{display:flex;align-items:center;justify-content:center;width:25px;height:25px;flex:0 0 25px;border-radius:50%;background:rgba(169,159,245,.16);color:#a99ff5;font-size:12px;font-weight:700}
+.pj-ok .pj-dn{background:rgba(0,229,160,.16);color:#00e5a0}
+.pj-dnm{flex:1;min-width:0;font-size:13px;color:var(--text);line-height:1.35}
+.pj-dej{display:block;font-size:10.5px;color:var(--muted)}
+.pj-dbtn{background:rgba(169,159,245,.14);color:#a99ff5;border-radius:8px;padding:7px 13px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.pj-dbtn:hover{background:rgba(169,159,245,.24)}
+.pj-cont{flex:0 0 100%;padding:4px 0 0}
 .cw-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding:9px 13px;border:1px solid var(--border2);border-radius:10px;background:var(--surface2)}
 .cw-bar-t{font-size:12px;font-weight:600;color:var(--text)}
 .cw-bar-n{font-size:11px;color:var(--muted)}
@@ -3994,7 +4014,7 @@ async function saveSession(){
   const res = await api({
     action:'saveRegistro', usuario:state.user.usuario,
     semana:realSemanaIdx(), dia:state.dia,
-    bloque:'SESION', ejercicio:'RPE_GLOBAL',
+    bloque: state.refSesion || 'SESION', ejercicio:'RPE_GLOBAL',
     carga_real:'', rpe:state.rpeSession, notas_jugador:'',
     tiempo_sesion: state.tiempoSesion ? parseInt(state.tiempoSesion) : '',
     fecha_sesion: fechaSesion
@@ -4002,6 +4022,7 @@ async function saveSession(){
   if (res.ok) {
     _savingSession = false;
     state.guardado=true;
+    if (state.refSesion){ _agProgs=null; _agPintarProgramas(); }
     progressClear();
     // La agenda cambia (el día pasa a registrado): se limpia su caché
     if (typeof _agInvalidar === 'function') _agInvalidar();
@@ -4501,10 +4522,13 @@ function renderAgendaDia(){
       cont.innerHTML = cab + `<div class="ag-empty" style="color:#ffa040">
         <div style="font-size:28px;margin-bottom:8px">⚠️</div>
         Tu ficha no tiene equipo asignado, por eso no te aparecen las sesiones.<br>
-        Díselo al preparador y lo arregla en un minuto.</div>`;
+        Díselo al preparador y lo arregla en un minuto.</div>` + '<div id="ag-progs"></div>';
+      _agPintarProgramas();
       return;
     }
-    cont.innerHTML = cab + `<div class="ag-empty"><div style="font-size:28px;margin-bottom:8px">🌴</div>Día de descanso — nada programado.</div>`;
+    cont.innerHTML = cab + `<div class="ag-empty"><div style="font-size:28px;margin-bottom:8px">🌴</div>Día de descanso — nada programado.</div>`
+      + '<div id="ag-progs"></div>';
+    _agPintarProgramas();
     return;
   }
 
@@ -4534,7 +4558,60 @@ function renderAgendaDia(){
     </div>`;
   });
 
-  cont.innerHTML = html;
+  cont.innerHTML = html + '<div id="ag-progs"></div>';
+  _agPintarProgramas();
+}
+
+// ══════════════ TUS PROGRAMAS ══════════════
+// Un programa asignado no tiene fecha: no va al calendario. Se queda aquí
+// abajo, el jugador lo despliega y hace el día que quiera cuando pueda.
+var _agProgs = null;        // null = aún no pedido
+var _agProgAbierto = '';    // id del programa desplegado
+
+async function _agPedirProgramas(forzar){
+  if (_agProgs !== null && !forzar) return;
+  const r = await api({ action:'getProgramasJugador', usuario:(state.user&&state.user.usuario)||'' });
+  _agProgs = (r && r.ok) ? (r.programas||[]) : [];
+}
+async function _agPintarProgramas(){
+  const caja = document.getElementById('ag-progs');
+  if (!caja) return;
+  await _agPedirProgramas();
+  const caja2 = document.getElementById('ag-progs');   // pudo repintarse mientras tanto
+  if (!caja2) return;
+  if (!_agProgs.length){ caja2.innerHTML=''; return; }
+  caja2.innerHTML = `
+    <div class="pj-tit">Tu programa</div>
+    <div class="pj-sub">Sin fecha fija: hazlo cuando puedas. Se marca solo al registrar la sesión.</div>
+    ${_agProgs.map(p=>_agProgTarjeta(p)).join('')}`;
+}
+function _agProgTarjeta(p){
+  const abierto = _agProgAbierto === String(p.id);
+  const pct = p.nDias ? Math.round(100*p.nHechos/p.nDias) : 0;
+  const dias = p.dias.map(d=>{
+    const key = 'prog'+p.id+'_'+d.i;
+    const ab  = _ag.abierta === key;
+    return `<div class="pj-dia${d.hecho?' pj-ok':''}">
+      <span class="pj-dn">${d.hecho?'&#10003;':(d.i+1)}</span>
+      <span class="pj-dnm">${(d.titulo||('Día '+(d.i+1))).replace(/</g,'&lt;')}
+        <span class="pj-dej">${d.nEj} ejercicio${d.nEj===1?'':'s'}${d.hecho&&d.fechaHecho?' · hecho el '+_indFechaCorta(d.fechaHecho):''}</span></span>
+      <span class="pj-dbtn" onclick="agToggleSesion('${key}','',0,${d.i},'${p.id}')">${ab?'Cerrar ⌃':(d.hecho?'Repetir':'Realizar')}</span>
+      ${ab?`<div id="ag-sesion-cont" class="pj-cont"><div class="loader"><div class="spinner"></div></div></div>`:''}
+    </div>`;
+  }).join('');
+  return `<div class="pj-card">
+    <div class="pj-hd" onclick="agProgDesplegar('${p.id}')">
+      <span class="pj-nm">${String(p.nombre).replace(/</g,'&lt;')}</span>
+      <span class="pj-prog"><span class="pj-barra"><i style="width:${pct}%"></i></span>${p.nHechos} de ${p.nDias}</span>
+      <span class="pj-chev">${abierto?'&#9650;':'&#9660;'}</span>
+    </div>
+    ${abierto?`<div class="pj-dias">${dias}</div>`:''}
+  </div>`;
+}
+function agProgDesplegar(id){
+  _agProgAbierto = (_agProgAbierto===String(id)) ? '' : String(id);
+  _ag.abierta = null;
+  _agPintarProgramas();
 }
 
 function _agColorTipo(titulo){
@@ -4547,12 +4624,24 @@ function _agColorTipo(titulo){
 
 // Despliega la sesión dentro de su tarjeta (o la pliega si ya estaba abierta)
 async function agToggleSesion(key, weekId, semanaIdx, dia, extraId){
-  if (_ag.abierta === key) { _ag.abierta = null; renderAgendaDia(); return; }
+  const esProg = String(key||'').indexOf('prog')===0;
+  if (_ag.abierta === key) {
+    _ag.abierta = null; state.refSesion='';
+    if (esProg) await _agPintarProgramas(); else renderAgendaDia();
+    return;
+  }
   _ag.abierta = key;
   state.semana = semanaIdx;
   state.dia    = dia;
   resetSessionState();
-  renderAgendaDia();
+  // Un día de programa no tiene fecha, así que no se puede marcar como hecho
+  // por el día. Se guarda el id del programa con el registro y así se sabe
+  // exactamente qué día hizo.
+  state.refSesion = esProg ? String(extraId||'') : '';
+  // Hay que ESPERAR al repintado: si no, el contenedor de la sesión se busca
+  // antes de que exista y los ejercicios se escriben en un nodo ya descartado,
+  // dejando el spinner girando para siempre.
+  if (esProg) await _agPintarProgramas(); else renderAgendaDia();
   const cont = document.getElementById('ag-sesion-cont');
   if (!cont) return;
   // Por id: los índices de la lista de semanas cambian según el filtro
@@ -9376,11 +9465,7 @@ async function progAsignarAbrir(id){
   if(!p){ alert('No se encontró el programa'); return; }
   const squad = p.squad || state.coachSquadFilter || "men's xv";
   _progAsig={ id:id, nombre:p.nombre||'Programa', nDias:p.nDias, dias:p.dias||[],
-              usuarios:[], fechas:[], squad:squad, jugadores:[] };
-
-  // Fechas por defecto: desde el próximo lunes, un día tras otro
-  const base=_indLunesDe(new Date()); base.setDate(base.getDate()+7);
-  for(let i=0;i<p.nDias;i++){ const d=new Date(base); d.setDate(d.getDate()+i); _progAsig.fechas.push(_agISO(d)); }
+              usuarios:[], squad:squad, jugadores:[] };
 
   const ov=document.createElement('div');
   ov.className='picker-backdrop'; ov.id='pasig-modal';
@@ -9404,7 +9489,6 @@ function progAsignarJug(u,on){
   const btn=document.getElementById('pasig-btn');
   if(btn) btn.textContent = n? 'Asignar a '+n+' jugador'+(n!==1?'es':'') : 'Elige jugadores';
 }
-function progAsignarFecha(i,v){ _progAsig.fechas[i]=v; }
 function progAsignarPintar(){
   const box=document.getElementById('pasig-box');
   if(!box) return;
@@ -9412,8 +9496,7 @@ function progAsignarPintar(){
     <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px">
       <span class="prog-dn">${i+1}</span>
       <span style="font-size:11.5px;color:var(--text2);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.titulo||('Día '+(i+1))}</span>
-      <input type="date" class="pe-addinput" style="width:150px;flex:0 0 150px" value="${_progAsig.fechas[i]||''}"
-             onchange="progAsignarFecha(${i},this.value)">
+      <span style="font-size:11px;color:var(--muted)">${d.nEj||0} ej</span>
     </div>`).join('');
   const jug=_progAsig.jugadores.map(j=>`
     <label style="display:flex;align-items:center;gap:9px;padding:7px 4px;cursor:pointer;font-size:13px;color:var(--text)">
@@ -9425,7 +9508,9 @@ function progAsignarPintar(){
     <div style="font-size:16px;font-weight:700;margin-bottom:2px">Asignar programa</div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
       <b style="color:var(--text)">${String(_progAsig.nombre).replace(/</g,'&lt;')}</b> · ${_progAsig.nDias} día${_progAsig.nDias!==1?'s':''} · ${_progAsig.squad}</div>
-    <label class="indiv-lbl">Qué día hace cada uno</label>
+    <div class="pasig-nota">Sin fechas: el programa le aparece en su pantalla de inicio,
+      debajo de la sesión del día, y lo va haciendo cuando puede. Tú ves cuántos días lleva.</div>
+    <label class="indiv-lbl">Qué incluye</label>
     <div style="margin-bottom:12px">${fechas||'<div style="font-size:11px;color:var(--muted)">Este programa no tiene días.</div>'}</div>
     <label class="indiv-lbl">Asignar a</label>
     <div style="background:var(--surface2);border-radius:8px;padding:6px 11px;max-height:230px;overflow-y:auto;margin-bottom:6px">
@@ -9437,14 +9522,14 @@ function progAsignarPintar(){
 }
 async function progAsignarGuardar(){
   if(!_progAsig.usuarios.length){ alert('Elige al menos un jugador'); return; }
-  const sinFecha=_progAsig.fechas.filter(f=>!f).length;
-  if(sinFecha && !confirm(sinFecha+' día'+(sinFecha!==1?'s':'')+' sin fecha.\n\nEsos días no les aparecerán en el calendario. ¿Sigo?')) return;
   const res=await api({ action:'asignarPrograma', idPrograma:_progAsig.id,
-    usuarios:_progAsig.usuarios, fechas:_progAsig.fechas, nombre:_progAsig.nombre,
+    usuarios:_progAsig.usuarios, nombre:_progAsig.nombre,
     creado_por:(state.user&&state.user.usuario)||'' });
   if(res&&res.ok){
     progAsignarCerrar();
-    alert('Asignado a '+res.creados+' jugador'+(res.creados!==1?'es':'')+'.\n\nCada uno tiene su copia: si le cambias algo a uno, a los demás no les afecta.');
+    alert('Asignado a '+res.creados+' jugador'+(res.creados!==1?'es':'')+'.\n\n'+
+          'Les aparece en su pantalla de inicio y lo hacen cuando puedan.\n'+
+          'Cada uno tiene su copia: si le cambias algo a uno, a los demás no les afecta.');
     renderProgramas();
   } else alert('No se pudo asignar: '+((res&&res.error)||''));
 }
