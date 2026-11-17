@@ -2087,8 +2087,8 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 .ind-pick-pie{margin-top:9px;font-size:11px;color:var(--muted);line-height:1.5}
 .day-menu .day-menu-del{color:#ff7070}
 .pasig-nota{font-size:11px;color:var(--text2);line-height:1.55;background:var(--surface2);border-radius:8px;padding:9px 11px;margin-bottom:13px}
-.pj-tit{font-size:13px;font-weight:700;color:var(--text);margin:20px 0 2px}
-.pj-sub{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.ag-aviso-err{font-size:11.5px;color:#ffa040;line-height:1.55;background:rgba(255,160,64,.08);border:1px solid rgba(255,160,64,.3);border-radius:10px;padding:11px 13px}
+.pj-tit{font-size:13px;font-weight:700;color:var(--text);margin:20px 0 10px}
 .pj-card{border:1px solid rgba(169,159,245,.32);border-radius:12px;background:rgba(169,159,245,.05);margin-bottom:10px;overflow:hidden}
 .pj-hd{display:flex;align-items:center;gap:10px;padding:12px 13px;cursor:pointer}
 .pj-nm{flex:1;font-size:14px;font-weight:700;color:var(--text);min-width:0}
@@ -4568,10 +4568,21 @@ function renderAgendaDia(){
 var _agProgs = null;        // null = aún no pedido
 var _agProgAbierto = '';    // id del programa desplegado
 
+var _agProgError = '';
 async function _agPedirProgramas(forzar){
   if (_agProgs !== null && !forzar) return;
-  const r = await api({ action:'getProgramasJugador', usuario:(state.user&&state.user.usuario)||'' });
-  _agProgs = (r && r.ok) ? (r.programas||[]) : [];
+  _agProgError = '';
+  let r = null;
+  try { r = await api({ action:'getProgramasJugador', usuario:(state.user&&state.user.usuario)||'' }); }
+  catch(e){ r = null; }
+  if (r && r.ok){ _agProgs = r.programas || []; return; }
+  // Antes esto se tragaba el error y el bloque salía vacío sin explicar nada:
+  // con el backend sin actualizar parecía que el programa no se había asignado.
+  _agProgs = [];
+  const err = String((r && r.error) || 'sin respuesta del servidor');
+  _agProgError = /Acci[oó]n desconocida/i.test(err)
+    ? 'La hoja de cálculo todavía no tiene la última versión del código, por eso no se ven los programas. Díselo al preparador.'
+    : 'No se pudieron cargar tus programas: ' + err;
 }
 async function _agPintarProgramas(){
   const caja = document.getElementById('ag-progs');
@@ -4579,10 +4590,14 @@ async function _agPintarProgramas(){
   await _agPedirProgramas();
   const caja2 = document.getElementById('ag-progs');   // pudo repintarse mientras tanto
   if (!caja2) return;
-  if (!_agProgs.length){ caja2.innerHTML=''; return; }
+  if (!_agProgs.length){
+    caja2.innerHTML = _agProgError
+      ? `<div class="pj-tit">Tus programas</div><div class="ag-aviso-err">${_agProgError}</div>`
+      : '';
+    return;
+  }
   caja2.innerHTML = `
-    <div class="pj-tit">Tu programa</div>
-    <div class="pj-sub">Sin fecha fija: hazlo cuando puedas. Se marca solo al registrar la sesión.</div>
+    <div class="pj-tit">Tus programas</div>
     ${_agProgs.map(p=>_agProgTarjeta(p)).join('')}`;
 }
 function _agProgTarjeta(p){
