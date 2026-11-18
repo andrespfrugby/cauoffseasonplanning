@@ -4408,7 +4408,12 @@ var _ag = { lunes:null, sel:null, data:null, abierta:null };
 var _agCache = {};
 // Sesiones ya abiertas: plegarlas y volver a abrirlas es instantáneo.
 var _agSesionCache = {};
-function _agInvalidar(){ _agCache = {}; _agSesionCache = {}; }
+function _agInvalidar(){
+  _agCache = {}; _agSesionCache = {};
+  // Los programas del jugador también: al salir y entrar otro sin recargar,
+  // la lista vieja no debe sobrevivir.
+  _agProgs = null; _agProgsDe = ''; _agProgAbierto = ''; _agProgError = '';
+}
 
 function _agLunesDe(d){
   const x = new Date(d); const dow = x.getDay();
@@ -4566,11 +4571,18 @@ function renderAgendaDia(){
 // Un programa asignado no tiene fecha: no va al calendario. Se queda aquí
 // abajo, el jugador lo despliega y hace el día que quiera cuando pueda.
 var _agProgs = null;        // null = aún no pedido
+var _agProgsDe = '';        // de QUÉ jugador es esa lista
 var _agProgAbierto = '';    // id del programa desplegado
 
 var _agProgError = '';
 async function _agPedirProgramas(forzar){
+  const quien = (state.user && state.user.usuario) || '';
+  // Atada al jugador: si entra otro sin recargar la página, la lista del
+  // anterior no vale. Antes se reutilizaba y un jugador veía el programa
+  // de su compañero.
+  if (_agProgsDe !== quien) { _agProgs = null; _agProgAbierto = ''; }
   if (_agProgs !== null && !forzar) return;
+  _agProgsDe = quien;
   _agProgError = '';
   let r = null;
   try { r = await api({ action:'getProgramasJugador', usuario:(state.user&&state.user.usuario)||'' }); }
@@ -4610,7 +4622,7 @@ function _agProgTarjeta(p){
       <span class="pj-dn">${d.hecho?'&#10003;':(d.i+1)}</span>
       <span class="pj-dnm">${(d.titulo||('Día '+(d.i+1))).replace(/</g,'&lt;')}
         <span class="pj-dej">${d.nEj} ejercicio${d.nEj===1?'':'s'}${d.hecho&&d.fechaHecho?' · hecho el '+_indFechaCorta(d.fechaHecho):''}</span></span>
-      <span class="pj-dbtn" onclick="agToggleSesion('${key}','',0,${d.i},'${p.id}')">${ab?'Cerrar ⌃':(d.hecho?'Repetir':'Realizar')}</span>
+      <span class="pj-dbtn" onclick="agToggleSesion('${key}','',0,${d.i+1},'${p.id}')">${ab?'Cerrar ⌃':(d.hecho?'Repetir':'Realizar')}</span>
       ${ab?`<div id="ag-sesion-cont" class="pj-cont"><div class="loader"><div class="spinner"></div></div></div>`:''}
     </div>`;
   }).join('');
