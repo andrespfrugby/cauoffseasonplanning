@@ -2105,7 +2105,11 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 .pj-dej{display:block;font-size:10.5px;color:var(--muted)}
 .pj-dbtn{background:rgba(169,159,245,.14);color:#a99ff5;border-radius:8px;padding:7px 13px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
 .pj-dbtn:hover{background:rgba(169,159,245,.24)}
-.pj-cont{flex:0 0 100%;padding:4px 0 0}
+/* min-width:0 es imprescindible: sin él, un elemento flexible no puede
+   encoger por debajo de su contenido, y un nombre de ejercicio largo
+   estiraba la caja hasta salirse de la pantalla del móvil. */
+.pj-cont{flex:0 0 100%;width:100%;min-width:0;max-width:100%;padding:4px 0 0;overflow-x:hidden}
+.pj-cont .ex-name,.pj-cont .pblk-n,.pj-cont .ag-nota-txt{overflow-wrap:anywhere}
 .cw-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding:9px 13px;border:1px solid var(--border2);border-radius:10px;background:var(--surface2)}
 .cw-bar-t{font-size:12px;font-weight:600;color:var(--text)}
 .cw-bar-n{font-size:11px;color:var(--muted)}
