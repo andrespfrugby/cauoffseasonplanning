@@ -2088,6 +2088,17 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
 .day-menu .day-menu-del{color:#ff7070}
 .pasig-nota{font-size:11px;color:var(--text2);line-height:1.55;background:var(--surface2);border-radius:8px;padding:9px 11px;margin-bottom:13px}
 .ag-aviso-err{font-size:11.5px;color:#ffa040;line-height:1.55;background:rgba(255,160,64,.08);border:1px solid rgba(255,160,64,.3);border-radius:10px;padding:11px 13px}
+.exl-play{display:flex;align-items:center;gap:11px;margin:9px 0 0;padding:9px 11px;border:1px solid var(--border2);border-radius:10px;background:var(--surface2);cursor:pointer}
+.exl-play:hover{border-color:#ff6b6b}
+.exl-play img{width:72px;height:41px;flex:0 0 72px;object-fit:cover;border-radius:6px}
+.exl-play-ic{color:#ff6b6b;font-size:15px}
+.exl-play-tx{font-size:12.5px;color:var(--text);font-weight:600}
+.addb-yt{color:#ff6b6b;border-color:rgba(255,107,107,.45)}
+.addb-yt:hover{border-color:#ff6b6b;background:rgba(255,107,107,.08)}
+.bnm-yt{color:#ff6b6b;margin-right:5px;font-size:10px}
+.yt-previa{display:flex;align-items:center;gap:9px;min-height:20px;margin-bottom:12px;font-size:11px;color:var(--muted)}
+.yt-previa img{width:62px;height:35px;object-fit:cover;border-radius:5px}
+.yt-previa .yt-mal{color:#ffa040;line-height:1.5}
 .pj-tit{font-size:13px;font-weight:700;color:var(--text);margin:20px 0 10px}
 .pj-card{border:1px solid rgba(169,159,245,.32);border-radius:12px;background:rgba(169,159,245,.05);margin-bottom:10px;overflow:hidden}
 .pj-hd{display:flex;align-items:center;gap:10px;padding:12px 13px;cursor:pointer}
@@ -3467,6 +3478,7 @@ function _extraBloquesAEjercicios(bloques){
         sets: it.sets||'', reps: it.reps||'', tempo: it.tempo||'',
         load_objetivo: loadObj, tipo_carga: tc,
         video: it.video||it.video_url||'', notas: it.nota||'',
+        tipo: it.tipo||'',
         fase: esPrep?'prep':'main'
       });
     });
@@ -3590,6 +3602,9 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeVideoModal()
 
 // ── RENDER CARD ───────────────────────────────────────────────
 function renderCard(e) {
+  // Trabajo de campo: solo título, vídeo y nota. Nada de series, cargas ni
+  // historial, porque eso no se registra. Sí se puede marcar como hecho.
+  if (e.tipo === 'link') return renderCardEnlace(e);
   const letra   = blockLetter(e.bloque);
   const letraOk = ['A','B','C','D','E'].includes(letra) ? letra : 'X';
   const cardId  = (e.bloque+'_'+e.ejercicio).replace(/\W/g,'_');
@@ -3651,6 +3666,32 @@ function renderCard(e) {
     <div id="panel-load-${cardId}" class="card-panel hidden"></div>
     <div id="panel-timer-${cardId}" class="hidden">${renderTimerStrip(cardId)}</div>
     <div id="panel-metro-${cardId}" class="hidden">${renderMetronomeStrip(cardId)}</div>
+  </div>`;
+}
+
+function renderCardEnlace(e){
+  const letra   = blockLetter(e.bloque);
+  const letraOk = ['A','B','C','D','E'].includes(letra) ? letra : 'X';
+  const cardId  = (e.bloque+'_'+e.ejercicio).replace(/\W/g,'_');
+  const nombreEsc = String(e.ejercicio||'').replace(/'/g,"\\'");
+  const videoEsc  = String(e.video||'').replace(/'/g,"\\'");
+  const hasVideo  = !!(e.video && String(e.video).indexOf('http')===0);
+  const th        = hasVideo ? ytThumb(e.video) : '';
+  const esc = (x)=>String(x||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  return `
+  <div class="ex-card accent-${letraOk} exn-card exl-card" id="card-${cardId}">
+    <div class="exn-head">
+      <span class="block-id block-${letraOk} exn-blk">${esc(e.bloque)}</span>
+      <span class="exn-name">${esc(e.ejercicio)}</span>
+      <span class="ex-tick-btn exn-tick" id="tick-${cardId}" onclick="toggleTick('${cardId}')" title="Marcar como completado">✓</span>
+    </div>
+    ${hasVideo?`<div class="exl-play" onclick="openVideoModal('${nombreEsc}','${videoEsc}')">
+        ${th?`<img src="${th}" alt="">`:''}
+        <span class="exl-play-ic">▶</span>
+        <span class="exl-play-tx">Ver el vídeo</span>
+      </div>`:''}
+    ${e.notas?`<div class="exn-nota"><span class="exn-nota-ic">ℹ</span><span class="exn-nota-txt">${esc(e.notas)}</span></div>`:''}
+    <div class="ex-done-meta" id="donemeta-${cardId}">Hecho ✓</div>
   </div>`;
 }
 
@@ -4715,6 +4756,8 @@ function _agResumenSesion(ejs){
     g.items.push(e);
   });
   const presc = e => {
+    // Un trabajo de campo no tiene series ni carga: en su sitio va la nota.
+    if (e.tipo === 'link') return String(e.notas||'').trim();
     const sets=String(e.sets||'').trim(), reps=String(e.reps||'').trim(), c=String(e.load_objetivo||'').trim();
     let t=''; if(sets) t+=sets; if(sets&&reps) t+=' × '; if(reps) t+=reps; if(c) t+=(t?' @ ':'')+c;
     return t;
@@ -10942,7 +10985,7 @@ function renderWeekEditor(){
   const daysHtml=(w.data.dias||[]).map((d,i)=>renderDayCard(d,i)).join('');
   const esProg = w._esPrograma === true;
   document.getElementById('planner-content').innerHTML=`
-    <button class="pback" onclick="cerrarEditor()">&#8249; ${esProg?'volver a programas':'volver a semanas'}</button>
+    <button class="pback" onclick="cerrarEditor()">&#8249; ${esProg?'volver a programas':'volver al calendario'}</button>
     ${esProg ? `<div style="background:rgba(90,169,230,.09);border:1px solid rgba(90,169,230,.3);
         border-radius:9px;padding:10px 13px;margin-bottom:10px;font-size:12px;color:#5aa9e6;line-height:1.6">
         <b>Programa de la biblioteca</b> — no tiene fechas y no le aparece a nadie todavía.
@@ -11014,9 +11057,10 @@ function renderDayCard(d,i){
       <textarea class="day-nota" placeholder="Nota de la sesión para los jugadores (objetivo, avisos...)"
         oninput="_diaSetNota(${i},this.value)" onclick="event.stopPropagation()">${(d.nota||'').replace(/</g,'&lt;')}</textarea>
       ${blocks||'<div style="font-size:11px;color:var(--muted);padding:4px 0 8px">Sin bloques</div>'}
-      <div style="display:flex;gap:6px;margin-top:6px">
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
         <button class="addb" onclick="addBlock(${i},'unico')">&#9723; bloque unico</button>
         <button class="addb" onclick="addBlock(${i},'superserie')">&#9707; superserie</button>
+        <button class="addb addb-yt" onclick="linkAbrir(${i})">&#9654; importar enlace de YouTube</button>
       </div>
     </div>`:''}
   </div>`;
@@ -11033,23 +11077,26 @@ function renderBlockRow(b,dayIdx,blockIdx){
   const nEj=(b.ejercicios||[]).length;
   const rows=(b.ejercicios||[]).map((it,ei)=>{
     const th=ytThumb(it.video);
-    const presc=[it.sets?it.sets+'x':'',it.reps||'',it.carga||''].filter(Boolean).join(' ');
+    const esLink = it.tipo==='link';
+    const presc = esLink
+      ? (it.nota||'').replace(/</g,'&lt;')
+      : [it.sets?it.sets+'x':'',it.reps||'',it.carga||''].filter(Boolean).join(' ');
     const canUp = ei>0, canDown = ei<nEj-1;
     return `<div class="brow" draggable="true"
       ondragstart="ejDragIni(event,${dayIdx},${blockIdx},${ei})" ondragend="ejDragFin()"
       ondragover="ejDragSobre(event,${dayIdx},${blockIdx},${ei})" ondrop="ejSoltar(event,${dayIdx},${blockIdx},${ei})"
-      onclick="openExerciseFields(${dayIdx},${blockIdx},${ei})">
+      onclick="${esLink?`linkAbrir(${dayIdx},${blockIdx},${ei})`:`openExerciseFields(${dayIdx},${blockIdx},${ei})`}">
       <span class="brow-grip" title="Arrastrar para reordenar" onclick="event.stopPropagation()">&#10303;</span>
       <span class="brow-handle" onclick="event.stopPropagation();toggleRowMenu('${dayIdx}_${blockIdx}_${ei}')" title="Opciones">&#8942;</span>
       <span class="bl">${it.orden||''}</span>
       <div class="bth">${th?`<img src="${th}" style="width:100%;height:100%;object-fit:cover">`:'&#9654;'}</div>
-      <span class="bnm">${it.ejercicio||'<i style=color:var(--muted)>elegir ejercicio</i>'}</span>
+      <span class="bnm">${esLink?'<span class="bnm-yt">&#9654;</span>':''}${it.ejercicio||'<i style=color:var(--muted)>elegir ejercicio</i>'}</span>
       <span class="bmini">${presc}</span>
       <span class="brow-del" onclick="event.stopPropagation();removeExerciseFromBlock(${dayIdx},${blockIdx},${ei})">&#10005;</span>
       <div class="brow-menu" id="rowmenu-${dayIdx}_${blockIdx}_${ei}">
         ${canUp?`<button onclick="event.stopPropagation();moveExercise(${dayIdx},${blockIdx},${ei},-1)"><span>&#8593;</span> Subir</button>`:''}
         ${canDown?`<button onclick="event.stopPropagation();moveExercise(${dayIdx},${blockIdx},${ei},1)"><span>&#8595;</span> Bajar</button>`:''}
-        <button onclick="event.stopPropagation();switchExercise(${dayIdx},${blockIdx},${ei})"><span>&#8646;</span> Cambiar ejercicio</button>
+        ${esLink?'':`<button onclick="event.stopPropagation();switchExercise(${dayIdx},${blockIdx},${ei})"><span>&#8646;</span> Cambiar ejercicio</button>`}
         <button onclick="event.stopPropagation();ejMoverAbrir(${dayIdx},${blockIdx},${ei})"><span>&#8644;</span> Mover a...</button>
       </div>
     </div>`;
@@ -11078,6 +11125,86 @@ function renderBlockRow(b,dayIdx,blockIdx){
   }
   return `<div class="single-wrap"><div class="blk-name-row" style="display:flex;align-items:center;gap:6px"><span class="blk-handle-wrap">${blkHandle}</span>${nameInput}</div>${rows}${zonaFin}</div>`;
 }
+// ══════════════ ENLACES DE YOUTUBE (trabajo de campo) ══════════════
+// A veces la sesión no es gimnasio: un calentamiento de sprint, un circuito
+// de campo. Eso no está en el catálogo de ejercicios y no tiene series ni
+// reps, así que va como una fila aparte: título, enlace y una nota libre
+// por si hay que apuntar "3 x 20 m".
+var _linkEdit = null;
+
+function linkAbrir(dayIdx, blockIdx, ei){
+  const dia = _plan.week && _plan.week.data && _plan.week.data.dias[dayIdx];
+  if (!dia) return;
+  const editando = (blockIdx !== undefined && ei !== undefined);
+  const it = editando ? dia.bloques[blockIdx].ejercicios[ei] : null;
+  _linkEdit = { dayIdx, blockIdx, ei, editando };
+  const v = (x)=>String(x||'').replace(/"/g,'&quot;');
+  const ov=document.createElement('div');
+  ov.className='picker-backdrop'; ov.id='yt-modal';
+  ov.innerHTML=`
+    <div class="fields-box" onclick="event.stopPropagation()">
+      <div style="font-size:16px;font-weight:700;margin-bottom:2px">
+        ${editando?'Editar enlace':'Importar enlace de YouTube'}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
+        Para trabajo de campo. El jugador ve el título y abre el vídeo; no se le piden series ni cargas.</div>
+      <label class="indiv-lbl">Título</label>
+      <input id="yt-tit" class="pe-addinput" style="margin-bottom:12px"
+             placeholder="Calentamiento de sprint" value="${v(it&&it.ejercicio)}">
+      <label class="indiv-lbl">Enlace de YouTube</label>
+      <input id="yt-url" class="pe-addinput" style="margin-bottom:4px" autocomplete="off"
+             placeholder="https://youtu.be/..." value="${v(it&&it.video)}"
+             oninput="linkPrevia(this.value)">
+      <div id="yt-previa" class="yt-previa"></div>
+      <label class="indiv-lbl">Nota (opcional)</label>
+      <input id="yt-nota" class="pe-addinput" style="margin-bottom:14px"
+             placeholder="3 x 20 m al 80%, 2' de descanso" value="${v(it&&it.nota)}">
+      <button class="pe-save" style="margin-top:0" onclick="linkGuardar()">${editando?'Guardar':'Añadir al día'}</button>
+      <button class="doc-cancel-btn" onclick="linkCerrar()">Cancelar</button>
+    </div>`;
+  ov.addEventListener('click', e=>{ if(e.target===ov) linkCerrar(); });
+  document.body.appendChild(ov);
+  if (it && it.video) linkPrevia(it.video);
+  setTimeout(()=>{ const i=document.getElementById('yt-tit'); if(i) i.focus(); },50);
+}
+function linkCerrar(){ const m=document.getElementById('yt-modal'); if(m) m.remove(); _linkEdit=null; }
+
+// Previa con la miniatura: si sale, el enlace es bueno; si no, está mal escrito.
+function linkPrevia(url){
+  const c=document.getElementById('yt-previa');
+  if(!c) return;
+  const th=ytThumb(url);
+  if(!String(url||'').trim()){ c.innerHTML=''; return; }
+  c.innerHTML = th
+    ? `<img src="${th}" alt=""><span>Enlace reconocido</span>`
+    : `<span class="yt-mal">No parece un enlace de YouTube. Pega la dirección completa del vídeo.</span>`;
+}
+function linkGuardar(){
+  if(!_linkEdit) return;
+  const tit=(document.getElementById('yt-tit').value||'').trim();
+  const url=(document.getElementById('yt-url').value||'').trim();
+  const nota=(document.getElementById('yt-nota').value||'').trim();
+  if(!tit){ alert('Ponle un título, por ejemplo "Calentamiento de sprint"'); return; }
+  if(!url){ alert('Falta el enlace de YouTube'); return; }
+  if(!ytThumb(url) && !confirm('Ese enlace no parece de YouTube.\n\n¿Lo guardo igualmente?')) return;
+  const { dayIdx, blockIdx, ei, editando } = _linkEdit;
+  const dia=_plan.week.data.dias[dayIdx];
+  if (editando){
+    const it=dia.bloques[blockIdx].ejercicios[ei];
+    it.ejercicio=tit; it.video=url; it.nota=nota; it.tipo='link';
+  } else {
+    // Va en su propio bloque: un trabajo de campo no se mezcla con una serie de gimnasio.
+    const letra=nextBlockLetter(dia);
+    dia.bloques.push({ tipo:'unico', letra:letra, nombre:'Campo',
+      ejercicios:[{ tipo:'link', ejercicio:tit, video:url, nota:nota,
+                    sets:'', reps:'', carga:'', tempo:'', patron:'', orden:letra+'1' }] });
+  }
+  linkCerrar();
+  reorderBlock(dayIdx);
+  renderWeekEditor();
+  if (typeof autosaveLocal==='function') autosaveLocal();
+  if (typeof scheduleAutosaveServer==='function') scheduleAutosaveServer();
+}
+
 function setBlockName(dayIdx,blockIdx,val){
   _plan.week.data.dias[dayIdx].bloques[blockIdx].nombre=val;
 }
@@ -12079,6 +12206,8 @@ function _pdfEsc(v){
 
 // Prescripción completa en una línea: "3 × 8 8 8 @ 75%  ·  tempo 3010"
 function _pdfPresc(it){
+  // Trabajo de campo: en vez de la prescripción va la nota, si la hay.
+  if (it.tipo === 'link') return String(it.nota||'').trim();
   const sets = String(it.sets||'').trim();
   const reps = String(it.reps||'').trim();
   let carga  = String(it.carga||'').trim();
