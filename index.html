@@ -3568,17 +3568,12 @@ function blockLetter(bloque) {
   return m ? m[1].toUpperCase() : 'X';
 }
 function toEmbedUrl(url) {
-  if (!url) return '';
-  let id='';
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes('youtu.be')) { id=u.pathname.slice(1).split('?')[0]; }
-    else if (u.hostname.includes('youtube.com')) {
-      id=u.searchParams.get('v')||'';
-      if (!id&&u.pathname.includes('/shorts/')) id=u.pathname.split('/shorts/')[1].split('/')[0];
-    }
-  } catch(_){}
-  return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : '';
+  const i = ytInfo(url);
+  if (i.id && i.lista) return `https://www.youtube.com/embed/${i.id}?autoplay=1&list=${i.lista}`;
+  if (i.id)            return `https://www.youtube.com/embed/${i.id}?autoplay=1`;
+  // Lista entera: 'videoseries' es la forma oficial de incrustarla.
+  if (i.lista)         return `https://www.youtube.com/embed/videoseries?list=${i.lista}`;
+  return '';
 }
 
 // ── VIDEO MODAL ───────────────────────────────────────────────
@@ -3677,6 +3672,8 @@ function renderCardEnlace(e){
   const videoEsc  = String(e.video||'').replace(/'/g,"\\'");
   const hasVideo  = !!(e.video && String(e.video).indexOf('http')===0);
   const th        = hasVideo ? ytThumb(e.video) : '';
+  const inf       = ytInfo(e.video);
+  const esLista   = !!(inf.lista && !inf.id);
   const esc = (x)=>String(x||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   return `
   <div class="ex-card accent-${letraOk} exn-card exl-card" id="card-${cardId}">
@@ -3687,8 +3684,8 @@ function renderCardEnlace(e){
     </div>
     ${hasVideo?`<div class="exl-play" onclick="openVideoModal('${nombreEsc}','${videoEsc}')">
         ${th?`<img src="${th}" alt="">`:''}
-        <span class="exl-play-ic">▶</span>
-        <span class="exl-play-tx">Ver el vídeo</span>
+        <span class="exl-play-ic">${esLista?'&#9776;':'▶'}</span>
+        <span class="exl-play-tx">${esLista?'Ver la lista de vídeos':'Ver el vídeo'}</span>
       </div>`:''}
     ${e.notas?`<div class="exn-nota"><span class="exn-nota-ic">ℹ</span><span class="exn-nota-txt">${esc(e.notas)}</span></div>`:''}
     <div class="ex-done-meta" id="donemeta-${cardId}">Hecho ✓</div>
@@ -8747,18 +8744,35 @@ function puedeVer(f){
 
 var SQUADS = ["men's xv","women's"];
 
-function ytThumb(url){
-  if(!url) return '';
-  var id='';
+// Saca de una URL de YouTube el vídeo y/o la lista de reproducción.
+// Cubre: youtu.be/ID · watch?v=ID · /shorts/ID · /playlist?list=ID ·
+// watch?v=ID&list=ID (un vídeo dentro de una lista) · /embed/ID.
+function ytInfo(url){
+  var r = { id:'', lista:'' };
+  if(!url) return r;
   try{
-    var u=new URL(url);
-    if(u.hostname.indexOf('youtu.be')!==-1) id=u.pathname.slice(1).split('?')[0];
-    else if(u.hostname.indexOf('youtube.com')!==-1){
-      id=u.searchParams.get('v')||'';
-      if(!id && u.pathname.indexOf('/shorts/')!==-1) id=u.pathname.split('/shorts/')[1].split('/')[0];
+    var u = new URL(String(url).trim());
+    var h = u.hostname;
+    if(h.indexOf('youtu.be') !== -1){
+      r.id = u.pathname.slice(1).split('/')[0];
+    } else if(h.indexOf('youtube.com') !== -1){
+      r.id = u.searchParams.get('v') || '';
+      if(!r.id && u.pathname.indexOf('/shorts/') !== -1) r.id = u.pathname.split('/shorts/')[1].split('/')[0];
+      if(!r.id && u.pathname.indexOf('/embed/') !== -1) r.id = u.pathname.split('/embed/')[1].split('/')[0];
     }
+    r.lista = u.searchParams.get('list') || '';
+    // 'videoseries' no es un vídeo, es el comodín que usa YouTube para las listas
+    if(r.id === 'videoseries') r.id = '';
   }catch(e){}
-  return id?'https://img.youtube.com/vi/'+id+'/mqdefault.jpg':'';
+  return r;
+}
+// ¿Es un enlace de YouTube que podemos reproducir? (vídeo suelto o lista)
+function esYouTube(url){ var i = ytInfo(url); return !!(i.id || i.lista); }
+
+function ytThumb(url){
+  var i = ytInfo(url);
+  // Una lista sin vídeo concreto no tiene miniatura propia sin pedirla a la API.
+  return i.id ? 'https://img.youtube.com/vi/'+i.id+'/mqdefault.jpg' : '';
 }
 
 async function ensurePlannerData(){
@@ -11185,7 +11199,7 @@ function linkGuardar(){
   const nota=(document.getElementById('yt-nota').value||'').trim();
   if(!tit){ alert('Ponle un título, por ejemplo "Calentamiento de sprint"'); return; }
   if(!url){ alert('Falta el enlace de YouTube'); return; }
-  if(!ytThumb(url) && !confirm('Ese enlace no parece de YouTube.\n\n¿Lo guardo igualmente?')) return;
+  if(!esYouTube(url) && !confirm('Ese enlace no parece de YouTube.\n\n¿Lo guardo igualmente?')) return;
   const { dayIdx, blockIdx, ei, editando } = _linkEdit;
   const dia=_plan.week.data.dias[dayIdx];
   if (editando){
