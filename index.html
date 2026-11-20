@@ -2121,6 +2121,10 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
    estiraba la caja hasta salirse de la pantalla del móvil. */
 .pj-cont{flex:0 0 100%;width:100%;min-width:0;max-width:100%;padding:4px 0 0;overflow-x:hidden}
 .pj-cont .ex-name,.pj-cont .pblk-n,.pj-cont .ag-nota-txt{overflow-wrap:anywhere}
+.csr-o{margin:14px 0 7px;font-size:11px;color:var(--muted);text-align:center}
+.csr-sem{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:4px}
+.csr-semb{background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;padding:7px 11px;font-size:11px;font-weight:600;cursor:pointer}
+.csr-semb:hover{color:var(--text);border-color:var(--border-strong)}
 .cw-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding:9px 13px;border:1px solid var(--border2);border-radius:10px;background:var(--surface2)}
 .cw-bar-t{font-size:12px;font-weight:600;color:var(--text)}
 .cw-bar-n{font-size:11px;color:var(--muted)}
@@ -9859,7 +9863,7 @@ function calPintarPaso(){
         </span>
         <span style="font-size:12px;color:var(--muted)">${abierto?'⌃':'⌄'}</span>
         <span style="font-size:12px;color:var(--text2);cursor:pointer" title="Cambiar el nombre" onclick="event.stopPropagation();calRenombrar('${g.weekId||''}',${g.dia})">&#9998;</span>
-        <span style="font-size:12px;color:var(--accent2);cursor:pointer" title="Repetir en próximas semanas" onclick="event.stopPropagation();calRepetirSesion('${g.weekId||''}',${g.dia})">⧉</span>
+        <span style="font-size:12px;color:var(--accent2);cursor:pointer" title="Repetir en otros días" onclick="event.stopPropagation();calRepetirSesion('${g.weekId||''}',${g.dia},'${String(g.titulo||g.nombre||'Sesión').replace(/'/g,"\\'")}','${g.fecha||''}')">⧉</span>
         <span style="font-size:13px;color:#ff7070;cursor:pointer" title="Quitar del calendario" onclick="event.stopPropagation();calBorrarGym('${g.weekId||''}',${g.dia})">🗑</span>
       </div>
       ${abierto?'<div id="cal-dia-editor" style="padding:0 8px 10px"><div class="loader"><div class="spinner"></div></div></div>':''}
@@ -10103,16 +10107,120 @@ async function calGuardarDia(){
 }
 
 // Repetir esta sesión el mismo día de la semana durante N semanas
-async function calRepetirSesion(weekId, dia){
+// ══════════════ REPETIR UNA SESIÓN ══════════════
+// Dos caminos en el mismo panel: marcar días sueltos en el calendario,
+// o repetirla cada semana unas cuantas veces. Las copias son
+// independientes y nacen ocultas, como siempre.
+var _csr = { weekId:null, dia:null, titulo:'', origen:'', mes:null, sel:[], ocupados:[], guardando:false };
+
+async function calRepetirSesion(weekId, dia, titulo, fecha){
   if (!weekId){ alert('Esta sesión no se puede repetir desde aquí.'); return; }
-  const n = prompt('¿En cuántas semanas siguientes quieres repetir esta sesión?\n(se creará una copia editable en cada una)', '4');
-  if (n===null) return;
-  const num = parseInt(n);
-  if (!num || num<1){ alert('Pon un número de semanas'); return; }
-  const res = await api({ action:'repetirSesion', weekId, dia, squad:_cal.squad, semanas:num });
+  const base = fecha || _cal.fecha || _agISO(new Date());
+  _csr = { weekId:weekId, dia:dia, titulo:titulo||'Sesión', origen:base,
+           mes:base.slice(0,7), sel:[], ocupados:[], guardando:false };
+  const ov=document.createElement('div');
+  ov.className='picker-backdrop'; ov.id='csr-modal';
+  ov.innerHTML='<div class="fields-box" id="csr-box" onclick="event.stopPropagation()"></div>';
+  ov.addEventListener('click', e=>{ if(e.target===ov) calRepCerrar(); });
+  document.body.appendChild(ov);
+  calRepPintar();
+  _csrCargarOcupados();
+}
+function calRepCerrar(){ const m=document.getElementById('csr-modal'); if(m) m.remove(); }
+function calRepMes(d){
+  const [y,mm]=_csr.mes.split('-').map(Number);
+  const n=new Date(y, mm-1+d, 1);
+  _csr.mes=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');
+  calRepPintar(); _csrCargarOcupados();
+}
+function calRepToggleDia(f){
+  const i=_csr.sel.indexOf(f);
+  if(i===-1) _csr.sel.push(f); else _csr.sel.splice(i,1);
+  _csr.sel.sort(); calRepPintar();
+}
+// Marca en gris los días que ya tienen sesión de ese squad, para no doblar sin querer
+async function _csrCargarOcupados(){
+  const [y,mm]=_csr.mes.split('-').map(Number);
+  const desde=`${y}-${String(mm).padStart(2,'0')}-01`;
+  const ult=new Date(y,mm,0).getDate();
+  const hasta=`${y}-${String(mm).padStart(2,'0')}-${String(ult).padStart(2,'0')}`;
+  try{
+    const r=await api({ action:'getAgenda', usuario:(state.user&&state.user.usuario)||'',
+      squad:_cal.squad, desde:desde, hasta:hasta, soloVisibles:false });
+    if(r&&r.ok){
+      _csr.ocupados=Object.keys(r.dias||{}).filter(f=>((r.dias[f].gym||[]).length));
+      calRepPintar();
+    }
+  }catch(e){}
+}
+function calRepPintar(){
+  const box=document.getElementById('csr-box');
+  if(!box) return;
+  const [yy,mm]=_csr.mes.split('-').map(Number);
+  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const primero=new Date(yy,mm-1,1), ultimo=new Date(yy,mm,0);
+  const offset=(primero.getDay()+6)%7;
+  let celdas='';
+  for(let i=0;i<offset;i++) celdas+='<span class="rep-d rep-off"></span>';
+  for(let d=1; d<=ultimo.getDate(); d++){
+    const f=`${yy}-${String(mm).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const esOrigen=f===_csr.origen;
+    const sel=_csr.sel.indexOf(f)!==-1;
+    const ocup=_csr.ocupados.indexOf(f)!==-1;
+    const cls='rep-d'+(esOrigen?' rep-ya':'')+(sel?' rep-sel':'')+((ocup&&!esOrigen&&!sel)?' rep-eq':'');
+    const tit=esOrigen?'Es el día de esta sesión':(ocup?'Ese día ya tiene sesión':'');
+    celdas+=`<span class="${cls}" title="${tit}" ${esOrigen?'':`onclick="calRepToggleDia('${f}')"`}>${d}</span>`;
+  }
+  const n=_csr.sel.length;
+  box.innerHTML=`
+    <div class="rep-tit">Repetir esta sesión</div>
+    <div class="rep-sub"><b>${String(_csr.titulo).replace(/</g,'&lt;')}</b> &middot; ${_indFechaCorta(_csr.origen)}</div>
+    <div class="rep-preg">Marca los d&iacute;as en los que quieres repetirla.</div>
+    <div class="rep-cal">
+      <div class="rep-cal-hd">
+        <button class="quad-navbtn" onclick="calRepMes(-1)">&#8249;</button>
+        <span class="rep-cal-m">${MESES[mm-1]} ${yy}</span>
+        <button class="quad-navbtn" onclick="calRepMes(1)">&#8250;</button>
+      </div>
+      <div class="rep-g">
+        ${['L','M','X','J','V','S','D'].map(x=>`<span class="rep-dw">${x}</span>`).join('')}
+        ${celdas}
+      </div>
+      <div class="rep-leg">
+        <span><i class="l-sel"></i>elegido</span>
+        <span><i class="l-ya"></i>d&iacute;a de origen</span>
+        <span><i class="l-eq"></i>ya tiene sesi&oacute;n</span>
+      </div>
+    </div>
+    ${n?`<div class="rep-res">${n} d&iacute;a${n!==1?'s':''}: ${_csr.sel.map(_indFechaCorta).join(' &middot; ')}</div>`:''}
+    <button class="rep-ok" ${n?'':'disabled'} onclick="calRepGuardar()">
+      ${n?`Repetir en ${n} d&iacute;a${n!==1?'s':''}`:'Elige al menos un d&iacute;a'}</button>
+    <div class="csr-o">o, si va cada semana:</div>
+    <div class="csr-sem">
+      ${[2,3,4,6,8].map(k=>`<button class="csr-semb" onclick="calRepSemanas(${k})">${k} semanas</button>`).join('')}
+    </div>
+    <button class="doc-cancel-btn" onclick="calRepCerrar()">Cancelar</button>`;
+}
+async function calRepGuardar(){
+  if(_csr.guardando || !_csr.sel.length) return;
+  _csr.guardando=true;
+  const res = await api({ action:'repetirSesion', weekId:_csr.weekId, dia:_csr.dia,
+    squad:_cal.squad, fechas:_csr.sel });
+  _csr.guardando=false;
+  _csrFin(res);
+}
+async function calRepSemanas(n){
+  if(_csr.guardando) return;
+  _csr.guardando=true;
+  const res = await api({ action:'repetirSesion', weekId:_csr.weekId, dia:_csr.dia,
+    squad:_cal.squad, semanas:n });
+  _csr.guardando=false;
+  _csrFin(res);
+}
+function _csrFin(res){
   if (res && res.ok){
-    calCerrar();
-    alert('Sesión repetida en '+res.creadas+' semana'+(res.creadas!==1?'s':'')+'.\n\nQuedan OCULTAS para los jugadores hasta que las actives.');
+    calRepCerrar(); calCerrar();
+    alert('Sesión repetida en '+res.creadas+' día'+(res.creadas!==1?'s':'')+'.\n\nQuedan OCULTAS para los jugadores hasta que las actives.');
     renderCalendarioCoach();
   } else alert('No se pudo repetir: '+((res&&res.error)||''));
 }
