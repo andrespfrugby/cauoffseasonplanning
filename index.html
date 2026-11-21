@@ -2121,6 +2121,12 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
    estiraba la caja hasta salirse de la pantalla del móvil. */
 .pj-cont{flex:0 0 100%;width:100%;min-width:0;max-width:100%;padding:4px 0 0;overflow-x:hidden}
 .pj-cont .ex-name,.pj-cont .pblk-n,.pj-cont .ag-nota-txt{overflow-wrap:anywhere}
+.csm-sqs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.csm-sq{background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer}
+.csm-sq:hover{color:var(--text)}
+.csm-sq.on{background:rgba(169,159,245,.16);color:#a99ff5;border-color:rgba(169,159,245,.5)}
+.csm-res{font-size:11.5px;color:var(--text2);line-height:1.55;background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:12px}
+.csm-res.csm-nada{color:var(--muted)}
 .csr-o{margin:14px 0 7px;font-size:11px;color:var(--muted);text-align:center}
 .csr-sem{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:4px}
 .csr-semb{background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;padding:7px 11px;font-size:11px;font-weight:600;cursor:pointer}
@@ -9863,6 +9869,7 @@ function calPintarPaso(){
         </span>
         <span style="font-size:12px;color:var(--muted)">${abierto?'⌃':'⌄'}</span>
         <span style="font-size:12px;color:var(--text2);cursor:pointer" title="Cambiar el nombre" onclick="event.stopPropagation();calRenombrar('${g.weekId||''}',${g.dia})">&#9998;</span>
+        <span style="font-size:12px;color:var(--text2);cursor:pointer" title="Mover a otro día o a otro equipo" onclick="event.stopPropagation();calMoverAbrir('${g.weekId||''}',${g.dia},'${String(g.titulo||g.nombre||'Sesión').replace(/'/g,"\\'")}','${g.fecha||''}')">&#10140;</span>
         <span style="font-size:12px;color:var(--accent2);cursor:pointer" title="Repetir en otros días" onclick="event.stopPropagation();calRepetirSesion('${g.weekId||''}',${g.dia},'${String(g.titulo||g.nombre||'Sesión').replace(/'/g,"\\'")}','${g.fecha||''}')">⧉</span>
         <span style="font-size:13px;color:#ff7070;cursor:pointer" title="Quitar del calendario" onclick="event.stopPropagation();calBorrarGym('${g.weekId||''}',${g.dia})">🗑</span>
       </div>
@@ -10107,6 +10114,70 @@ async function calGuardarDia(){
 }
 
 // Repetir esta sesión el mismo día de la semana durante N semanas
+// ══════════════ MOVER UNA SESIÓN ══════════════
+// Cambia el día, el equipo, o los dos. Útil cuando una sesión se programa
+// por error en el squad equivocado.
+// Comparar squads sin que estorben mayúsculas, espacios ni el tipo de apóstrofo
+// ('women's' vs 'women\u2019s'), igual que hace el backend.
+function _sqIgual(a,b){
+  const n = x => String(x||'').toLowerCase().replace(/[\u2018\u2019\u02BC\u00B4\u0060]/g,"'").replace(/\s+/g,' ').trim();
+  return n(a)===n(b);
+}
+var _csm = { weekId:null, dia:null, titulo:'', origenF:'', origenSq:'', fecha:'', squad:'', guardando:false };
+
+function calMoverAbrir(weekId, dia, titulo, fecha){
+  if (!weekId){ alert('Esta sesión no se puede mover desde aquí.'); return; }
+  const f = fecha || _cal.fecha || _agISO(new Date());
+  _csm = { weekId:weekId, dia:dia, titulo:titulo||'Sesión', origenF:f, origenSq:_cal.squad,
+           fecha:f, squad:_cal.squad, guardando:false };
+  const ov=document.createElement('div');
+  ov.className='picker-backdrop'; ov.id='csm-modal';
+  ov.innerHTML='<div class="fields-box" id="csm-box" onclick="event.stopPropagation()"></div>';
+  ov.addEventListener('click', e=>{ if(e.target===ov) calMoverCerrar(); });
+  document.body.appendChild(ov);
+  calMoverPintar();
+}
+function calMoverCerrar(){ const m=document.getElementById('csm-modal'); if(m) m.remove(); }
+function calMoverSq(sq){ _csm.squad=sq; calMoverPintar(); }
+function calMoverFecha(v){ _csm.fecha=v; calMoverPintar(); }
+function calMoverPintar(){
+  const box=document.getElementById('csm-box');
+  if(!box) return;
+  const cambiaSq = !_sqIgual(_csm.squad,_csm.origenSq);
+  const cambiaF  = _csm.fecha!==_csm.origenF;
+  const hay = cambiaSq || cambiaF;
+  const pills = SQUADS.map(sq=>`<button class="csm-sq${_sqIgual(sq,_csm.squad)?' on':''}"
+      onclick="calMoverSq('${sq.replace(/'/g,"\\'")}')">${sq}</button>`).join('');
+  box.innerHTML=`
+    <div class="rep-tit">Mover esta sesión</div>
+    <div class="rep-sub"><b>${String(_csm.titulo).replace(/</g,'&lt;')}</b> &middot; ${_indFechaCorta(_csm.origenF)} &middot; ${_csm.origenSq}</div>
+    <label class="indiv-lbl" style="margin-top:12px">Equipo</label>
+    <div class="csm-sqs">${pills}</div>
+    <label class="indiv-lbl">Día</label>
+    <input type="date" class="pe-addinput" style="margin-bottom:12px" value="${_csm.fecha}"
+           onchange="calMoverFecha(this.value)">
+    ${hay?`<div class="csm-res">Pasa a <b>${_csm.squad}</b>, el <b>${_indFechaCorta(_csm.fecha)}</b>.
+      ${cambiaSq?'Deja de verla el equipo de origen.':''}</div>`:
+      `<div class="csm-res csm-nada">Cambia el equipo o el día para poder moverla.</div>`}
+    <button class="rep-ok" ${hay?'':'disabled'} onclick="calMoverGuardar()">Mover</button>
+    <button class="doc-cancel-btn" onclick="calMoverCerrar()">Cancelar</button>`;
+}
+async function calMoverGuardar(){
+  if(_csm.guardando) return;
+  _csm.guardando=true;
+  const res = await api({ action:'moverSesion', weekId:_csm.weekId, dia:_csm.dia,
+    fecha:_csm.fecha, squad:_csm.squad });
+  _csm.guardando=false;
+  if (res && res.ok){
+    const sq=_csm.squad, f=_csm.fecha;
+    calMoverCerrar(); calCerrar();
+    // Si se ha ido a otro equipo, nos cambiamos a ese equipo para verla
+    if (!_sqIgual(sq,_cal.squad)){ _cal.squad=sq; state.coachSquadFilter=sq; }
+    alert('Sesión movida a '+sq+', el '+_indFechaCorta(f)+'.');
+    renderCalendarioCoach();
+  } else alert('No se pudo mover: '+((res&&res.error)||''));
+}
+
 // ══════════════ REPETIR UNA SESIÓN ══════════════
 // Dos caminos en el mismo panel: marcar días sueltos en el calendario,
 // o repetirla cada semana unas cuantas veces. Las copias son
