@@ -2121,6 +2121,18 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
    estiraba la caja hasta salirse de la pantalla del móvil. */
 .pj-cont{flex:0 0 100%;width:100%;min-width:0;max-width:100%;padding:4px 0 0;overflow-x:hidden}
 .pj-cont .ex-name,.pj-cont .pblk-n,.pj-cont .ag-nota-txt{overflow-wrap:anywhere}
+.undo-bar{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:12px;max-width:92vw;background:#1b1d24;border:1px solid var(--border-strong);border-radius:12px;padding:12px 14px;box-shadow:0 12px 34px rgba(0,0,0,.55)}
+.undo-tx{font-size:12.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.undo-b{background:rgba(169,159,245,.18);color:#a99ff5;border:0;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.undo-b:hover{background:rgba(169,159,245,.3)}
+.undo-x{background:transparent;border:0;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;padding:0 2px}
+.pap-lista{max-height:330px;overflow-y:auto;border:1px solid var(--border2);border-radius:10px;margin-bottom:12px}
+.pap-row{display:flex;align-items:center;gap:11px;padding:10px 12px}
+.pap-row + .pap-row{border-top:1px solid var(--line)}
+.pap-nm{flex:1;min-width:0;font-size:13px;color:var(--text)}
+.pap-meta{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+.pap-b{background:rgba(0,229,160,.14);color:var(--accent2);border:0;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.pap-vacia{font-size:12px;color:var(--muted);text-align:center;padding:22px 0}
 .csm-sqs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
 .csm-sq{background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer}
 .csm-sq:hover{color:var(--text)}
@@ -9005,6 +9017,7 @@ async function renderCalSemana(){
       <span style="display:flex;gap:4px;margin-left:8px">
         <span style="font-size:11px;padding:6px 12px;border-radius:7px;background:var(--surface2);color:var(--text);border:1px solid var(--border-strong)">Semana</span>
         <span onclick="calVista('mes')" style="font-size:11px;padding:6px 12px;border-radius:7px;cursor:pointer;color:var(--muted);border:1px solid var(--border2)">Mes</span>
+        <span onclick="papeleraAbrir()" title="Papelera: recuperar lo borrado" style="font-size:11px;padding:6px 10px;border-radius:7px;cursor:pointer;color:var(--muted);border:1px solid var(--border2)">&#9851; papelera</span>
       </span>
       <span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         ${squadBtns}
@@ -9020,6 +9033,7 @@ async function renderCalSemana(){
         <div class="cw-menu" id="cw-menu">
           <button onclick="event.stopPropagation();calSemMenu(false);calDupSemanaAbrir()"><span>&#10697;</span> Duplicar esta semana en…</button>
           <button class="cw-menu-del" onclick="event.stopPropagation();calSemMenu(false);calVaciarSemana()"><span>&#128465;</span> Vaciar la semana</button>
+          <button onclick="event.stopPropagation();calSemMenu(false);papeleraAbrir()"><span>&#9851;</span> Papelera</button>
         </div>
       </span>
     </div>
@@ -9871,7 +9885,7 @@ function calPintarPaso(){
         <span style="font-size:12px;color:var(--text2);cursor:pointer" title="Cambiar el nombre" onclick="event.stopPropagation();calRenombrar('${g.weekId||''}',${g.dia})">&#9998;</span>
         <span style="font-size:12px;color:var(--text2);cursor:pointer" title="Mover a otro día o a otro equipo" onclick="event.stopPropagation();calMoverAbrir('${g.weekId||''}',${g.dia},'${String(g.titulo||g.nombre||'Sesión').replace(/'/g,"\\'")}','${g.fecha||''}')">&#10140;</span>
         <span style="font-size:12px;color:var(--accent2);cursor:pointer" title="Repetir en otros días" onclick="event.stopPropagation();calRepetirSesion('${g.weekId||''}',${g.dia},'${String(g.titulo||g.nombre||'Sesión').replace(/'/g,"\\'")}','${g.fecha||''}')">⧉</span>
-        <span style="font-size:13px;color:#ff7070;cursor:pointer" title="Quitar del calendario" onclick="event.stopPropagation();calBorrarGym('${g.weekId||''}',${g.dia})">🗑</span>
+        <span style="font-size:13px;color:#ff7070;cursor:pointer" title="Quitar del calendario" onclick="event.stopPropagation();calBorrarGym('${g.weekId||''}',${g.dia},'${String(g.titulo||g.nombre||'Sesión').replace(/'/g,"\\'")}')">🗑</span>
       </div>
       ${abierto?'<div id="cal-dia-editor" style="padding:0 8px 10px"><div class="loader"><div class="spinner"></div></div></div>':''}
     </div>`;
@@ -10317,12 +10331,85 @@ async function calPublicar(weekId, visible){
   renderCalendarioCoach();
 }
 
-async function calBorrarGym(weekId, dia){
+async function calBorrarGym(weekId, dia, titulo){
   if (!weekId){ alert('Esta sesión viene de una hoja antigua y no se puede quitar desde aquí.'); return; }
   if (!confirm('¿Quitar esta sesión de gym del calendario?')) return;
   const res = await api({ action:'borrarDiaSemana', weekId, dia });
-  if (res && res.ok){ calCerrar(); renderCalendarioCoach(); }
+  if (res && res.ok){
+    calCerrar(); renderCalendarioCoach();
+    deshacerAviso(titulo||'Sesión', res.papelera);
+  }
   else alert('No se pudo quitar: '+((res&&res.error)||''));
+}
+
+// ══════════════ DESHACER ══════════════
+// Nada se borra del todo: va a la papelera. Nada más borrar aparece abajo un
+// aviso con "Deshacer" durante unos segundos; después sigue estando en la
+// papelera, a la que se llega desde el calendario.
+var _undoT = null;
+function deshacerAviso(nombre, pid){
+  if (!pid) return;                       // sin referencia no hay nada que deshacer
+  const v = document.getElementById('undo-bar');
+  if (v) v.remove();
+  if (_undoT) { clearTimeout(_undoT); _undoT = null; }
+  const d = document.createElement('div');
+  d.className = 'undo-bar'; d.id = 'undo-bar';
+  d.innerHTML = `<span class="undo-tx">Se ha quitado <b>${String(nombre).replace(/</g,'&lt;')}</b></span>
+    <button class="undo-b" onclick="deshacerYa('${pid}')">Deshacer</button>
+    <button class="undo-x" onclick="deshacerCerrar()" title="Cerrar">&times;</button>`;
+  document.body.appendChild(d);
+  _undoT = setTimeout(deshacerCerrar, 12000);
+}
+function deshacerCerrar(){
+  const d = document.getElementById('undo-bar'); if (d) d.remove();
+  if (_undoT) { clearTimeout(_undoT); _undoT = null; }
+}
+async function deshacerYa(pid){
+  const d = document.getElementById('undo-bar');
+  if (d) d.querySelector('.undo-b').textContent = 'Recuperando…';
+  const res = await api({ action:'restaurarPapelera', id:pid });
+  deshacerCerrar();
+  if (res && res.ok){
+    alert('Recuperada ✓\n\nVuelve OCULTA para los jugadores: revísala y actívala cuando quieras.');
+    renderCalendarioCoach();
+  } else alert('No se pudo recuperar: '+((res&&res.error)||''));
+}
+
+// ── La papelera, para cuando te das cuenta más tarde ──
+async function papeleraAbrir(){
+  const ov=document.createElement('div');
+  ov.className='picker-backdrop'; ov.id='pap-modal';
+  ov.innerHTML='<div class="fields-box" id="pap-box" onclick="event.stopPropagation()">'+
+    '<div class="rep-tit">Papelera</div><div class="loader"><div class="spinner"></div></div></div>';
+  ov.addEventListener('click', e=>{ if(e.target===ov) papeleraCerrar(); });
+  document.body.appendChild(ov);
+  const r = await api({ action:'getPapelera', squad:_cal.squad, dias:60 });
+  const box=document.getElementById('pap-box');
+  if(!box) return;
+  if(!r || !r.ok){ box.innerHTML='<div class="rep-tit">Papelera</div><div class="pap-vacia">No se pudo abrir la papelera.</div>'+
+      '<button class="doc-cancel-btn" onclick="papeleraCerrar()">Cerrar</button>'; return; }
+  const l=r.borrados||[];
+  box.innerHTML=`
+    <div class="rep-tit">Papelera</div>
+    <div class="rep-sub">Lo que has quitado en los últimos 60 días, de ${_cal.squad}.</div>
+    ${l.length? `<div class="pap-lista">${l.map(x=>`
+      <div class="pap-row">
+        <span class="pap-nm">${String(x.nombre).replace(/</g,'&lt;')}
+          <span class="pap-meta">${x.fechas.length?x.fechas.map(_indFechaCorta).join(' · '):'sin fecha'} ·
+            ${x.nEj} ejercicio${x.nEj===1?'':'s'} · borrado el ${_indFechaCorta(x.cuando)}</span></span>
+        <button class="pap-b" onclick="papeleraRestaurar('${x.id}')">Recuperar</button>
+      </div>`).join('')}</div>`
+      : '<div class="pap-vacia">No has quitado nada todavía.</div>'}
+    <button class="doc-cancel-btn" onclick="papeleraCerrar()">Cerrar</button>`;
+}
+function papeleraCerrar(){ const m=document.getElementById('pap-modal'); if(m) m.remove(); }
+async function papeleraRestaurar(pid){
+  const res = await api({ action:'restaurarPapelera', id:pid });
+  if (res && res.ok){
+    papeleraCerrar();
+    alert('Recuperada ✓\n\nVuelve OCULTA para los jugadores: revísala y actívala cuando quieras.');
+    renderCalendarioCoach();
+  } else alert('No se pudo recuperar: '+((res&&res.error)||''));
 }
 
 // Abre el editor de la semana a la que pertenece esta sesión
