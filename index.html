@@ -2121,6 +2121,8 @@ body.light-mode .ag-day.con{background:rgba(0,0,0,.03)}
    estiraba la caja hasta salirse de la pantalla del móvil. */
 .pj-cont{flex:0 0 100%;width:100%;min-width:0;max-width:100%;padding:4px 0 0;overflow-x:hidden}
 .pj-cont .ex-name,.pj-cont .pblk-n,.pj-cont .ag-nota-txt{overflow-wrap:anywhere}
+.cump-cel{display:inline-block;min-width:52px;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.coach-table tr.rep-media td{border-top:2px solid var(--border-strong);font-weight:700;color:var(--text);background:var(--surface2)}
 .undo-bar{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:12px;max-width:92vw;background:#1b1d24;border:1px solid var(--border-strong);border-radius:12px;padding:12px 14px;box-shadow:0 12px 34px rgba(0,0,0,.55)}
 .undo-tx{font-size:12.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .undo-b{background:rgba(169,159,245,.18);color:#a99ff5;border:0;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
@@ -5712,6 +5714,7 @@ async function renderReportsPanel() {
       <div class="rep-period-row">
         <button class="rep-period-btn rep-period-btn-active" id="rep-btn-semana" onclick="repSwitchMode('semana')">Semana</button>
         <button class="rep-period-btn" id="rep-btn-mes" onclick="repSwitchMode('mes')">Mes</button>
+        <button class="rep-period-btn" id="rep-btn-u4" onclick="repSwitchMode('u4')">Últimas 4</button>
         <button class="rep-period-btn" id="rep-btn-meso" onclick="repSwitchMode('meso')">Mesociclo</button>
         <select class="rep-period-select" id="rep-sel-semana" onchange="repLoadData()">
           ${semOptions}
@@ -5747,6 +5750,8 @@ function repSwitchMode(mode) {
   window._repMode = mode;
   document.getElementById('rep-btn-semana').classList.toggle('rep-period-btn-active', mode==='semana');
   document.getElementById('rep-btn-mes').classList.toggle('rep-period-btn-active', mode==='mes');
+  const bU4 = document.getElementById('rep-btn-u4');
+  if (bU4) bU4.classList.toggle('rep-period-btn-active', mode==='u4');
   const bMeso = document.getElementById('rep-btn-meso');
   if (bMeso) bMeso.classList.toggle('rep-period-btn-active', mode==='meso');
   document.getElementById('rep-sel-semana').style.display = mode==='semana' ? '' : 'none';
@@ -5763,6 +5768,37 @@ async function _getHistCached(usuario){
   const r = await api({ action:'getHistorial', usuario, ejercicio:'RPE_GLOBAL' });
   _repHistCache[usuario] = r;
   return r;
+}
+
+// Una fila por DÍA real de entrenamiento, con sus minutos y su RPE.
+// Hace falta para la carga en UA: es la suma de minutos × RPE de cada sesión,
+// no los minutos totales por el RPE medio (eso da otro número).
+function _repPorDia(sesiones, porFecha){
+  const dias = {};
+  sesiones.forEach(h=>{
+    const k = porFecha ? String(h.fecha).slice(0,10)
+                       : String(h.semana).trim()+'|'+String(h.dia).trim();
+    if (!dias[k]) dias[k] = { min:null, rpe:null };
+    const t = parseInt(h.tiempo_sesion);
+    if (!isNaN(t) && t>0 && dias[k].min===null) dias[k].min = t;
+    const r = parseFloat(h.rpe);
+    if (!isNaN(r) && dias[k].rpe===null) dias[k].rpe = r;
+  });
+  return Object.values(dias);
+}
+// Devuelve de una vez lo que pide la tabla: sesiones, minutos, RPE medio y UA.
+function _repMetricas(sesiones, porFecha){
+  const dias = _repPorDia(sesiones, porFecha);
+  const mins = dias.map(d=>d.min).filter(v=>v!==null && v>0);
+  const rpes = dias.map(d=>d.rpe).filter(v=>v!==null && !isNaN(v));
+  let ua = 0, conUA = 0;
+  dias.forEach(d=>{ if(d.min>0 && d.rpe>0){ ua += d.min*d.rpe; conUA++; } });
+  return {
+    sesCount: dias.length,
+    tiempo:   mins.length ? mins.reduce((a,b)=>a+b,0) : null,
+    avgRpe:   rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null,
+    ua:       conUA ? Math.round(ua) : null
+  };
 }
 
 // Suma el tiempo tomando UN registro por día (semana+día), evita duplicados
@@ -5835,25 +5871,36 @@ async function repLoadData() {
       const res = histResults[idx];
       if (!res.ok || !res.historial) return { nombre:j.nombre, usuario:j.usuario, avgRpe:null, sesCount:0, comp:0, tiempo:null };
       const sesiones = res.historial.filter(h => String(h.semana).trim() === semStr);
-      const rpes = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
-      const avgRpe = rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null;
-      // contar DÍAS distintos, no filas (evita duplicados del mismo día)
-      const sesCount = new Set(sesiones.map(h=>String(h.dia).trim())).size;
-      const tiempo = _tiempoDiasUnicos(sesiones);
+      const mt = _repMetricas(sesiones, false);
       const diasProg = j.diasProgramados || 5;
-      const comp = sesCount > 0 ? Math.min(Math.round((sesCount/diasProg)*100), 100) : 0;
-      return { nombre:j.nombre, usuario:j.usuario, avgRpe, sesCount, comp, tiempo };
+      const comp = mt.sesCount > 0 ? Math.min(Math.round((mt.sesCount/diasProg)*100), 100) : 0;
+      return { nombre:j.nombre, usuario:j.usuario, comp, prog:diasProg, ...mt };
     }).sort((a,b)=>b.comp-a.comp);
 
-  } else if (mode === 'meso') {
-    // Semanas seleccionadas (checkboxes)
-    const checks = Array.from(document.querySelectorAll('#rep-meso-picker input[type=checkbox]:checked')).map(c=>c.value);
+  } else if (mode === 'meso' || mode === 'u4') {
+    // Mesociclo: las semanas que marques. Últimas 4: las cuatro más recientes.
+    let checks;
+    if (mode === 'u4'){
+      const act = (typeof realSemanaIdx==='function' ? realSemanaIdx() : semIdx) || semIdx;
+      const todas = (state.semanaIndices && state.semanaIndices.length)
+        ? state.semanaIndices.slice().sort((x,y)=>x-y)
+        : Array.from({length:act},(_,i)=>i+1);
+      // las 4 últimas que no pasen de la semana actual
+      checks = todas.filter(x=>x<=act).slice(-4).map(String);
+      if (!checks.length) checks = [String(act)];
+    } else {
+      checks = Array.from(document.querySelectorAll('#rep-meso-picker input[type=checkbox]:checked')).map(c=>c.value);
+    }
     if (!checks.length) {
       body.innerHTML = '<div class="hist-empty" style="text-align:center;padding:24px">Selecciona una o varias semanas arriba para ver el total del mesociclo.</div>';
       return;
     }
+
     const semSet = new Set(checks.map(String));
-    periodLabel = 'Mesociclo · ' + checks.length + ' semanas';
+    const nSemanas = checks.length;
+    periodLabel = (mode==='u4')
+      ? 'Últimas ' + nSemanas + ' semanas'
+      : 'Mesociclo · ' + nSemanas + ' semanas';
 
     const histResults = await Promise.all(
       equipo.map(j => _getHistCached(j.usuario))
@@ -5863,15 +5910,11 @@ async function repLoadData() {
       const res = histResults[idx];
       if (!res.ok || !res.historial) return { nombre:j.nombre, usuario:j.usuario, avgRpe:null, sesCount:0, comp:0, tiempo:null };
       const sesiones = res.historial.filter(h => semSet.has(String(h.semana).trim()));
-      const rpes = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
-      const avgRpe = rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null;
-      // contar días distintos por semana+día (evita duplicados del mismo día)
-      const sesCount = new Set(sesiones.map(h=>String(h.semana).trim()+'|'+String(h.dia).trim())).size;
-      const tiempo = _tiempoDiasUnicos(sesiones);
+      const mt = _repMetricas(sesiones, false);
       // adherencia: sesiones hechas / (días programados × nº semanas)
-      const diasProg = (j.diasProgramados || 5) * checks.length;
-      const comp = sesCount > 0 ? Math.min(Math.round((sesCount/diasProg)*100), 100) : 0;
-      return { nombre:j.nombre, usuario:j.usuario, avgRpe, sesCount, comp, tiempo };
+      const diasProg = (j.diasProgramados || 5) * nSemanas;
+      const comp = mt.sesCount > 0 ? Math.min(Math.round((mt.sesCount/diasProg)*100), 100) : 0;
+      return { nombre:j.nombre, usuario:j.usuario, comp, prog:diasProg, ...mt };
     }).sort((a,b)=>b.comp-a.comp);
 
   } else {
@@ -5891,16 +5934,15 @@ async function repLoadData() {
         const d = new Date(h.fecha);
         return d.getMonth() === monIdx && d.getFullYear() === year;
       });
-      const rpes = sesiones.map(h=>parseFloat(h.rpe)).filter(v=>!isNaN(v));
-      const avgRpe = rpes.length ? Math.round((rpes.reduce((a,b)=>a+b,0)/rpes.length)*10)/10 : null;
-      // contar días distintos (fecha) — evita duplicados del mismo día
-      const sesCount = new Set(sesiones.map(h=>String(h.fecha).slice(0,10))).size;
-      const tiempo = _tiempoDiasUnicosFecha(sesiones);
+      const mt = _repMetricas(sesiones, true);
+      const avgRpe = mt.avgRpe, sesCount = mt.sesCount, tiempo = mt.tiempo;
+      const semEnMes = Math.ceil(new Date(year, monIdx+1, 0).getDate()/7);
+      const prog = (j.diasProgramados || 5) * semEnMes;
       // compliance mensual correcto: promedio de compliance semanales (backend)
       const rc = await api({ action:'getComplianceMes', usuario:j.usuario, squad:j.squad||sqFilter||'', mes:monIdx, anio:year });
       const comp = (rc && rc.ok && typeof rc.compliance==='number') ? rc.compliance
                    : (sesCount>0 ? Math.min(Math.round((sesCount/20)*100),100) : 0);
-      return { nombre:j.nombre, usuario:j.usuario, avgRpe, sesCount, comp, tiempo };
+      return { nombre:j.nombre, usuario:j.usuario, avgRpe, sesCount, comp, tiempo, ua:mt.ua, prog };
     }));
     rows.sort((a,b)=>b.comp-a.comp);
   }
@@ -5914,25 +5956,36 @@ async function repLoadData() {
 
   const tableRows = rows.map(r => {
     const cc = compCol(r.comp);
-    const rc = rpeCol(r.avgRpe);
     return `<tr>
       <td>
         <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:${cc}22;color:${cc};font-size:9px;font-weight:600;margin-right:6px;flex-shrink:0;vertical-align:middle">${avInit(r.nombre)}</span>
         ${r.nombre.split(',')[0]}
       </td>
-      <td><span class="rpe7-chip rpe7-${r.avgRpe===null?'none':r.avgRpe<=5?'low':r.avgRpe<=7?'mid':'high'}">${r.avgRpe !== null ? r.avgRpe : '—'}</span></td>
-      <td style="color:var(--muted);text-align:center">${r.sesCount}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px">
-          <div style="flex:1;height:3px;border-radius:2px;background:var(--border);overflow:hidden">
-            <div style="height:100%;width:${r.comp}%;background:${cc};border-radius:2px"></div>
-          </div>
-          <span style="font-size:10px;font-weight:600;color:${cc};min-width:28px;text-align:right">${r.comp}%</span>
-        </div>
-      </td>
-      <td style="color:var(--muted)">${r.tiempo ? r.tiempo+' min' : '—'}</td>
+      <td style="text-align:center;color:var(--text2)">${r.sesCount}<span style="color:var(--muted)">/${r.prog||'—'}</span></td>
+      <td style="text-align:center;color:var(--muted)">${r.tiempo ? r.tiempo : '—'}</td>
+      <td style="text-align:center"><span class="rpe7-chip rpe7-${r.avgRpe===null?'none':r.avgRpe<=5?'low':r.avgRpe<=7?'mid':'high'}">${r.avgRpe !== null ? r.avgRpe : '—'}</span></td>
+      <td style="text-align:center;font-weight:600;color:var(--text)">${r.ua !== null && r.ua !== undefined ? r.ua : '—'}</td>
+      <td style="text-align:center"><span class="cump-cel" style="background:${cc}1f;color:${cc}">${r.comp}%</span></td>
     </tr>`;
   }).join('');
+
+  // ── Media del equipo, solo con quien ha entrenado ──
+  const nAct = activeRows.length;
+  const mediaSes  = nAct ? (activeRows.reduce((a,b)=>a+b.sesCount,0)/nAct) : 0;
+  const mediaProg = nAct ? Math.round(activeRows.reduce((a,b)=>a+(b.prog||0),0)/nAct) : 0;
+  const minsAct   = activeRows.map(r=>r.tiempo).filter(v=>v);
+  const mediaMin  = minsAct.length ? Math.round(minsAct.reduce((a,b)=>a+b,0)/minsAct.length) : null;
+  const uasAct    = activeRows.map(r=>r.ua).filter(v=>v);
+  const mediaUA   = uasAct.length ? Math.round(uasAct.reduce((a,b)=>a+b,0)/uasAct.length) : null;
+  const ccMedia   = compCol(avgComp);
+  const filaMedia = `<tr class="rep-media">
+      <td>Media equipo</td>
+      <td style="text-align:center">${nAct? (Math.round(mediaSes*10)/10)+'/'+(mediaProg||'—') : '—'}</td>
+      <td style="text-align:center">${mediaMin !== null ? mediaMin : '—'}</td>
+      <td style="text-align:center">${avgRpeTotal !== null ? avgRpeTotal : '—'}</td>
+      <td style="text-align:center">${mediaUA !== null ? mediaUA : '—'}</td>
+      <td style="text-align:center"><span class="cump-cel" style="background:${ccMedia}1f;color:${ccMedia}">${avgComp}%</span></td>
+    </tr>`;
 
   body.innerHTML = `
     <div id="report-printable">
@@ -5948,9 +6001,14 @@ async function repLoadData() {
       <div class="coach-table-wrap">
         <table class="coach-table">
           <thead><tr>
-            <th>Jugador</th><th>RPE</th><th style="text-align:center">Sesiones</th><th>Compliance</th><th>Tiempo total</th>
+            <th>Jugador</th>
+            <th style="text-align:center">Sesiones</th>
+            <th style="text-align:center">Min</th>
+            <th style="text-align:center">RPE</th>
+            <th style="text-align:center">Carga (UA)</th>
+            <th style="text-align:center">Cumpl.</th>
           </tr></thead>
-          <tbody>${tableRows}</tbody>
+          <tbody>${tableRows}${rows.length?filaMedia:''}</tbody>
         </table>
       </div>
     </div>
